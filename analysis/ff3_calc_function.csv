@@ -1,0 +1,81 @@
+30, SpellInfo に name が無い環境でも落ちない攻撃白魔判定, _is_offensive_white
+146, 部分石化の蓄積処理, apply_partial_petrification
+181, セーブデータのステータスから部分石化ゲージを計算, partial_petrify_gauge_from_status_effects
+197, 敵の Status Attack による部分石化の蓄積処理（apply_partial_petrification に一本化）, apply_partial_petrify_from_status_attack
+223, 名前から amount を返す小ヘルパー（部分石化）, partial_petrify_amount_from_name
+234, BattleActorState を1行の状態表示テキストに整形, format_state_line
+265, 共通：JSON を読み込み、top_key 配下を name_key で dict 化, _load_named_index
+272, モンスター JSON を name → dict にして返す, load_monsters
+276, 武器 JSON を name → dict にして返す, load_weapons
+281, 防具 JSON を name → dict にして返す, load_armors
+285, 魔法 JSON を name → dict にして返す, load_spells
+289, アイテム JSON を Name → dict にして返す, load_items
+293, ジョブ JSON を読み込み、Job オブジェクトの辞書を作成, load_jobs
+325, セーブデータ JSON を読み込む, load_savedata
+329, party の1人分の情報からキャラクター・装備・戦闘状態を生成, character_from_party_entry
+439, セーブデータの status_effects を Status の集合に変換する, statuses_from_status_effects
+495, Job.raw["Weapons"] / ["Armors"] に基づいて、, apply_job_equipment_restrictions
+550, EquipmentSet を人間が読みやすい1ブロックの文字列にする, equipment_summary
+636, 混乱時の「自傷」用に、キャラ自身を防御側として扱うためのダミー敵ステータスを作る, ff3_confused_self_dummy_enemy
+661, 混乱時の「敵の自傷」用に、敵自身を“キャラの防御側”として扱うダミーを作る, ff3_confused_self_dummy_char
+699, "Air, Ice" / ["Air","Ice"] / None / "-" を想定して Elements を正規化, parse_elements
+719, 武器名 → (威力, 命中%, 長距離フラグ, 属性リスト) に変換, weapon_stats
+747, 防具名 → (Defense, Evasion, MagicDefense, 盾フラグ, 属性耐性, 属性無効) に変換, armor_stats
+802, 生存している味方キャラのインデックスをランダムに選ぶ, random_alive_char_index
+809, 生存している敵のインデックスをランダムに選ぶ, random_alive_enemy_index
+902, 魔法 JSON 1件から SpellInfo を構築, spell_from_json
+993, FC版準拠：spell_json["Level"] の MP を1消費する, use_mp_for_spell
+1009, 回復/補助系なら種類を返す（hp/status/revive/protect/haste）, healing_spell_kind
+1050, 回復白魔法の回復量を計算する簡易関数, magic_heal_amount_to_char
+1085, ffiii_jobs_compact.json の job.raw["Spells"] を正とし、, allowed_spell_names_for_job
+1098, 基礎ステータス + 装備名 + JSON データ から、戦闘用の最終ステータスを自動算出, compute_character_final_stats
+1230, StatsByLevel から Str/Agi/Vit/Int/Mnd を線形補完して target_level のステータスを作る, interpolate_stats
+1295, StatsByLevel から MP を線形補完して target_level の MP を作る, interpolate_mp
+1352, 魔法を Lv 単位で 1 行形式で表示する, print_magic_menu_by_level
+1392, spells.json 内の Summon Magic（親：Bahamut等）を、子召喚魔法へ展開する, expand_spells_for_summons
+1452, 敵 JSON から「行動順決定用の擬似 Agility」を計算する, compute_enemy_base_agility
+1475, monsters.json の 1 モンスター dict から FinalEnemyStats を作成, compute_enemy_final_stats
+1508, save["inventory"] を見て、使えるアイテムのリストを返す, build_item_list
+1556, ffiii_items.json のキーに合わせた表示可否判定, is_item_visible_in_context
+1583, save["inventory"] 全カテゴリ横断で残数取得（無ければ0）, get_item_quantity
+1600, アイテムの効果（回復・蘇生・バフなど）を対象1体に適用する, apply_item_effect_to_actor
+2004, アイテム JSON から「攻撃用 SpellInfo」を作成する補助, spellinfo_from_item_for_attack
+2042, アイテムによる魔法攻撃ダメージを計算する, magic_damage_item_to_actor
+2114, 敵の魔法攻撃に Reflect がかかるかどうか判定する, maybe_reflect_magic_to_caster
+2178, SpellInfo と敵の属性から相性・有効属性を返す, calc_element_relation_for_spell
+2238, 属性相性に応じてダメージ倍率を返す, element_multiplier_for_relation
+2277, 属性名のシノニム集合を展開する, _expand_synonyms
+2300, SpellInfo の属性と相手の耐性から ElementRelation を決定する, resolve_element_relation
+2374, 属性名リストをシノニム展開して set で返す, _expand_synonyms
+2380, キャラ側の属性耐性情報から ElementRelation を決める, element_relation_char_side
+2422, 敵側の属性耐性情報から ElementRelation を決める, element_relation_enemy_side
+2455, 味方キャラの装備などから元素属性の実効リストを作る, gather_elements_for_char
+2493, 敵の JSON から元素属性の実効リストを作る, gather_elements_for_enemy
+2531, 味方キャラの武器属性に基づいて攻撃属性リストを作る, gather_attack_elements_for_char
+2567, SpellInfo から反射可能かどうかのフラグを判定する, is_reflectable_spell
+2595, 物理攻撃時に属性相性を決定する, determine_element_relation_for_physical
+2642, 物理攻撃1ヒットあたりのダメージ（乱数込み）を計算する, _calc_base_physical_damage_per_hit
+2705, 物理防御に基づきダメージをクリップ・補正する, _apply_physical_defense_clip
+2763, キャラ → 敵の物理ダメージ（1ヒットあたり期待値）を計算, physical_damage_char_to_enemy
+2838, 敵 → キャラの物理ダメージ（1ヒットあたり期待値）を計算, physical_damage_enemy_to_char
+2901, 黒/白/召喚/その他に応じて魔法の威力を算出する, _calc_magic_power
+2907, 魔法攻撃のヒット回数（倍率）を計算, _calc_magic_multiplier
+2928, 魔法攻撃の命中率[%]を計算, _calc_magic_accuracy
+2956, 魔法1ヒットあたりの基礎ダメージ（乱数込み）を計算, _calc_base_magic_damage_per_hit
+3011, 魔法ダメージに魔法防御・抵抗・属性相性を反映する, _apply_magic_defense_and_resistance
+3086, キャラ → 敵の魔法ダメージ（期待値）を計算, magic_damage_char_to_enemy
+3295, 敵 → キャラの魔法ダメージ（期待値）を計算, magic_damage_enemy_to_char
+3837, monsters.json の Spells エントリから状態異常名を取り出すヘルパー, _get_status_name_from_monster_spell
+3853, 敵がキャラクターに攻撃する 1 回分の攻撃結果を返す, enemy_attack_to_char_with_special
+4106, 1ターンシミュレーション（魔法で攻撃する場合のためのラッパ）, simulate_one_turn_with_spell_name
+4162, 1ターンシミュレーション（アイテム版ラッパ関数）, simulate_one_turn_with_item_name
+4223, save["inventory"] から item_name を 1 消費する, consume_item_from_inventory
+4256, save["inventory"] に item_name を qty 分加算するヘルパー, add_item_to_inventory
+4293, バトルコマンド文字列を BattleKind に正規化, normalize_battle_command
+4306, 1アクター分のターン開始時処理（毒など）, start_of_turn_for_actor
+4363, 毒など、ターン開始時に自動発動する効果をまとめる場所, apply_start_of_turn_effects
+4377, HP が 0 以下、または KO / Petrify 状態なら戦闘不能とみなす, is_out_of_battle
+4388, 戦闘離脱状態かどうかを判定, is_actor_alive
+4394, 「キャラ1人分の行動フェーズ」だけを担当する関数, run_character_turn
+5891, 「敵の1行動フェーズ」だけを担当する関数, run_enemy_turn
+6569, 1ターン分の攻防をシミュレートしてログを返す簡易関数（1vs1）, simulate_one_turn

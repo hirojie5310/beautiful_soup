@@ -1,0 +1,792 @@
+        {
+          "Level": 1,
+          "Str": 25,
+          "Agi": 25,
+          "Vit": 20,
+          "Int": 15,
+          "Mnd": 15
+        },
+        {
+          "Level": 2,
+          "Str": 26,
+          "Agi": 26,
+          "Vit": 21,
+          "Int": 16,
+          "Mnd": 16
+        },
+        {
+          "Level": 3,
+          "Str": 27,
+          "Agi": 27,
+          "Vit": 21,
+          "Int": 16,
+          "Mnd": 16
+        },
+        {
+          "Level": 4,
+          "Str": 28,
+          "Agi": 28,
+          "Vit": 22,
+          "Int": 16,
+          "Mnd": 16
+        },
+        {
+          "Level": 5,
+          "Str": 29,
+          "Agi": 29,
+          "Vit": 23,
+          "Int": 17,
+          "Mnd": 17
+        },
+        {
+          "Level": 6,
+          "Str": 29,
+          "Agi": 29,
+          "Vit": 24,
+          "Int": 17,
+          "Mnd": 17
+        },
+        {
+          "Level": 7,
+          "Str": 30,
+          "Agi": 30,
+          "Vit": 25,
+          "Int": 17,
+          "Mnd": 17
+        },
+        {
+          "Level": 8,
+          "Str": 31,
+          "Agi": 31,
+          "Vit": 25,
+          "Int": 18,
+          "Mnd": 18
+        },
+        {
+          "Level": 9,
+          "Str": 32,
+          "Agi": 32,
+          "Vit": 26,
+          "Int": 18,
+          "Mnd": 18
+        },
+        {
+          "Level": 10,
+          "Str": 32,
+          "Agi": 32,
+          "Vit": 27,
+          "Int": 19,
+          "Mnd": 19
+        },
+        {
+          "Level": 11,
+          "Str": 33,
+          "Agi": 33,
+          "Vit": 28,
+          "Int": 19,
+          "Mnd": 19
+        },
+        {
+          "Level": 12,
+          "Str": 34,
+          "Agi": 34,
+          "Vit": 29,
+          "Int": 19,
+          "Mnd": 19
+        },
+        {
+          "Level": 13,
+          "Str": 35,
+          "Agi": 35,
+          "Vit": 29,
+          "Int": 20,
+          "Mnd": 20
+        },
+        {
+          "Level": 14,
+          "Str": 35,
+          "Agi": 35,
+          "Vit": 30,
+          "Int": 20,
+          "Mnd": 20
+        },
+        {
+          "Level": 15,
+          "Str": 36,
+          "Agi": 36,
+          "Vit": 31,
+          "Int": 20,
+          "Mnd": 20
+        },
+        {
+          "Level": 16,
+          "Str": 37,
+          "Agi": 37,
+          "Vit": 32,
+          "Int": 21,
+          "Mnd": 21
+        },
+        {
+          "Level": 17,
+          "Str": 38,
+          "Agi": 38,
+          "Vit": 33,
+          "Int": 21,
+          "Mnd": 21
+        },
+        {
+          "Level": 18,
+          "Str": 38,
+          "Agi": 38,
+          "Vit": 33,
+          "Int": 21,
+          "Mnd": 21
+        },
+        {
+          "Level": 19,
+          "Str": 39,
+          "Agi": 39,
+          "Vit": 34,
+          "Int": 22,
+          "Mnd": 22
+        },
+        {
+          "Level": 20,
+          "Str": 40,
+          "Agi": 40,
+          "Vit": 35,
+          "Int": 22,
+          "Mnd": 22
+        },
+        {
+          "Level": 21,
+          "Str": 41,
+          "Agi": 41,
+          "Vit": 36,
+          "Int": 22,
+          "Mnd": 22
+        },
+        {
+          "Level": 22,
+          "Str": 41,
+          "Agi": 41,
+          "Vit": 37,
+          "Int": 23,
+          "Mnd": 23
+        },
+        {
+          "Level": 23,
+          "Str": 42,
+          "Agi": 42,
+          "Vit": 37,
+          "Int": 23,
+          "Mnd": 23
+        },
+        {
+          "Level": 24,
+          "Str": 43,
+          "Agi": 43,
+          "Vit": 38,
+          "Int": 23,
+          "Mnd": 23
+        },
+        {
+          "Level": 25,
+          "Str": 44,
+          "Agi": 44,
+          "Vit": 39,
+          "Int": 24,
+          "Mnd": 24
+        },
+        {
+          "Level": 26,
+          "Str": 44,
+          "Agi": 44,
+          "Vit": 40,
+          "Int": 24,
+          "Mnd": 24
+        },
+        {
+          "Level": 27,
+          "Str": 45,
+          "Agi": 45,
+          "Vit": 41,
+          "Int": 25,
+          "Mnd": 25
+        },
+        {
+          "Level": 28,
+          "Str": 46,
+          "Agi": 46,
+          "Vit": 41,
+          "Int": 25,
+          "Mnd": 25
+        },
+        {
+          "Level": 29,
+          "Str": 47,
+          "Agi": 47,
+          "Vit": 42,
+          "Int": 25,
+          "Mnd": 25
+        },
+        {
+          "Level": 30,
+          "Str": 47,
+          "Agi": 47,
+          "Vit": 43,
+          "Int": 26,
+          "Mnd": 26
+        },
+        {
+          "Level": 31,
+          "Str": 48,
+          "Agi": 48,
+          "Vit": 44,
+          "Int": 26,
+          "Mnd": 26
+        },
+        {
+          "Level": 32,
+          "Str": 49,
+          "Agi": 49,
+          "Vit": 45,
+          "Int": 26,
+          "Mnd": 26
+        },
+        {
+          "Level": 33,
+          "Str": 50,
+          "Agi": 50,
+          "Vit": 45,
+          "Int": 27,
+          "Mnd": 27
+        },
+        {
+          "Level": 34,
+          "Str": 50,
+          "Agi": 50,
+          "Vit": 46,
+          "Int": 27,
+          "Mnd": 27
+        },
+        {
+          "Level": 35,
+          "Str": 51,
+          "Agi": 51,
+          "Vit": 47,
+          "Int": 27,
+          "Mnd": 27
+        },
+        {
+          "Level": 36,
+          "Str": 52,
+          "Agi": 52,
+          "Vit": 48,
+          "Int": 28,
+          "Mnd": 28
+        },
+        {
+          "Level": 37,
+          "Str": 53,
+          "Agi": 53,
+          "Vit": 49,
+          "Int": 28,
+          "Mnd": 28
+        },
+        {
+          "Level": 38,
+          "Str": 53,
+          "Agi": 53,
+          "Vit": 49,
+          "Int": 28,
+          "Mnd": 28
+        },
+        {
+          "Level": 39,
+          "Str": 54,
+          "Agi": 54,
+          "Vit": 50,
+          "Int": 29,
+          "Mnd": 29
+        },
+        {
+          "Level": 40,
+          "Str": 55,
+          "Agi": 55,
+          "Vit": 51,
+          "Int": 29,
+          "Mnd": 29
+        },
+        {
+          "Level": 41,
+          "Str": 56,
+          "Agi": 56,
+          "Vit": 52,
+          "Int": 29,
+          "Mnd": 29
+        },
+        {
+          "Level": 42,
+          "Str": 56,
+          "Agi": 56,
+          "Vit": 53,
+          "Int": 30,
+          "Mnd": 30
+        },
+        {
+          "Level": 43,
+          "Str": 57,
+          "Agi": 57,
+          "Vit": 53,
+          "Int": 30,
+          "Mnd": 30
+        },
+        {
+          "Level": 44,
+          "Str": 58,
+          "Agi": 58,
+          "Vit": 54,
+          "Int": 31,
+          "Mnd": 31
+        },
+        {
+          "Level": 45,
+          "Str": 59,
+          "Agi": 59,
+          "Vit": 55,
+          "Int": 31,
+          "Mnd": 31
+        },
+        {
+          "Level": 46,
+          "Str": 59,
+          "Agi": 59,
+          "Vit": 56,
+          "Int": 31,
+          "Mnd": 31
+        },
+        {
+          "Level": 47,
+          "Str": 60,
+          "Agi": 60,
+          "Vit": 57,
+          "Int": 32,
+          "Mnd": 32
+        },
+        {
+          "Level": 48,
+          "Str": 61,
+          "Agi": 61,
+          "Vit": 57,
+          "Int": 32,
+          "Mnd": 32
+        },
+        {
+          "Level": 49,
+          "Str": 62,
+          "Agi": 62,
+          "Vit": 58,
+          "Int": 32,
+          "Mnd": 32
+        },
+        {
+          "Level": 50,
+          "Str": 62,
+          "Agi": 62,
+          "Vit": 59,
+          "Int": 33,
+          "Mnd": 33
+        },
+        {
+          "Level": 51,
+          "Str": 63,
+          "Agi": 63,
+          "Vit": 60,
+          "Int": 33,
+          "Mnd": 33
+        },
+        {
+          "Level": 52,
+          "Str": 64,
+          "Agi": 64,
+          "Vit": 60,
+          "Int": 33,
+          "Mnd": 33
+        },
+        {
+          "Level": 53,
+          "Str": 65,
+          "Agi": 65,
+          "Vit": 61,
+          "Int": 34,
+          "Mnd": 34
+        },
+        {
+          "Level": 54,
+          "Str": 65,
+          "Agi": 65,
+          "Vit": 62,
+          "Int": 34,
+          "Mnd": 34
+        },
+        {
+          "Level": 55,
+          "Str": 66,
+          "Agi": 66,
+          "Vit": 63,
+          "Int": 34,
+          "Mnd": 34
+        },
+        {
+          "Level": 56,
+          "Str": 67,
+          "Agi": 67,
+          "Vit": 64,
+          "Int": 35,
+          "Mnd": 35
+        },
+        {
+          "Level": 57,
+          "Str": 68,
+          "Agi": 68,
+          "Vit": 64,
+          "Int": 35,
+          "Mnd": 35
+        },
+        {
+          "Level": 58,
+          "Str": 68,
+          "Agi": 68,
+          "Vit": 65,
+          "Int": 36,
+          "Mnd": 36
+        },
+        {
+          "Level": 59,
+          "Str": 69,
+          "Agi": 69,
+          "Vit": 66,
+          "Int": 36,
+          "Mnd": 36
+        },
+        {
+          "Level": 60,
+          "Str": 70,
+          "Agi": 70,
+          "Vit": 67,
+          "Int": 36,
+          "Mnd": 36
+        },
+        {
+          "Level": 61,
+          "Str": 71,
+          "Agi": 71,
+          "Vit": 68,
+          "Int": 37,
+          "Mnd": 37
+        },
+        {
+          "Level": 62,
+          "Str": 71,
+          "Agi": 71,
+          "Vit": 68,
+          "Int": 37,
+          "Mnd": 37
+        },
+        {
+          "Level": 63,
+          "Str": 72,
+          "Agi": 72,
+          "Vit": 69,
+          "Int": 37,
+          "Mnd": 37
+        },
+        {
+          "Level": 64,
+          "Str": 73,
+          "Agi": 73,
+          "Vit": 70,
+          "Int": 38,
+          "Mnd": 38
+        },
+        {
+          "Level": 65,
+          "Str": 74,
+          "Agi": 74,
+          "Vit": 71,
+          "Int": 38,
+          "Mnd": 38
+        },
+        {
+          "Level": 66,
+          "Str": 74,
+          "Agi": 74,
+          "Vit": 72,
+          "Int": 38,
+          "Mnd": 38
+        },
+        {
+          "Level": 67,
+          "Str": 75,
+          "Agi": 75,
+          "Vit": 72,
+          "Int": 39,
+          "Mnd": 39
+        },
+        {
+          "Level": 68,
+          "Str": 76,
+          "Agi": 76,
+          "Vit": 73,
+          "Int": 39,
+          "Mnd": 39
+        },
+        {
+          "Level": 69,
+          "Str": 77,
+          "Agi": 77,
+          "Vit": 74,
+          "Int": 39,
+          "Mnd": 39
+        },
+        {
+          "Level": 70,
+          "Str": 77,
+          "Agi": 77,
+          "Vit": 75,
+          "Int": 40,
+          "Mnd": 40
+        },
+        {
+          "Level": 71,
+          "Str": 78,
+          "Agi": 78,
+          "Vit": 76,
+          "Int": 40,
+          "Mnd": 40
+        },
+        {
+          "Level": 72,
+          "Str": 79,
+          "Agi": 79,
+          "Vit": 76,
+          "Int": 40,
+          "Mnd": 40
+        },
+        {
+          "Level": 73,
+          "Str": 80,
+          "Agi": 80,
+          "Vit": 77,
+          "Int": 41,
+          "Mnd": 41
+        },
+        {
+          "Level": 74,
+          "Str": 80,
+          "Agi": 80,
+          "Vit": 78,
+          "Int": 41,
+          "Mnd": 41
+        },
+        {
+          "Level": 75,
+          "Str": 81,
+          "Agi": 81,
+          "Vit": 79,
+          "Int": 42,
+          "Mnd": 42
+        },
+        {
+          "Level": 76,
+          "Str": 82,
+          "Agi": 82,
+          "Vit": 80,
+          "Int": 42,
+          "Mnd": 42
+        },
+        {
+          "Level": 77,
+          "Str": 83,
+          "Agi": 83,
+          "Vit": 80,
+          "Int": 42,
+          "Mnd": 42
+        },
+        {
+          "Level": 78,
+          "Str": 83,
+          "Agi": 83,
+          "Vit": 81,
+          "Int": 43,
+          "Mnd": 43
+        },
+        {
+          "Level": 79,
+          "Str": 84,
+          "Agi": 84,
+          "Vit": 82,
+          "Int": 43,
+          "Mnd": 43
+        },
+        {
+          "Level": 80,
+          "Str": 85,
+          "Agi": 85,
+          "Vit": 83,
+          "Int": 43,
+          "Mnd": 43
+        },
+        {
+          "Level": 81,
+          "Str": 86,
+          "Agi": 86,
+          "Vit": 84,
+          "Int": 44,
+          "Mnd": 44
+        },
+        {
+          "Level": 82,
+          "Str": 86,
+          "Agi": 86,
+          "Vit": 84,
+          "Int": 44,
+          "Mnd": 44
+        },
+        {
+          "Level": 83,
+          "Str": 87,
+          "Agi": 87,
+          "Vit": 85,
+          "Int": 44,
+          "Mnd": 44
+        },
+        {
+          "Level": 84,
+          "Str": 88,
+          "Agi": 88,
+          "Vit": 86,
+          "Int": 45,
+          "Mnd": 45
+        },
+        {
+          "Level": 85,
+          "Str": 89,
+          "Agi": 89,
+          "Vit": 87,
+          "Int": 45,
+          "Mnd": 45
+        },
+        {
+          "Level": 86,
+          "Str": 89,
+          "Agi": 89,
+          "Vit": 88,
+          "Int": 45,
+          "Mnd": 45
+        },
+        {
+          "Level": 87,
+          "Str": 90,
+          "Agi": 90,
+          "Vit": 88,
+          "Int": 46,
+          "Mnd": 46
+        },
+        {
+          "Level": 88,
+          "Str": 91,
+          "Agi": 91,
+          "Vit": 89,
+          "Int": 46,
+          "Mnd": 46
+        },
+        {
+          "Level": 89,
+          "Str": 92,
+          "Agi": 92,
+          "Vit": 90,
+          "Int": 46,
+          "Mnd": 46
+        },
+        {
+          "Level": 90,
+          "Str": 92,
+          "Agi": 92,
+          "Vit": 91,
+          "Int": 47,
+          "Mnd": 47
+        },
+        {
+          "Level": 91,
+          "Str": 93,
+          "Agi": 93,
+          "Vit": 92,
+          "Int": 47,
+          "Mnd": 47
+        },
+        {
+          "Level": 92,
+          "Str": 94,
+          "Agi": 94,
+          "Vit": 92,
+          "Int": 48,
+          "Mnd": 48
+        },
+        {
+          "Level": 93,
+          "Str": 95,
+          "Agi": 95,
+          "Vit": 93,
+          "Int": 48,
+          "Mnd": 48
+        },
+        {
+          "Level": 94,
+          "Str": 95,
+          "Agi": 95,
+          "Vit": 94,
+          "Int": 48,
+          "Mnd": 48
+        },
+        {
+          "Level": 95,
+          "Str": 96,
+          "Agi": 96,
+          "Vit": 95,
+          "Int": 49,
+          "Mnd": 49
+        },
+        {
+          "Level": 96,
+          "Str": 97,
+          "Agi": 97,
+          "Vit": 96,
+          "Int": 49,
+          "Mnd": 49
+        },
+        {
+          "Level": 97,
+          "Str": 98,
+          "Agi": 98,
+          "Vit": 96,
+          "Int": 49,
+          "Mnd": 49
+        },
+        {
+          "Level": 98,
+          "Str": 98,
+          "Agi": 98,
+          "Vit": 97,
+          "Int": 50,
+          "Mnd": 50
+        },
+        {
+          "Level": 99,
+          "Str": 99,
+          "Agi": 99,
+          "Vit": 98,
+          "Int": 50,
+          "Mnd": 50
+        },

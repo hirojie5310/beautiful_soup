@@ -1,0 +1,3345 @@
+{
+  "meta": {
+    "generated_at": "2025-11-14T23:03:07.613069",
+    "count": 43,
+    "error_count": 1,
+    "source": "https://guides.gamercorner.net/ffiii/items/"
+  },
+  "items": [
+    {
+      "Name": "Potion",
+      "ItemType": "Anywhere",
+      "Price": 150,
+      "Value": 75,
+      "SpellEffect": "Recovery",
+      "SpellInfo": {
+        "Effect": "Restore target's HP",
+        "Element": "Recovery",
+        "BasePower": 30,
+        "BaseAccuracy": 1.0,
+        "Reflectable": "No",
+        "Target": "One Enemy",
+        "Multiplier": 3
+      },
+      "Monsters": [
+        {
+          "Name": "Blue Wisp",
+          "HP": 10,
+          "StealRate": 1.0,
+          "DropChance": 0.047
+        },
+        {
+          "Name": "Carbuncle",
+          "HP": 7,
+          "StealRate": 1.0,
+          "DropChance": 0.047
+        },
+        {
+          "Name": "Dullahan",
+          "HP": 350,
+          "StealRate": 1.0,
+          "DropChance": 0.047
+        },
+        {
+          "Name": "Goblin",
+          "HP": 5,
+          "StealRate": 1.0,
+          "DropChance": 0.047
+        },
+        {
+          "Name": "Lilliputian",
+          "HP": 58,
+          "StealRate": 1.0,
+          "DropChance": 0.047
+        },
+        {
+          "Name": "Rukh",
+          "HP": 120,
+          "StealRate": 1.0,
+          "DropChance": 0.047
+        },
+        {
+          "Name": "Abaia",
+          "HP": 990,
+          "StealRate": 1.0,
+          "DropChance": null
+        },
+        {
+          "Name": "Abtu",
+          "HP": 385,
+          "StealRate": 1.0,
+          "DropChance": null
+        },
+        {
+          "Name": "Acheron",
+          "HP": 1020,
+          "StealRate": 1.0,
+          "DropChance": null
+        },
+        {
+          "Name": "Aegir",
+          "HP": 590,
+          "StealRate": 1.0,
+          "DropChance": null
+        },
+        {
+          "Name": "Aeon",
+          "HP": 1200,
+          "StealRate": 1.0,
+          "DropChance": null
+        },
+        {
+          "Name": "Agaliarept",
+          "HP": 215,
+          "StealRate": 1.0,
+          "DropChance": null
+        },
+        {
+          "Name": "Ahriman",
+          "HP": 35000,
+          "StealRate": 1.0,
+          "DropChance": null
+        },
+        {
+          "Name": "Amon",
+          "HP": 7040,
+          "StealRate": 1.0,
+          "DropChance": null
+        },
+        {
+          "Name": "Anet",
+          "HP": 179,
+          "StealRate": 1.0,
+          "DropChance": null
+        },
+        {
+          "Name": "Aughisky",
+          "HP": 122,
+          "StealRate": 1.0,
+          "DropChance": null
+        },
+        {
+          "Name": "Azer",
+          "HP": 1570,
+          "StealRate": 1.0,
+          "DropChance": null
+        },
+        {
+          "Name": "Bahamut",
+          "HP": 60000,
+          "StealRate": 1.0,
+          "DropChance": null
+        },
+        {
+          "Name": "Bahamut",
+          "HP": 7500,
+          "StealRate": 1.0,
+          "DropChance": null
+        },
+        {
+          "Name": "Balor",
+          "HP": 530,
+          "StealRate": 1.0,
+          "DropChance": null
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Ur",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Kazus",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Canaan",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Tozus",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Vikings' Cove",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Dwarven Hollow",
+          "Shop": "Items"
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Altar Cave B3",
+          "Notes": "East side of main hall",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Altar Cave B2",
+          "Notes": "Southeast passage of path to the crystal",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Altar Cave B2",
+          "Notes": "North area of path to the crystal",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Ur",
+          "Notes": "Right pot in bedroom in inn",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Ur",
+          "Notes": "Top right pot in bar in inn",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Ur",
+          "Notes": "In a chest inside the well",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Ur",
+          "Notes": "In a chest inside the well",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Ur",
+          "Notes": "In a chest inside the well",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Ur",
+          "Notes": "Grass east of lake",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Ur",
+          "Notes": "Grass south of storeroom",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Kazus",
+          "Notes": "Shelves behind counter in inn",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Kazus",
+          "Notes": "Middle pot in smithy",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Castle Sasune",
+          "Notes": "West chest in east tower 4F",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Sealed Cave B1",
+          "Notes": "Southwest path",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Canaan",
+          "Notes": "West chest in Cid's secret room",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Canaan",
+          "Notes": "Chest in hidden area in Cid's secret room",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Molten Cave B3",
+          "Notes": "Southwest chest",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Hi Potion",
+      "ItemType": "Anywhere",
+      "Price": 1200,
+      "Value": 600,
+      "SpellEffect": "Recovery",
+      "SpellInfo": {
+        "Effect": "Restore target's HP",
+        "Element": "Recovery",
+        "BasePower": 30,
+        "BaseAccuracy": 1.0,
+        "Reflectable": "No",
+        "Target": "One Enemy",
+        "Multiplier": 12
+      },
+      "Monsters": [
+        {
+          "Name": "Bovian",
+          "HP": 365,
+          "StealRate": 1.0,
+          "DropChance": 0.047
+        },
+        {
+          "Name": "Dark General",
+          "HP": 1130,
+          "StealRate": 1.0,
+          "DropChance": 0.047
+        },
+        {
+          "Name": "Demon Horse",
+          "HP": 355,
+          "StealRate": 1.0,
+          "DropChance": 0.047
+        },
+        {
+          "Name": "Gaap",
+          "HP": 1000,
+          "StealRate": 1.0,
+          "DropChance": 0.047
+        },
+        {
+          "Name": "King Lizard",
+          "HP": 430,
+          "StealRate": 1.0,
+          "DropChance": 0.047
+        },
+        {
+          "Name": "Sleipnir",
+          "HP": 1000,
+          "StealRate": 1.0,
+          "DropChance": 0.047
+        },
+        {
+          "Name": "Vassago",
+          "HP": 720,
+          "StealRate": 1.0,
+          "DropChance": 0.047
+        },
+        {
+          "Name": "Boss Troll",
+          "HP": 500,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Death Claw",
+          "HP": 1400,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Fachan",
+          "HP": 510,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Glasya Labolas",
+          "HP": 2160,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Kyklops",
+          "HP": 490,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Magician",
+          "HP": 260,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Needle Monkey",
+          "HP": 300,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Rock Gargoyle",
+          "HP": 360,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Sorceror",
+          "HP": 310,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Stroper",
+          "HP": 400,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Thor",
+          "HP": 2180,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Vulcan",
+          "HP": 250,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Bomb",
+          "HP": 125,
+          "StealRate": 0.188,
+          "DropChance": null
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Dwarven Hollow",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Amur",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Duster",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Replito",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Northwest Saronia",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Doga's Manor",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Ancient Ruins B1",
+          "Shop": "Items"
+        },
+        {
+          "Map": "The Invincible",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Falgabard",
+          "Shop": "Items"
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Molten Cave B2",
+          "Notes": "Southwest chest",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Molten Cave B2",
+          "Notes": "Northwest chest",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Molten Cave B3",
+          "Notes": "North chest",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Saronia Castle",
+          "Notes": "Chest in secret room in tower bedroom",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Saronia Castle",
+          "Notes": "Chest in secret room in tower bedroom",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Doga's Manor",
+          "Notes": "Bookshelf in magic pot room",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Falgabard",
+          "Notes": "Grass on southeast island",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Falgabard",
+          "Notes": "Grass on southeast island",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Lake Dohr B1",
+          "Notes": "Chest near stairs down",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Lake Dohr B1",
+          "Notes": "Chest near stairs down",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Lake Dohr B1",
+          "Notes": "Chest near stairs down",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Elixir",
+      "ItemType": "Anywhere",
+      "Value": 1500,
+      "SpellEffect": "Elixir",
+      "SpellInfo": {
+        "Effect": "Restore target to full HP and MP",
+        "Element": null,
+        "BasePower": 0,
+        "BaseAccuracy": 1.0,
+        "Reflectable": "No",
+        "Target": "One Enemy",
+        "Multiplier": 1
+      },
+      "Monsters": [
+        {
+          "Name": "Green Dragon",
+          "HP": 10000,
+          "StealRate": 1.0,
+          "DropChance": 0.75
+        },
+        {
+          "Name": "Red Dragon",
+          "HP": 15000,
+          "StealRate": 1.0,
+          "DropChance": 0.75
+        },
+        {
+          "Name": "Yellow Dragon",
+          "HP": 10000,
+          "StealRate": 1.0,
+          "DropChance": 0.75
+        },
+        {
+          "Name": "Bovian",
+          "HP": 365,
+          "StealRate": null,
+          "DropChance": 0.004
+        },
+        {
+          "Name": "Dark General",
+          "HP": 1130,
+          "StealRate": null,
+          "DropChance": 0.004
+        },
+        {
+          "Name": "Demon Horse",
+          "HP": 355,
+          "StealRate": null,
+          "DropChance": 0.004
+        },
+        {
+          "Name": "Gaap",
+          "HP": 1000,
+          "StealRate": null,
+          "DropChance": 0.004
+        },
+        {
+          "Name": "King Lizard",
+          "HP": 430,
+          "StealRate": null,
+          "DropChance": 0.004
+        },
+        {
+          "Name": "Sleipnir",
+          "HP": 1000,
+          "StealRate": null,
+          "DropChance": 0.004
+        },
+        {
+          "Name": "Vassago",
+          "HP": 720,
+          "StealRate": null,
+          "DropChance": 0.004
+        },
+        {
+          "Name": "Blue Wisp",
+          "HP": 10,
+          "StealRate": null,
+          "DropChance": 0.001
+        },
+        {
+          "Name": "Carbuncle",
+          "HP": 7,
+          "StealRate": null,
+          "DropChance": 0.001
+        },
+        {
+          "Name": "Dullahan",
+          "HP": 350,
+          "StealRate": null,
+          "DropChance": 0.001
+        },
+        {
+          "Name": "Goblin",
+          "HP": 5,
+          "StealRate": null,
+          "DropChance": 0.001
+        },
+        {
+          "Name": "Lilliputian",
+          "HP": 58,
+          "StealRate": null,
+          "DropChance": 0.001
+        },
+        {
+          "Name": "Rukh",
+          "HP": 120,
+          "StealRate": null,
+          "DropChance": 0.001
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Canaan",
+          "Notes": "Grass on island in river",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Castle Argus",
+          "Notes": "Given by white mage in northwest tower",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Dwarven Hollow",
+          "Notes": "Chest in lower area",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Replito",
+          "Notes": "Hidden grass in northwest",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Replito",
+          "Notes": "Chest in hidden area in north building",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Northeast Saronia",
+          "Notes": "Northeast tree in center of town",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Sunken Cave B3",
+          "Notes": "Chest on west island",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Saronia Catacombs 4F",
+          "Notes": "Hidden room top row chest",
+          "GuardedBy": "Ouroboros"
+        },
+        {
+          "Map": "Saronia Catacombs 4F",
+          "Notes": "Hidden room top row chest",
+          "GuardedBy": "Ouroboros"
+        },
+        {
+          "Map": "Saronia Catacombs 4F",
+          "Notes": "Hidden room top row chest",
+          "GuardedBy": "Ouroboros"
+        },
+        {
+          "Map": "Saronia Catacombs 4F",
+          "Notes": "Hidden room top row chest",
+          "GuardedBy": "Ouroboros"
+        },
+        {
+          "Map": "Lake Dohr B1",
+          "Notes": "Chest near stairs down",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Bahamut's Lair B3",
+          "Notes": "Chest on middle island",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Ancient's Maze Entrance",
+          "Notes": "Northeast chest",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Eureka B1",
+          "Notes": "Chest on east side",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Eureka B3",
+          "Notes": "Central chest",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Eureka B7",
+          "Notes": "Chest in shop room",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Eureka B7",
+          "Notes": "Chest in shop room",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Crystal Tower 2F",
+          "Notes": "West chest",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Crystal Tower 2F",
+          "Notes": "Southwest chest",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Phoenix Down",
+      "ItemType": "Anywhere",
+      "Value": 1500,
+      "SpellEffect": "Raise",
+      "SpellInfo": {
+        "Effect": "Revive from KO",
+        "Element": "Recovery",
+        "BasePower": 1,
+        "BaseAccuracy": 0.15,
+        "Reflectable": "No",
+        "Target": "One Enemy",
+        "Multiplier": 1
+      },
+      "Monsters": [
+        {
+          "Name": "Bovian",
+          "HP": 365,
+          "StealRate": null,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Dark General",
+          "HP": 1130,
+          "StealRate": null,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Demon Horse",
+          "HP": 355,
+          "StealRate": null,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Gaap",
+          "HP": 1000,
+          "StealRate": null,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "King Lizard",
+          "HP": 430,
+          "StealRate": null,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Sleipnir",
+          "HP": 1000,
+          "StealRate": null,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Vassago",
+          "HP": 720,
+          "StealRate": null,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Blue Wisp",
+          "HP": 10,
+          "StealRate": null,
+          "DropChance": 0.003
+        },
+        {
+          "Name": "Carbuncle",
+          "HP": 7,
+          "StealRate": null,
+          "DropChance": 0.003
+        },
+        {
+          "Name": "Dullahan",
+          "HP": 350,
+          "StealRate": null,
+          "DropChance": 0.003
+        },
+        {
+          "Name": "Goblin",
+          "HP": 5,
+          "StealRate": null,
+          "DropChance": 0.003
+        },
+        {
+          "Name": "Lilliputian",
+          "HP": 58,
+          "StealRate": null,
+          "DropChance": 0.003
+        },
+        {
+          "Name": "Rukh",
+          "HP": 120,
+          "StealRate": null,
+          "DropChance": 0.003
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Canaan",
+          "Notes": "East chest in Cid's secret room",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Canaan",
+          "Notes": "Chest in hidden area in Cid's secret room",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Tokkul",
+          "Notes": "Chest in secret area of elder's house",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Hein's Castle 2F",
+          "Notes": "Chest in secret area",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Hein's Castle 3F",
+          "Notes": "Chest in east room",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Hein's Castle 4F",
+          "Notes": "Chest",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Dwarven Hollow",
+          "Notes": "Chest in lower area",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Dwarven Hollow",
+          "Notes": "Chest in lower area",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Replito",
+          "Notes": "Hidden grass in east",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Southeast Saronia",
+          "Notes": "Chest in north area on top floor of Dragon Spire",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Southeast Saronia",
+          "Notes": "Chest in south area on top floor of Dragon Spire",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Saronia Castle",
+          "Notes": "Chest in castle hall in east building B3",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Saronia Castle",
+          "Notes": "Chest in castle hall in east building B3",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Sunken Cave B3",
+          "Notes": "Chest on west island",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Saronia Catacombs 4F",
+          "Notes": "Hidden room bottom row chest",
+          "GuardedBy": "Aeon"
+        },
+        {
+          "Map": "Saronia Catacombs 4F",
+          "Notes": "Hidden room bottom row chest",
+          "GuardedBy": "Aeon"
+        },
+        {
+          "Map": "Saronia Catacombs 4F",
+          "Notes": "Hidden room bottom row chest",
+          "GuardedBy": "Aeon"
+        },
+        {
+          "Map": "Saronia Catacombs 4F",
+          "Notes": "Hidden room bottom row chest",
+          "GuardedBy": "Aeon"
+        },
+        {
+          "Map": "Lake Dohr B1",
+          "Notes": "Chest in southern path",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Bahamut's Lair B1",
+          "Notes": "Chest on northern path",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Gold Needle",
+      "ItemType": "Anywhere",
+      "Price": 300,
+      "Value": 150,
+      "SpellEffect": "Stona",
+      "SpellInfo": {
+        "Effect": "Cure Petrification and Partial Petrification",
+        "Element": null,
+        "BasePower": 0,
+        "BaseAccuracy": 0.6,
+        "Reflectable": "No",
+        "Target": "One Enemy",
+        "Multiplier": 1
+      },
+      "Monsters": [
+        {
+          "Name": "Cockatrice",
+          "HP": 195,
+          "StealRate": 1.0,
+          "DropChance": 0.062
+        },
+        {
+          "Name": "Helldiver",
+          "HP": 85,
+          "StealRate": 1.0,
+          "DropChance": 0.062
+        },
+        {
+          "Name": "Stalagmite",
+          "HP": 130,
+          "StealRate": 1.0,
+          "DropChance": 0.062
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Dwarven Hollow",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Amur",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Duster",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Replito",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Northwest Saronia",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Doga's Manor",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Ancient Ruins B1",
+          "Shop": "Items"
+        },
+        {
+          "Map": "The Invincible",
+          "Shop": "Items"
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Canaan",
+          "Notes": "Pot in hidden room in building near inn",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Canaan",
+          "Notes": "East chest in Cid's secret room",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Canaan",
+          "Notes": "Chest in hidden area in Cid's secret room",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Dragon's Peak",
+          "Notes": "Southeast path",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Dragon's Peak",
+          "Notes": "Northwest path",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Subterranean Lake B1",
+          "Notes": "Chest",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Subterranean Lake B2",
+          "Notes": "Southwest chest",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Subterranean Lake B2",
+          "Notes": "Northwest chest",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Dwarven Hollow",
+          "Notes": "Chest in lower area",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Maiden's Kiss",
+      "ItemType": "Anywhere",
+      "Price": 100,
+      "Value": 50,
+      "SpellEffect": "Maiden's Kiss",
+      "SpellInfo": {
+        "Effect": "Cure Toad",
+        "Element": "Recovery",
+        "BasePower": 0,
+        "BaseAccuracy": 1.0,
+        "Reflectable": "No",
+        "Target": "One Enemy",
+        "Multiplier": 1
+      },
+      "Monsters": [
+        {
+          "Name": "Petit Mage",
+          "HP": 118,
+          "StealRate": 0.188,
+          "DropChance": 0.018000000000000002
+        },
+        {
+          "Name": "Pugman",
+          "HP": 109,
+          "StealRate": 0.188,
+          "DropChance": 0.018000000000000002
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Dwarven Hollow",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Amur",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Duster",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Northwest Saronia",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Doga's Manor",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Ancient Ruins B1",
+          "Shop": "Items"
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Tower of Owen 2F",
+          "Notes": "Chest",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Tower of Owen 5F",
+          "Notes": "Chest",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Echo Herbs",
+      "ItemType": "Anywhere",
+      "Price": 100,
+      "Value": 50,
+      "SpellEffect": "Echo Herbs",
+      "SpellInfo": {
+        "Effect": "Cure Silence",
+        "Element": "Recovery",
+        "BasePower": 0,
+        "BaseAccuracy": 1.0,
+        "Reflectable": "No",
+        "Target": "One Enemy",
+        "Multiplier": 1
+      },
+      "Monsters": [
+        {
+          "Name": "Petit Mage",
+          "HP": 118,
+          "StealRate": 0.188,
+          "DropChance": 0.018000000000000002
+        },
+        {
+          "Name": "Pugman",
+          "HP": 109,
+          "StealRate": 0.188,
+          "DropChance": 0.018000000000000002
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Dwarven Hollow",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Amur",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Duster",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Replito",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Northwest Saronia",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Doga's Manor",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Ancient Ruins B1",
+          "Shop": "Items"
+        },
+        {
+          "Map": "The Invincible",
+          "Shop": "Items"
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Ur",
+          "Notes": "Give old man near elder's house a potion",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Tower of Owen 7F",
+          "Notes": "Chest in east area",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Tower of Owen 8F",
+          "Notes": "Chest",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Dwarven Hollow",
+          "Notes": "Chest in lower area",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Mallet",
+      "ItemType": "Anywhere",
+      "Price": 100,
+      "Value": 50,
+      "SpellEffect": "Mallet",
+      "SpellInfo": {
+        "Effect": "Cure or inflict Mini",
+        "Element": "Recovery",
+        "BasePower": 0,
+        "BaseAccuracy": 1.0,
+        "Reflectable": "No",
+        "Target": "One Enemy",
+        "Multiplier": 1
+      },
+      "Monsters": [
+        {
+          "Name": "Petit Mage",
+          "HP": 118,
+          "StealRate": 0.43799999999999994,
+          "DropChance": 0.015
+        },
+        {
+          "Name": "Pugman",
+          "HP": 109,
+          "StealRate": 0.43799999999999994,
+          "DropChance": 0.015
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Dwarven Hollow",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Amur",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Duster",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Northwest Saronia",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Doga's Manor",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Ancient Ruins B1",
+          "Shop": "Items"
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Canaan",
+          "Notes": "Top pot in building near inn",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Hein's Castle 1F",
+          "Notes": "Given by guard in cell",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Eye Drops",
+      "ItemType": "Anywhere",
+      "Price": 40,
+      "Value": 20,
+      "SpellEffect": "Blindna",
+      "SpellInfo": {
+        "Effect": "Cure Blind",
+        "Element": null,
+        "BasePower": 0,
+        "BaseAccuracy": 0.75,
+        "Reflectable": "No",
+        "Target": "One Enemy",
+        "Multiplier": 1
+      },
+      "Monsters": [
+        {
+          "Name": "Larva",
+          "HP": 38,
+          "StealRate": 0.375,
+          "DropChance": 0.035
+        },
+        {
+          "Name": "Pharaoh",
+          "HP": 160,
+          "StealRate": 0.375,
+          "DropChance": 0.035
+        },
+        {
+          "Name": "Revenant",
+          "HP": 70,
+          "StealRate": 0.375,
+          "DropChance": 0.035
+        },
+        {
+          "Name": "Shadow",
+          "HP": 65,
+          "StealRate": 0.375,
+          "DropChance": 0.035
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Ur",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Kazus",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Canaan",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Tozus",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Vikings' Cove",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Dwarven Hollow",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Amur",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Duster",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Replito",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Northwest Saronia",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Doga's Manor",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Ancient Ruins B1",
+          "Shop": "Items"
+        },
+        {
+          "Map": "The Invincible",
+          "Shop": "Items"
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Sealed Cave B3",
+          "Notes": "North path",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Antidote",
+      "ItemType": "Anywhere",
+      "Price": 80,
+      "Value": 40,
+      "SpellEffect": "Poisona",
+      "SpellInfo": {
+        "Effect": "Cure Poison",
+        "Element": null,
+        "BasePower": 0,
+        "BaseAccuracy": 0.5,
+        "Reflectable": "No",
+        "Target": "One Enemy",
+        "Multiplier": 1
+      },
+      "Monsters": [
+        {
+          "Name": "Larva",
+          "HP": 38,
+          "StealRate": 0.625,
+          "DropChance": 0.027000000000000003
+        },
+        {
+          "Name": "Pharaoh",
+          "HP": 160,
+          "StealRate": 0.625,
+          "DropChance": 0.027000000000000003
+        },
+        {
+          "Name": "Revenant",
+          "HP": 70,
+          "StealRate": 0.625,
+          "DropChance": 0.027000000000000003
+        },
+        {
+          "Name": "Shadow",
+          "HP": 65,
+          "StealRate": 0.625,
+          "DropChance": 0.027000000000000003
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Ur",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Kazus",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Canaan",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Tozus",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Vikings' Cove",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Dwarven Hollow",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Amur",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Duster",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Replito",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Northwest Saronia",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Doga's Manor",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Ancient Ruins B1",
+          "Shop": "Items"
+        },
+        {
+          "Map": "The Invincible",
+          "Shop": "Items"
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Ur",
+          "Notes": "Bottom pot in storeroom 1F",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Ur",
+          "Notes": "Second pot from top in storeroom 1F",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Magic Key",
+      "ItemType": "Field",
+      "Price": 100,
+      "Value": 50,
+      "Shops": [
+        {
+          "Map": "Village of Gysahl",
+          "Shop": "Magic Keys"
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Village of Gysahl",
+          "Notes": "Southeast grass",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Village of Gysahl",
+          "Notes": "Southeast grass",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Dwarven Hollow",
+          "Notes": "Given by dwarf after defeating Salamander",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Gysahl Greens",
+      "ItemType": "Field",
+      "Price": 150,
+      "Value": 75,
+      "Shops": [
+        {
+          "Map": "Village of Gysahl",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Amur",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Duster",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Replito",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Northwest Saronia",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Doga's Manor",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Ancient Ruins B1",
+          "Shop": "Items"
+        },
+        {
+          "Map": "The Invincible",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Falgabard",
+          "Shop": "Items"
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Village of Gysahl",
+          "Notes": "Southeast grass",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Village of Gysahl",
+          "Notes": "One of the southern pots in the chocobo house",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Village of Gysahl",
+          "Notes": "One of the northern pots in the chocobo house",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Dwarven Hollow",
+          "Notes": "Chest in lower area",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Amur",
+          "Notes": "Vegetable field",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Amur",
+          "Notes": "Vegetable field",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Amur",
+          "Notes": "Vegetable field",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Amur",
+          "Notes": "Vegetable field",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Southwest Saronia",
+          "Notes": "Chest in secret room in southeast house",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Southwest Saronia",
+          "Notes": "Chest in secret room in southeast house",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Southwest Saronia",
+          "Notes": "Chest in secret room in southeast house",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Southwest Saronia",
+          "Notes": "Chest in secret room in southeast house",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Southwest Saronia",
+          "Notes": "Chest in secret room in southeast house",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Southwest Saronia",
+          "Notes": "Chest in secret room in southeast house",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Southwest Saronia",
+          "Notes": "Chest in secret room in southeast house",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Southwest Saronia",
+          "Notes": "Chest in secret room in southeast house",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Southwest Saronia",
+          "Notes": "Chest in secret room in southeast house",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Southwest Saronia",
+          "Notes": "Chest in secret room in southeast house",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Southwest Saronia",
+          "Notes": "Chest in secret room in southeast house",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Gnomish Bread",
+      "ItemType": "Field",
+      "Price": 200,
+      "Value": 100,
+      "SpellEffect": "Sight",
+      "SpellInfo": {
+        "Effect": "View local map",
+        "Element": null,
+        "BasePower": 0,
+        "BaseAccuracy": 1.0,
+        "Reflectable": "No",
+        "Target": "One Enemy",
+        "Multiplier": null
+      },
+      "Monsters": [
+        {
+          "Name": "Adamantoise",
+          "HP": 153,
+          "StealRate": 0.43799999999999994,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Lemur",
+          "HP": 164,
+          "StealRate": 0.43799999999999994,
+          "DropChance": null
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Tozus",
+          "Shop": "Gnomish Bread"
+        },
+        {
+          "Map": "Replito",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "Items"
+        },
+        {
+          "Map": "The Invincible",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Falgabard",
+          "Shop": "Items"
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Canaan",
+          "Notes": "West chest in Cid's secret room",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Canaan",
+          "Notes": "West chest in Cid's secret room",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Village of the Ancients",
+          "Notes": "Talk to the child and ride around the continent",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Ottershroom",
+      "ItemType": "Field",
+      "Price": 2000,
+      "Value": 1000,
+      "SpellEffect": "Teleport",
+      "SpellInfo": {
+        "Effect": "Teleport to dungeon exit, or inflict KO in battle",
+        "Element": null,
+        "BasePower": 0,
+        "BaseAccuracy": null,
+        "Reflectable": "No",
+        "Target": "One Enemy",
+        "Multiplier": null
+      },
+      "Monsters": [
+        {
+          "Name": "Adamantoise",
+          "HP": 153,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Balloon",
+          "HP": 143,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Boss Troll",
+          "HP": 500,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Fachan",
+          "HP": 510,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Knocker",
+          "HP": 185,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Kyklops",
+          "HP": 490,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Leprechaun",
+          "HP": 36,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Magician",
+          "HP": 260,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Red Cap",
+          "HP": 210,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Rock Gargoyle",
+          "HP": 360,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Sorceror",
+          "HP": 310,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Stroper",
+          "HP": 400,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Thor",
+          "HP": 2180,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Vulcan",
+          "HP": 250,
+          "StealRate": null,
+          "DropChance": 0.006
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Replito",
+          "Shop": "Items"
+        },
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "Items"
+        },
+        {
+          "Map": "The Invincible",
+          "Shop": "Items"
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Dwarven Hollow",
+          "Notes": "Chest in lower area",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Antarctic Wind",
+      "ItemType": "Combat",
+      "Value": 500,
+      "SpellEffect": "Blizzara",
+      "SpellInfo": {
+        "Effect": "Deal Ice damage",
+        "Element": "Ice",
+        "BasePower": 55,
+        "BaseAccuracy": 1.0,
+        "Reflectable": "Yes",
+        "Target": "One/All Enemies",
+        "Multiplier": 2
+      },
+      "Monsters": [
+        {
+          "Name": "Adamantoise",
+          "HP": 153,
+          "StealRate": 0.375,
+          "DropChance": 0.023
+        },
+        {
+          "Name": "Lemur",
+          "HP": 164,
+          "StealRate": 0.375,
+          "DropChance": null
+        },
+        {
+          "Name": "Griffon",
+          "HP": 150,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Lamia",
+          "HP": 168,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Petit",
+          "HP": 45,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Altar Cave B2",
+          "Notes": "Southwest passage of path to the crystal",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Altar Cave B2",
+          "Notes": "Northeast passage of path to the crystal",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Sealed Cave B3",
+          "Notes": "Southeast path",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Castle Argus",
+          "Notes": "Chest in round table secret room",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Molten Cave B1",
+          "Notes": "Northwest chest",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Molten Cave B1",
+          "Notes": "Southeast chest",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Zeus's Wrath",
+      "ItemType": "Combat",
+      "Value": 500,
+      "SpellEffect": "Thundara",
+      "SpellInfo": {
+        "Effect": "Deal Lightning damage",
+        "Element": "Lightning",
+        "BasePower": 55,
+        "BaseAccuracy": 1.0,
+        "Reflectable": "Yes",
+        "Target": "One/All Enemies",
+        "Multiplier": 2
+      },
+      "Monsters": [
+        {
+          "Name": "Knocker",
+          "HP": 185,
+          "StealRate": 0.375,
+          "DropChance": 0.023
+        },
+        {
+          "Name": "Red Cap",
+          "HP": 210,
+          "StealRate": 0.375,
+          "DropChance": 0.023
+        },
+        {
+          "Name": "Griffon",
+          "HP": 150,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Lamia",
+          "HP": 168,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Petit",
+          "HP": 45,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Kazus",
+          "Notes": "Grass in northwest",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Tower of Owen 9F",
+          "Notes": "South chest",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Subterranean Lake B2",
+          "Notes": "Northeast chest",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Subterranean Lake B2",
+          "Notes": "South chest",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Hein's Castle 3F",
+          "Notes": "Chest in east room",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Wrecked Ship",
+          "Notes": "Chest in the lower decks",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Bomb Arm",
+      "ItemType": "Combat",
+      "Value": 750,
+      "SpellEffect": "Firaga",
+      "SpellInfo": {
+        "Effect": "Deal Fire damage",
+        "Element": "Fire",
+        "BasePower": 150,
+        "BaseAccuracy": 1.0,
+        "Reflectable": "Yes",
+        "Target": "One/All Enemies",
+        "Multiplier": 3
+      },
+      "Monsters": [
+        {
+          "Name": "Fachan",
+          "HP": 510,
+          "StealRate": 0.375,
+          "DropChance": 0.023
+        },
+        {
+          "Name": "Rock Gargoyle",
+          "HP": 360,
+          "StealRate": 0.375,
+          "DropChance": 0.023
+        },
+        {
+          "Name": "Vulcan",
+          "HP": 250,
+          "StealRate": 0.375,
+          "DropChance": 0.023
+        },
+        {
+          "Name": "Bomb",
+          "HP": 125,
+          "StealRate": 0.375,
+          "DropChance": null
+        },
+        {
+          "Name": "Azrael",
+          "HP": 1100,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Black Flan",
+          "HP": 240,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Dread Knight",
+          "HP": 370,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Roper",
+          "HP": 210,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Balloon",
+          "HP": 143,
+          "StealRate": null,
+          "DropChance": 0.004
+        },
+        {
+          "Name": "Leprechaun",
+          "HP": 36,
+          "StealRate": null,
+          "DropChance": 0.004
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Eureka B1",
+          "Notes": "Chest on west side",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Eureka B2",
+          "Notes": "Chest in west room",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Arctic Wind",
+      "ItemType": "Combat",
+      "Value": 750,
+      "SpellEffect": "Blizzaga",
+      "SpellInfo": {
+        "Effect": "Deal Ice damage",
+        "Element": "Ice",
+        "BasePower": 85,
+        "BaseAccuracy": 1.0,
+        "Reflectable": "Yes",
+        "Target": "One/All Enemies",
+        "Multiplier": 3
+      },
+      "Monsters": [
+        {
+          "Name": "Boss Troll",
+          "HP": 500,
+          "StealRate": 0.375,
+          "DropChance": 0.023
+        },
+        {
+          "Name": "Sorceror",
+          "HP": 310,
+          "StealRate": 0.375,
+          "DropChance": 0.023
+        },
+        {
+          "Name": "Azrael",
+          "HP": 1100,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Black Flan",
+          "HP": 240,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Dread Knight",
+          "HP": 370,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Roper",
+          "HP": 210,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Adamantoise",
+          "HP": 153,
+          "StealRate": null,
+          "DropChance": 0.004
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Lake Dohr B1",
+          "Notes": "Chest in southern path",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Bahamut's Lair B1",
+          "Notes": "Chest on northern path",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Eureka B1",
+          "Notes": "Chest on east side",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Eureka B2",
+          "Notes": "Chest in east room",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Heavenly Wrath",
+      "ItemType": "Combat",
+      "Value": 750,
+      "SpellEffect": "Thundaga",
+      "SpellInfo": {
+        "Effect": "Deal Lightning damage",
+        "Element": "Lightning",
+        "BasePower": 110,
+        "BaseAccuracy": 1.0,
+        "Reflectable": "Yes",
+        "Target": "One/All Enemies",
+        "Multiplier": 3
+      },
+      "Monsters": [
+        {
+          "Name": "Kyklops",
+          "HP": 490,
+          "StealRate": 0.375,
+          "DropChance": 0.023
+        },
+        {
+          "Name": "Magician",
+          "HP": 260,
+          "StealRate": 0.375,
+          "DropChance": 0.023
+        },
+        {
+          "Name": "Stroper",
+          "HP": 400,
+          "StealRate": 0.375,
+          "DropChance": 0.023
+        },
+        {
+          "Name": "Thor",
+          "HP": 2180,
+          "StealRate": 0.375,
+          "DropChance": 0.023
+        },
+        {
+          "Name": "Azrael",
+          "HP": 1100,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Black Flan",
+          "HP": 240,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Dread Knight",
+          "HP": 370,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Roper",
+          "HP": 210,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Knocker",
+          "HP": 185,
+          "StealRate": null,
+          "DropChance": 0.004
+        },
+        {
+          "Name": "Red Cap",
+          "HP": 210,
+          "StealRate": null,
+          "DropChance": 0.004
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Lake Dohr B1",
+          "Notes": "Chest in southern path",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Bahamut's Lair B1",
+          "Notes": "Chest in area south of entrance",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Eureka B1",
+          "Notes": "Chest on west side",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Eureka B2",
+          "Notes": "Chest in east room",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Earthen Drums",
+      "ItemType": "Combat",
+      "Value": 1250,
+      "SpellEffect": "Quake",
+      "SpellInfo": {
+        "Effect": "Deal Earth damage",
+        "Element": "Earth",
+        "BasePower": 133,
+        "BaseAccuracy": 1.0,
+        "Reflectable": "No",
+        "Target": "All Enemies",
+        "Multiplier": 3
+      },
+      "Monsters": [
+        {
+          "Name": "Azrael",
+          "HP": 1100,
+          "StealRate": null,
+          "DropChance": 0.001
+        },
+        {
+          "Name": "Black Flan",
+          "HP": 240,
+          "StealRate": null,
+          "DropChance": 0.001
+        },
+        {
+          "Name": "Dread Knight",
+          "HP": 370,
+          "StealRate": null,
+          "DropChance": 0.001
+        },
+        {
+          "Name": "Roper",
+          "HP": 210,
+          "StealRate": null,
+          "DropChance": 0.001
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Duster",
+          "Notes": "Northwest grass",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Duster",
+          "Notes": "Northeast grass",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Lake Dohr B1",
+          "Notes": "Chest in southern path",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Bahamut's Lair B1",
+          "Notes": "Chest in area south of entrance",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Crystal Tower 1F",
+          "Notes": "Chest in east area",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Lamia Scale",
+      "ItemType": "Combat",
+      "Value": 1500,
+      "SpellEffect": "Confuse",
+      "SpellInfo": {
+        "Effect": "Inflict Confusion",
+        "Element": null,
+        "BasePower": 0,
+        "BaseAccuracy": 0.25,
+        "Reflectable": "No",
+        "Target": "One/All Enemies",
+        "Multiplier": 3
+      },
+      "Monsters": [
+        {
+          "Name": "Azrael",
+          "HP": 1100,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Balloon",
+          "HP": 143,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Black Flan",
+          "HP": 240,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Dread Knight",
+          "HP": 370,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Leprechaun",
+          "HP": 36,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Roper",
+          "HP": 210,
+          "StealRate": null,
+          "DropChance": 0.006
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Tokkul",
+          "Notes": "Northwest grass",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Lake Dohr B2",
+          "Notes": "Chest in northern group",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Bahamut's Lair B2",
+          "Notes": "Chest on central platform",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Cave of Shadows B1",
+          "Notes": "North chest",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Bacchus's Cider",
+      "ItemType": "Combat",
+      "Value": 1500,
+      "SpellEffect": "Haste",
+      "SpellInfo": {
+        "Effect": "Enhance Accuracy and Attack Multiplier",
+        "Element": null,
+        "BasePower": 5,
+        "BaseAccuracy": 0.16,
+        "Reflectable": "No",
+        "Target": "One Enemy",
+        "Multiplier": 3
+      },
+      "Monsters": [
+        {
+          "Name": "Adamantoise",
+          "HP": 153,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Azrael",
+          "HP": 1100,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Black Flan",
+          "HP": 240,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Dread Knight",
+          "HP": 370,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Roper",
+          "HP": 210,
+          "StealRate": null,
+          "DropChance": 0.006
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Tokkul",
+          "Notes": "Southwest grass",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Sunken Cave B3",
+          "Notes": "Chest on southeast island",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Lake Dohr B2",
+          "Notes": "Chest in northern group",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Bahamut's Lair B2",
+          "Notes": "Chest on central platform",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Cave of Shadows B1",
+          "Notes": "Southeast chest",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Turtle Shell",
+      "ItemType": "Combat",
+      "Value": 1500,
+      "SpellEffect": "Protect",
+      "SpellInfo": {
+        "Effect": "Enhance Defense and Magic Defense",
+        "Element": null,
+        "BasePower": 5,
+        "BaseAccuracy": 0.75,
+        "Reflectable": "No",
+        "Target": "One Enemy",
+        "Multiplier": 3
+      },
+      "Monsters": [
+        {
+          "Name": "Boss Troll",
+          "HP": 500,
+          "StealRate": 0.43799999999999994,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Sorceror",
+          "HP": 310,
+          "StealRate": 0.43799999999999994,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Azrael",
+          "HP": 1100,
+          "StealRate": null,
+          "DropChance": 0.003
+        },
+        {
+          "Name": "Black Flan",
+          "HP": 240,
+          "StealRate": null,
+          "DropChance": 0.003
+        },
+        {
+          "Name": "Dread Knight",
+          "HP": 370,
+          "StealRate": null,
+          "DropChance": 0.003
+        },
+        {
+          "Name": "Roper",
+          "HP": 210,
+          "StealRate": null,
+          "DropChance": 0.003
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Replito",
+          "Notes": "Tree west of entrance",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Replito",
+          "Notes": "Hidden grass in northwest",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Lake Dohr B2",
+          "Notes": "Chest in northern group",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Bahamut's Lair B2",
+          "Notes": "Chest on southern platform",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Devil's Sigh",
+      "ItemType": "Combat",
+      "Value": 1500,
+      "SpellEffect": "Raze",
+      "SpellInfo": {
+        "Effect": "Inflict KO",
+        "Element": null,
+        "BasePower": 100,
+        "BaseAccuracy": 1.0,
+        "Reflectable": "No",
+        "Target": "All Enemies",
+        "Multiplier": 3
+      },
+      "Monsters": [
+        {
+          "Name": "Knocker",
+          "HP": 185,
+          "StealRate": 0.43799999999999994,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Red Cap",
+          "HP": 210,
+          "StealRate": 0.43799999999999994,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Griffon",
+          "HP": 150,
+          "StealRate": null,
+          "DropChance": 0.004
+        },
+        {
+          "Name": "Lamia",
+          "HP": 168,
+          "StealRate": null,
+          "DropChance": 0.004
+        },
+        {
+          "Name": "Petit",
+          "HP": 45,
+          "StealRate": null,
+          "DropChance": 0.004
+        }
+      ]
+    },
+    {
+      "Name": "Black Hole",
+      "ItemType": "Combat",
+      "Value": 2000,
+      "SpellEffect": "Teleport",
+      "SpellInfo": {
+        "Effect": "Teleport to dungeon exit, or inflict KO in battle",
+        "Element": null,
+        "BasePower": 0,
+        "BaseAccuracy": null,
+        "Reflectable": "No",
+        "Target": "One Enemy",
+        "Multiplier": 3
+      },
+      "Monsters": [
+        {
+          "Name": "Death Claw",
+          "HP": 1400,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Glasya Labolas",
+          "HP": 2160,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Needle Monkey",
+          "HP": 300,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Boss Troll",
+          "HP": 500,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Sorceror",
+          "HP": 310,
+          "StealRate": null,
+          "DropChance": 0.006
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Sunken Cave B3",
+          "Notes": "Chest on southeast island",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Lake Dohr B3",
+          "Notes": "Chest in northeast group",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Black Musk",
+      "ItemType": "Combat",
+      "Value": 2500,
+      "SpellEffect": "Death",
+      "SpellInfo": {
+        "Effect": "Inflict KO",
+        "Element": null,
+        "BasePower": 0,
+        "BaseAccuracy": 0.35,
+        "Reflectable": "No",
+        "Target": "One Enemy",
+        "Multiplier": 3
+      },
+      "Monsters": [
+        {
+          "Name": "Death Claw",
+          "HP": 1400,
+          "StealRate": null,
+          "DropChance": 0.003
+        },
+        {
+          "Name": "Glasya Labolas",
+          "HP": 2160,
+          "StealRate": null,
+          "DropChance": 0.003
+        },
+        {
+          "Name": "Needle Monkey",
+          "HP": 300,
+          "StealRate": null,
+          "DropChance": 0.003
+        },
+        {
+          "Name": "Kyklops",
+          "HP": 490,
+          "StealRate": null,
+          "DropChance": 0.001
+        },
+        {
+          "Name": "Magician",
+          "HP": 260,
+          "StealRate": null,
+          "DropChance": 0.001
+        },
+        {
+          "Name": "Stroper",
+          "HP": 400,
+          "StealRate": null,
+          "DropChance": 0.001
+        },
+        {
+          "Name": "Thor",
+          "HP": 2180,
+          "StealRate": null,
+          "DropChance": 0.001
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Lake Dohr B3",
+          "Notes": "Lone chest on northeast path",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Bahamut's Lair B3",
+          "Notes": "Chest on middle island",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Ancient's Maze Left side",
+          "Notes": "South chest",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Lilith's Kiss",
+      "ItemType": "Combat",
+      "Value": 1500,
+      "SpellEffect": "Drain",
+      "SpellInfo": {
+        "Effect": "Absorb HP from target",
+        "Element": "Recovery",
+        "BasePower": 160,
+        "BaseAccuracy": 1.0,
+        "Reflectable": "No",
+        "Target": "One Enemy",
+        "Multiplier": 3
+      },
+      "Monsters": [
+        {
+          "Name": "Death Claw",
+          "HP": 1400,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Glasya Labolas",
+          "HP": 2160,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Needle Monkey",
+          "HP": 300,
+          "StealRate": 0.188,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Fachan",
+          "HP": 510,
+          "StealRate": null,
+          "DropChance": 0.004
+        },
+        {
+          "Name": "Rock Gargoyle",
+          "HP": 360,
+          "StealRate": null,
+          "DropChance": 0.004
+        },
+        {
+          "Name": "Vulcan",
+          "HP": 250,
+          "StealRate": null,
+          "DropChance": 0.004
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Lake Dohr B3",
+          "Notes": "Chest in southwest pair",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Cave of Shadows B2",
+          "Notes": "Northwest chest",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Ancient's Maze Left side",
+          "Notes": "Chest in eastern alcove",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Crystal Tower 1F",
+          "Notes": "Chest in northeast area",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Raven's Yawn",
+      "ItemType": "Combat",
+      "Value": 1500,
+      "SpellEffect": "Aeroga",
+      "SpellInfo": {
+        "Effect": "Deal Air and Ice damage",
+        "Element": null,
+        "BasePower": 115,
+        "BaseAccuracy": 1.0,
+        "Reflectable": "Yes",
+        "Target": "One/All Enemies",
+        "Multiplier": 3
+      },
+      "Monsters": [
+        {
+          "Name": "Death Claw",
+          "HP": 1400,
+          "StealRate": 0.43799999999999994,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Glasya Labolas",
+          "HP": 2160,
+          "StealRate": 0.43799999999999994,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Needle Monkey",
+          "HP": 300,
+          "StealRate": 0.43799999999999994,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Boss Troll",
+          "HP": 500,
+          "StealRate": null,
+          "DropChance": 0.004
+        },
+        {
+          "Name": "Sorceror",
+          "HP": 310,
+          "StealRate": null,
+          "DropChance": 0.004
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Lake Dohr B3",
+          "Notes": "Chest in southwest pair",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Tranquilizer",
+      "ItemType": "Combat",
+      "Value": 1500,
+      "SpellEffect": "Shade",
+      "SpellInfo": {
+        "Effect": "Inflict Paralysis",
+        "Element": null,
+        "BasePower": 0,
+        "BaseAccuracy": 0.8,
+        "Reflectable": "No",
+        "Target": "One/All Enemies",
+        "Multiplier": 3
+      },
+      "Monsters": [
+        {
+          "Name": "Fachan",
+          "HP": 510,
+          "StealRate": 0.43799999999999994,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Kyklops",
+          "HP": 490,
+          "StealRate": 0.43799999999999994,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Magician",
+          "HP": 260,
+          "StealRate": 0.43799999999999994,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Rock Gargoyle",
+          "HP": 360,
+          "StealRate": 0.43799999999999994,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Stroper",
+          "HP": 400,
+          "StealRate": 0.43799999999999994,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Thor",
+          "HP": 2180,
+          "StealRate": 0.43799999999999994,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Vulcan",
+          "HP": 250,
+          "StealRate": 0.43799999999999994,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Bomb",
+          "HP": 125,
+          "StealRate": 0.43799999999999994,
+          "DropChance": null
+        },
+        {
+          "Name": "Griffon",
+          "HP": 150,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Lamia",
+          "HP": 168,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Petit",
+          "HP": 45,
+          "StealRate": null,
+          "DropChance": 0.006
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Castle Argus",
+          "Notes": "Chest in hidden room in round table secret room",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Cave of Shadows B2",
+          "Notes": "Center chest",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Sheep Pillow",
+      "ItemType": "Combat",
+      "Value": 1000,
+      "SpellEffect": "Sleep",
+      "SpellInfo": {
+        "Effect": "Inflict Sleep",
+        "Element": null,
+        "BasePower": 0,
+        "BaseAccuracy": 0.15,
+        "Reflectable": "No",
+        "Target": "One/All Enemies",
+        "Multiplier": 3
+      },
+      "Monsters": [
+        {
+          "Name": "Balloon",
+          "HP": 143,
+          "StealRate": 0.43799999999999994,
+          "DropChance": 0.012
+        },
+        {
+          "Name": "Leprechaun",
+          "HP": 36,
+          "StealRate": 0.43799999999999994,
+          "DropChance": 0.012
+        }
+      ]
+    },
+    {
+      "Name": "Shining Curtain",
+      "ItemType": "Combat",
+      "Value": 2500,
+      "SpellEffect": "Reflect",
+      "SpellInfo": {
+        "Effect": "Grant Reflect",
+        "Element": null,
+        "BasePower": 0,
+        "BaseAccuracy": 0.75,
+        "Reflectable": "No",
+        "Target": "One Enemy",
+        "Multiplier": 3
+      },
+      "Monsters": [
+        {
+          "Name": "Death Claw",
+          "HP": 1400,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Glasya Labolas",
+          "HP": 2160,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Kyklops",
+          "HP": 490,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Magician",
+          "HP": 260,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Needle Monkey",
+          "HP": 300,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Stroper",
+          "HP": 400,
+          "StealRate": null,
+          "DropChance": 0.006
+        },
+        {
+          "Name": "Thor",
+          "HP": 2180,
+          "StealRate": null,
+          "DropChance": 0.006
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Doga's Grotto B2",
+          "Notes": "Chest in northeast room",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Doga's Grotto B2",
+          "Notes": "Chest in northwest room",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Doga's Grotto B2",
+          "Notes": "Chest in northwest room",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Doga's Grotto B2",
+          "Notes": "Chest in northwest room",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Crystal Tower 1F",
+          "Notes": "Chest in southeast area",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Crystal Tower 1F",
+          "Notes": "Chest in southwest area",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Chocobo's Wrath",
+      "ItemType": "Combat",
+      "Value": 2500,
+      "SpellEffect": "Flare",
+      "SpellInfo": {
+        "Effect": "Deal damage",
+        "Element": null,
+        "BasePower": 200,
+        "BaseAccuracy": 1.0,
+        "Reflectable": "Yes",
+        "Target": "One/All Enemies",
+        "Multiplier": 3
+      },
+      "Monsters": [
+        {
+          "Name": "Kyklops",
+          "HP": 490,
+          "StealRate": null,
+          "DropChance": 0.003
+        },
+        {
+          "Name": "Magician",
+          "HP": 260,
+          "StealRate": null,
+          "DropChance": 0.003
+        },
+        {
+          "Name": "Stroper",
+          "HP": 400,
+          "StealRate": null,
+          "DropChance": 0.003
+        },
+        {
+          "Name": "Thor",
+          "HP": 2180,
+          "StealRate": null,
+          "DropChance": 0.003
+        },
+        {
+          "Name": "Death Claw",
+          "HP": 1400,
+          "StealRate": null,
+          "DropChance": 0.001
+        },
+        {
+          "Name": "Glasya Labolas",
+          "HP": 2160,
+          "StealRate": null,
+          "DropChance": 0.001
+        },
+        {
+          "Name": "Needle Monkey",
+          "HP": 300,
+          "StealRate": null,
+          "DropChance": 0.001
+        }
+      ],
+      "Treasures": [
+        {
+          "Map": "Bahamut's Lair B2",
+          "Notes": "Chest on southern platform",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Crystal Tower 1F",
+          "Notes": "Chest in east area",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Crystal Tower 1F",
+          "Notes": "Chest in northwest area",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "White Musk",
+      "ItemType": "Combat",
+      "Value": 2500,
+      "SpellEffect": "Holy",
+      "SpellInfo": {
+        "Effect": "Deal Holy damage",
+        "Element": "Holy",
+        "BasePower": 160,
+        "BaseAccuracy": 1.0,
+        "Reflectable": "Yes",
+        "Target": "One Enemy",
+        "Multiplier": 3
+      },
+      "Treasures": [
+        {
+          "Map": "Lake Dohr B2",
+          "Notes": "Lone chest",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Crystal Tower 1F",
+          "Notes": "Chest in southeast area",
+          "GuardedBy": "-"
+        },
+        {
+          "Map": "Crystal Tower 1F",
+          "Notes": "Chest in west area",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Horn Of Ice",
+      "ItemType": "Key Item",
+      "Treasures": [
+        {
+          "Map": "Subterranean Lake B3",
+          "Notes": "Received after defeating Gustco",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Nepto Eye",
+      "ItemType": "Key Item",
+      "Treasures": [
+        {
+          "Map": "Nepto Temple B2",
+          "Notes": "Won from giant rat",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Wheel Of Time",
+      "ItemType": "Key Item",
+      "Treasures": [
+        {
+          "Map": "Castle Argus",
+          "Notes": "Given by king after he is rescued",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Eureka Key",
+      "ItemType": "Key Item",
+      "Treasures": [
+        {
+          "Map": "Doga's Grotto B3",
+          "Notes": "After defeating Doga",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Fang Of Wind",
+      "ItemType": "Key Item",
+      "Treasures": [
+        {
+          "Map": "Living Woods",
+          "Notes": "Given by faeries",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Fang Of Fire",
+      "ItemType": "Key Item",
+      "Treasures": [
+        {
+          "Map": "Unei's Shrine",
+          "Notes": "Given by Unei",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Fang Of Water",
+      "ItemType": "Key Item",
+      "Treasures": [
+        {
+          "Map": "Nepto Temple B1",
+          "Notes": "Given after returning Nepto's eye",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Fang Of Earth",
+      "ItemType": "Key Item",
+      "Treasures": [
+        {
+          "Map": "Cave of Shadows B8",
+          "Notes": "After defeating Hecatoncheir",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Noah's Lute",
+      "ItemType": "Key Item",
+      "Treasures": [
+        {
+          "Map": "Temple of Time B3",
+          "Notes": "Chest in east room",
+          "GuardedBy": "-"
+        }
+      ]
+    },
+    {
+      "Name": "Syrcus Key",
+      "ItemType": "Key Item",
+      "Treasures": [
+        {
+          "Map": "Doga's Grotto B3",
+          "Notes": "After defeating Unei",
+          "GuardedBy": "-"
+        }
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "name": "bomb-fragment",
+      "url": "https://guides.gamercorner.net/ffiii/items/bomb-fragment",
+      "error": "500 Server Error: Internal Server Error for url: https://guides.gamercorner.net/ffiii/items/bomb-fragment",
+      "trace": "Traceback (most recent call last):\n  File \"C:\\Users\\hirot\\AppData\\Local\\Temp\\ipykernel_25120\\3998485762.py\", line 13, in <module>\n    data = fetch_item_data(url, base_url, spells_data)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nrequests.exceptions.HTTPError: 500 Server Error: Internal Server Error for url: https://guides.gamercorner.net/ffiii/items/bomb-fragment\n"
+    }
+  ]
+}

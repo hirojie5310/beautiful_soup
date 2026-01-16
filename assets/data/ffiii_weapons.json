@@ -1,0 +1,2482 @@
+{
+  "meta": {
+    "generated_at": "2025-11-13T23:55:23.230911",
+    "count": 84,
+    "error_count": 0,
+    "source": "https://guides.gamercorner.net/ffiii/weapons/"
+  },
+  "weapons": [
+    {
+      "name": "Kaiser Knuckles",
+      "Type": "Nunchaku",
+      "BasePower": 36,
+      "BaseAccuracy": 1.0,
+      "Price": 7000,
+      "Value": 3500,
+      "EquippedBy": [
+        "BB",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Amur",
+          "Shop": "Weapons"
+        }
+      ]
+    },
+    {
+      "name": "Cat Claws",
+      "Type": "Nunchaku",
+      "BasePower": 42,
+      "BaseAccuracy": 1.0,
+      "Value": 7000,
+      "EquippedBy": [
+        "BB",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Cat Claws",
+          "Map": "Sewers B2",
+          "Notes": "Chest",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Wyvern Claws",
+      "Type": "Nunchaku",
+      "BasePower": 48,
+      "BaseAccuracy": 1.0,
+      "Value": 9000,
+      "SpellCast": "Aero",
+      "Elements": "Fire, Lightning",
+      "EquippedBy": [
+        "BB",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Wyvern Claws",
+          "Map": "Goldor Manor 2F",
+          "Notes": "Rightmost chest",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Faerie Claws",
+      "Type": "Nunchaku",
+      "BasePower": 37,
+      "BaseAccuracy": 1.0,
+      "Value": 9000,
+      "SpellCast": "Confuse",
+      "EquippedBy": [
+        "BB",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Faerie Claws",
+          "Map": "Ancient Ruins B2",
+          "Notes": "Chest in northeast room",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Hellish Claws",
+      "Type": "Nunchaku",
+      "BasePower": 60,
+      "BaseAccuracy": 1.0,
+      "Value": 20000,
+      "StatusAilment": "Poison",
+      "Element": "Dark",
+      "EquippedBy": [
+        "BB",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Hellish Claws",
+          "Map": "Ancient's Maze Exit",
+          "Notes": "East chest",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Nunchaku",
+      "Type": "Nunchaku",
+      "BasePower": 12,
+      "BaseAccuracy": 0.7,
+      "Price": 60,
+      "Value": 30,
+      "EquippedBy": [
+        "Mo",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Ur",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Nunchaku",
+          "Map": "Altar Cave B2",
+          "Notes": "Southwest chest in pit room",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Tonfa",
+      "Type": "Nunchaku",
+      "BasePower": 20,
+      "BaseAccuracy": 0.8,
+      "Price": 500,
+      "Value": 250,
+      "EquippedBy": [
+        "Mo",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Dwarven Hollow",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Tonfa",
+          "Map": "Castle Sasune",
+          "Notes": "Chest in hidden area in main keep 3F",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Three Section Staff",
+      "Type": "Nunchaku",
+      "BasePower": 25,
+      "BaseAccuracy": 0.7,
+      "Price": 3000,
+      "Value": 1500,
+      "EquippedBy": [
+        "Mo",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Dwarven Hollow",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Three-Section Staff",
+          "Map": "Tokkul",
+          "Notes": "Bottom pot in secret area of elder's house",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Mythril Rod",
+      "Type": "Rod",
+      "BasePower": 5,
+      "BaseAccuracy": 0.6,
+      "Price": 400,
+      "Value": 200,
+      "EquippedBy": [
+        "WM",
+        "BM",
+        "RM",
+        "Ev",
+        "Ma",
+        "De",
+        "Su",
+        "Sa",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Kazus",
+          "Shop": "Weapons"
+        },
+        {
+          "Map": "Canaan",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Mythril Rod",
+          "Map": "Tozus",
+          "Notes": "Chest near hidden stairs in Dr. Shelco's house",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Fire Rod",
+      "Type": "Rod",
+      "BasePower": 12,
+      "BaseAccuracy": 0.7,
+      "Bonus": "Fire  up",
+      "Price": 3000,
+      "Value": 1500,
+      "Element": "Fire",
+      "EquippedBy": [
+        "BM",
+        "RM",
+        "Ev",
+        "Ma",
+        "Su",
+        "Sa",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Fire Rod",
+          "Map": "Gulgan Gulch",
+          "Notes": "Chest in secret room downstairs",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Ice Rod",
+      "Type": "Rod",
+      "BasePower": 12,
+      "BaseAccuracy": 0.7,
+      "Bonus": "Ice  up",
+      "Price": 3000,
+      "Value": 1500,
+      "Element": "Ice",
+      "EquippedBy": [
+        "BM",
+        "RM",
+        "Ev",
+        "Ma",
+        "Su",
+        "Sa",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Ice Rod",
+          "Map": "Gulgan Gulch",
+          "Notes": "Chest in secret room downstairs",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Light Rod",
+      "Type": "Rod",
+      "BasePower": 12,
+      "BaseAccuracy": 0.6,
+      "Bonus": "Lightning  up",
+      "Price": 3000,
+      "Value": 1500,
+      "Element": "Lightning",
+      "EquippedBy": [
+        "BM",
+        "RM",
+        "Ev",
+        "Ma",
+        "Su",
+        "Sa",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "Weapons"
+        }
+      ]
+    },
+    {
+      "name": "Omnirod",
+      "Type": "Rod",
+      "BasePower": 20,
+      "BaseAccuracy": 0.8,
+      "Value": 15000,
+      "StatusAilment": "Partial Petrification (2/3)",
+      "Elements": "Air, Earth, Fire, Holy, Ice, Lightning",
+      "EquippedBy": [
+        "Ma",
+        "Su",
+        "Sa",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Omnirod",
+          "Map": "Ancient's Maze Center",
+          "Notes": "Chest on southern path",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Staff",
+      "Type": "Rod",
+      "BasePower": 3,
+      "BaseAccuracy": 0.5,
+      "Price": 40,
+      "Value": 20,
+      "EquippedBy": [
+        "WM",
+        "RM",
+        "De",
+        "Sa",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Ur",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Staff",
+          "Map": "Kazus",
+          "Notes": "Grass on north lake shore",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Fire Staff",
+      "Type": "Rod",
+      "BasePower": 8,
+      "BaseAccuracy": 0.5,
+      "Price": 3500,
+      "Value": 1750,
+      "SpellCast": "Fire",
+      "EquippedBy": [
+        "WM",
+        "RM",
+        "De",
+        "Sa",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Weapons"
+        },
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Fire Staff",
+          "Map": "Tozus",
+          "Notes": "Second shelf from left in Dr. Shelco's house",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Ice Staff",
+      "Type": "Rod",
+      "BasePower": 8,
+      "BaseAccuracy": 0.5,
+      "Price": 3500,
+      "Value": 1750,
+      "SpellCast": "Blizzard",
+      "EquippedBy": [
+        "WM",
+        "RM",
+        "De",
+        "Sa",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Weapons"
+        },
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Ice Staff",
+          "Map": "Tokkul",
+          "Notes": "East grass",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Ice Staff",
+          "Map": "Saronia Castle",
+          "Notes": "Chest in secret room in tower bedroom",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Light Staff",
+      "Type": "Rod",
+      "BasePower": 8,
+      "BaseAccuracy": 0.5,
+      "Price": 3500,
+      "Value": 1750,
+      "SpellCast": "Thunder",
+      "EquippedBy": [
+        "WM",
+        "RM",
+        "De",
+        "Sa",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Dwarven Hollow",
+          "Shop": "Weapons"
+        },
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "Weapons"
+        }
+      ]
+    },
+    {
+      "name": "Golem Staff",
+      "Type": "Rod",
+      "BasePower": 16,
+      "BaseAccuracy": 0.7,
+      "Price": 13500,
+      "Value": 6750,
+      "SpellCast": "Break",
+      "StatusAilment": "Partial Petrification (1/3)",
+      "Element": "Earth",
+      "EquippedBy": [
+        "WM",
+        "RM",
+        "De",
+        "Sa",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Golem Staff",
+          "Map": "Saronia Castle",
+          "Notes": "Chest in secret room in tower bedroom",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Golem Staff",
+          "Map": "Saronia Catacombs 3F",
+          "Notes": "Southeast path chest",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Golem Staff",
+          "Map": "Bahamut's Lair B2",
+          "Notes": "Northwest chest",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Rune Staff",
+      "Type": "Rod",
+      "BasePower": 20,
+      "BaseAccuracy": 0.8,
+      "Price": 18000,
+      "Value": 9000,
+      "SpellCast": "Blizzaga",
+      "EquippedBy": [
+        "WM",
+        "RM",
+        "De",
+        "Sa",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "Weapons"
+        }
+      ]
+    },
+    {
+      "name": "Elder Staff",
+      "Type": "Rod",
+      "BasePower": 30,
+      "BaseAccuracy": 0.9,
+      "Bonus": "Lightning  up, Ice  up, Fire  up",
+      "Value": 32500,
+      "SpellCast": "Cure",
+      "EquippedBy": [
+        "De",
+        "Sa",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Elder Staff",
+          "Map": "Eureka B7",
+          "Notes": "West staff",
+          "Guarded By": "Scylla"
+        },
+        {
+          "Treasure": "Elder Staff",
+          "Map": "Crystal Tower 4F",
+          "Notes": "Chest in south area",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Thor'S Hammer",
+      "Type": "Axe",
+      "BasePower": 30,
+      "BaseAccuracy": 0.7,
+      "Value": 7000,
+      "SpellCast": "Thundara",
+      "Element": "Lightning",
+      "EquippedBy": [
+        "Vi",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Thor's Hammer",
+          "Map": "Sewers B4",
+          "Notes": "East chest in east hidden room",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Thor's Hammer",
+          "Map": "Saronia Castle",
+          "Notes": "Chest in secret room in tower bedroom",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Thor's Hammer",
+          "Map": "Falgabard Cave",
+          "Notes": "Southwest chest",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Thor's Hammer",
+          "Map": "Lake Dohr B3",
+          "Notes": "Chest in northeast group",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Battleaxe",
+      "Type": "Axe",
+      "BasePower": 45,
+      "BaseAccuracy": 0.6,
+      "Price": 5500,
+      "Value": 2750,
+      "Element": "Lightning",
+      "EquippedBy": [
+        "Vi",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Amur",
+          "Shop": "Weapons"
+        }
+      ]
+    },
+    {
+      "name": "Great Axe",
+      "Type": "Axe",
+      "BasePower": 75,
+      "BaseAccuracy": 0.8,
+      "Price": 14000,
+      "Value": 7000,
+      "Element": "Lightning",
+      "EquippedBy": [
+        "Vi",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "The Invincible",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Great Axe",
+          "Map": "Ancient's Maze Center",
+          "Notes": "Chest on eastern path",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Morning Star",
+      "Type": "Axe",
+      "BasePower": 50,
+      "BaseAccuracy": 0.7,
+      "Price": 8000,
+      "Value": 4000,
+      "Element": "Lightning",
+      "EquippedBy": [
+        "Vi",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Amur",
+          "Shop": "Weapons"
+        }
+      ]
+    },
+    {
+      "name": "Dual Tomahawk",
+      "Type": "Axe",
+      "BasePower": 60,
+      "BaseAccuracy": 0.8,
+      "Price": 20000,
+      "Value": 10000,
+      "EquippedBy": [
+        "Vi",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Ancient Ruins B1",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Dual Tomahawk",
+          "Map": "Sunken Cave B2",
+          "Notes": "South chest",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Triton Hammer",
+      "Type": "Axe",
+      "BasePower": 85,
+      "BaseAccuracy": 0.8,
+      "Price": 20000,
+      "Value": 10000,
+      "Element": "Air",
+      "EquippedBy": [
+        "Vi",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Ancient Ruins B1",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Triton Hammer",
+          "Map": "Sunken Cave B3",
+          "Notes": "Bottom right chest in hidden room",
+          "Guarded By": "Eater"
+        }
+      ]
+    },
+    {
+      "name": "Thunder Spear",
+      "Type": "Spear",
+      "BasePower": 35,
+      "BaseAccuracy": 0.8,
+      "Price": 8000,
+      "Value": 4000,
+      "SpellCast": "Thundara",
+      "Elements": "Air, Lightning",
+      "EquippedBy": [
+        "Dr",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "Spears"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Thunder Spear",
+          "Map": "Southeast Saronia",
+          "Notes": "Chest in north area on top floor of Dragon Spire",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Thunder Spear",
+          "Map": "Southeast Saronia",
+          "Notes": "Chest in south area on top floor of Dragon Spire",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Thunder Spear",
+          "Map": "Southeast Saronia",
+          "Notes": "Chest in south area on top floor of Dragon Spire",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Wind Spear",
+      "Type": "Spear",
+      "BasePower": 50,
+      "BaseAccuracy": 0.8,
+      "Price": 10000,
+      "Value": 5000,
+      "SpellCast": "Aero",
+      "Element": "Air",
+      "EquippedBy": [
+        "Dr",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "Spears"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Wind Spear",
+          "Map": "Southwest Saronia",
+          "Notes": "Given by southwest old man with Alus in party",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Blood Lance",
+      "Type": "Spear",
+      "BasePower": 70,
+      "BaseAccuracy": 0.8,
+      "Value": 10000,
+      "Elements": "Air, Recovery",
+      "Draining": "This weapon restores 1/4 of the damage dealt to the wielder as HP (however, when used against undead this weapon will always miss and drain HP from the wielder instead)",
+      "EquippedBy": [
+        "Dr",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Blood Lance",
+          "Map": "Sunken Cave B3",
+          "Notes": "Top left chest in hidden room",
+          "Guarded By": "Peryton"
+        }
+      ]
+    },
+    {
+      "name": "Holy Lance",
+      "Type": "Spear",
+      "BasePower": 100,
+      "BaseAccuracy": 0.8,
+      "Value": 22500,
+      "Elements": "Air, Holy",
+      "EquippedBy": [
+        "Dr",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Holy Lance",
+          "Map": "Ancient's Maze Exit",
+          "Notes": "West chest",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Knife",
+      "Type": "Knife",
+      "BasePower": 6,
+      "BaseAccuracy": 0.85,
+      "Price": 20,
+      "Value": 10,
+      "EquippedBy": [
+        "OK",
+        "Wa",
+        "BM",
+        "RM",
+        "Kn",
+        "Th",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Ur",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Knife ×4",
+          "Map": "Altar Cave B3",
+          "Notes": "Starting equipment",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Dagger",
+      "Type": "Knife",
+      "BasePower": 8,
+      "BaseAccuracy": 0.85,
+      "Price": 60,
+      "Value": 30,
+      "EquippedBy": [
+        "OK",
+        "Wa",
+        "BM",
+        "RM",
+        "Kn",
+        "Th",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Ur",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Dagger",
+          "Map": "Ur",
+          "Notes": "Chest in storeroom 2F",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Mythril Knife",
+      "Type": "Knife",
+      "BasePower": 10,
+      "BaseAccuracy": 0.85,
+      "Price": 500,
+      "Value": 250,
+      "EquippedBy": [
+        "OK",
+        "Wa",
+        "BM",
+        "RM",
+        "Kn",
+        "Th",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Kazus",
+          "Shop": "Weapons"
+        },
+        {
+          "Map": "Canaan",
+          "Shop": "Weapons"
+        }
+      ]
+    },
+    {
+      "name": "Main Gauche",
+      "Type": "Knife",
+      "BasePower": 30,
+      "BaseAccuracy": 1.0,
+      "Price": 7000,
+      "Value": 3500,
+      "EquippedBy": [
+        "Th",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Amur",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Main Gauche",
+          "Map": "Sewers B4",
+          "Notes": "Center chest in east hidden room",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Main Gauche",
+          "Map": "Saronia Castle",
+          "Notes": "Chest in secret room in tower bedroom",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Orichalcum",
+      "Type": "Knife",
+      "BasePower": 45,
+      "BaseAccuracy": 1.0,
+      "Value": 6000,
+      "Element": "Recovery",
+      "Draining": "This weapon restores 1/4 of the damage dealt to the wielder as HP (however, when used against undead this weapon will always miss and drain HP from the wielder instead)",
+      "EquippedBy": [
+        "Th",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Orichalcum",
+          "Map": "Sewers B4",
+          "Notes": "Center chest in west hidden room",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Orichalcum",
+          "Map": "Temple of Time B2",
+          "Notes": "Chest in northwest room",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Air Knife",
+      "Type": "Knife",
+      "BasePower": 60,
+      "BaseAccuracy": 1.0,
+      "Value": 5000,
+      "SpellCast": "Aero",
+      "Element": "Air",
+      "EquippedBy": [
+        "Th",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Air Knife",
+          "Map": "Sunken Cave B3",
+          "Notes": "Chest on northwest island",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Longsword",
+      "Type": "Sword",
+      "BasePower": 10,
+      "BaseAccuracy": 0.8,
+      "Price": 100,
+      "Value": 50,
+      "EquippedBy": [
+        "OK",
+        "Wa",
+        "Kn",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Ur",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Longsword",
+          "Map": "Altar Cave B2",
+          "Notes": "Southeast chest in pit room",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Longsword",
+          "Map": "Altar Cave B2",
+          "Notes": "West chest in pit room",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Longsword",
+          "Map": "Ur",
+          "Notes": "Chest in storeroom 2F",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Wightslayer",
+      "Type": "Sword",
+      "BasePower": 15,
+      "BaseAccuracy": 0.8,
+      "Price": 1000,
+      "Value": 500,
+      "Element": "Holy",
+      "EquippedBy": [
+        "RM",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Weapons"
+        },
+        {
+          "Map": "Dwarven Hollow",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Wightslayer",
+          "Map": "Castle Sasune",
+          "Notes": "Chest in west tower 4F",
+          "Guarded By": "Griffon"
+        }
+      ]
+    },
+    {
+      "name": "Golden Sword",
+      "Type": "Sword",
+      "BasePower": 5,
+      "BaseAccuracy": 0.2,
+      "Value": 2500,
+      "EquippedBy": [
+        "Wa",
+        "Kn",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Golden Sword",
+          "Map": "Goldor Manor 2F",
+          "Notes": "Chest",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Golden Sword",
+          "Map": "Goldor Manor 2F",
+          "Notes": "Chest",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Golden Sword",
+          "Map": "Goldor Manor 2F",
+          "Notes": "Chest",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Golden Sword",
+          "Map": "Goldor Manor 2F",
+          "Notes": "Chest",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Golden Sword",
+          "Map": "Goldor Manor 2F",
+          "Notes": "Chest",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Golden Sword",
+          "Map": "Goldor Manor 2F",
+          "Notes": "Chest",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Golden Sword",
+          "Map": "Goldor Manor 2F",
+          "Notes": "Chest",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Golden Sword",
+          "Map": "Goldor Manor 2F",
+          "Notes": "Chest",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Golden Sword",
+          "Map": "Goldor Manor 2F",
+          "Notes": "Chest",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Golden Sword",
+          "Map": "Goldor Manor 2F",
+          "Notes": "Chest",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Golden Sword",
+          "Map": "Goldor Manor 2F",
+          "Notes": "Chest",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Mythril Sword",
+      "Type": "Sword",
+      "BasePower": 17,
+      "BaseAccuracy": 0.85,
+      "Price": 500,
+      "Value": 250,
+      "EquippedBy": [
+        "OK",
+        "Wa",
+        "Kn",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Kazus",
+          "Shop": "Weapons"
+        },
+        {
+          "Map": "Canaan",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Mythril Sword",
+          "Map": "Mythril Mines B2",
+          "Notes": "Chest",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Mythril Sword",
+          "Map": "Mythril Mines B2",
+          "Notes": "Chest",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Serpent Sword",
+      "Type": "Sword",
+      "BasePower": 25,
+      "BaseAccuracy": 0.8,
+      "Price": 1500,
+      "Value": 750,
+      "Element": "Lightning",
+      "EquippedBy": [
+        "Wa",
+        "Kn",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Weapons"
+        },
+        {
+          "Map": "Dwarven Hollow",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Serpent Sword",
+          "Map": "Nepto Temple B1",
+          "Notes": "Chest in right side room",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Serpent Sword",
+          "Map": "Village of the Ancients",
+          "Notes": "Hidden in a tree on the west side of the second tier",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Freezing Blade",
+      "Type": "Sword",
+      "BasePower": 40,
+      "BaseAccuracy": 0.8,
+      "Value": 1500,
+      "SpellCast": "Blizzard",
+      "Element": "Ice",
+      "EquippedBy": [
+        "Wa",
+        "Kn",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Freezing Blade",
+          "Map": "Molten Cave B2",
+          "Notes": "Southeast chest",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Tyrfing",
+      "Type": "Sword",
+      "BasePower": 29,
+      "BaseAccuracy": 0.75,
+      "Price": 2800,
+      "Value": 1400,
+      "EquippedBy": [
+        "RM",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Dwarven Hollow",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Tyrfing",
+          "Map": "Tower of Owen 4F",
+          "Notes": "Chest",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Salamand Sword",
+      "Type": "Sword",
+      "BasePower": 32,
+      "BaseAccuracy": 0.8,
+      "Price": 3000,
+      "Value": 1500,
+      "SpellCast": "Fire",
+      "Element": "Fire",
+      "EquippedBy": [
+        "Wa",
+        "Kn",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Dwarven Hollow",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Salamand Sword",
+          "Map": "Tower of Owen 9F",
+          "Notes": "Center chest",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Royal Sword",
+      "Type": "Sword",
+      "BasePower": 50,
+      "BaseAccuracy": 0.8,
+      "Value": 2500,
+      "EquippedBy": [
+        "Wa",
+        "Kn",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Royal Sword",
+          "Map": "Hein's Castle 3F",
+          "Notes": "Chest in north room",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Ancient Sword",
+      "Type": "Sword",
+      "BasePower": 5,
+      "BaseAccuracy": 0.8,
+      "Price": 16500,
+      "Value": 8250,
+      "Element": "Holy",
+      "EquippedBy": [
+        "Wa",
+        "Kn",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Ancient Ruins B1",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Ancient Sword",
+          "Map": "Sunken Cave B3",
+          "Notes": "Chest on east island",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Blood Sword",
+      "Type": "Sword",
+      "BasePower": 35,
+      "BaseAccuracy": 0.8,
+      "Price": 16500,
+      "Value": 8250,
+      "Element": "Recovery",
+      "Draining": "This weapon restores 1/4 of the damage dealt to the wielder as HP (however, when used against undead this weapon will always miss and drain HP from the wielder instead)",
+      "EquippedBy": [
+        "Wa",
+        "Kn",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Ancient Ruins B1",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Blood Sword",
+          "Map": "Wrecked Ship",
+          "Notes": "Chest in the lower decks",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Defender",
+      "Type": "Sword",
+      "BasePower": 95,
+      "BaseAccuracy": 0.8,
+      "Price": 16500,
+      "Value": 8250,
+      "SpellCast": "Protect",
+      "EquippedBy": [
+        "Kn",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Ancient Ruins B1",
+          "Shop": "Weapons"
+        },
+        {
+          "Map": "The Invincible",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Defender",
+          "Map": "Sunken Cave B2",
+          "Notes": "Northeast chest",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Defender",
+          "Map": "Temple of Time B2",
+          "Notes": "Chest in southwest room",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Break Blade",
+      "Type": "Sword",
+      "BasePower": 120,
+      "BaseAccuracy": 0.8,
+      "Value": 15000,
+      "StatusAilment": "Partial Petrification (1/2)",
+      "Element": "Earth",
+      "EquippedBy": [
+        "Kn",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Break Blade",
+          "Map": "Ancient's Maze Center",
+          "Notes": "Chest on southern path",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Excalibur",
+      "Type": "Sword",
+      "BasePower": 160,
+      "BaseAccuracy": 0.8,
+      "Value": 32500,
+      "EquippedBy": [
+        "Kn",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Excalibur",
+          "Map": "Eureka B6",
+          "Notes": "Southeast altar",
+          "Guarded By": "General"
+        }
+      ]
+    },
+    {
+      "name": "Ragnarok",
+      "Type": "Sword",
+      "BasePower": 180,
+      "BaseAccuracy": 1.0,
+      "Value": 32750,
+      "Element": "Dark",
+      "EquippedBy": [
+        "Kn",
+        "MK",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Ragnarok",
+          "Map": "Eureka B7",
+          "Notes": "East sword",
+          "Guarded By": "Guardian"
+        }
+      ]
+    },
+    {
+      "name": "Onion Sword",
+      "Type": "Sword",
+      "BasePower": 200,
+      "BaseAccuracy": 1.0,
+      "Value": 32750,
+      "EquippedBy": [
+        "OK"
+      ],
+      "Monsters": [
+        {
+          "Name": "Red Dragon",
+          "HP": "15,000",
+          "Gil": "5,800 gil",
+          "Steal Rate": "-",
+          "Drop Chance": "23.4%"
+        },
+        {
+          "Name": "Green Dragon",
+          "HP": "10,000",
+          "Gil": "2,900 gil",
+          "Steal Rate": "-",
+          "Drop Chance": "1.6%"
+        },
+        {
+          "Name": "Yellow Dragon",
+          "HP": "10,000",
+          "Gil": "5,400 gil",
+          "Steal Rate": "-",
+          "Drop Chance": "1.6%"
+        }
+      ]
+    },
+    {
+      "name": "Ashura",
+      "Type": "Dark Blade",
+      "BasePower": 65,
+      "BaseAccuracy": 1.0,
+      "Price": 20000,
+      "Value": 10000,
+      "Element": "Dark",
+      "EquippedBy": [
+        "MK",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Falgabard",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Ashura",
+          "Map": "Falgabard Cave",
+          "Notes": "Chest in northeast hidden area",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Kotetsu",
+      "Type": "Dark Blade",
+      "BasePower": 105,
+      "BaseAccuracy": 0.9,
+      "Value": 10500,
+      "Element": "Dark",
+      "EquippedBy": [
+        "MK",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Kotetsu",
+          "Map": "Falgabard Cave",
+          "Notes": "Chest in northeast hidden area",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Kotetsu",
+          "Map": "Bahamut's Lair B3",
+          "Notes": "Lone chest past bridge",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Kotetsu",
+          "Map": "Cave of Shadows B1",
+          "Notes": "Southeast mystic knight",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Kiku Ichimonji",
+      "Type": "Dark Blade",
+      "BasePower": 125,
+      "BaseAccuracy": 1.0,
+      "Value": 11000,
+      "Element": "Dark",
+      "EquippedBy": [
+        "MK",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Kiku-Ichimonji",
+          "Map": "Falgabard",
+          "Notes": "Speak to old man in waterfall cave",
+          "Guarded By": "Shinobi"
+        },
+        {
+          "Treasure": "Kiku-Ichimonji",
+          "Map": "Cave of Shadows B5",
+          "Notes": "Center chest",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Masamune",
+      "Type": "Dark Blade",
+      "BasePower": 160,
+      "BaseAccuracy": 0.9,
+      "Value": 32500,
+      "Element": "Dark",
+      "EquippedBy": [
+        "MK",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Masamune",
+          "Map": "Eureka B5",
+          "Notes": "East altar",
+          "Guarded By": "Kunoichi"
+        }
+      ]
+    },
+    {
+      "name": "Book Of Fire",
+      "Type": "Book",
+      "BasePower": 32,
+      "BaseAccuracy": 0.7,
+      "Value": 1650,
+      "Element": "Fire",
+      "EquippedBy": [
+        "Sc",
+        "Sa",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Book of Fire",
+          "Map": "Castle Argus",
+          "Notes": "Chest in northeast tower",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Book of Fire",
+          "Map": "Dwarven Hollow",
+          "Notes": "Chest in lower area",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Book Of Ice",
+      "Type": "Book",
+      "BasePower": 32,
+      "BaseAccuracy": 0.7,
+      "Value": 1650,
+      "Element": "Ice",
+      "EquippedBy": [
+        "Sc",
+        "Sa",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Book of Ice",
+          "Map": "Castle Argus",
+          "Notes": "Chest in northeast tower",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Book of Ice",
+          "Map": "Dwarven Hollow",
+          "Notes": "Chest in lower area",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Tome Of Fire",
+      "Type": "Book",
+      "BasePower": 65,
+      "BaseAccuracy": 0.7,
+      "Price": 15000,
+      "Value": 7500,
+      "Element": "Fire",
+      "EquippedBy": [
+        "Sc",
+        "Sa",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "The Invincible",
+          "Shop": "Weapons"
+        }
+      ]
+    },
+    {
+      "name": "Book Of Light",
+      "Type": "Book",
+      "BasePower": 32,
+      "BaseAccuracy": 0.7,
+      "Value": 1650,
+      "Element": "Lightning",
+      "EquippedBy": [
+        "Sc",
+        "Sa",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Book of Light",
+          "Map": "Castle Argus",
+          "Notes": "Chest in northeast tower",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Book of Light",
+          "Map": "Dwarven Hollow",
+          "Notes": "Chest in lower area",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Tome Of Light",
+      "Type": "Book",
+      "BasePower": 65,
+      "BaseAccuracy": 0.8,
+      "Price": 15000,
+      "Value": 7500,
+      "Element": "Lightning",
+      "EquippedBy": [
+        "Sc",
+        "Sa",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "The Invincible",
+          "Shop": "Weapons"
+        }
+      ]
+    },
+    {
+      "name": "Tome Of Ice",
+      "Type": "Book",
+      "BasePower": 65,
+      "BaseAccuracy": 0.8,
+      "Price": 15000,
+      "Value": 7500,
+      "Element": "Ice",
+      "EquippedBy": [
+        "Sc",
+        "Sa",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "The Invincible",
+          "Shop": "Weapons"
+        }
+      ]
+    },
+    {
+      "name": "Boomerang",
+      "Type": "Boomerang",
+      "BasePower": 35,
+      "BaseAccuracy": 0.7,
+      "Price": 9000,
+      "Value": 4500,
+      "LongRange": "This weapon has full accuracy when used in the back row",
+      "EquippedBy": [
+        "Th",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Amur",
+          "Shop": "Weapons"
+        }
+      ]
+    },
+    {
+      "name": "Moonring Blade",
+      "Type": "Boomerang",
+      "BasePower": 160,
+      "BaseAccuracy": 0.9,
+      "Value": 31000,
+      "LongRange": "This weapon has full accuracy when used in the back row",
+      "EquippedBy": [
+        "Kn",
+        "MK",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Moonring Blade",
+          "Map": "Eureka B4",
+          "Notes": "Altar",
+          "Guarded By": "Amon"
+        }
+      ]
+    },
+    {
+      "name": "Shuriken",
+      "Type": "Shuriken",
+      "BasePower": 200,
+      "BaseAccuracy": 1.0,
+      "Price": 65500,
+      "Value": 32750,
+      "LongRange": "This weapon has full accuracy when used in the back row",
+      "EquippedBy": [
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Eureka B7",
+          "Shop": "Weapons & Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Shuriken",
+          "Map": "Village of Gysahl",
+          "Notes": "Chest behind counter of magic key shop",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Shuriken",
+          "Map": "Eureka B3",
+          "Notes": "Chest in western area",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Shuriken",
+          "Map": "Eureka B3",
+          "Notes": "South chest",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Shuriken",
+          "Map": "Eureka B7",
+          "Notes": "Chest in shop room",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Shuriken",
+          "Map": "Eureka B7",
+          "Notes": "Chest in shop room",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Diamond Bell",
+      "Type": "Bell",
+      "BasePower": 25,
+      "BaseAccuracy": 0.8,
+      "Price": 4500,
+      "Value": 2250,
+      "EquippedBy": [
+        "Ge",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Duster",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Diamond Bell",
+          "Map": "Saronia Catacombs 3F",
+          "Notes": "Northwest path chest",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Earthen Bell",
+      "Type": "Bell",
+      "BasePower": 30,
+      "BaseAccuracy": 0.8,
+      "Value": 2750,
+      "EquippedBy": [
+        "Ge",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Earthen Bell",
+          "Map": "Saronia Castle",
+          "Notes": "Chest in tower secret basement",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Rune Bell",
+      "Type": "Bell",
+      "BasePower": 40,
+      "BaseAccuracy": 1.0,
+      "Price": 5500,
+      "Value": 2750,
+      "EquippedBy": [
+        "Ge",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "The Invincible",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Rune Bell",
+          "Map": "Ancient Ruins B2",
+          "Notes": "Chest in northwest room",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Madhura Harp",
+      "Type": "Harp",
+      "BasePower": 40,
+      "BaseAccuracy": 0.7,
+      "Price": 8000,
+      "Value": 4000,
+      "Two-Handed": "This weapon requires both hands to wield",
+      "LongRange": "This weapon has full accuracy when used in the back row",
+      "EquippedBy": [
+        "Ba",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Duster",
+          "Shop": "Weapons"
+        }
+      ]
+    },
+    {
+      "name": "Lamia Harp",
+      "Type": "Harp",
+      "BasePower": 0,
+      "BaseAccuracy": 0.8,
+      "Value": 10750,
+      "Two-Handed": "This weapon requires both hands to wield",
+      "LongRange": "This weapon has full accuracy when used in the back row",
+      "EquippedBy": [
+        "Ba",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Lamia Harp",
+          "Map": "Temple of Time B3",
+          "Notes": "Chest at bottom of secret waterfall",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Loki Harp",
+      "Type": "Harp",
+      "BasePower": 60,
+      "BaseAccuracy": 1.0,
+      "Price": 40000,
+      "Value": 20000,
+      "Two-Handed": "This weapon requires both hands to wield",
+      "LongRange": "This weapon has full accuracy when used in the back row",
+      "EquippedBy": [
+        "Ba",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "The Invincible",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Loki Harp",
+          "Map": "Sunken Cave B3",
+          "Notes": "Chest on northwest island",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Bow",
+      "Type": "Bow",
+      "BasePower": 5,
+      "BaseAccuracy": 0.9,
+      "Value": 50,
+      "Two-Handed": "This weapon requires both hands to wield",
+      "LongRange": "This weapon has full accuracy when used in the back row",
+      "EquippedBy": [
+        "OK",
+        "Wa",
+        "BM",
+        "RM",
+        "Ra",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Bow",
+          "Map": "Castle Sasune",
+          "Notes": "Southeast chest in east tower 4F",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Great Bow",
+      "Type": "Bow",
+      "BasePower": 8,
+      "BaseAccuracy": 0.85,
+      "Value": 600,
+      "Two-Handed": "This weapon requires both hands to wield",
+      "LongRange": "This weapon has full accuracy when used in the back row",
+      "EquippedBy": [
+        "OK",
+        "Wa",
+        "BM",
+        "RM",
+        "Ra",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Great Bow",
+          "Map": "Canaan",
+          "Notes": "West chest in Cid's secret room",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Great Bow",
+          "Map": "Tokkul",
+          "Notes": "West grass",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Killer Bow",
+      "Type": "Bow",
+      "BasePower": 15,
+      "BaseAccuracy": 0.85,
+      "Price": 2000,
+      "Value": 1000,
+      "Two-Handed": "This weapon requires both hands to wield",
+      "LongRange": "This weapon has full accuracy when used in the back row",
+      "EquippedBy": [
+        "Ra",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Killer Bow",
+          "Map": "Castle Argus",
+          "Notes": "Chest in secret room in northwest tower",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Killer Bow",
+          "Map": "Dwarven Hollow",
+          "Notes": "Chest in lower area",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Rune Bow",
+      "Type": "Bow",
+      "BasePower": 25,
+      "BaseAccuracy": 0.9,
+      "Value": 1500,
+      "Two-Handed": "This weapon requires both hands to wield",
+      "LongRange": "This weapon has full accuracy when used in the back row",
+      "EquippedBy": [
+        "Ra",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Rune Bow",
+          "Map": "Hein's Castle 5F",
+          "Notes": "Chest",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Yoichi Bow",
+      "Type": "Bow",
+      "BasePower": 50,
+      "BaseAccuracy": 1.0,
+      "Price": 42000,
+      "Value": 21000,
+      "Two-Handed": "This weapon requires both hands to wield",
+      "LongRange": "This weapon has full accuracy when used in the back row",
+      "EquippedBy": [
+        "Ra",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Falgabard",
+          "Shop": "Weapons"
+        }
+      ]
+    },
+    {
+      "name": "Wooden Arrow",
+      "Type": "Bow",
+      "BasePower": 6,
+      "BaseAccuracy": 0.9,
+      "Value": 2,
+      "LongRange": "This weapon has full accuracy when used in the back row",
+      "EquippedBy": [
+        "OK",
+        "Wa",
+        "BM",
+        "RM",
+        "Ra",
+        "Ni"
+      ],
+      "Monsters": [
+        {
+          "Name": "Demon",
+          "HP": "171",
+          "Gil": "158 gil",
+          "Steal Rate": "18.8%",
+          "Drop Chance": "1.2%"
+        },
+        {
+          "Name": "Parademon",
+          "HP": "145",
+          "Gil": "72 gil",
+          "Steal Rate": "18.8%",
+          "Drop Chance": "1.2%"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Wooden Arrow ×20",
+          "Map": "Castle Sasune",
+          "Notes": "East chest in west tower 3F",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Wooden Arrow ×20",
+          "Map": "Castle Sasune",
+          "Notes": "East chest in east tower 3F",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Wooden Arrow ×20",
+          "Map": "Castle Sasune",
+          "Notes": "Northeast chest in east tower 4F",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Holy Arrow",
+      "Type": "Bow",
+      "BasePower": 13,
+      "BaseAccuracy": 0.85,
+      "Value": 5,
+      "Element": "Holy",
+      "LongRange": "This weapon has full accuracy when used in the back row",
+      "EquippedBy": [
+        "OK",
+        "Wa",
+        "BM",
+        "RM",
+        "Ra",
+        "Ni"
+      ],
+      "Monsters": [
+        {
+          "Name": "Demon",
+          "HP": "171",
+          "Gil": "158 gil",
+          "Steal Rate": "18.8%",
+          "Drop Chance": "1.2%"
+        },
+        {
+          "Name": "Parademon",
+          "HP": "145",
+          "Gil": "72 gil",
+          "Steal Rate": "18.8%",
+          "Drop Chance": "1.2%"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Holy Arrow ×20",
+          "Map": "Castle Sasune",
+          "Notes": "West chest in west tower 3F",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Holy Arrow ×20",
+          "Map": "Castle Sasune",
+          "Notes": "West chest in east tower 3F",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Holy Arrow ×20",
+          "Map": "Hein's Castle 2F",
+          "Notes": "Chest",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Iron Arrow",
+      "Type": "Bow",
+      "BasePower": 17,
+      "BaseAccuracy": 0.85,
+      "Value": 5,
+      "LongRange": "This weapon has full accuracy when used in the back row",
+      "EquippedBy": [
+        "OK",
+        "Wa",
+        "BM",
+        "RM",
+        "Ra",
+        "Ni"
+      ],
+      "Monsters": [
+        {
+          "Name": "Demon",
+          "HP": "171",
+          "Gil": "158 gil",
+          "Steal Rate": "18.8%",
+          "Drop Chance": "1.2%"
+        },
+        {
+          "Name": "Parademon",
+          "HP": "145",
+          "Gil": "72 gil",
+          "Steal Rate": "18.8%",
+          "Drop Chance": "1.2%"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Iron Arrow ×20",
+          "Map": "Canaan",
+          "Notes": "East chest in Cid's secret room",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Iron Arrow ×20",
+          "Map": "Canaan",
+          "Notes": "Chest in hidden area in Cid's secret room",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Light Arrow",
+      "Type": "Bow",
+      "BasePower": 30,
+      "BaseAccuracy": 0.85,
+      "Price": 30,
+      "Value": 15,
+      "Element": "Lightning",
+      "LongRange": "This weapon has full accuracy when used in the back row",
+      "EquippedBy": [
+        "Ra",
+        "Ni"
+      ],
+      "Monsters": [
+        {
+          "Name": "Demon",
+          "HP": "171",
+          "Gil": "158 gil",
+          "Steal Rate": "43.8%",
+          "Drop Chance": "1.2%"
+        },
+        {
+          "Name": "Parademon",
+          "HP": "145",
+          "Gil": "72 gil",
+          "Steal Rate": "43.8%",
+          "Drop Chance": "1.2%"
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Light Arrow ×20",
+          "Map": "Castle Argus",
+          "Notes": "Chest in secret room in northwest tower",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Fire Arrow",
+      "Type": "Bow",
+      "BasePower": 30,
+      "BaseAccuracy": 0.9,
+      "Price": 30,
+      "Value": 15,
+      "Element": "Fire",
+      "LongRange": "This weapon has full accuracy when used in the back row",
+      "EquippedBy": [
+        "Ra",
+        "Ni"
+      ],
+      "Monsters": [
+        {
+          "Name": "Demon",
+          "HP": "171",
+          "Gil": "158 gil",
+          "Steal Rate": "-",
+          "Drop Chance": "0.6%"
+        },
+        {
+          "Name": "Parademon",
+          "HP": "145",
+          "Gil": "72 gil",
+          "Steal Rate": "-",
+          "Drop Chance": "0.6%"
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Fire Arrow ×20",
+          "Map": "Castle Argus",
+          "Notes": "Chest in northeast tower",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Ice Arrow",
+      "Type": "Bow",
+      "BasePower": 30,
+      "BaseAccuracy": 0.9,
+      "Price": 30,
+      "Value": 15,
+      "Element": "Ice",
+      "LongRange": "This weapon has full accuracy when used in the back row",
+      "EquippedBy": [
+        "Ra",
+        "Ni"
+      ],
+      "Monsters": [
+        {
+          "Name": "Demon",
+          "HP": "171",
+          "Gil": "158 gil",
+          "Steal Rate": "-",
+          "Drop Chance": "0.6%"
+        },
+        {
+          "Name": "Parademon",
+          "HP": "145",
+          "Gil": "72 gil",
+          "Steal Rate": "-",
+          "Drop Chance": "0.6%"
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Weapons"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Ice Arrow ×20",
+          "Map": "Castle Argus",
+          "Notes": "Chest in northeast tower",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Medusa Arrow",
+      "Type": "Bow",
+      "BasePower": 20,
+      "BaseAccuracy": 1.0,
+      "Value": 50,
+      "StatusAilment": "Petrification",
+      "Element": "Earth",
+      "LongRange": "This weapon has full accuracy when used in the back row",
+      "EquippedBy": [
+        "Ra",
+        "Ni"
+      ],
+      "Monsters": [
+        {
+          "Name": "Demon",
+          "HP": "171",
+          "Gil": "158 gil",
+          "Steal Rate": "-",
+          "Drop Chance": "0.3%"
+        },
+        {
+          "Name": "Parademon",
+          "HP": "145",
+          "Gil": "72 gil",
+          "Steal Rate": "-",
+          "Drop Chance": "0.3%"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Medusa Arrow ×20",
+          "Map": "Castle Argus",
+          "Notes": "Chest in secret room in northwest tower",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Medusa Arrow ×20",
+          "Map": "Saronia Castle",
+          "Notes": "Chest in secret room in tower bedroom",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Yoichi Arrow",
+      "Type": "Bow",
+      "BasePower": 70,
+      "BaseAccuracy": 1.0,
+      "Price": 200,
+      "Value": 100,
+      "LongRange": "This weapon has full accuracy when used in the back row",
+      "EquippedBy": [
+        "Ra",
+        "Ni"
+      ],
+      "Monsters": [
+        {
+          "Name": "Demon",
+          "HP": "171",
+          "Gil": "158 gil",
+          "Steal Rate": "-",
+          "Drop Chance": "0.1%"
+        },
+        {
+          "Name": "Parademon",
+          "HP": "145",
+          "Gil": "72 gil",
+          "Steal Rate": "-",
+          "Drop Chance": "0.1%"
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "The Invincible",
+          "Shop": "Weapons"
+        },
+        {
+          "Map": "Falgabard",
+          "Shop": "Weapons"
+        }
+      ]
+    }
+  ],
+  "errors": []
+}

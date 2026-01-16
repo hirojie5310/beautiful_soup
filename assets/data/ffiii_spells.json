@@ -1,0 +1,3872 @@
+{
+  "meta": {
+    "generated_at": "2025-11-13T23:48:26.607662",
+    "count": 86,
+    "error_count": 0,
+    "source": "https://guides.gamercorner.net/ffiii/spells/"
+  },
+  "spells": [
+    {
+      "name": "Flare",
+      "Type": "Black Magic",
+      "Level": 8,
+      "Effect": "Deal damage",
+      "BasePower": 200,
+      "BaseAccuracy": 1.0,
+      "Price": 60000,
+      "Value": 30000,
+      "Reflectable": "Yes",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "Ma",
+        "Sa"
+      ],
+      "Items": [
+        {
+          "Name": "Chocobo's Wrath",
+          "Type": "Combat",
+          "Price": null,
+          "Value": 2500,
+          "Effect": "Flare",
+          "Multiplier": 3
+        }
+      ],
+      "Monsters": [
+        {
+          "Name": "Titan",
+          "HP": 7800,
+          "Exp": 4400,
+          "Gil": 4500
+        },
+        {
+          "Name": "Scylla",
+          "HP": 10000,
+          "Exp": 5200,
+          "Gil": 5400
+        },
+        {
+          "Name": "Echidna",
+          "HP": 32000,
+          "Exp": 7000,
+          "Gil": 7000
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Eureka B7",
+          "Shop": "Magic"
+        }
+      ]
+    },
+    {
+      "name": "Death",
+      "Type": "Black Magic",
+      "Level": 8,
+      "Effect": "Inflict KO",
+      "StatusAilment": "KO",
+      "BasePower": 0,
+      "BaseAccuracy": 0.35,
+      "Price": 60000,
+      "Value": 30000,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "Ma",
+        "Sa"
+      ],
+      "Items": [
+        {
+          "Name": "Black Musk",
+          "Type": "Combat",
+          "Price": null,
+          "Value": 2500,
+          "Effect": "Death",
+          "Multiplier": 3
+        }
+      ],
+      "Monsters": [
+        {
+          "Name": "Kum Kum",
+          "HP": 2090,
+          "Exp": 4400,
+          "Gil": 3900
+        },
+        {
+          "Name": "Echidna",
+          "HP": 32000,
+          "Exp": 7000,
+          "Gil": 7000
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Eureka B7",
+          "Shop": "Magic"
+        }
+      ]
+    },
+    {
+      "name": "Meteor",
+      "Type": "Black Magic",
+      "Level": 8,
+      "Effect": "Deal damage",
+      "BasePower": 180,
+      "BaseAccuracy": 1.0,
+      "Price": 60000,
+      "Value": 30000,
+      "Reflectable": "No",
+      "Target": "All Enemies",
+      "CastBy": [
+        "Ma",
+        "Sa"
+      ],
+      "Monsters": [
+        {
+          "Name": "Xande's Clone",
+          "HP": 10000,
+          "Exp": 3400,
+          "Gil": 1550
+        },
+        {
+          "Name": "Xande",
+          "HP": 21000,
+          "Exp": null,
+          "Gil": null
+        },
+        {
+          "Name": "Echidna",
+          "HP": 32000,
+          "Exp": 7000,
+          "Gil": 7000
+        },
+        {
+          "Name": "Ahriman",
+          "HP": 35000,
+          "Exp": 8000,
+          "Gil": 7200
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Eureka B7",
+          "Shop": "Magic"
+        }
+      ]
+    },
+    {
+      "name": "Quake",
+      "Type": "Black Magic",
+      "Level": 7,
+      "Effect": "Deal Earth damage",
+      "Element": "Earth",
+      "BasePower": 133,
+      "BaseAccuracy": 1.0,
+      "Price": 20000,
+      "Value": 10000,
+      "Reflectable": "No",
+      "Target": "All Enemies",
+      "CastBy": [
+        "BM",
+        "Ma",
+        "Sa"
+      ],
+      "Items": [
+        {
+          "Name": "Earthen Drums",
+          "Type": "Combat",
+          "Price": null,
+          "Value": 1250,
+          "Effect": "Quake",
+          "Multiplier": 3
+        }
+      ],
+      "Monsters": [
+        {
+          "Name": "Xande's Clone",
+          "HP": 10000,
+          "Exp": 3400,
+          "Gil": 1550
+        },
+        {
+          "Name": "Doga's Clone",
+          "HP": 1500,
+          "Exp": 4000,
+          "Gil": 2800
+        },
+        {
+          "Name": "Doga",
+          "HP": 4500,
+          "Exp": 3400,
+          "Gil": 4000
+        },
+        {
+          "Name": "Guardian",
+          "HP": 12000,
+          "Exp": 5400,
+          "Gil": 5600
+        },
+        {
+          "Name": "Xande",
+          "HP": 21000,
+          "Exp": null,
+          "Gil": null
+        },
+        {
+          "Name": "Echidna",
+          "HP": 32000,
+          "Exp": 7000,
+          "Gil": 7000
+        },
+        {
+          "Name": "Ahriman",
+          "HP": 35000,
+          "Exp": 8000,
+          "Gil": 7200
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 7 Magic"
+        },
+        {
+          "Map": "The Invincible",
+          "Shop": "Magic"
+        }
+      ]
+    },
+    {
+      "name": "Breakga",
+      "Type": "Black Magic",
+      "Level": 7,
+      "Effect": "Inflict Petrification",
+      "Element": "Earth",
+      "StatusAilment": "Petrification",
+      "BasePower": 0,
+      "BaseAccuracy": 0.4,
+      "Price": 20000,
+      "Value": 10000,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "BM",
+        "Ma",
+        "Sa"
+      ],
+      "Monsters": [
+        {
+          "Name": "Rock Gargoyle",
+          "HP": 360,
+          "Exp": 1320,
+          "Gil": 490
+        },
+        {
+          "Name": "Fachan",
+          "HP": 510,
+          "Exp": 2800,
+          "Gil": 745
+        },
+        {
+          "Name": "Thanatos",
+          "HP": 2200,
+          "Exp": 3800,
+          "Gil": 2500
+        },
+        {
+          "Name": "Doga's Clone",
+          "HP": 1500,
+          "Exp": 4000,
+          "Gil": 2800
+        },
+        {
+          "Name": "Platinal",
+          "HP": 4580,
+          "Exp": 4400,
+          "Gil": 3800
+        },
+        {
+          "Name": "Kum Kum",
+          "HP": 2090,
+          "Exp": 4400,
+          "Gil": 3900
+        },
+        {
+          "Name": "Doga",
+          "HP": 4500,
+          "Exp": 3400,
+          "Gil": 4000
+        },
+        {
+          "Name": "Echidna",
+          "HP": 32000,
+          "Exp": 7000,
+          "Gil": 7000
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 7 Magic"
+        },
+        {
+          "Map": "The Invincible",
+          "Shop": "Magic"
+        }
+      ]
+    },
+    {
+      "name": "Drain",
+      "Type": "Black Magic",
+      "Level": 7,
+      "Effect": "Absorb HP from target",
+      "Element": "Recovery",
+      "BasePower": 160,
+      "BaseAccuracy": 1.0,
+      "Price": 20000,
+      "Value": 10000,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "BM",
+        "Ma",
+        "Sa"
+      ],
+      "Items": [
+        {
+          "Name": "Lilith's Kiss",
+          "Type": "Combat",
+          "Price": null,
+          "Value": 1500,
+          "Effect": "Drain",
+          "Multiplier": 3
+        }
+      ],
+      "Monsters": [
+        {
+          "Name": "Doga's Clone",
+          "HP": 1500,
+          "Exp": 4000,
+          "Gil": 2800
+        },
+        {
+          "Name": "Gomory",
+          "HP": 4050,
+          "Exp": 4200,
+          "Gil": 181
+        },
+        {
+          "Name": "Garm",
+          "HP": 4240,
+          "Exp": 4800,
+          "Gil": 5200
+        },
+        {
+          "Name": "Doga",
+          "HP": 4500,
+          "Exp": 3400,
+          "Gil": 4000
+        },
+        {
+          "Name": "Echidna",
+          "HP": 32000,
+          "Exp": 7000,
+          "Gil": 7000
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 7 Magic"
+        },
+        {
+          "Map": "The Invincible",
+          "Shop": "Magic"
+        }
+      ]
+    },
+    {
+      "name": "Firaga",
+      "Type": "Black Magic",
+      "Level": 6,
+      "Effect": "Deal Fire damage",
+      "Element": "Fire",
+      "BasePower": 150,
+      "BaseAccuracy": 1.0,
+      "Price": 10000,
+      "Value": 5000,
+      "Reflectable": "Yes",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "BM",
+        "Ma",
+        "Sa"
+      ],
+      "Items": [
+        {
+          "Name": "Bomb Arm",
+          "Type": "Combat",
+          "Price": null,
+          "Value": 750,
+          "Effect": "Firaga",
+          "Multiplier": 3
+        }
+      ],
+      "Monsters": [
+        {
+          "Name": "Kum Kum",
+          "HP": 2090,
+          "Exp": 4400,
+          "Gil": 3900
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Doga's Manor",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 6 Magic"
+        }
+      ]
+    },
+    {
+      "name": "Bio",
+      "Type": "Black Magic",
+      "Level": 6,
+      "Effect": "Deal damage",
+      "BasePower": 130,
+      "BaseAccuracy": 1.0,
+      "Price": 10000,
+      "Value": 5000,
+      "Reflectable": "Yes",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "BM",
+        "Ma",
+        "Sa"
+      ],
+      "Shops": [
+        {
+          "Map": "Doga's Manor",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 6 Magic"
+        }
+      ]
+    },
+    {
+      "name": "Warp",
+      "Type": "Black Magic",
+      "Level": 6,
+      "Effect": "Teleport to any previous dungeon floor, or inflict KO in battle",
+      "StatusAilment": "KO",
+      "BasePower": 0,
+      "Price": 10000,
+      "Value": 5000,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "BM",
+        "Ma",
+        "Sa"
+      ],
+      "Shops": [
+        {
+          "Map": "Doga's Manor",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 6 Magic"
+        }
+      ]
+    },
+    {
+      "name": "Thundaga",
+      "Type": "Black Magic",
+      "Level": 5,
+      "Effect": "Deal Lightning damage",
+      "Element": "Lightning",
+      "BasePower": 110,
+      "BaseAccuracy": 1.0,
+      "Price": 5000,
+      "Value": 2500,
+      "Reflectable": "Yes",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "BM",
+        "Ma",
+        "Sa"
+      ],
+      "Items": [
+        {
+          "Name": "Heavenly Wrath",
+          "Type": "Combat",
+          "Price": null,
+          "Value": 750,
+          "Effect": "Thundaga",
+          "Multiplier": 3
+        }
+      ],
+      "Monsters": [
+        {
+          "Name": "Kum Kum",
+          "HP": 2090,
+          "Exp": 4400,
+          "Gil": 3900
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "LV. 5 Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 5 Magic"
+        }
+      ]
+    },
+    {
+      "name": "Raze",
+      "Type": "Black Magic",
+      "Level": 5,
+      "Effect": "Inflict KO",
+      "StatusAilment": "KO",
+      "BasePower": 100,
+      "BaseAccuracy": 1.0,
+      "Price": 5000,
+      "Value": 2500,
+      "Reflectable": "No",
+      "Target": "All Enemies",
+      "CastBy": [
+        "BM",
+        "Ma",
+        "Sa"
+      ],
+      "Items": [
+        {
+          "Name": "Devil's Sigh",
+          "Type": "Combat",
+          "Price": null,
+          "Value": 1500,
+          "Effect": "Raze",
+          "Multiplier": 3
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "LV. 5 Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 5 Magic"
+        }
+      ]
+    },
+    {
+      "name": "Erase",
+      "Type": "Black Magic",
+      "Level": 5,
+      "Effect": "Remove Reflect (doesn't work)",
+      "BasePower": 0,
+      "BaseAccuracy": 0.6,
+      "Price": 5000,
+      "Value": 2500,
+      "Reflectable": "No",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "BM",
+        "Ma",
+        "Sa"
+      ],
+      "Shops": [
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "LV. 5 Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 5 Magic"
+        }
+      ]
+    },
+    {
+      "name": "Break",
+      "Type": "Black Magic",
+      "Level": 4,
+      "Effect": "Deal damage and inflict Partial Petrification (1/2)",
+      "Element": "Earth",
+      "StatusAilment": "Partial Petrification (1/2)",
+      "BasePower": 0,
+      "BaseAccuracy": 0.5,
+      "Price": 3000,
+      "Value": 1500,
+      "Reflectable": "Yes",
+      "Target": "One Enemy",
+      "CastBy": [
+        "BM",
+        "RM",
+        "Ma",
+        "Sa"
+      ],
+      "Weapons": [
+        {
+          "Name": "Golem Staff",
+          "Type": "Rod",
+          "Multiplier": 1,
+          "Equipped By": [
+            "De",
+            "Ni",
+            "RM",
+            "Sa",
+            "WM"
+          ]
+        }
+      ],
+      "Monsters": [
+        {
+          "Name": "Gold Bear",
+          "HP": 280,
+          "Exp": 600,
+          "Gil": 340
+        },
+        {
+          "Name": "Hellgaroo Mage",
+          "HP": 295,
+          "Exp": 700,
+          "Gil": 370
+        },
+        {
+          "Name": "Medusa",
+          "HP": 980,
+          "Exp": 360,
+          "Gil": 1200
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Village of Gysahl",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "LV. 4 Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 4 Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 6 Magic"
+        }
+      ]
+    },
+    {
+      "name": "Blizzaga",
+      "Type": "Black Magic",
+      "Level": 4,
+      "Effect": "Deal Ice damage",
+      "Element": "Ice",
+      "BasePower": 85,
+      "BaseAccuracy": 1.0,
+      "Price": 3000,
+      "Value": 1500,
+      "Reflectable": "Yes",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "BM",
+        "RM",
+        "Ma",
+        "Sa"
+      ],
+      "Items": [
+        {
+          "Name": "Arctic Wind",
+          "Type": "Combat",
+          "Price": null,
+          "Value": 750,
+          "Effect": "Blizzaga",
+          "Multiplier": 3
+        }
+      ],
+      "Weapons": [
+        {
+          "Name": "Rune Staff",
+          "Type": "Rod",
+          "Multiplier": 1,
+          "Equipped By": [
+            "De",
+            "Ni",
+            "RM",
+            "Sa",
+            "WM"
+          ]
+        }
+      ],
+      "Monsters": [
+        {
+          "Name": "Kum Kum",
+          "HP": 2090,
+          "Exp": 4400,
+          "Gil": 3900
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Village of Gysahl",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "LV. 4 Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 4 Magic"
+        }
+      ]
+    },
+    {
+      "name": "Shade",
+      "Type": "Black Magic",
+      "Level": 4,
+      "Effect": "Inflict Paralysis",
+      "StatusAilment": "Paralysis",
+      "BasePower": 0,
+      "BaseAccuracy": 0.8,
+      "Price": 3000,
+      "Value": 1500,
+      "Reflectable": "No",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "BM",
+        "RM",
+        "Ma",
+        "Sa"
+      ],
+      "Items": [
+        {
+          "Name": "Tranquilizer",
+          "Type": "Combat",
+          "Price": null,
+          "Value": 1500,
+          "Effect": "Shade",
+          "Multiplier": 3
+        }
+      ],
+      "Monsters": [
+        {
+          "Name": "Hellgaroo Mage",
+          "HP": 295,
+          "Exp": 700,
+          "Gil": 370
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Village of Gysahl",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "LV. 4 Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 4 Magic"
+        }
+      ]
+    },
+    {
+      "name": "Fira",
+      "Type": "Black Magic",
+      "Level": 3,
+      "Effect": "Deal Fire damage",
+      "Element": "Fire",
+      "BasePower": 55,
+      "BaseAccuracy": 1.0,
+      "Price": 1500,
+      "Value": 750,
+      "Reflectable": "Yes",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "BM",
+        "RM",
+        "Ma",
+        "Sa"
+      ],
+      "Items": [
+        {
+          "Name": "Bomb Fragment",
+          "Type": "Combat",
+          "Price": null,
+          "Value": 500,
+          "Effect": "Fira",
+          "Multiplier": 2
+        }
+      ],
+      "Monsters": [
+        {
+          "Name": "Vulcan",
+          "HP": 250,
+          "Exp": 500,
+          "Gil": 280
+        },
+        {
+          "Name": "Magician",
+          "HP": 260,
+          "Exp": 560,
+          "Gil": 300
+        },
+        {
+          "Name": "Hellgaroo Mage",
+          "HP": 295,
+          "Exp": 700,
+          "Gil": 370
+        },
+        {
+          "Name": "Sorceror",
+          "HP": 310,
+          "Exp": 800,
+          "Gil": 400
+        },
+        {
+          "Name": "Flyer Mage",
+          "HP": 555,
+          "Exp": 1440,
+          "Gil": 520
+        },
+        {
+          "Name": "Giant Rat",
+          "HP": 450,
+          "Exp": 240,
+          "Gil": 1000
+        },
+        {
+          "Name": "Gutsco",
+          "HP": 1400,
+          "Exp": 500,
+          "Gil": 1500
+        },
+        {
+          "Name": "Hein",
+          "HP": 1600,
+          "Exp": 1040,
+          "Gil": 2100
+        },
+        {
+          "Name": "Kraken",
+          "HP": 1950,
+          "Exp": 1320,
+          "Gil": 2500
+        },
+        {
+          "Name": "Goldor",
+          "HP": 2250,
+          "Exp": 1640,
+          "Gil": 3300
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Northwest Saronia",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 3 Magic"
+        },
+        {
+          "Map": "Falgabard",
+          "Shop": "Magic"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Fira",
+          "Map": "Vikings' Cove",
+          "Notes": "Chest in hidden part of north area",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Blizzara",
+      "Type": "Black Magic",
+      "Level": 3,
+      "Effect": "Deal Ice damage",
+      "Element": "Ice",
+      "BasePower": 55,
+      "BaseAccuracy": 1.0,
+      "Price": 1500,
+      "Value": 750,
+      "Reflectable": "Yes",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "BM",
+        "RM",
+        "Ma",
+        "Sa"
+      ],
+      "Items": [
+        {
+          "Name": "Antarctic Wind",
+          "Type": "Combat",
+          "Price": null,
+          "Value": 500,
+          "Effect": "Blizzara",
+          "Multiplier": 2
+        }
+      ],
+      "Monsters": [
+        {
+          "Name": "Far Darrig",
+          "HP": 111,
+          "Exp": 144,
+          "Gil": 98
+        },
+        {
+          "Name": "Petit Mage",
+          "HP": 118,
+          "Exp": 152,
+          "Gil": 101
+        },
+        {
+          "Name": "Vulcan",
+          "HP": 250,
+          "Exp": 500,
+          "Gil": 280
+        },
+        {
+          "Name": "Magician",
+          "HP": 260,
+          "Exp": 560,
+          "Gil": 300
+        },
+        {
+          "Name": "Hellgaroo Mage",
+          "HP": 295,
+          "Exp": 700,
+          "Gil": 370
+        },
+        {
+          "Name": "Sorceror",
+          "HP": 310,
+          "Exp": 800,
+          "Gil": 400
+        },
+        {
+          "Name": "Frostfly",
+          "HP": 325,
+          "Exp": 960,
+          "Gil": 430
+        },
+        {
+          "Name": "Flyer Mage",
+          "HP": 555,
+          "Exp": 1440,
+          "Gil": 520
+        },
+        {
+          "Name": "Sleipnir",
+          "HP": 1000,
+          "Exp": 4000,
+          "Gil": 3100
+        },
+        {
+          "Name": "Giant Rat",
+          "HP": 450,
+          "Exp": 240,
+          "Gil": 1000
+        },
+        {
+          "Name": "Hein",
+          "HP": 1600,
+          "Exp": 1040,
+          "Gil": 2100
+        },
+        {
+          "Name": "Kraken",
+          "HP": 1950,
+          "Exp": 1320,
+          "Gil": 2500
+        },
+        {
+          "Name": "Goldor",
+          "HP": 2250,
+          "Exp": 1640,
+          "Gil": 3300
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Northwest Saronia",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 3 Magic"
+        },
+        {
+          "Map": "Falgabard",
+          "Shop": "Magic"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Blizzara",
+          "Map": "Vikings' Cove",
+          "Notes": "Chest in hidden part of north area",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Thundara",
+      "Type": "Black Magic",
+      "Level": 3,
+      "Effect": "Deal Lightning damage",
+      "Element": "Lightning",
+      "BasePower": 55,
+      "BaseAccuracy": 1.0,
+      "Price": 1500,
+      "Value": 750,
+      "Reflectable": "Yes",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "BM",
+        "RM",
+        "Ma",
+        "Sa"
+      ],
+      "Items": [
+        {
+          "Name": "Zeus's Wrath",
+          "Type": "Combat",
+          "Price": null,
+          "Value": 500,
+          "Effect": "Thundara",
+          "Multiplier": 2
+        }
+      ],
+      "Weapons": [
+        {
+          "Name": "Thor's Hammer",
+          "Type": "Axe",
+          "Multiplier": 1,
+          "Equipped By": [
+            "Ni",
+            "Vi"
+          ]
+        },
+        {
+          "Name": "Thunder Spear",
+          "Type": "Spear",
+          "Multiplier": 1,
+          "Equipped By": [
+            "Dr",
+            "Ni"
+          ]
+        }
+      ],
+      "Monsters": [
+        {
+          "Name": "Vulcan",
+          "HP": 250,
+          "Exp": 500,
+          "Gil": 280
+        },
+        {
+          "Name": "Magician",
+          "HP": 260,
+          "Exp": 560,
+          "Gil": 300
+        },
+        {
+          "Name": "Hellgaroo Mage",
+          "HP": 295,
+          "Exp": 700,
+          "Gil": 370
+        },
+        {
+          "Name": "Sorceror",
+          "HP": 310,
+          "Exp": 800,
+          "Gil": 400
+        },
+        {
+          "Name": "Flyer Mage",
+          "HP": 555,
+          "Exp": 1440,
+          "Gil": 520
+        },
+        {
+          "Name": "Giant Rat",
+          "HP": 450,
+          "Exp": 240,
+          "Gil": 1000
+        },
+        {
+          "Name": "Hein",
+          "HP": 1600,
+          "Exp": 1040,
+          "Gil": 2100
+        },
+        {
+          "Name": "Kraken",
+          "HP": 1950,
+          "Exp": 1320,
+          "Gil": 2500
+        },
+        {
+          "Name": "Goldor",
+          "HP": 2250,
+          "Exp": 1640,
+          "Gil": 3300
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Northwest Saronia",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 3 Magic"
+        },
+        {
+          "Map": "Falgabard",
+          "Shop": "Magic"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Thundara",
+          "Map": "Vikings' Cove",
+          "Notes": "Chest in hidden part of north area",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Thunder",
+      "Type": "Black Magic",
+      "Level": 2,
+      "Effect": "Deal Lightning damage",
+      "Element": "Lightning",
+      "BasePower": 35,
+      "BaseAccuracy": 1.0,
+      "Price": 700,
+      "Value": 350,
+      "Reflectable": "Yes",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "BM",
+        "RM",
+        "Ma",
+        "Sa"
+      ],
+      "Weapons": [
+        {
+          "Name": "Light Staff",
+          "Type": "Rod",
+          "Multiplier": 1,
+          "Equipped By": [
+            "De",
+            "Ni",
+            "RM",
+            "Sa",
+            "WM"
+          ]
+        }
+      ],
+      "Monsters": [
+        {
+          "Name": "Petit",
+          "HP": 45,
+          "Exp": 80,
+          "Gil": 54
+        },
+        {
+          "Name": "Lilliputian",
+          "HP": 58,
+          "Exp": 88,
+          "Gil": 58
+        },
+        {
+          "Name": "Gold Warrior",
+          "HP": 275,
+          "Exp": 600,
+          "Gil": 330
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Canaan",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Tozus",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Vikings' Cove",
+          "Shop": "Magic"
+        }
+      ]
+    },
+    {
+      "name": "Poison",
+      "Type": "Black Magic",
+      "Level": 2,
+      "Effect": "Deal damage and inflict Poison",
+      "StatusAilment": "Poison",
+      "BasePower": 20,
+      "BaseAccuracy": 0.6,
+      "Price": 700,
+      "Value": 350,
+      "Reflectable": "Yes",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "BM",
+        "RM",
+        "Ma",
+        "Sa"
+      ],
+      "Monsters": [
+        {
+          "Name": "Mummy",
+          "HP": 48,
+          "Exp": 40,
+          "Gil": 24
+        },
+        {
+          "Name": "Pugman",
+          "HP": 109,
+          "Exp": 144,
+          "Gil": 96
+        },
+        {
+          "Name": "Far Darrig",
+          "HP": 111,
+          "Exp": 144,
+          "Gil": 98
+        },
+        {
+          "Name": "Sleipnir",
+          "HP": 1000,
+          "Exp": 4000,
+          "Gil": 3100
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Canaan",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Tozus",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Vikings' Cove",
+          "Shop": "Magic"
+        }
+      ]
+    },
+    {
+      "name": "Blind",
+      "Type": "Black Magic",
+      "Level": 2,
+      "Effect": "Inflict Blind",
+      "StatusAilment": "Blind",
+      "BasePower": 10,
+      "BaseAccuracy": 0.6,
+      "Price": 700,
+      "Value": 350,
+      "Reflectable": "No",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "BM",
+        "RM",
+        "Ma",
+        "Sa"
+      ],
+      "Monsters": [
+        {
+          "Name": "Dark Eye",
+          "HP": 38,
+          "Exp": 32,
+          "Gil": 20
+        },
+        {
+          "Name": "Larva",
+          "HP": 38,
+          "Exp": 48,
+          "Gil": 30
+        },
+        {
+          "Name": "Shadow",
+          "HP": 65,
+          "Exp": 48,
+          "Gil": 32
+        },
+        {
+          "Name": "Pugman",
+          "HP": 109,
+          "Exp": 144,
+          "Gil": 96
+        },
+        {
+          "Name": "Far Darrig",
+          "HP": 111,
+          "Exp": 144,
+          "Gil": 98
+        },
+        {
+          "Name": "Hellgaroo",
+          "HP": 245,
+          "Exp": 500,
+          "Gil": 270
+        },
+        {
+          "Name": "Sleipnir",
+          "HP": 1000,
+          "Exp": 4000,
+          "Gil": 3100
+        },
+        {
+          "Name": "Shinobi",
+          "HP": 1100,
+          "Exp": 4600,
+          "Gil": 4200
+        },
+        {
+          "Name": "Ninja",
+          "HP": 5500,
+          "Exp": 4600,
+          "Gil": 4800
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Canaan",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Tozus",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Vikings' Cove",
+          "Shop": "Magic"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Blind",
+          "Map": "Canaan",
+          "Notes": "East chest in Cid's secret room",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Fire",
+      "Type": "Black Magic",
+      "Level": 1,
+      "Effect": "Deal Fire damage",
+      "Element": "Fire",
+      "BasePower": 25,
+      "BaseAccuracy": 1.0,
+      "Price": 100,
+      "Value": 50,
+      "Reflectable": "Yes",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "BM",
+        "RM",
+        "Ma",
+        "Sa"
+      ],
+      "Weapons": [
+        {
+          "Name": "Fire Staff",
+          "Type": "Rod",
+          "Multiplier": 1,
+          "Equipped By": [
+            "De",
+            "Ni",
+            "RM",
+            "Sa",
+            "WM"
+          ]
+        },
+        {
+          "Name": "Salamand Sword",
+          "Type": "Sword",
+          "Multiplier": 1,
+          "Equipped By": [
+            "Kn",
+            "Ni",
+            "Wa"
+          ]
+        }
+      ],
+      "Monsters": [
+        {
+          "Name": "Firefly",
+          "HP": 72,
+          "Exp": 52,
+          "Gil": 36
+        },
+        {
+          "Name": "Petit",
+          "HP": 45,
+          "Exp": 80,
+          "Gil": 54
+        },
+        {
+          "Name": "Lilliputian",
+          "HP": 58,
+          "Exp": 88,
+          "Gil": 58
+        },
+        {
+          "Name": "Pugman",
+          "HP": 109,
+          "Exp": 144,
+          "Gil": 96
+        },
+        {
+          "Name": "Djinn",
+          "HP": 480,
+          "Exp": 160,
+          "Gil": 700
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Kazus",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Tozus",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Vikings' Cove",
+          "Shop": "Magic"
+        }
+      ]
+    },
+    {
+      "name": "Blizzard",
+      "Type": "Black Magic",
+      "Level": 1,
+      "Effect": "Deal Ice damage",
+      "Element": "Ice",
+      "BasePower": 25,
+      "BaseAccuracy": 1.0,
+      "Price": 100,
+      "Value": 50,
+      "Reflectable": "Yes",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "BM",
+        "RM",
+        "Ma",
+        "Sa"
+      ],
+      "Weapons": [
+        {
+          "Name": "Ice Staff",
+          "Type": "Rod",
+          "Multiplier": 1,
+          "Equipped By": [
+            "De",
+            "Ni",
+            "RM",
+            "Sa",
+            "WM"
+          ]
+        },
+        {
+          "Name": "Freezing Blade",
+          "Type": "Sword",
+          "Multiplier": 1,
+          "Equipped By": [
+            "Kn",
+            "Ni",
+            "Wa"
+          ]
+        }
+      ],
+      "Monsters": [
+        {
+          "Name": "Petit",
+          "HP": 45,
+          "Exp": 80,
+          "Gil": 54
+        },
+        {
+          "Name": "Lilliputian",
+          "HP": 58,
+          "Exp": 88,
+          "Gil": 58
+        },
+        {
+          "Name": "Pugman",
+          "HP": 109,
+          "Exp": 144,
+          "Gil": 96
+        },
+        {
+          "Name": "Manticore",
+          "HP": 128,
+          "Exp": 160,
+          "Gil": 112
+        },
+        {
+          "Name": "Merman",
+          "HP": 136,
+          "Exp": 180,
+          "Gil": 118
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Kazus",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Tozus",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Vikings' Cove",
+          "Shop": "Magic"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Blizzard",
+          "Map": "Castle Sasune",
+          "Notes": "Hidden west room chest in main keep 3F",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Sleep",
+      "Type": "Black Magic",
+      "Level": 1,
+      "Effect": "Inflict Sleep",
+      "StatusAilment": "Sleep",
+      "BasePower": 0,
+      "BaseAccuracy": 0.15,
+      "Price": 100,
+      "Value": 50,
+      "Reflectable": "No",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "BM",
+        "RM",
+        "Ma",
+        "Sa"
+      ],
+      "Items": [
+        {
+          "Name": "Sheep Pillow",
+          "Type": "Combat",
+          "Price": null,
+          "Value": 1000,
+          "Effect": "Sleep",
+          "Multiplier": 3
+        }
+      ],
+      "Monsters": [
+        {
+          "Name": "Pugman",
+          "HP": 109,
+          "Exp": 144,
+          "Gil": 96
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Kazus",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Tozus",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Vikings' Cove",
+          "Shop": "Magic"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Sleep",
+          "Map": "Altar Cave B2",
+          "Notes": "Northeast chest in pit room",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Tornado",
+      "Type": "White Magic",
+      "Level": 8,
+      "Effect": "Set target's HP to critical",
+      "Element": "Air",
+      "BasePower": 4,
+      "BaseAccuracy": 0.4,
+      "Price": 60000,
+      "Value": 30000,
+      "Reflectable": "No",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "De",
+        "Sa"
+      ],
+      "Monsters": [
+        {
+          "Name": "Unei's Clone",
+          "HP": 1500,
+          "Exp": 72,
+          "Gil": 50
+        },
+        {
+          "Name": "Unei",
+          "HP": 4500,
+          "Exp": 4000,
+          "Gil": 4200
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Eureka B7",
+          "Shop": "Magic"
+        }
+      ]
+    },
+    {
+      "name": "Arise",
+      "Type": "White Magic",
+      "Level": 8,
+      "Effect": "Revive from KO with full HP",
+      "Element": "Recovery",
+      "StatusAilment": "KO",
+      "BasePower": 255,
+      "Price": 60000,
+      "Value": 30000,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "De",
+        "Sa"
+      ],
+      "Shops": [
+        {
+          "Map": "Eureka B7",
+          "Shop": "Magic"
+        }
+      ]
+    },
+    {
+      "name": "Holy",
+      "Type": "White Magic",
+      "Level": 8,
+      "Effect": "Deal Holy damage",
+      "Element": "Holy",
+      "BasePower": 160,
+      "BaseAccuracy": 1.0,
+      "Price": 60000,
+      "Value": 30000,
+      "Reflectable": "Yes",
+      "Target": "One Enemy",
+      "CastBy": [
+        "De",
+        "Sa"
+      ],
+      "Items": [
+        {
+          "Name": "White Musk",
+          "Type": "Combat",
+          "Price": null,
+          "Value": 2500,
+          "Effect": "Holy",
+          "Multiplier": 3
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Eureka B7",
+          "Shop": "Magic"
+        }
+      ]
+    },
+    {
+      "name": "Curaja",
+      "Type": "White Magic",
+      "Level": 7,
+      "Effect": "Restore target's HP",
+      "Element": "Recovery",
+      "BasePower": 220,
+      "BaseAccuracy": 1.0,
+      "Price": 20000,
+      "Value": 10000,
+      "Reflectable": "No",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "WM",
+        "De",
+        "Sa"
+      ],
+      "Shops": [
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 7 Magic"
+        },
+        {
+          "Map": "The Invincible",
+          "Shop": "Magic"
+        }
+      ]
+    },
+    {
+      "name": "Esuna",
+      "Type": "White Magic",
+      "Level": 7,
+      "Effect": "Cure all status ailments",
+      "StatusAilments": "Blind, Confusion, Mini, Paralysis, Partial Petrification, Petrification, Poison, Silence, Sleep, Toad",
+      "BasePower": 0,
+      "BaseAccuracy": 0.6,
+      "Price": 20000,
+      "Value": 10000,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "WM",
+        "De",
+        "Sa"
+      ],
+      "Shops": [
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 7 Magic"
+        },
+        {
+          "Map": "The Invincible",
+          "Shop": "Magic"
+        }
+      ]
+    },
+    {
+      "name": "Reflect",
+      "Type": "White Magic",
+      "Level": 7,
+      "Effect": "Grant Reflect",
+      "BasePower": 0,
+      "BaseAccuracy": 0.75,
+      "Price": 20000,
+      "Value": 10000,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "WM",
+        "De",
+        "Sa"
+      ],
+      "Items": [
+        {
+          "Name": "Shining Curtain",
+          "Type": "Combat",
+          "Price": null,
+          "Value": 2500,
+          "Effect": "Reflect",
+          "Multiplier": 3
+        }
+      ],
+      "Monsters": [
+        {
+          "Name": "Unei's Clone",
+          "HP": 1500,
+          "Exp": 72,
+          "Gil": 50
+        },
+        {
+          "Name": "Unei",
+          "HP": 4500,
+          "Exp": 4000,
+          "Gil": 4200
+        },
+        {
+          "Name": "Guardian",
+          "HP": 12000,
+          "Exp": 5400,
+          "Gil": 5600
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 7 Magic"
+        },
+        {
+          "Map": "The Invincible",
+          "Shop": "Magic"
+        }
+      ]
+    },
+    {
+      "name": "Aeroga",
+      "Type": "White Magic",
+      "Level": 6,
+      "Effect": "Deal Air and Ice damage",
+      "Elements": "Air, Ice",
+      "BasePower": 115,
+      "BaseAccuracy": 1.0,
+      "Price": 10000,
+      "Value": 5000,
+      "Reflectable": "Yes",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "WM",
+        "De",
+        "Sa"
+      ],
+      "Items": [
+        {
+          "Name": "Raven's Yawn",
+          "Type": "Combat",
+          "Price": null,
+          "Value": 1500,
+          "Effect": "Aeroga",
+          "Multiplier": 3
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Doga's Manor",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 6 Magic"
+        }
+      ]
+    },
+    {
+      "name": "Stona",
+      "Type": "White Magic",
+      "Level": 6,
+      "Effect": "Cure Petrification and Partial Petrification",
+      "StatusAilments": "Partial Petrification, Petrification",
+      "BasePower": 0,
+      "BaseAccuracy": 0.6,
+      "Price": 10000,
+      "Value": 5000,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "WM",
+        "De",
+        "Sa"
+      ],
+      "Items": [
+        {
+          "Name": "Gold Needle",
+          "Type": "Anywhere",
+          "Price": 300,
+          "Value": 150,
+          "Effect": "Stona",
+          "Multiplier": 1
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Doga's Manor",
+          "Shop": "Magic"
+        }
+      ]
+    },
+    {
+      "name": "Haste",
+      "Type": "White Magic",
+      "Level": 6,
+      "Effect": "Enhance Accuracy and Attack Multiplier",
+      "BasePower": 5,
+      "BaseAccuracy": 0.16,
+      "Price": 10000,
+      "Value": 5000,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "WM",
+        "De",
+        "Sa"
+      ],
+      "Items": [
+        {
+          "Name": "Bacchus's Cider",
+          "Type": "Combat",
+          "Price": null,
+          "Value": 1500,
+          "Effect": "Haste",
+          "Multiplier": 3
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Doga's Manor",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 6 Magic"
+        }
+      ]
+    },
+    {
+      "name": "Curaga",
+      "Type": "White Magic",
+      "Level": 5,
+      "Effect": "Restore target's HP",
+      "Element": "Recovery",
+      "BasePower": 180,
+      "BaseAccuracy": 1.0,
+      "Price": 5000,
+      "Value": 2500,
+      "Reflectable": "No",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "WM",
+        "De",
+        "Sa"
+      ],
+      "Shops": [
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "LV. 5 Magic"
+        },
+        {
+          "Map": "Doga's Manor",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 5 Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 6 Magic"
+        }
+      ]
+    },
+    {
+      "name": "Raise",
+      "Type": "White Magic",
+      "Level": 5,
+      "Effect": "Revive from KO",
+      "Element": "Recovery",
+      "StatusAilment": "KO",
+      "BasePower": 1,
+      "BaseAccuracy": 0.15,
+      "Price": 5000,
+      "Value": 2500,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "WM",
+        "De",
+        "Sa"
+      ],
+      "Items": [
+        {
+          "Name": "Phoenix Down",
+          "Type": "Anywhere",
+          "Price": null,
+          "Value": 1500,
+          "Effect": "Raise",
+          "Multiplier": 1
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "LV. 5 Magic"
+        },
+        {
+          "Map": "Doga's Manor",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 5 Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 6 Magic"
+        }
+      ]
+    },
+    {
+      "name": "Protect",
+      "Type": "White Magic",
+      "Level": 5,
+      "Effect": "Enhance Defense and Magic Defense",
+      "BasePower": 5,
+      "BaseAccuracy": 0.75,
+      "Price": 5000,
+      "Value": 2500,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "WM",
+        "De",
+        "Sa"
+      ],
+      "Items": [
+        {
+          "Name": "Turtle Shell",
+          "Type": "Combat",
+          "Price": null,
+          "Value": 1500,
+          "Effect": "Protect",
+          "Multiplier": 3
+        }
+      ],
+      "Weapons": [
+        {
+          "Name": "Defender",
+          "Type": "Sword",
+          "Multiplier": 1,
+          "Equipped By": [
+            "Kn",
+            "Ni"
+          ]
+        }
+      ],
+      "Monsters": [
+        {
+          "Name": "Shadow Master",
+          "HP": 2110,
+          "Exp": 4400,
+          "Gil": 4100
+        },
+        {
+          "Name": "Yormungand",
+          "HP": 2570,
+          "Exp": 4600,
+          "Gil": 4700
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "LV. 5 Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 5 Magic"
+        }
+      ]
+    },
+    {
+      "name": "Libra",
+      "Type": "White Magic",
+      "Level": 4,
+      "Effect": "View target's HP",
+      "BasePower": 0,
+      "BaseAccuracy": 1.0,
+      "Price": 3000,
+      "Value": 1500,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "WM",
+        "RM",
+        "De",
+        "Sa"
+      ],
+      "Monsters": [
+        {
+          "Name": "Xande's Clone",
+          "HP": 10000,
+          "Exp": 3400,
+          "Gil": 1550
+        },
+        {
+          "Name": "Xande",
+          "HP": 21000,
+          "Exp": null,
+          "Gil": null
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Village of Gysahl",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "LV. 4 Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 4 Magic"
+        }
+      ]
+    },
+    {
+      "name": "Confuse",
+      "Type": "White Magic",
+      "Level": 4,
+      "Effect": "Inflict Confusion",
+      "StatusAilment": "Confusion",
+      "BasePower": 0,
+      "BaseAccuracy": 0.25,
+      "Price": 3000,
+      "Value": 1500,
+      "Reflectable": "No",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "WM",
+        "RM",
+        "De",
+        "Sa"
+      ],
+      "Items": [
+        {
+          "Name": "Lamia Scale",
+          "Type": "Combat",
+          "Price": null,
+          "Value": 1500,
+          "Effect": "Confuse",
+          "Multiplier": 3
+        }
+      ],
+      "Weapons": [
+        {
+          "Name": "Faerie Claws",
+          "Type": "Nunchaku",
+          "Multiplier": 1,
+          "Equipped By": [
+            "BB",
+            "Ni"
+          ]
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Village of Gysahl",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "LV. 4 Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 4 Magic"
+        }
+      ]
+    },
+    {
+      "name": "Silence",
+      "Type": "White Magic",
+      "Level": 4,
+      "Effect": "Inflict Silence",
+      "StatusAilment": "Silence",
+      "BasePower": 0,
+      "BaseAccuracy": 0.6,
+      "Price": 3000,
+      "Value": 1500,
+      "Reflectable": "No",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "WM",
+        "RM",
+        "De",
+        "Sa"
+      ],
+      "Monsters": [
+        {
+          "Name": "Petit Mage",
+          "HP": 118,
+          "Exp": 152,
+          "Gil": 101
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Village of Gysahl",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Northeast Saronia",
+          "Shop": "LV. 4 Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 4 Magic"
+        }
+      ]
+    },
+    {
+      "name": "Cura",
+      "Type": "White Magic",
+      "Level": 3,
+      "Effect": "Restore target's HP",
+      "Element": "Recovery",
+      "BasePower": 125,
+      "BaseAccuracy": 1.0,
+      "Price": 1500,
+      "Value": 750,
+      "Reflectable": "No",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "WM",
+        "RM",
+        "Ra",
+        "MK",
+        "De",
+        "Sa"
+      ],
+      "Monsters": [
+        {
+          "Name": "Guardian",
+          "HP": 12000,
+          "Exp": 5400,
+          "Gil": 5600
+        },
+        {
+          "Name": "Ahriman",
+          "HP": 35000,
+          "Exp": 8000,
+          "Gil": 7200
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Northwest Saronia",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 3 Magic"
+        },
+        {
+          "Map": "Falgabard",
+          "Shop": "Magic"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Cura",
+          "Map": "Tozus",
+          "Notes": "Leftmost shelf in Dr. Shelco's house",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Teleport",
+      "Type": "White Magic",
+      "Level": 3,
+      "Effect": "Teleport to dungeon exit, or inflict KO in battle",
+      "StatusAilment": "KO",
+      "BasePower": 0,
+      "Price": 1500,
+      "Value": 750,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "WM",
+        "RM",
+        "Ra",
+        "MK",
+        "De",
+        "Sa"
+      ],
+      "Items": [
+        {
+          "Name": "Ottershroom",
+          "Type": "Field",
+          "Price": 2000,
+          "Value": 1000,
+          "Effect": "Teleport",
+          "Multiplier": null
+        },
+        {
+          "Name": "Black Hole",
+          "Type": "Combat",
+          "Price": null,
+          "Value": 2000,
+          "Effect": "Teleport",
+          "Multiplier": 3
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Northwest Saronia",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 3 Magic"
+        },
+        {
+          "Map": "Falgabard",
+          "Shop": "Magic"
+        }
+      ]
+    },
+    {
+      "name": "Blindna",
+      "Type": "White Magic",
+      "Level": 3,
+      "Effect": "Cure Blind",
+      "StatusAilment": "Blind",
+      "BasePower": 0,
+      "BaseAccuracy": 0.75,
+      "Price": 1500,
+      "Value": 750,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "WM",
+        "RM",
+        "Ra",
+        "MK",
+        "De",
+        "Sa"
+      ],
+      "Items": [
+        {
+          "Name": "Eye Drops",
+          "Type": "Anywhere",
+          "Price": 40,
+          "Value": 20,
+          "Effect": "Blindna",
+          "Multiplier": 1
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Northwest Saronia",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "LV. 4 Magic"
+        },
+        {
+          "Map": "Falgabard",
+          "Shop": "Magic"
+        }
+      ]
+    },
+    {
+      "name": "Aero",
+      "Type": "White Magic",
+      "Level": 2,
+      "Effect": "Deal Air and Ice damage",
+      "Elements": "Air, Ice",
+      "BasePower": 45,
+      "BaseAccuracy": 1.0,
+      "Price": 700,
+      "Value": 350,
+      "Reflectable": "Yes",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "WM",
+        "RM",
+        "De",
+        "Sa"
+      ],
+      "Weapons": [
+        {
+          "Name": "Wyvern Claws",
+          "Type": "Nunchaku",
+          "Multiplier": 1,
+          "Equipped By": [
+            "BB",
+            "Ni"
+          ]
+        },
+        {
+          "Name": "Wind Spear",
+          "Type": "Spear",
+          "Multiplier": 1,
+          "Equipped By": [
+            "Dr",
+            "Ni"
+          ]
+        },
+        {
+          "Name": "Air Knife",
+          "Type": "Knife",
+          "Multiplier": 1,
+          "Equipped By": [
+            "Ni",
+            "Th"
+          ]
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Tozus",
+          "Shop": "Magic"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Aero",
+          "Map": "Dragon's Peak",
+          "Notes": "Northeast path",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Toad",
+      "Type": "White Magic",
+      "Level": 2,
+      "Effect": "Turn target into a toad",
+      "StatusAilment": "Toad",
+      "BasePower": 0,
+      "BaseAccuracy": 0.0,
+      "Price": 700,
+      "Value": 350,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "WM",
+        "RM",
+        "Ra",
+        "MK",
+        "De",
+        "Sa"
+      ],
+      "Monsters": [
+        {
+          "Name": "Far Darrig",
+          "HP": 111,
+          "Exp": 144,
+          "Gil": 98
+        },
+        {
+          "Name": "Sleipnir",
+          "HP": 1000,
+          "Exp": 4000,
+          "Gil": 3100
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Village of Gysahl",
+          "Shop": "Magic"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Toad",
+          "Map": "Gulgan Gulch",
+          "Notes": "Speak to the gulgan downstairs",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Mini",
+      "Type": "White Magic",
+      "Level": 2,
+      "Effect": "Miniaturize target",
+      "StatusAilment": "Mini",
+      "BasePower": 0,
+      "BaseAccuracy": 0.0,
+      "Price": 700,
+      "Value": 350,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "WM",
+        "RM",
+        "Ra",
+        "MK",
+        "De",
+        "Sa"
+      ],
+      "Shops": [
+        {
+          "Map": "Village of Gysahl",
+          "Shop": "Magic"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Mini",
+          "Map": "Dragon's Peak",
+          "Notes": "Given by Desh after fleeing from Bahamut",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Cure",
+      "Type": "White Magic",
+      "Level": 1,
+      "Effect": "Restore target's HP",
+      "Element": "Recovery",
+      "BasePower": 42,
+      "BaseAccuracy": 1.0,
+      "Price": 100,
+      "Value": 50,
+      "Reflectable": "No",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "WM",
+        "RM",
+        "Ra",
+        "MK",
+        "De",
+        "Sa"
+      ],
+      "Weapons": [
+        {
+          "Name": "Elder Staff",
+          "Type": "Rod",
+          "Multiplier": 1,
+          "Equipped By": [
+            "De",
+            "Ni",
+            "Sa"
+          ]
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Canaan",
+          "Shop": "Magic"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Cure",
+          "Map": "Ur",
+          "Notes": "Chest in storeroom 2F",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Cure",
+          "Map": "Sealed Cave B1",
+          "Notes": "Northeast path",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Poisona",
+      "Type": "White Magic",
+      "Level": 1,
+      "Effect": "Cure Poison",
+      "StatusAilment": "Poison",
+      "BasePower": 0,
+      "BaseAccuracy": 0.5,
+      "Price": 100,
+      "Value": 50,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "WM",
+        "RM",
+        "Ra",
+        "MK",
+        "De",
+        "Sa"
+      ],
+      "Items": [
+        {
+          "Name": "Antidote",
+          "Type": "Anywhere",
+          "Price": 80,
+          "Value": 40,
+          "Effect": "Poisona",
+          "Multiplier": 1
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Ur",
+          "Shop": "Magic"
+        }
+      ]
+    },
+    {
+      "name": "Sight",
+      "Type": "White Magic",
+      "Level": 1,
+      "Effect": "View local map",
+      "BasePower": 0,
+      "BaseAccuracy": 1.0,
+      "Price": 100,
+      "Value": 50,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "WM",
+        "RM",
+        "Ra",
+        "MK",
+        "De",
+        "Sa"
+      ],
+      "Items": [
+        {
+          "Name": "Gnomish Bread",
+          "Type": "Field",
+          "Price": 200,
+          "Value": 100,
+          "Effect": "Sight",
+          "Multiplier": null
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Magic"
+        }
+      ]
+    },
+    {
+      "name": "Bahamut",
+      "Type": "Summon Magic",
+      "Level": 8,
+      "Effect": "Summon Bahamut",
+      "Price": 65000,
+      "Value": 32500,
+      "Reflectable": "No",
+      "CastBy": [
+        "Ev",
+        "Su",
+        "Sa"
+      ],
+      "Spells": [
+        {
+          "Name": "Bahamut: Aura",
+          "Type": "Summon",
+          "Level": 8,
+          "Power": null,
+          "Accuracy": 100,
+          "Price": "-",
+          "Value": "-",
+          "Target": "All Enemies",
+          "Status": "-",
+          "Element": "-",
+          "Cast By": "Ev"
+        },
+        {
+          "Name": "Bahamut: Rend",
+          "Type": "Summon",
+          "Level": 8,
+          "Power": 144,
+          "Accuracy": 100,
+          "Price": "-",
+          "Value": "-",
+          "Target": "One Enemy",
+          "Status": "-",
+          "Element": "-",
+          "Cast By": "Ev"
+        },
+        {
+          "Name": "Bahamut: Mega Flare",
+          "Type": "Summon",
+          "Level": 8,
+          "Power": 255,
+          "Accuracy": 100,
+          "Price": "-",
+          "Value": "-",
+          "Target": "All Enemies",
+          "Status": "-",
+          "Element": "-",
+          "Cast By": "Sa, Su"
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Eureka B7",
+          "Shop": "Summon Magic"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Bahamut",
+          "Map": "Bahamut's Lair B3",
+          "Notes": "Won after defeating Bahamut",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Leviathan",
+      "Type": "Summon Magic",
+      "Level": 7,
+      "Effect": "Summon Leviathan",
+      "Price": 55000,
+      "Value": 27500,
+      "Reflectable": "No",
+      "CastBy": [
+        "Ev",
+        "Su",
+        "Sa"
+      ],
+      "Spells": [
+        {
+          "Name": "Leviathan: Demon Eye",
+          "Type": "Summon",
+          "Level": 7,
+          "Power": null,
+          "Accuracy": 5,
+          "Price": "-",
+          "Value": "-",
+          "Target": "All Enemies",
+          "Status": "Petrification",
+          "Element": "Earth",
+          "Cast By": "Ev"
+        },
+        {
+          "Name": "Leviathan: Cyclone",
+          "Type": "Summon",
+          "Level": 7,
+          "Power": 133,
+          "Accuracy": 100,
+          "Price": "-",
+          "Value": "-",
+          "Target": "All Enemies",
+          "Status": "-",
+          "Element": "Air",
+          "Cast By": "Ev"
+        },
+        {
+          "Name": "Leviathan: Tidal Wave",
+          "Type": "Summon",
+          "Level": 7,
+          "Power": 202,
+          "Accuracy": 100,
+          "Price": "-",
+          "Value": "-",
+          "Target": "All Enemies",
+          "Status": "-",
+          "Element": "Lightning",
+          "Cast By": "Sa, Su"
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Eureka B7",
+          "Shop": "Summon Magic"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Leviathan",
+          "Map": "Lake Dohr B4",
+          "Notes": "After defeating Leviathan",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Odin",
+      "Type": "Summon Magic",
+      "Level": 6,
+      "Effect": "Summon Odin",
+      "Price": 45000,
+      "Value": 22500,
+      "Reflectable": "No",
+      "CastBy": [
+        "Ev",
+        "Su",
+        "Sa"
+      ],
+      "Spells": [
+        {
+          "Name": "Odin: Protective Light",
+          "Type": "Summon",
+          "Level": 6,
+          "Power": null,
+          "Accuracy": 100,
+          "Price": "-",
+          "Value": "-",
+          "Target": "All Enemies",
+          "Status": "-",
+          "Element": "-",
+          "Cast By": "Ev"
+        },
+        {
+          "Name": "Odin: Slash",
+          "Type": "Summon",
+          "Level": 6,
+          "Power": 117,
+          "Accuracy": 100,
+          "Price": "-",
+          "Value": "-",
+          "Target": "One Enemy",
+          "Status": "-",
+          "Element": "-",
+          "Cast By": "Ev"
+        },
+        {
+          "Name": "Odin: Zantetsuken",
+          "Type": "Summon",
+          "Level": 6,
+          "Power": 195,
+          "Accuracy": 100,
+          "Price": "-",
+          "Value": "-",
+          "Target": "All Enemies",
+          "Status": "-",
+          "Element": "-",
+          "Cast By": "Sa, Su"
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Eureka B7",
+          "Shop": "Summon Magic"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Odin",
+          "Map": "Saronia Catacombs 4F",
+          "Notes": "After defeating Odin",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Titan",
+      "Type": "Summon Magic",
+      "Level": 5,
+      "Effect": "Summon Titan",
+      "Price": 5000,
+      "Value": 2500,
+      "Reflectable": "No",
+      "CastBy": [
+        "Ev",
+        "Su",
+        "Sa"
+      ],
+      "Spells": [
+        {
+          "Name": "Titan: Clobber",
+          "Type": "Summon",
+          "Level": 5,
+          "Power": 101,
+          "Accuracy": 100,
+          "Price": "-",
+          "Value": "-",
+          "Target": "One Enemy",
+          "Status": "-",
+          "Element": "Fire",
+          "Cast By": "Ev"
+        },
+        {
+          "Name": "Titan: Stomp",
+          "Type": "Summon",
+          "Level": 5,
+          "Power": 106,
+          "Accuracy": 100,
+          "Price": "-",
+          "Value": "-",
+          "Target": "One Enemy",
+          "Status": "-",
+          "Element": "-",
+          "Cast By": "Ev"
+        },
+        {
+          "Name": "Titan: Earthen Fury",
+          "Type": "Summon",
+          "Level": 5,
+          "Power": 160,
+          "Accuracy": 100,
+          "Price": "-",
+          "Value": "-",
+          "Target": "All Enemies",
+          "Status": "-",
+          "Element": "Earth",
+          "Cast By": "Sa, Su"
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Replito",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "Summon Magic"
+        }
+      ]
+    },
+    {
+      "name": "Ifrit",
+      "Type": "Summon Magic",
+      "Level": 4,
+      "Effect": "Summon Ifrit",
+      "Price": 3000,
+      "Value": 1500,
+      "Reflectable": "No",
+      "CastBy": [
+        "Ev",
+        "Su",
+        "Sa"
+      ],
+      "Spells": [
+        {
+          "Name": "Ifrit: Healing Light",
+          "Type": "Summon",
+          "Level": 4,
+          "Power": 90,
+          "Accuracy": 100,
+          "Price": "-",
+          "Value": "-",
+          "Target": "All Enemies",
+          "Status": "-",
+          "Element": "Recovery",
+          "Cast By": "Ev"
+        },
+        {
+          "Name": "Ifrit: Hellfire",
+          "Type": "Summon",
+          "Level": 4,
+          "Power": 85,
+          "Accuracy": 100,
+          "Price": "-",
+          "Value": "-",
+          "Target": "One Enemy",
+          "Status": "-",
+          "Element": "Fire",
+          "Cast By": "Ev"
+        },
+        {
+          "Name": "Ifrit: Inferno",
+          "Type": "Summon",
+          "Level": 4,
+          "Power": 128,
+          "Accuracy": 100,
+          "Price": "-",
+          "Value": "-",
+          "Target": "All Enemies",
+          "Status": "-",
+          "Element": "Fire",
+          "Cast By": "Sa, Su"
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Replito",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "Summon Magic"
+        }
+      ]
+    },
+    {
+      "name": "Ramuh",
+      "Type": "Summon Magic",
+      "Level": 3,
+      "Effect": "Summon Ramuh",
+      "Price": 1500,
+      "Value": 750,
+      "Reflectable": "No",
+      "CastBy": [
+        "Ev",
+        "Su",
+        "Sa"
+      ],
+      "Spells": [
+        {
+          "Name": "Ramuh: Mind Blast",
+          "Type": "Summon",
+          "Level": 3,
+          "Power": null,
+          "Accuracy": 70,
+          "Price": "-",
+          "Value": "-",
+          "Target": "All Enemies",
+          "Status": "Paralysis",
+          "Element": "-",
+          "Cast By": "Ev"
+        },
+        {
+          "Name": "Ramuh: Thunderstorm",
+          "Type": "Summon",
+          "Level": 3,
+          "Power": 48,
+          "Accuracy": 100,
+          "Price": "-",
+          "Value": "-",
+          "Target": "One Enemy",
+          "Status": "-",
+          "Element": "Lightning",
+          "Cast By": "Ev"
+        },
+        {
+          "Name": "Ramuh: Judgment Bolt",
+          "Type": "Summon",
+          "Level": 3,
+          "Power": 96,
+          "Accuracy": 100,
+          "Price": "-",
+          "Value": "-",
+          "Target": "All Enemies",
+          "Status": "-",
+          "Element": "Lightning",
+          "Cast By": "Sa, Su"
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Replito",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "Summon Magic"
+        }
+      ]
+    },
+    {
+      "name": "Shiva",
+      "Type": "Summon Magic",
+      "Level": 2,
+      "Effect": "Summon Shiva",
+      "Price": 700,
+      "Value": 350,
+      "Reflectable": "No",
+      "CastBy": [
+        "Ev",
+        "Su",
+        "Sa"
+      ],
+      "Spells": [
+        {
+          "Name": "Shiva: Mesmerize",
+          "Type": "Summon",
+          "Level": 2,
+          "Power": null,
+          "Accuracy": 80,
+          "Price": "-",
+          "Value": "-",
+          "Target": "All Enemies",
+          "Status": "Sleep",
+          "Element": "-",
+          "Cast By": "Ev"
+        },
+        {
+          "Name": "Shiva: Icy Stare",
+          "Type": "Summon",
+          "Level": 2,
+          "Power": 53,
+          "Accuracy": 100,
+          "Price": "-",
+          "Value": "-",
+          "Target": "One Enemy",
+          "Status": "-",
+          "Element": "-",
+          "Cast By": "Ev"
+        },
+        {
+          "Name": "Shiva: Diamond Dust",
+          "Type": "Summon",
+          "Level": 2,
+          "Power": 32,
+          "Accuracy": 100,
+          "Price": "-",
+          "Value": "-",
+          "Target": "All Enemies",
+          "Status": "-",
+          "Element": "Ice",
+          "Cast By": "Sa, Su"
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Replito",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "Summon Magic"
+        }
+      ]
+    },
+    {
+      "name": "Chocobo",
+      "Type": "Summon Magic",
+      "Level": 1,
+      "Effect": "Summon Chocobo",
+      "Price": 100,
+      "Value": 50,
+      "Reflectable": "No",
+      "CastBy": [
+        "Ev",
+        "Su",
+        "Sa"
+      ],
+      "Spells": [
+        {
+          "Name": "Chocobo: Chocobo Dash",
+          "Type": "Summon",
+          "Level": 1,
+          "Power": null,
+          "Accuracy": 100,
+          "Price": "-",
+          "Value": "-",
+          "Target": "All Enemies",
+          "Status": "-",
+          "Element": "-",
+          "Cast By": "Ev"
+        },
+        {
+          "Name": "Chocobo: Chocobo Kick?",
+          "Type": "Summon",
+          "Level": 1,
+          "Power": null,
+          "Accuracy": 100,
+          "Price": "-",
+          "Value": "-",
+          "Target": "One Enemy",
+          "Status": "-",
+          "Element": "-",
+          "Cast By": "Ev"
+        },
+        {
+          "Name": "Chocobo: Chocobo Kick",
+          "Type": "Summon",
+          "Level": 1,
+          "Power": 16,
+          "Accuracy": 100,
+          "Price": "-",
+          "Value": "-",
+          "Target": "One Enemy",
+          "Status": "-",
+          "Element": "-",
+          "Cast By": "Sa, Su"
+        }
+      ],
+      "Shops": [
+        {
+          "Map": "Replito",
+          "Shop": "Magic"
+        },
+        {
+          "Map": "Doga's Village",
+          "Shop": "Summon Magic"
+        }
+      ]
+    },
+    {
+      "name": "Recovery",
+      "Type": "Item Magic",
+      "Level": 1,
+      "Effect": "Restore target's HP",
+      "Element": "Recovery",
+      "BasePower": 30,
+      "BaseAccuracy": 1.0,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "Items": [
+        {
+          "Name": "Potion",
+          "Type": "Anywhere",
+          "Price": 150,
+          "Value": 75,
+          "Effect": "Recovery",
+          "Multiplier": 3
+        },
+        {
+          "Name": "Hi-Potion",
+          "Type": "Anywhere",
+          "Price": 1200,
+          "Value": 600,
+          "Effect": "Recovery",
+          "Multiplier": 12
+        }
+      ]
+    },
+    {
+      "name": "Elixir",
+      "Type": "Item Magic",
+      "Level": 1,
+      "Effect": "Restore target to full HP and MP",
+      "BasePower": 0,
+      "BaseAccuracy": 1.0,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "Items": [
+        {
+          "Name": "Elixir",
+          "Type": "Anywhere",
+          "Price": null,
+          "Value": 1500,
+          "Effect": "Elixir",
+          "Multiplier": 1
+        }
+      ]
+    },
+    {
+      "name": "Echo Herbs",
+      "Type": "Item Magic",
+      "Level": 1,
+      "Effect": "Cure Silence",
+      "Element": "Recovery",
+      "StatusAilment": "Silence",
+      "BasePower": 0,
+      "BaseAccuracy": 1.0,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "Items": [
+        {
+          "Name": "Echo Herbs",
+          "Type": "Anywhere",
+          "Price": 100,
+          "Value": 50,
+          "Effect": "Echo Herbs",
+          "Multiplier": 1
+        }
+      ]
+    },
+    {
+      "name": "Mallet",
+      "Type": "Item Magic",
+      "Level": 1,
+      "Effect": "Cure or inflict Mini",
+      "Element": "Recovery",
+      "StatusAilment": "Mini",
+      "BasePower": 0,
+      "BaseAccuracy": 1.0,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "Items": [
+        {
+          "Name": "Mallet",
+          "Type": "Anywhere",
+          "Price": 100,
+          "Value": 50,
+          "Effect": "Mallet",
+          "Multiplier": 1
+        }
+      ]
+    },
+    {
+      "name": "Maiden'S Kiss",
+      "Type": "Item Magic",
+      "Level": 1,
+      "Effect": "Cure Toad",
+      "Element": "Recovery",
+      "StatusAilment": "Toad",
+      "BasePower": 0,
+      "BaseAccuracy": 1.0,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "Items": [
+        {
+          "Name": "Maiden's Kiss",
+          "Type": "Anywhere",
+          "Price": 100,
+          "Value": 50,
+          "Effect": "Maiden's Kiss",
+          "Multiplier": 1
+        }
+      ]
+    },
+    {
+      "name": "Zantetsuken",
+      "Type": "Black Magic (used only by monsters)",
+      "Level": 8,
+      "Effect": "Deal damage",
+      "BasePower": 32,
+      "BaseAccuracy": 1.0,
+      "Reflectable": "No",
+      "Target": "All Enemies"
+    },
+    {
+      "name": "Flame",
+      "Type": "Black Magic (used only by monsters)",
+      "Level": 6,
+      "Effect": "Deal Fire damage",
+      "Element": "Fire",
+      "BasePower": 40,
+      "BaseAccuracy": 1.0,
+      "Reflectable": "Yes",
+      "Target": "All Enemies",
+      "Monsters": [
+        {
+          "Name": "Dragon",
+          "HP": 480,
+          "Exp": 2000,
+          "Gil": 700
+        },
+        {
+          "Name": "Xande's Clone",
+          "HP": 10000,
+          "Exp": 3400,
+          "Gil": 1550
+        },
+        {
+          "Name": "Amon",
+          "HP": 7040,
+          "Exp": 4200,
+          "Gil": 3450
+        },
+        {
+          "Name": "Azer",
+          "HP": 1570,
+          "Exp": 4400,
+          "Gil": 3700
+        },
+        {
+          "Name": "Salamander",
+          "HP": 2100,
+          "Exp": 700,
+          "Gil": 1800
+        },
+        {
+          "Name": "Xande",
+          "HP": 21000,
+          "Exp": null,
+          "Gil": null
+        },
+        {
+          "Name": "Ahriman",
+          "HP": 35000,
+          "Exp": 8000,
+          "Gil": 7200
+        }
+      ]
+    },
+    {
+      "name": "Snowstorm",
+      "Type": "Black Magic (used only by monsters)",
+      "Level": 3,
+      "Effect": "Deal Ice damage",
+      "Element": "Ice",
+      "BasePower": 40,
+      "BaseAccuracy": 1.0,
+      "Reflectable": "Yes",
+      "Target": "All Enemies",
+      "Monsters": [
+        {
+          "Name": "Unei's Clone",
+          "HP": 1500,
+          "Exp": 72,
+          "Gil": 50
+        },
+        {
+          "Name": "Unei",
+          "HP": 4500,
+          "Exp": 4000,
+          "Gil": 4200
+        },
+        {
+          "Name": "Ahriman",
+          "HP": 35000,
+          "Exp": 8000,
+          "Gil": 7200
+        }
+      ]
+    },
+    {
+      "name": "Lightning",
+      "Type": "Black Magic (used only by monsters)",
+      "Level": 3,
+      "Effect": "Deal Lightning damage",
+      "Element": "Lightning",
+      "BasePower": 40,
+      "BaseAccuracy": 1.0,
+      "Reflectable": "Yes",
+      "Target": "All Enemies",
+      "Monsters": [
+        {
+          "Name": "Chimera Mage",
+          "HP": 420,
+          "Exp": 1640,
+          "Gil": 615
+        },
+        {
+          "Name": "Haokah",
+          "HP": 1010,
+          "Exp": 4000,
+          "Gil": 3200
+        },
+        {
+          "Name": "Thor",
+          "HP": 2180,
+          "Exp": 4800,
+          "Gil": 4800
+        },
+        {
+          "Name": "Garuda",
+          "HP": 5000,
+          "Exp": 2200,
+          "Gil": 3400
+        },
+        {
+          "Name": "Cerberus",
+          "HP": 23000,
+          "Exp": 5800,
+          "Gil": 6400
+        },
+        {
+          "Name": "Ahriman",
+          "HP": 35000,
+          "Exp": 8000,
+          "Gil": 7200
+        }
+      ]
+    },
+    {
+      "name": "Earthquake",
+      "Type": "Black Magic (used only by monsters)",
+      "Level": 7,
+      "Effect": "Deal Earth damage",
+      "Element": "Earth",
+      "BasePower": 80,
+      "BaseAccuracy": 1.0,
+      "Reflectable": "No",
+      "Target": "All Enemies"
+    },
+    {
+      "name": "Stare",
+      "Type": "Black Magic (used only by monsters)",
+      "Level": 7,
+      "Effect": "Inflict Petrification",
+      "Element": "Earth",
+      "StatusAilment": "Petrification",
+      "BasePower": 0,
+      "BaseAccuracy": 0.8,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "Monsters": [
+        {
+          "Name": "Stalagmite",
+          "HP": 130,
+          "Exp": 160,
+          "Gil": 115
+        }
+      ]
+    },
+    {
+      "name": "Tidal Wave",
+      "Type": "Black Magic (used only by monsters)",
+      "Level": 7,
+      "Effect": "Deal damage",
+      "BasePower": 37,
+      "BaseAccuracy": 1.0,
+      "Reflectable": "No",
+      "Target": "All Enemies"
+    },
+    {
+      "name": "Particle Beam",
+      "Type": "Black Magic (used only by monsters)",
+      "Level": 7,
+      "Effect": "Deal damage",
+      "BasePower": 80,
+      "BaseAccuracy": 1.0,
+      "Reflectable": "No",
+      "Target": "All Enemies",
+      "Monsters": [
+        {
+          "Name": "Cloud of Darkness",
+          "HP": 45000,
+          "Exp": null,
+          "Gil": null
+        },
+        {
+          "Name": "Cloud of Darkness",
+          "HP": 65000,
+          "Exp": null,
+          "Gil": null
+        }
+      ]
+    },
+    {
+      "name": "Self Destruct",
+      "Type": "Black Magic (used only by monsters)",
+      "Level": 3,
+      "Effect": "Explode for 4×HP damage if not at max HP",
+      "BasePower": 0,
+      "BaseAccuracy": 1.0,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "Monsters": [
+        {
+          "Name": "Bomb",
+          "HP": 125,
+          "Exp": 160,
+          "Gil": 110
+        },
+        {
+          "Name": "Balloon",
+          "HP": 143,
+          "Exp": 180,
+          "Gil": 125
+        },
+        {
+          "Name": "Grenade",
+          "HP": 870,
+          "Exp": 3800,
+          "Gil": 1900
+        }
+      ]
+    },
+    {
+      "name": "Glare",
+      "Type": "Black Magic (used only by monsters)",
+      "Level": 1,
+      "Effect": "Inflict Sleep",
+      "StatusAilment": "Sleep",
+      "BasePower": 0,
+      "BaseAccuracy": 0.8,
+      "Reflectable": "No",
+      "Target": "One Enemy"
+    },
+    {
+      "name": "Bad Breath",
+      "Type": "Black Magic (used only by monsters)",
+      "Level": 4,
+      "Effect": "Inflict Paralysis",
+      "StatusAilment": "Paralysis",
+      "BasePower": 0,
+      "BaseAccuracy": 0.6,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "Monsters": [
+        {
+          "Name": "Parademon",
+          "HP": 145,
+          "Exp": 108,
+          "Gil": 72
+        },
+        {
+          "Name": "Barometz",
+          "HP": 220,
+          "Exp": 132,
+          "Gil": 88
+        },
+        {
+          "Name": "Ruinous Wave",
+          "HP": 140,
+          "Exp": 180,
+          "Gil": 120
+        },
+        {
+          "Name": "Black Flan",
+          "HP": 240,
+          "Exp": 440,
+          "Gil": 260
+        }
+      ]
+    },
+    {
+      "name": "Mind Blast",
+      "Type": "Black Magic (used only by monsters)",
+      "Level": 4,
+      "Effect": "Inflict Paralysis",
+      "StatusAilment": "Paralysis",
+      "BasePower": 0,
+      "BaseAccuracy": 0.8,
+      "Reflectable": "No",
+      "Target": "All Enemies"
+    },
+    {
+      "name": "Summon",
+      "Type": "Monster Ability",
+      "Level": 1,
+      "Effect": "Summon another monster",
+      "BasePower": 0,
+      "BaseAccuracy": 1.0,
+      "Reflectable": "No",
+      "Monsters": [
+        {
+          "Name": "Greater Demon",
+          "HP": 2250,
+          "Exp": 3800,
+          "Gil": 2400
+        },
+        {
+          "Name": "Bluck",
+          "HP": 1760,
+          "Exp": 4200,
+          "Gil": 3600
+        }
+      ]
+    },
+    {
+      "name": "Mega Flare",
+      "Type": "Black Magic (used only by monsters)",
+      "Level": 8,
+      "Effect": "Deal damage",
+      "BasePower": 80,
+      "BaseAccuracy": 1.0,
+      "Reflectable": "Yes",
+      "Target": "All Enemies"
+    },
+    {
+      "name": "Barrier Shift",
+      "Type": "Black Magic (used only by monsters)",
+      "Level": 4,
+      "Effect": "Change elemental weakness",
+      "BasePower": 0,
+      "BaseAccuracy": 1.0,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "Monsters": [
+        {
+          "Name": "Amon",
+          "HP": 7040,
+          "Exp": 4200,
+          "Gil": 3450
+        },
+        {
+          "Name": "Hein",
+          "HP": 1600,
+          "Exp": 1040,
+          "Gil": 2100
+        }
+      ]
+    },
+    {
+      "name": "Divide",
+      "Type": "Black Magic (used only by monsters)",
+      "Level": 4,
+      "Effect": "Create new monster with same HP",
+      "BasePower": 0,
+      "BaseAccuracy": 1.0,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "Monsters": [
+        {
+          "Name": "Azrael",
+          "HP": 1100,
+          "Exp": 320,
+          "Gil": 940
+        },
+        {
+          "Name": "Eater",
+          "HP": 1150,
+          "Exp": 320,
+          "Gil": 945
+        }
+      ]
+    },
+    {
+      "name": "Earthquake",
+      "Type": "Black Magic (used only by monsters)",
+      "Level": 7,
+      "Effect": "Deal Earth damage",
+      "Element": "Earth",
+      "BasePower": 80,
+      "BaseAccuracy": 1.0,
+      "Reflectable": "No",
+      "Target": "All Enemies"
+    },
+    {
+      "name": "Quicksand",
+      "Type": "Terrain Effect (Black Magic)",
+      "BaseTerrain": "Desert",
+      "Level": 1,
+      "Effect": "Inflict KO",
+      "StatusAilment": "KO",
+      "BasePower": 0,
+      "BaseAccuracy": 0.3,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "Ge"
+      ]
+    },
+    {
+      "name": "Wind Slash",
+      "Type": "Terrain Effect (Black Magic)",
+      "BaseTerrain": "Forest",
+      "Level": 1,
+      "Effect": "Deal Air damage",
+      "Element": "Air",
+      "BasePower": 120,
+      "BaseAccuracy": 0.3,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "Ge"
+      ],
+      "Maps": [
+        "Sewers B1",
+        "Sewers B2",
+        "Sewers B4",
+        "Goldor Manor 1F",
+        "Goldor Manor 2F",
+        "Southeast Saronia",
+        "Cave of the Circle B1",
+        "Cave of the Circle B2",
+        "Cave of the Circle B3",
+        "Ancient Ruins B1",
+        "Ancient Ruins B2",
+        "Ancient Ruins B3",
+        "Ancient Ruins B4",
+        "Ancient Ruins B5",
+        "Ancient Ruins B6",
+        "Bahamut's Lair B3",
+        "Cave of Shadows B1",
+        "Cave of Shadows B2",
+        "Cave of Shadows B3",
+        "Cave of Shadows B4"
+      ]
+    },
+    {
+      "name": "Sinkhole",
+      "Type": "Terrain Effect (Black Magic)",
+      "BaseTerrain": "Marsh",
+      "Level": 1,
+      "Effect": "Inflict KO",
+      "StatusAilment": "KO",
+      "BasePower": 0,
+      "BaseAccuracy": 0.4,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "Ge"
+      ],
+      "Maps": [
+        "Bahamut's Lair B2"
+      ]
+    },
+    {
+      "name": "Torrent",
+      "Type": "Terrain Effect (Black Magic)",
+      "BaseTerrain": "River",
+      "Level": 1,
+      "Effect": "Inflict KO",
+      "Element": "Lightning",
+      "StatusAilment": "KO",
+      "BasePower": 0,
+      "BaseAccuracy": 0.4,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "Ge"
+      ],
+      "Maps": [
+        "Cave of Tides B1",
+        "Cave of Tides B2",
+        "Cave of Tides B3",
+        "Cave of Tides B4",
+        "Lake Dohr B1",
+        "Lake Dohr B2",
+        "Lake Dohr B3",
+        "Lake Dohr B4"
+      ]
+    },
+    {
+      "name": "Whirlpool",
+      "Type": "Terrain Effect (Black Magic)",
+      "BaseTerrain": "Ocean",
+      "Level": 1,
+      "Effect": "Deal Air damage",
+      "Element": "Air",
+      "BasePower": 120,
+      "BaseAccuracy": 0.6,
+      "Reflectable": "No",
+      "Target": "All Enemies",
+      "CastBy": [
+        "Ge"
+      ],
+      "Maps": [
+        "Sunken Cave B1",
+        "Sunken Cave B2",
+        "Sunken Cave B3",
+        "Saronia Catacombs 1F",
+        "Saronia Catacombs 2F",
+        "Saronia Catacombs 3F",
+        "Saronia Catacombs 4F",
+        "Temple of Time B1",
+        "Temple of Time B2",
+        "Temple of Time B3"
+      ]
+    },
+    {
+      "name": "Cyclone",
+      "Type": "Terrain Effect (Black Magic)",
+      "BaseTerrain": "Sky",
+      "Level": 1,
+      "Effect": "Deal Air damage",
+      "Element": "Air",
+      "BasePower": 120,
+      "BaseAccuracy": 0.6,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "Ge"
+      ]
+    },
+    {
+      "name": "Cave In",
+      "Type": "Terrain Effect (Black Magic)",
+      "Level": 1,
+      "Effect": "Deal Earth damage",
+      "Element": "Earth",
+      "BasePower": 120,
+      "BaseAccuracy": 0.4,
+      "Reflectable": "No",
+      "Target": "All Enemies",
+      "CastBy": [
+        "Ge"
+      ],
+      "Maps": [
+        "Dragon's Peak",
+        "Doga's Grotto B3"
+      ]
+    }
+  ],
+  "errors": []
+}

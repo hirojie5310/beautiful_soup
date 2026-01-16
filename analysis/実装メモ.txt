@@ -1,0 +1,1968 @@
+現状の構造をざっくり振り返ると：
+戦闘中の状態を持つのは BattleActorState
+　HP、状態異常のセット、reflect_charges（Reflect残回数）などを持っている。
+キャラ側の最終ステータス：FinalCharacterStats 
+敵側の最終ステータス：FinalEnemyStats 
+属性相性関係
+　モンスターに対して：element_relation_and_hits_for_monster 
+　キャラに対して：element_relation_and_hits_on_char 
+状態異常魔法（キャラ→敵）は apply_status_spell_to_enemy でまとめている。
+
+
+--------------
+そうなんですよね、「敵にも Agility がある前提」で話してしまうと、
+いざ JSON を見ると **Agility が無い** という問題が出てきます 🥲
+
+でも大丈夫で、やり方はいくつかあります。
+
+---
+## 方針：敵用の「擬似 Agility」を定義してしまう
+**結論から言うと：**
+> 「敵も味方もまとめて行動順を決めたい」
+> → 敵には **JSON から計算した “仮の素早さ”** を持たせてしまう
+のが一番きれいです。
+
+### どこに持たせる？
+* すでに `FinalEnemyStats` を作っていると思うので、
+  * そこに `agility` 相当のフィールドを **計算して埋める**
+  * もしくは `speed` / `initiative_base` みたいな名前でもOK
+JSON を書き換える必要はありません。
+**「ロード時に勝手に計算して Stats にだけ持つ」** 形にするのが楽です。
+
+---
+## 擬似 Agility の作り方の例
+敵 JSON にはだいたいこんな情報がありますね：
+* `Level`
+* `Attack.Count`
+* `Evasion.Rate`（0.1 なら 10%）
+* `Accuracy` など
+これらを使って **「速そうな敵は早く動く」** 程度の仮ルールを作ります。
+
+### 例1：Level + Attack 回数 + 回避率 から作る
+```python
+def enemy_base_agility(enemy_json: dict) -> int:
+    lvl = int(enemy_json.get("Level", 1))
+
+    atk = enemy_json.get("Attack") or {}
+    atk_count = atk.get("Count")
+    if atk_count is None:
+        atk_count = 1
+
+    eva = enemy_json.get("Evasion") or {}
+    eva_rate = float(eva.get("Rate") or 0.0)  # 0.0〜1.0 を想定
+
+    # ベースはレベル
+    agi = lvl
+
+    # 攻撃回数が多い敵は手数が多い＝素早め扱い
+    # Count=1 → +0, Count=3 → +4 みたいな感じ
+    if atk_count > 1:
+        agi += 2 * (atk_count - 1)
+
+    # 回避率が高い敵も素早いイメージ
+    # Rate=0.1 → +2, Rate=0.5 → +10 くらいのノリ
+    agi += int(eva_rate * 20)
+
+    return max(1, agi)
+```
+
+そして `FinalEnemyStats` を作るところで：
+```python
+enemy_stats.agility = enemy_base_agility(enemy_json)
+```
+
+と入れておけば、あとはキャラと同じように
+```python
+def calc_initiative_for_enemy(enemy_stats, rng):
+    agi = getattr(enemy_stats, "agility", 10)
+    return agi + rng.randint(0, max(1, agi))
+```
+みたいに使えます。
+
+---
+
+## 「ランダム割り込み」味は残すなら
+完全に同じ式でもいいですが、
+* 味方：`agi + randint(0, agi)`
+* 敵　：`(agi // 2) + randint(0, agi * 2)`
+
+みたいにすると、
+* 敵は **ブレが大きくてたまにすごく早く動く**
+* でも平均的には味方の素早さに従う
+
+という「割り込みっぽさ」を出せます。
+
+---
+## もっと簡単にする場合
+「難しく考えたくない、まずは動かしたい」なら、
+**レベルだけを素早さとみなす**のでも動きます。
+
+```python
+def enemy_base_agility_simple(enemy_json: dict) -> int:
+    return max(1, int(enemy_json.get("Level", 1)))
+```
+
+あとから
+* 「ボスはもうちょっと早くしたい」
+* 「多段攻撃する敵は速く感じてほしい」
+
+と思ったところで、上のような式に差し替えればOKです。
+
+---
+
+## まとめ
+* ✅ `save["party"]` を複数メンバーにして、**毎ターン「行動順リスト」を作る**設計はそのままで良い
+* ❗ ただし、そのためには **敵にも「initiative の元になる値」が必要**
+* ✅ それは **JSON ロード時に `FinalEnemyStats` に計算して入れる**のがきれい
+
+  * `Level` / `Attack.Count` / `Evasion.Rate` から「擬似 Agility」を作るのがおすすめ
+* ✅ そうすれば、味方も敵も共通の `calc_initiative(actor_stats, rng)` で1行動単位の順番が決められます
+
+もしよければ、`FinalEnemyStats` の定義部分（`NamedTuple` / `dataclass` など）が分かれば、
+そこにどうフィールドを足して、どこで値を入れるかまでコードで一緒に整理しますよ。
+--------------
+はい、ここまで貼っていただいた情報があれば、
+party_members / enemies をどういうタプル（or クラス）で持つかを、かなりはっきり決められます。
+
+今ある流れはざっくり言うと：
+セーブデータ party_entry から
+→ character_from_party_entry(entry, jobs_by_name) で
+→ base, eq, char_state を作る
+
+そこから
+→ compute_character_final_stats(base, eq, weapons, armors, job_name) で
+→ FinalCharacterStats を作る
+
+敵側は：
+enemy_json = monsters[enemy_name]
+enemy_final = compute_enemy_final_stats(enemy_json)（←ここで agility も生えている）
+enemy_state = BattleActorState(...)
+なので、マルチパーティ戦の 1 ユニットはだいたい次の3要素（＋敵は元JSON）で持つのがきれいです。
+
+1. PartyMember / EnemyUnit の型を決める
+2. 既存コードから PartyMember / EnemyUnit を組み立てる例
+3. simulate_one_round_multi_party をこの型に合わせて書く
+
+--------------
+一番大きなポイントは、
+1. 「行動入力フェーズ」と「行動解決フェーズ」を分離する
+2. 行動解決フェーズでは、パーティ＋敵をまとめてイニシアティブ順に回す
+この2つだけです。
+
+# 敵の擬似 Agilityの作成（Level + Attack 回数 + 回避率 から作る）
+def compute_enemy_base_agility(monster: Dict[str, Any]) -> int:
+    """
+    敵 JSON から「行動順決定用の擬似 Agility」を計算する。
+    - Level が高い敵ほど素早く
+    - Attack.Count が多い敵は手数が多い＝素早い印象に
+    - Evasion.Rate が高い敵も素早い印象に
+    """
+    lvl = int(monster.get("Level", 1))
+
+    atk = monster.get("Attack") or {}
+    atk_count = int(atk.get("Count") or 1)
+
+    ev = monster.get("Evasion") or {}
+    eva_rate = float(ev.get("Rate") or 0.0)  # 0.1 → 10% みたいな値
+
+    # 適当な指標：あとで好きに調整してOK
+    agi = lvl
+    agi += 2 * max(0, atk_count - 1)   # 攻撃回数が多いほど +2, +4, ...
+    agi += int(eva_rate * 20)          # 回避 10% → +2, 50% → +10 くらいのノリ
+
+    return max(1, agi)
+--------------
+
+
+# 敵→キャラ「純粋な全体攻撃」（Snowstorm等）用の汎用ヘルパ
+# normal: ダメージ攻撃、ratio: 割合削り
+3488 def enemy_cast_aoe_damage_spell_to_party(
+
+
+
+# ============================================================
+# アイテム効果用ヘルパ（回復・蘇生・状態異常回復）
+# ============================================================
+def apply_item_effect_to_actor(
+# 0) Haste系バフアイテム（Bacchus's Cider） *
+# 0-b) Protect系バフアイテム（Turtle Shell） *
+
+# ============================================================
+# 1ターンシミュレーション
+# ============================================================
+def simulate_one_turn(
+elif char_attack_kind == "magic":
+# ④ Protect：防御・魔法防御アップ *
+# ⑤ Haste：攻撃力・攻撃回数アップ *
+else:
+# 通常の敵行動（スペシャル込み）
+# 4) Haste / Protect（敵自身の自己バフ）簡易案
+elif name_lower == "haste": *
+elif name_lower == "protect": *
+
+
+
+# 属性相性コメント
+def relation_comment(
+
+4260 弱点を突いた *
+5024 弱点を突いた *
+5116 弱点を突いた *
+5673 弱点を突いた *
+6235 弱点を突かれた *
+
+
+2384 # ダメージログ
+def log_damage(
+
+def simulate_one_turn(
+4141 f"{char_name}は毒のダメージを受けた！" f"（{poison_dmg_char} → {char_state.hp}/{max_hp_char}）" *
+4159 f"{enemy_name}は毒のダメージを受けた！" f"（{poison_dmg_enemy} → {enemy_state.hp}/{max_hp_enemy}）" *
+
+4253 f"{enemy_name}に{dmg_to_enemy}のダメージ！（{enemy_name} 残りHP: {enemy_state.hp}）" *
+4298 f"{enemy_name}に{dmg_to_enemy}のダメージ。（{enemy_name} 残りHP: {enemy_state.hp}）" *
+4304 f"{enemy_name}に{dmg_to_enemy}のダメージ。（{enemy_name} 残りHP: {enemy_state.hp}）" *
+4327 f"{char_name}は{dmg_to_char_from_self}のダメージ。（{char_name} 残りHP: {char_state.hp}）" *
+4331 f"{char_name}は{dmg_to_char_from_self}のダメージ。（{char_name} 残りHP: {char_state.hp}）" *
+4966 f"{char_name}は{dmg_back}のダメージを受けた。" f"（{char_name} 残りHP: {char_state.hp}） {suffix}" *
+5096 f"{enemy_name}に{dmg_to_enemy}のダメージ。" f"（{enemy_name} 残りHP: {enemy_state.hp}） {suffix}" *
+5180 f"{enemy_name}に{dmg_to_enemy}のダメージ。" f"（{enemy_name} 残りHP: {enemy_state.hp}）" *
+5486 f"バックファイア！{char_name}は{backfire}のダメージを受けた！" f"（{old_hp}→{char_state.hp}）" *
+5541 f"{enemy_name}に{final_damage}のダメージ！" f"（{old_enemy_hp}→{enemy_state.hp}）" *
+5557 f"{enemy_name}に{final_damage}のダメージ！" f"（{old_enemy_hp}→{enemy_state.hp}）" *
+5600 f"{char_name}はオーバーロードで{overload_damage}のダメージを受けた。" f"（{char_name} 残りHP: {char_state.hp}）" *
+5735 f"{enemy_name}に{dmg_to_enemy}のダメージ。" f"（{enemy_name} 残りHP: {enemy_state.hp}）" *
+5743 f"{enemy_name}に{dmg_to_enemy}のダメージ。" f"（{enemy_name} 残りHP: {enemy_state.hp}）" *
+
+5912 f"{enemy_name}は{dmg_to_self}のダメージ。（{enemy_name} 残りHP: {enemy_state.hp}）" *
+5917 f"{enemy_name}は{dmg_to_self}のダメージ。（{enemy_name} 残りHP: {enemy_state.hp}）" *
+5946 f"{char_name}は{dmg_to_char}のダメージ。（{char_name} 残りHP: {char_state.hp}）" *
+5951 f"{char_name}は{dmg_to_char}のダメージ。（{char_name} 残りHP: {char_state.hp}）" *
+5975 f"{char_name}は{dmg_to_char}のダメージを受けた。（{char_name} 残りHP: {char_state.hp}）" *
+5980 f"{char_name}は{dmg_to_char}のダメージを受けた。（{char_name} 残りHP: {char_state.hp}）" *
+6016 f"{enemy_name}は{reflected_damage}のダメージを受けた。（{enemy_name} 残りHP: {enemy_state.hp}）" *
+6267 f"{char_name}は{dmg_to_char}のダメージを受けた。" f"（{char_name} 残りHP: {char_state.hp}）" *
+6273 f"{char_name}は{dmg_to_char}のダメージを受けた。" f"（{char_name} 残りHP: {char_state.hp}）" *
+6291 f"{char_name}は{dmg_to_char}のダメージを受けた。" f"（{char_name} 残りHP: {char_state.hp}）" *
+6298 f"{char_name}は{dmg_to_char}のダメージを受けた。" f"（{char_name} 残りHP: {char_state.hp}）" *
+
+
+
+744 def parse_elements
+
+870 elem_raw = spell_json.get("Element") or spell_json.get("Elements") or "" *
+895 elem_raw = spell_json.get("Element") or spell_json.get("Elements") *
+1155 final.main_weapon_elements = [str(e).strip().lower() for e in (main_weapon_elements or [])] *
+1908 elements = [e.strip().lower() for e in elem_raw.split(",") if e.strip()] *
+2488 elements = [e.strip() for e in elem_raw.split(",") if e.strip()] *
+4989 elem_raw = (char_spell_json.get("Element") or char_spell_json.get("Elements") or """ *
+
+<削除できた責務（重要）>
+これだけの処理が すべて parse_elements に集約されました：
+✅ None / 空文字チェック
+✅ "-" チェック
+✅ str or list 分岐
+✅ split(",")
+✅ strip()
+✅ .lower()
+
+✅ 設計的なメリット
+✅ 元素パースが全コードで完全に同一仕様になる
+✅ 魔法・召喚・武器・敵耐性・アイテム効果がすべて統一
+✅ 将来 "Air / Ice" など変なフォーマットが来ても
+→ parse_elements だけ直せば全体が救われる
+
+✅ ここまで来ると、「属性まわりのバグ」は構造的にほぼ封殺できています。
+
+ここまでで：
+✅ 魔法
+✅ 武器
+✅ 防具
+✅ 召喚
+✅ 敵スペル
+✅ Peep
+✅ 攻撃白魔判定
+すべて parse_elements に統一完了 ですね。
+
+
+# ============================================================
+# ターン開始時処理（毒など拡張しやすく）
+# ============================================================
+3898 def start_of_turn_for_actor(
+
+
+def apply_start_of_turn_effects(
+
+
+
+
+■ Red Mage の魔法使用制限
+（RM は 白/黒 Lv1〜4 のみ使用可能）
+
+■ 魔法選択画面から「使えない魔法」を削除
+（CastBy="RM" を見てフィルタ）
+
+■ 最大MPと現在MPの区別
+（今は savedata の mp がそのまま残量になっている）
+
+■ 戦闘終了時に MP を savedata に反映
+（ゲームとしては必須ステップ）
+
+ステータス異常を与える魔法には、
+黒魔法のSleep（Sleep）、Blind（Blind）、Poison（Poison）、Shade（Paralysis）、Erase（KO）、Raze（KO）、Warp（KO）、Break（Partial Petrification）、Breakga（Petrification）、Death（KO）、
+白魔法のMini（Mini）、Toad（Toad）、Teleport（KO）、Silence（Silence）、Confuse（Confuse）があります。
+また、"Status"異常付与効果を持つ召喚魔法には、"Shiva: Mesmerize"（Sleep）、"Ramuh: Mind Blast"（Paralysis）、"Ifrit: Healing Light"（Recovery）、"Leviathan: Demon Eye"（Petrification）があります。
+
+
+-----
+白魔法"Protect"と"Haste"は以下の仕様になっています。これらの魔法を添付のff3_calc.py内に実装したいと思います。
+
+白魔法"Protect"：defenceとmagic defenceを増加させる。（<=255、累積可能）
+"Protect"の命中率% = BaseAccuracy% + mind/2 (<=100%)
+additional defence = BasePower * (mind/16 + level/16 + job_level/32 + 1) * 1～1.5
+additional magic_defence = BasePower * (mind/16 + level/16 + job_level/32 + 1) * 1～1.5
+
+    {
+      "name": "Protect",
+      "Type": "White Magic",
+      "Level": 5,
+      "Effect": "Enhance Defense and Magic Defense",
+      "BasePower": 5,
+      "BaseAccuracy": 0.75,
+      "Price": 5000,
+      "Value": 2500,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "WM",
+        "De",
+        "Sa"
+      ],
+
+白魔法"Haste"：attack power、attack multiplierを増加させる。（attack power<=255、attack multiplier<=最大16、累積可能）
+"Haste"の命中率% = BaseAccuracy% + mind/2 (<=100%)
+additional attack power = BasePower * (mind/16 + level/16 + job_level/32 + 1) * 1～1.5
+additional attack multiplier = mind/16 + level/16 + job_level/32 + 1
+
+添付のSpellsデータでは、白魔法"Protect"、"Haste"は以下のようになっていることから、"Protect"の命中率の計算式の75と、"Haste"の命中率の計算式の16はBaseAccuracyのデータを適用したいと思います。その点について修正をお願いします。
+
+    {
+      "name": "Protect",
+      "Type": "White Magic",
+      "Level": 5,
+      "Effect": "Enhance Defense and Magic Defense",
+      "BasePower": 5,
+      "BaseAccuracy": 0.75,
+      "Price": 5000,
+      "Value": 2500,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "WM",
+        "De",
+        "Sa"
+      ],
+
+    {
+      "name": "Haste",
+      "Type": "White Magic",
+      "Level": 6,
+      "Effect": "Enhance Accuracy and Attack Multiplier",
+      "BasePower": 5,
+      "BaseAccuracy": 0.16,
+      "Price": 10000,
+      "Value": 5000,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "WM",
+        "De",
+        "Sa"
+      ],
+
+<実装上のポイント整理>
+
+命中率
+Protect: hit% = 75 + mind//2（最大100）
+Haste : hit% = 16 + mind//2（最大100）
+rng.random() * 100 < hit% で判定。
+
+基本係数（両方共通）
+base_factor = (mind // 16) + (level // 16) + (job_level // 32) + 1
+
+Protect の増加量
+base_amount = 5 * base_factor
+rand_mul = 1.0 + rng.random() * 0.5     # 1.0〜1.5
+add_value = int(base_amount * rand_mul)
+を defense と magic_defense に加算し、255でクランプ。
+
+Haste の増加量
+attack power 用: 5 * base_factor * (1〜1.5) → main_power / off_power に加算（255まで）。
+attack multiplier 用: base_factor → main_atk_multiplier / off_atk_multiplier に加算（16まで）。
+
+累積可能
+単に「今の値に加算して上限でクリップ」しているので、同一ターン中でも複数ターンに渡っても、
+同じ FinalCharacterStats オブジェクトを使い回せばそのまま累積します。
+
+<使用結果>
+"job": mind : 55, "Sage", "level": 12, "job_level": 24
+ルーネスは《Protect》を唱えた！ 防御力 25→54、魔法防御 6→35 に上がった。 （MP5 0/19）
+ルーネスは《Haste》を唱えた！ 攻撃力 右手 67→89、攻撃回数 右手 3→7 に上がった。 （MP6 0/15）
+
+-----
+白魔法"Toad"・"Mini"：成功すると敵は逃げてKOとなる。
+Magic Hit% = (Spell Hit%) + (Mind/2)
+
+    {
+      "name": "Toad",
+      "Type": "White Magic",
+      "Level": 2,
+      "Effect": "Turn target into a toad",
+      "StatusAilment": "Toad",
+      "BasePower": 0,
+      "BaseAccuracy": 0.0,
+      "Price": 700,
+      "Value": 350,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "WM",
+        "RM",
+        "Ra",
+        "MK",
+        "De",
+        "Sa"
+      ],
+    {
+      "name": "Mini",
+      "Type": "White Magic",
+      "Level": 2,
+      "Effect": "Miniaturize target",
+      "StatusAilment": "Mini",
+      "BasePower": 0,
+      "BaseAccuracy": 0.0,
+      "Price": 700,
+      "Value": 350,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "WM",
+        "RM",
+        "Ra",
+        "MK",
+        "De",
+        "Sa"
+      ],
+
+<以下の仕様で実装します>
+成功したら敵は 逃げて KO（＝HP0、Status.KO を付与）
+成功率 Magic Hit% = BaseAccuracy + (Mind / 2)
+※今回 BaseAccuracy=0 のため Mind / 2 % がそのまま命中率になる
+失敗したら何も起きない
+敵が「無効（Immune）」なら必ず失敗
+
+-----
+LV5黒魔法"Erase"(Kill)：敵全員をKOにする。
+Magic Hit% = BaseAccuracy% + (Mind/2)
+IF Target Level >= (Attacker Level)*3/4
+Magic Hit% = 0
+
+なお、"Erase"のデータは以下のとおり。
+    {
+      "name": "Erase",
+      "Type": "Black Magic",
+      "Level": 5,
+      "Effect": "Remove Reflect (doesn't work)",
+      "BasePower": 0,
+      "BaseAccuracy": 0.6,
+      "Price": 5000,
+      "Value": 2500,
+      "Reflectable": "No",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "BM",
+        "Ma",
+        "Sa"
+      ],
+
+<やりたいこと>
+対象：黒魔法 "Erase"
+効果：敵（将来的には敵全員）を KO にする
+命中率：Magic Hit% = BaseAccuracy% + (Mind/2)
+（BaseAccuracy は 0.6 → 60% の扱い）
+ただし IF Target Level >= (Attacker Level)*3/4: Magic Hit% = 0
+KO 耐性がある敵（Immune に "KO" がある敵）は無効
+
+-----
+白魔法"Tornado"：敵のHPを一桁（1～9）にまで減少
+Magic Hit% = BaseAccuracy% + (Mind/2)
+
+なお、"Tornado"のデータは以下のとおり。
+    {
+      "name": "Tornado",
+      "Type": "White Magic",
+      "Level": 8,
+      "Effect": "Set target's HP to critical",
+      "Element": "Air",
+      "BasePower": 4,
+      "BaseAccuracy": 0.4,
+      "Price": 60000,
+      "Value": 30000,
+      "Reflectable": "No",
+      "Target": "One/All Enemies",
+      "CastBy": [
+        "De",
+        "Sa"
+      ],
+
+<挙動の方針>
+対象：白魔法 Tornado（name = "Tornado"）
+効果：命中したら敵の HP を 1〜9 のランダムな値にする
+ただし 現在 HP 以下にする（回復はしない）
+命中率：Magic Hit% = BaseAccuracy% + (Mind/2)
+BaseAccuracy が 0.4 → 40% として扱う（Toad / Mini の処理と同じ）
+外れた場合：
+HP 変化なし,「効かなかった…（命中率xx.x% 判定yy.y）」ログ
+
+-----
+白魔法"Reflect"：Reflect状態のキャラクターに掛けられたSpell（"Reflectable": "Yes"のSpell）を1回跳ね返す。
+跳ね返した後、Reflect状態は消失する。
+Magic Hit% = BaseAccuracy% + (Mind/2)
+
+なお、"Tornado"のデータは以下のとおり。
+    {
+      "name": "Reflect",
+      "Type": "White Magic",
+      "Level": 7,
+      "Effect": "Grant Reflect",
+      "BasePower": 0,
+      "BaseAccuracy": 0.75,
+      "Price": 20000,
+      "Value": 10000,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "WM",
+        "De",
+        "Sa"
+      ],
+
+<ポイント>
+1. 「Reflectable: Yes」かどうかを見て、対象に reflect_charges があれば跳ね返す
+2. プレイヤー魔法 → 敵Reflect と 敵スペシャル（Spell） → プレイヤーReflect の両方で同じ考え方にする
+
+敵スペル spell_def に Reflectable が無い
+→ 同名のプレイヤー用 spell（spells.json の name）を参照して Reflectable を補完
+
+魔法反射のダメージ計算
+プレイヤーの魔法攻撃における反射処理では、ff3_confused_self_dummy_enemyを使用してダミー敵を作成し、魔法ダメージを計算。その後、ダメージをキャラクターのHPから差し引き、反射のログを記録します。敵の攻撃でも同様の処理を行い、正しいダメージ計算を行います。
+
+-----
+黒魔法"Drain"：対象にダメージを与えた分、使用者のhpを回復する
+Magic Hit% = BaseAccuracy% + (Intelligence/2)
+
+なお、"Drain"のデータは以下のとおり。
+    {
+      "name": "Drain",
+      "Type": "Black Magic",
+      "Level": 7,
+      "Effect": "Absorb HP from target",
+      "Element": "Recovery",
+      "BasePower": 160,
+      "BaseAccuracy": 1.0,
+      "Price": 20000,
+      "Value": 10000,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "BM",
+        "Ma",
+        "Sa"
+      ],
+
+通常の魔法ダメージ計算でダメージを算出
+最終的に与ダメージ量だけ caster_state.hp を回復すれば OK
+
+-----
+アイテム"Bacchus's Cider": 白魔法"Haste"と同様の効果（Multiplierは3で固定）
+なお、アイテムデータは以下のとおり。
+    {
+      "Name": "Bacchus's Cider",
+      "ItemType": "Combat",
+      "Value": 1500,
+      "SpellEffect": "Haste",
+      "SpellInfo": {
+        "Effect": "Enhance Accuracy and Attack Multiplier",
+        "Element": null,
+        "BasePower": 5,
+        "BaseAccuracy": 0.16,
+        "Reflectable": "No",
+        "Target": "One Enemy",
+        "Multiplier": 3
+      },
+
+既存の Haste の計算式（命中率・攻撃力アップ量）をそのまま流用。
+ただし 攻撃回数の増分 add_mul だけを固定 3 にする。
+
+-----
+アイテム"Shining Curtain": 白魔法"Reflect"と同様の効果
+なお、アイテムデータは以下のとおり。
+    {
+      "Name": "Shining Curtain",
+      "ItemType": "Combat",
+      "Value": 2500,
+      "SpellEffect": "Reflect",
+      "SpellInfo": {
+        "Effect": "Grant Reflect",
+        "Element": null,
+        "BasePower": 0,
+        "BaseAccuracy": 0.75,
+        "Reflectable": "No",
+        "Target": "One Enemy",
+        "Multiplier": 3
+      },
+
+命中率：BaseAccuracy% + Mind/2（白魔 Reflect と同じ式）
+成功したら char_state.reflect_charges = 1
+ログも Reflect と同じノリだが、「唱えた」ではなく「使った」にする
+MP 消費はもちろんナシ
+
+-----
+アイテム"Turtle Shell": 白魔法"Protect"と同様の効果（Multiplierは3で固定）
+なお、アイテムデータは以下のとおり。
+    {
+      "Name": "Turtle Shell",
+      "ItemType": "Combat",
+      "Value": 1500,
+      "SpellEffect": "Protect",
+      "SpellInfo": {
+        "Effect": "Enhance Defense and Magic Defense",
+        "Element": null,
+        "BasePower": 5,
+        "BaseAccuracy": 0.75,
+        "Reflectable": "No",
+        "Target": "One Enemy",
+        "Multiplier": 3
+      },
+
+判定式／上昇量は 白魔法 Protect と同じ
+ただし
+MP 消費なし
+ログ文言は「《Protect》を唱えた！」ではなく「Turtle Shell を使った！」
+Multiplier=3 はデータ側に入っているだけで、防御バフ計算では使っていない（魔法側も使っていないので同じ扱い）
+
+-----
+アイテム"Lilith's Kiss": 黒魔法"Drain"と同様の効果（Multiplierは3で固定）
+なお、アイテムデータは以下のとおり。
+    {
+      "Name": "Lilith's Kiss",
+      "ItemType": "Combat",
+      "Value": 1500,
+      "SpellEffect": "Drain",
+      "SpellInfo": {
+        "Effect": "Absorb HP from target",
+        "Element": "Recovery",
+        "BasePower": 160,
+        "BaseAccuracy": 1.0,
+        "Reflectable": "No",
+        "Target": "One Enemy",
+        "Multiplier": 3
+      },
+
+「攻撃アイテム」判定に Lilith's Kiss を加える
+ダメージ後に Drain と同じ HP 吸収処理を追加
+
+-----
+召喚魔法"Odin: Protective Light"：パーティ全体に"Reflect"を付与する。
+Call Magic Power = (Spell Damage) + (Intelligence)
+Call Magic Multiplier = (Intelligence/8) + (((JobLevel/8)*3)/2) + 1
+Call Magic Accuracy% = (Spell Accuracy%) + (Intelligence)
+
+なお、Spellsデータは以下のとおり。
+      "Spells": [
+        {
+          "Name": "Odin: Protective Light",
+          "Type": "Summon",
+          "Level": 6,
+          "Power": null,
+          "Accuracy": 100,
+          "Price": "-",
+          "Value": "-",
+          "Target": "All Enemies",
+          "Status": "-",
+          "Element": "-",
+          "Cast By": "Ev"
+        },
+
+① Reflect 分岐の条件を拡張
+② Reflect ブロック本体を差し替え
+
+-----
+召喚魔法"Ifrit: Healing Light"：味方全体を回復。
+なお、Spellsデータは以下のとおり。
+      "Spells": [
+        {
+          "Name": "Ifrit: Healing Light",
+          "Type": "Summon",
+          "Level": 4,
+          "Power": 90,
+          "Accuracy": 100,
+          "Price": "-",
+          "Value": "-",
+          "Target": "All Enemies",
+          "Status": "-",
+          "Element": "Recovery",
+          "Cast By": "Ev"
+        },
+
+Ifrit: Healing Light を「味方全体回復の召喚魔法」として扱うために、
+①召喚魔法の種別を専用化(Summon Spell を magic_type="summon" にする)
+②回復魔法判定(healing_spell_kind)に Healing Light を追加
+③ログを召喚っぽく(HP 回復ブロックに「召喚用ログ」を追加)
+という3点を入れてあげるときれいに動きます。
+
+-----
+召喚魔法"Chocobo: Chocobo Dash"：50%の確率で戦闘から逃げる。
+なお、Spellsデータは以下のとおり。
+      "Spells": [
+        {
+          "Name": "Chocobo: Chocobo Dash",
+          "Type": "Summon",
+          "Level": 1,
+          "Power": null,
+          "Accuracy": 100,
+          "Price": "-",
+          "Value": "-",
+          "Target": "All Enemies",
+          "Status": "-",
+          "Element": "-",
+          "Cast By": "Ev"
+        },
+
+通常戦闘:
+MP消費 → 乱数 50% 未満なら
+ログ:
+ルーネスは召喚魔法《Chocobo: Chocobo Dash》を呼び出した！ チョコボのダッシュで戦闘から逃げ出した！ （MP1 x/x）
+Run コマンドと同様に escaped=True, end_reason="escaped" でターン終了
+失敗時は
+ログ:
+しかしチョコボは逃げ切れなかった…
+ダメージは 0、敵の行動フェーズへ
+
+ボス戦（enemy_json["PlotBattles"] 真）:
+MPだけ消費して
+ログ:
+しかしこの戦いからは逃げられない！
+当然逃走は発生せず、そのまま敵ターンへ
+
+MP不足:
+召喚しようとして失敗ログ＋ダメージ0、敵ターンへ
+
+-----
+召喚魔法"Chocobo: Chocobo Kick?"：1体の敵に攻撃するが必ず外れる。
+なお、Spellsデータは以下のとおり。
+
+        {
+          "Name": "Chocobo: Chocobo Kick?",
+          "Type": "Summon",
+          "Level": 1,
+          "Power": null,
+          "Accuracy": 100,
+          "Price": "-",
+          "Value": "-",
+          "Target": "One Enemy",
+          "Status": "-",
+          "Element": "-",
+          "Cast By": "Ev"
+        },
+
+spell_label.endswith("Chocobo Kick?") で「Chocobo: Chocobo Kick?」を判定（末尾だけ見るのでプレフィックスが変わっても安心）。
+既にこの時点で MP は消費済み なので、suffix に MP 表示が入っています。
+dmg_to_enemy = 0 のままにしてあるので、
+ダメージ適用部分では HP 変化なし
+下の共通ログ部分も dmg_to_enemy > 0 でガードされているので追加ログは出ません
+状態異常は apply_status_spell_to_enemy が呼ばれるのは「通常攻撃魔法」ブロックの中だけなので、この専用分岐では一切付与されません。
+
+-----
+召喚魔法
+MagicPower = SpellPower + Intelligence
+MagicMultiplier = (Intelligence/8) + (((JobLevel/8)*3)/2) + 1
+MagicAccuracy% = SpellAccuracy% + Intelligence
+
+魔法攻撃：
+ダメージ
+Black Magic Power = (Spell Power) + (Intelligence/2)
+For offensive White spells (Holy, Aeroga, Aero):
+White Magic Power = (Spell Power) + (Mind/2)
+For non-offensive White spells (Cureja, Curega, Cura, Cure, Haste, Protect):
+White Magic Power = (Spell Power) 
+Call Magic Power = (Spell Damage) + (Intelligence)
+
+倍率
+Black Magic Multiplier = (Intelligence/16) + (Level/16) + (JobLevel/32) + 1
+White Magic Multiplier = (Spirit/16) + (Level/16) + (JobLevel/32) + 1
+Call Magic Multiplier = (Intelligence/8) + (((JobLevel/8)*3)/2) + 1
+
+命中率
+Black Magic Accuracy% = (Spell Accuracy%) + (Intelligence/2)
+White Magic Accuracy% = (Spell Accuracy%) + (Mind/2)
+Call Magic Accuracy% = (Spell Accuracy%) + (Intelligence)
+
+アイテム：
+Power計算は"BasePower"を適用し、魔法攻撃と同じ方法で行う
+Magic Multiplierはアイテムに設定された"Multiplier"を適用（使用者のステータスに依存しない、大部分は3）
+Magic Accuracyは100%（使用者のステータスに依存しない、Blindにも影響されない）
+
+
+-----------
+いまのコードでのダメージ式（重要部分）
+
+magic_damage_char_to_enemy() はこういう流れです：
+1. magic_power / magic_mult / magic_acc を計算
+2. _calc_expected_magic_hits() で 平均ヒット数（期待値） を出す
+3. _calc_base_magic_damage_per_hit() で 1ヒットあたり基礎ダメ を出す
+4. base_per_hit * expected_hits がダメージ 
+
+expected_hits = _calc_expected_magic_hits(
+    magic_mult=magic_mult,
+    magic_acc_percent=magic_acc,
+    mdef_mult=enemy.magic_def_multiplier,
+    magic_resistance_percent=enemy.magic_resistance_percent,
+)
+base_per_hit = _calc_base_magic_damage_per_hit(...)
+dmg = base_per_hit * expected_hits
+
+_calc_expected_magic_hits() は
+expected = magic_mult * hit_rate - mdef_mult * resist_rate
+という “期待値のまま”計算する式になっています。
+-----------
+
+
+アイテムのAccuracy：100%（キャラクターのステータスに依存しない）
+
+
+-----------
+盗賊"盗む"Steal
+成功率：
+Steal Rate% = level/3% + job_level/3%
+成功したら敵 JSON の "Stolen Items" からアイテムを抽選し、save["inventory"] に 1個 追加する。
+
+-----------
+盗賊"とんずら"Flee
+ボス以外から100%逃げ出す
+
+-----------
+学者"みやぶる"Peep
+敵の"ElementalVulnerability"を確認する
+"Weakness"、"Absorb"、"Resistance"になる属性があれば、ログとして表示
+
+-----------
+学者"しらべる"Study
+対象の現在 HP / 最大 HP をログに出すだけ（ダメージなし）
+
+-----------
+風水師"ちけい"Terrain
+Magic Damage = BasePower + (Intelligence/2)
+Magic Hit% = BaseAccuracy% + (Intelligence/2)
+Magic Attack Multiplier = (Intelligence/16) + (Level/16) + (Job_Level/32) + 1
+敵にヒットしなかったときは"Backfired"が発動し、最大hp/4のダメージを受ける。
+
+戦闘フィールドに応じて、Cave In等のSpellsが発動する。Spellsと戦闘フィールドの関係は以下のとおり。
+Cyclone: Sky
+Earthquake: Grassland (All Enemy)
+Quicksand: Desert, KO
+Sinkhole: Marsh, KO
+Torrent: River, KO
+Whirlpool: Ocean (All Enemy)
+Wind Slash: Forest
+Cave In: Other (All Enemy)
+
+各Spellsのデータは以下のとおり。
+    {
+      "name": "Cyclone",
+      "Type": "Terrain Effect (Black Magic)",
+      "BaseTerrain": "Sky",
+      "Level": 1,
+      "Effect": "Deal Air damage",
+      "Element": "Air",
+      "BasePower": 120,
+      "BaseAccuracy": 0.6,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "Ge"
+      ]
+    },
+    {
+      "name": "Earthquake",
+      "Type": "Black Magic (used only by monsters)",
+      "Level": 7,
+      "Effect": "Deal Earth damage",
+      "Element": "Earth",
+      "BasePower": 80,
+      "BaseAccuracy": 1.0,
+      "Reflectable": "No",
+      "Target": "All Enemies"
+    },
+    {
+      "name": "Quicksand",
+      "Type": "Terrain Effect (Black Magic)",
+      "BaseTerrain": "Desert",
+      "Level": 1,
+      "Effect": "Inflict KO",
+      "StatusAilment": "KO",
+      "BasePower": 0,
+      "BaseAccuracy": 0.3,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "Ge"
+      ]
+    },
+    {
+      "name": "Sinkhole",
+      "Type": "Terrain Effect (Black Magic)",
+      "BaseTerrain": "Marsh",
+      "Level": 1,
+      "Effect": "Inflict KO",
+      "StatusAilment": "KO",
+      "BasePower": 0,
+      "BaseAccuracy": 0.4,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "Ge"
+      ],
+      "Maps": [
+        "Bahamut's Lair B2"
+      ]
+    },
+    {
+      "name": "Torrent",
+      "Type": "Terrain Effect (Black Magic)",
+      "BaseTerrain": "River",
+      "Level": 1,
+      "Effect": "Inflict KO",
+      "Element": "Lightning",
+      "StatusAilment": "KO",
+      "BasePower": 0,
+      "BaseAccuracy": 0.4,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "Ge"
+      ],
+    },
+    {
+      "name": "Whirlpool",
+      "Type": "Terrain Effect (Black Magic)",
+      "BaseTerrain": "Ocean",
+      "Level": 1,
+      "Effect": "Deal Air damage",
+      "Element": "Air",
+      "BasePower": 120,
+      "BaseAccuracy": 0.6,
+      "Reflectable": "No",
+      "Target": "All Enemies",
+      "CastBy": [
+        "Ge"
+      ],
+    },
+    {
+      "name": "Wind Slash",
+      "Type": "Terrain Effect (Black Magic)",
+      "BaseTerrain": "Forest",
+      "Level": 1,
+      "Effect": "Deal Air damage",
+      "Element": "Air",
+      "BasePower": 120,
+      "BaseAccuracy": 0.3,
+      "Reflectable": "No",
+      "Target": "One Enemy",
+      "CastBy": [
+        "Ge"
+      ],
+    },
+    {
+      "name": "Cave In",
+      "Type": "Terrain Effect (Black Magic)",
+      "Level": 1,
+      "Effect": "Deal Earth damage",
+      "Element": "Earth",
+      "BasePower": 120,
+      "BaseAccuracy": 0.4,
+      "Reflectable": "No",
+      "Target": "All Enemies",
+      "CastBy": [
+        "Ge"
+      ],
+      "Maps": [
+        "Dragon's Peak",
+        "Doga's Grotto B3"
+      ]
+    }
+
+-----------
+ジョブ"Dragoon"のコマンド"BattleCommand2"である"Jump"を以下の仕様で添付のff3_calc.pyに実装したいと思います。
+
+キャラクターは、"Jump"を使用したターンは上空に舞い上がってダメージを受けなくなり、次のターンに攻撃を行った後戦闘に復帰します。
+
+"Jump"を使用したターン：敵からの物理攻撃・魔法攻撃のHit% = 0 とする（攻撃によるダメージを受けない。ステータス状態は維持。Poisonダメージは受ける。）
+"Jump"を使用した次のターン：以下の計算式で攻撃を行い戦闘に復帰。敵からの攻撃対象となり、復帰後は通常通りダメージを受ける。
+
+Attack Damage = ((Weapon Damage) + (Strength/4)) * 3
+Attack Multiplier = (Agility/16) + (Level/16) + 1
+Hit% = (Weapon Hit%) + (Agility/4) + (Job_Level/4)
+
+///////////
+コードをご提示しようとしたのですが、ff3_calc.py がかなり大きく、BattleCommand2 や Jump がどの部分に実装される構造なのかがまだ読み切れていません。
+（＝ファイル内に BattleCommand2 / Jump が見当たらないため、正確に組み込むには 該当クラス定義部分 を確認する必要があります）
+
+🔧 次のステップ — 該当部分を教えてください
+以下のどれかを送っていただければ、Jump の完全なコードを あなたの ff3_calc.py の構造に合わせて 実装します。
+
+📌 送ってほしい部分
+1. BattleCommand / BattleCommand2 のクラス定義部分
+2. Dragoon のコマンド実行処理 (command dispatch) が書かれている部分
+3. 攻撃計算（通常攻撃）を行っている関数（Jump の着地攻撃で流用したい）
+
+✨ 今できること：Jump 実装の“完成版ロジック”
+あなたの仕様に基づいて、Jump の動作は次のとおりです：
+
+仕様の整理（今回のゴール）
+
+Turn N で Jump コマンドを選ぶ
+→ 上空に飛ぶ
+→ このターンは敵の攻撃が一切当たらない（Poisonダメージだけは受ける）
+→ ジャンプフラグ is_jumping = True
+
+Turn N+1
+→ プレイヤーが何を入力しようが無視して
+強制的に「ジャンプ着地攻撃」を実行
+→ そのあと 敵ターンは通常どおり行う
+→ is_jumping = False に戻る
+
+さらに
+ジャンプ攻撃のダメージは指定式で計算：
+
+Attack Damage = ((Weapon Damage) + (Strength/4)) * 3
+Attack Multiplier = (Agility/16) + (Level/16) + 1
+Hit% = (Weapon Hit%) + (Agility/4) + (Job_Level/4)
+
+ここで
+Weapon Damage = main_power または off_power
+Weapon Hit% = main_accuracy または off_accuracy
+と解釈します。
+
+
+BattleActorState にジャンプ状態フラグを追加
+「ジャンプ着地攻撃」をキャラ行動の一番最初に挿入
+special ブロック内の「Dragoon: Jump」を“上昇だけ”にする
+敵ターン側に「ジャンプ中は攻撃無効」を入れる（オプション）
+
+これで期待されるログイメージ
+Turn 1（Jump 選択）
+ルーネスはジャンプした！次のターンに攻撃する。
+（敵ターン無し）
+
+Turn 2（コマンドは Fight だろうが Defend だろうが無視）
+ルーネスは空から降下攻撃！ GutscoにXXXのダメージ！（Gutsco 残りHP: ...）
+（このあと、通常通り Gutsco のターン）
+
+以降は普通の行動に戻ります。
+///////////////
+Prompt:
+ジョブ"Black Belt"のコマンド"BattleCommand2"である"Boost"を以下の仕様で実装したいと思います。
+
+Boost を1回使用: Attack Damage = ((Weapon Damage) + (Strength/4)) * 2。defence、defence multiplier、magic defenceが0になる。
+Boost を2回使用: Attack Damage = ((Weapon Damage) + (Strength/4)) * 3。defence、defence multiplier、magic defenceが0になる。
+Boost を3回使用: "Overload"が発生。Attack Damage = 0。現在のhpの半分を失うとともに、Boost効果を失う。
+
+Attack Multiplier = (Agility/16) + (Level/16) + 1
+Hit% = (Weapon Hit%) + (Agility/4) + (Job_Level/4)
+
+ff3_calc.py の必要な箇所があれば抜粋して提供するので、教えてください。
+
+設計:
+Boost 1回 → 攻撃力 ×2 / 防御0 / 魔防0
+Boost 2回 → 攻撃力 ×3 / 防御0 / 魔防0
+Boost 3回 → Overload 発生
+           → 攻撃ダメージ0
+           → 現在HPの50%減少
+           → boost_count = 0 にリセット
+つまり：
+✅ Boost は 即時攻撃ではなく「次回攻撃強化バフ」
+✅ Defend と同じく temp_flags + 永続カウンタ併用
+✅ 3回目は 自己ダメージ＋強化解除
+
+-----------
+吟遊詩人
+Prompt:
+ジョブ"Bard"のコマンド"BattleCommand1"である"Sing"を以下の仕様で実装したいと思います。
+
+コマンド"Sing"を 内部的に"Fight"と同じ扱いにする
+
+ff3_calc.py の必要な箇所があれば抜粋して提供するので、教えてください。
+
+///////////////
+”おどかす”Scare
+ジョブ"Bard"のコマンド"BattleCommand2"である"Scare"を以下の仕様で実装したいと思います。
+
+敵のレベルを3下げる。効果は累積可能。
+
+ff3_calc.py の必要な箇所があれば抜粋して提供するので、教えてください。
+
+////
+ボス以外の敵が逃げようとするのは以下の場合
+(Lowest character level) - (Enemy level) > 15
+敵が逃げ出す確率は
+Chance to run% = 100 - Monster hit%
+
+あなたのコード構造だと、
+味方側は char_stats: FinalCharacterStats（＝1人想定）
+敵側は enemy_stats: FinalEnemyStats
+味方レベル → char_stats.level
+敵レベル → enemy_stats.level（← Scare で下げたやつ）
+Monster hit% → enemy_stats.accuracy_percent（compute_enemy_final_stats で 0〜100 にしている）
+なので、そのままこの式に当てはめて実装できます。
+
+-----------
+“おうえん”Cheer
+ジョブ"Bard"のコマンド"BattleCommand3"である"Cheer"を以下の仕様で実装したいと思います。
+
+パーティメンバーの物理攻撃力を上げる。効果は累積可能。
+Base damage = Base damage + 10
+
+BattleActorState.cheer_bonus で 戦闘中のみ累積
+"Cheer" 実行ごとに 物理攻撃力を10上昇させる
+
+-----------
+
+-----------
+
+
+
+
+単体的への攻撃の対象を複数の敵にした場合：最終ダメージ=最終ダメージ/対象とする敵の数
+
+
+
+3) special コマンドの実装優先度
+Evoker だと次は「Summon のランダム効果（白/黒どっちが出るか）」が面白ポイントなので、
+special → ジョブ別ハンドラ、の枠を作っていくと楽しく伸ばせます。
+また挙動追加したくなったら、どのコマンドから実装するか一緒に決めよ〜。
+
+■ 敵のすばやさの代わりに回避率を利用
+elif char_attack_kind == "run":
+    # 逃走：簡易判定
+    # FinalCharacterStats は agility 属性
+    char_agi = char_stats.agility
+    # FinalEnemyStats には敏捷が無いので、逃げにくさの代理として回避率を利用（安全に動く簡易式）
+    enemy_weight = max(1.0, float(enemy_stats.evasion_percent))  # 0除算ガード
+    escape_chance = min(
+        0.95,
+        max(0.05, char_agi / (char_agi + enemy_weight))
+    )
+
+
+【Anywhere】
+  Restore（回復）: 1: Elixir, 2: Hi Potion, 3: Potion
+  Revive（蘇生）: 4: Phoenix Down
+  Cure（治療）: 5: Antidote, 6: Echo Herbs,, 7: Eye Drops, 8: Gold Needle, 9: Maiden's Kiss, 10: Mallet
+【Combat】
+  Damage（攻撃）: 11: Bomb Arm, 12: Antarctic Wind, 13: Arctic Wind, 14: Zeus's Wrath, 15: Heavenly Wrath, 16: Raven's Yawn, 17: Earthen Drums, 18: Chocobo's Wrath, 19: White Musk
+  Inflict（状態異常）: 20: Black Hole, 21: Black Musk, 22: Devil's Sigh, 23: Lamia Scale, 24: Sheep Pillow, 25: Tranquilizer
+  Support（補助/その他）: 26: Bacchus's Cider, 27: Lilith's Kiss, 28: Shining Curtain, 29: Turtle Shell
+
+
+各種状態異常について、一部実装しかけていますが、以下のルールで戦闘状態に反映するように、添付のff3_calc.py、実行時コードを修正したいと思います。
+
+"Poison":
+Type Parmanent（戦闘が終わっても継続する）
+・戦闘中は1ターンに1/16のhpを失う
+・移動中は1歩毎に1のhpを失う
+
+"Blind":
+Type Parmanent（戦闘が終わっても継続する）
+・物理攻撃と魔法攻撃の命中率が半減する
+
+"Mini":
+Type Parmanent（戦闘が終わっても継続する）
+・物理攻撃力が0に、物理防御力と魔法防御力が0になる
+
+"Silence":
+Type Parmanent（戦闘が終わっても継続する）
+・Spells、Special Attacksが使えなくなる
+
+"Toad":
+Type Parmanent（戦闘が終わっても継続する）
+・物理攻撃力が0に、物理防御力と魔法防御力が0になる
+
+"Petrification":
+Type Parmanent（戦闘が終わっても継続する）
+・戦闘を離脱（行動ができなくなり、攻撃の対象にもならなくなる）
+
+"KO":
+Type Parmanent（戦闘が終わっても継続する）
+・hpが0になると発動
+・先頭から離脱（行動ができなくなり、攻撃の対象にもならなくなる）
+
+"Confusion":
+Type Temporary（戦闘後解除される）
+・パーティメンバーをランダムで攻撃する
+・物理攻撃を受けると解除される
+
+"Sleep":
+Type Temporary（戦闘後解除される）
+・行動ができなくなる
+・物理攻撃を受けると解除される
+
+"Paralysis":
+Type Temporary（戦闘後解除される）
+・行動ができなくなる
+
+"Partial Petrification":
+Type Temporary（戦闘後解除される）
+・完全に石化するまでは影響がない
+・累積して1になれば石化する
+
+
+"Partial Petrification"には、
+"Partial Petrification (1/3)"
+"Partial Petrification (1/2)"
+"Partial Petrification (Full)"
+の３種がありますが、
+"Partial Petrification (1/3)"=1/3
+"Partial Petrification (1/2)"=1/2
+"Partial Petrification (Full)"=1
+として、累積が１になったときに、"Petrification"=true として処理するようにしたいと思います。
+このような処理を実装できますか。
+
+現在のff3_calc.pyを添付し、実行コードを下記します。
+
+＜実行時コード＞
+from __future__ import annotations
+
+import json
+import random
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Optional, Literal, Dict, Any, Tuple, List, Iterable
+from collections import defaultdict
+from importlib import reload
+
+import ff3_calc
+reload(ff3_calc)
+
+from ff3_calc import (
+    load_monsters, load_weapons, load_armors, load_spells, load_items,
+    BaseCharacter, EquipmentSet,
+    compute_character_final_stats, compute_enemy_final_stats,
+    physical_damage_char_to_enemy, element_relation_for_attack,
+    weapon_stats, spell_from_json, magic_damage_char_to_enemy,
+    BattleActorState, Status, print_magic_menu_by_level,
+    expand_spells_for_summons,  # ★ 召喚展開
+    allowed_spell_names_for_job,
+    character_from_party_entry, build_item_list, is_item_visible_in_context,
+)
+
+# --- ここから追加: 魔法一覧と選択メニュー ---
+def build_magic_list(
+    spells_by_name: Dict[str, Dict[str, Any]],
+    *,
+    allowed_names: Optional[Iterable[str]] = None,
+    cast_code: Optional[str] = None,
+) -> List[Tuple[str, str, int]]:
+
+    allowed_set = set(allowed_names) if allowed_names is not None else None
+
+    lst: List[Tuple[str, str, int]] = []
+    for name, s in spells_by_name.items():
+
+        if allowed_set is not None and name not in allowed_set:
+            continue
+
+        if cast_code is not None:
+            cast_by = s.get("CastBy")
+            if cast_by:
+                if isinstance(cast_by, str):
+                    ok = cast_code in [c.strip() for c in cast_by.split(",")]
+                elif isinstance(cast_by, list):
+                    ok = cast_code in cast_by
+                else:
+                    ok = False
+                if not ok:
+                    continue
+
+        t = s.get("Type", "")
+        if t not in ("Black Magic", "White Magic", "Summon Magic", "Summon"):
+            continue
+
+        level = int(s.get("Level", 0) or 0)
+
+        # 子召喚(Type="Summon")もメニュー上は Summon Magic 表示に寄せる
+        if t == "Summon":
+            t = "Summon Magic"
+
+        lst.append((name, t, level))
+
+    type_order = {"Black Magic": 0, "White Magic": 1, "Summon Magic": 2}
+    lst.sort(key=lambda x: (type_order.get(x[1], 99), x[2], x[0]))
+    return lst
+
+
+def choose_magic(char_state: BattleActorState) -> str:
+    """
+    MAGIC_LIST から番号で魔法を選ばせて「魔法名」を返す。
+    表示は Lv別まとめ形式。
+    """
+    if not MAGIC_LIST:
+        print("使用可能な魔法が定義されていません。")
+        return ""
+
+    print("使用する魔法を選んでください。")
+    print_magic_menu_by_level(MAGIC_LIST, char_state)
+
+    while True:
+        s = input(f"番号を入力してください (1-{len(MAGIC_LIST)}): ").strip()
+        if s.isdigit():
+            n = int(s)
+            if 1 <= n <= len(MAGIC_LIST):
+                spell_name, _, _ = MAGIC_LIST[n - 1]
+                return spell_name
+        print("入力が正しくありません。")
+
+
+# --- ここから追加: アイテム一覧と選択メニュー ---
+def print_item_menu_grouped(
+    item_list: List[str],                  # 所持アイテム名リスト
+    items_by_name: Dict[str, Dict[str, Any]],
+) -> List[str]:
+    """
+    item_list を items_by_name の情報で分類して表示。
+    戻り値：表示順のアイテム名リスト（番号→名前対応用）
+    """
+
+    anywhere_buckets = defaultdict(list)
+    combat_buckets   = defaultdict(list)
+
+    for name in item_list:
+        item_json = items_by_name.get(name)
+        if not item_json:
+            continue
+
+        loc = (item_json.get("Location") or "").strip()
+        effect_text = ((item_json.get("SpellInfo") or {}).get("Effect") or "").strip()
+
+        if loc.lower() == "anywhere":
+            cat = categorize_anywhere_item(effect_text)
+            anywhere_buckets[cat].append((name, qty))
+        elif loc.lower() == "combat":
+            cat = categorize_combat_item(effect_text)
+            combat_buckets[cat].append((name, qty))
+        else:
+            cat = "Other"
+            anywhere_buckets[cat].append((name, qty))
+
+    anywhere_order = ["Restore", "Revive", "Cure", "Other"]
+    combat_order   = ["Damage", "Inflict", "Support"]
+
+    shown_names: List[str] = []
+    idx = 1
+
+    if any(anywhere_buckets.get(c) for c in anywhere_order):
+        print("【Anywhere】")
+        for cat in anywhere_order:
+            names = anywhere_buckets.get(cat, [])
+            if not names:
+                continue
+            print(f"  {cat}:")
+            for n in names:
+                print(f"    {idx}: {n}")
+                shown_names.append(n)
+                idx += 1
+
+    if any(combat_buckets.get(c) for c in combat_order):
+        print("【Combat】")
+        for cat in combat_order:
+            names = combat_buckets.get(cat, [])
+            if not names:
+                continue
+            print(f"  {cat}:")
+            for n in names:
+                print(f"    {idx}: {n}")
+                shown_names.append(n)
+                idx += 1
+
+    return shown_names
+
+
+def categorize_anywhere_item(effect_text: str) -> str:
+    e = effect_text.lower()
+    if "revive from ko" in e:
+        return "Revive"
+    if "cure " in e:
+        return "Cure"
+    if "restore" in e:
+        return "Restore"
+    return "Other"
+
+
+def categorize_combat_item(effect_text: str) -> str:
+    e = effect_text.lower()
+    if "deal" in e and "damage" in e:
+        return "Damage"
+    if "inflict " in e:
+        return "Inflict"
+    return "Support"
+
+
+def build_grouped_item_menu(
+    item_list: List[Tuple[str, str, int]],  # [(name, itype, qty), ...]
+    items_by_name: Dict[str, Dict[str, Any]]
+) -> List[str]:
+
+    anywhere_buckets = defaultdict(list)  # {cat: [(name, qty), ...]}
+    combat_buckets   = defaultdict(list)
+
+    for name, itype, qty in item_list:
+        item_json = items_by_name.get(name, {})
+        spell_info = item_json.get("SpellInfo") or {}
+        effect_text = (spell_info.get("Effect") or "")
+
+        if itype.lower() == "anywhere":
+            cat = categorize_anywhere_item(effect_text)
+            anywhere_buckets[cat].append((name, qty))   # ★2要素だけ
+        elif itype.lower() == "combat":
+            cat = categorize_combat_item(effect_text)
+            combat_buckets[cat].append((name, qty))     # ★2要素だけ
+        else:
+            anywhere_buckets["Other"].append((name, qty))  # ★2要素だけ
+
+    anywhere_order = ["Restore", "Revive", "Cure", "Other"]
+    combat_order   = ["Damage", "Inflict", "Support"]
+
+    label_anywhere = {
+        "Restore": "Restore（回復）",
+        "Revive": "Revive（蘇生）",
+        "Cure": "Cure（治療）",
+        "Other": "Other（その他）",
+    }
+    label_combat = {
+        "Damage": "Damage（攻撃）",
+        "Inflict": "Inflict（状態異常）",
+        "Support": "Support（補助/その他）",
+    }
+
+    # =========================================================
+    # ★ Damage（攻撃）だけ「属性→威力→名前」でソート
+    #    entries は (name, qty) なので name は x[0]
+    # =========================================================
+    ELEMENT_ORDER = {
+        "": 0, "none": 0, "-": 0,
+        "ice": 1,
+        "wind": 2,
+        "lightning": 3, "thunder": 3,
+        "earth": 4,
+        "holy": 5,
+        "dark": 6,
+        "fire": 7,
+    }
+
+    def damage_sort_key(name: str):
+        item_json = items_by_name.get(name, {})
+        spell_info = item_json.get("SpellInfo") or {}
+
+        elem_raw = spell_info.get("Element") or spell_info.get("Elements") or ""
+        if isinstance(elem_raw, list):
+            elem = (elem_raw[0] if elem_raw else "")
+        else:
+            elem = str(elem_raw)
+
+        elem_l = elem.strip().lower()
+        elem_rank = ELEMENT_ORDER.get(elem_l, 99)
+
+        power = spell_info.get("BasePower")
+        if power is None:
+            power = item_json.get("Value", 0) or 0
+        power = int(power)
+
+        return (elem_rank, -power, name)
+
+    if combat_buckets.get("Damage"):
+        combat_buckets["Damage"].sort(key=lambda x: damage_sort_key(x[0]))  # ★x[0]=name
+
+    shown_names: List[str] = []
+    idx = 1
+
+    def print_one_line(cat_label: str, entries: List[Tuple[str, int]]):
+        nonlocal idx, shown_names
+        if not entries:
+            return
+        parts = []
+        for n, q in entries:
+            parts.append(f"{idx}: {n}({q})")
+            shown_names.append(n)
+            idx += 1
+        print(f"  {cat_label}: " + ", ".join(parts))
+
+    if any(anywhere_buckets.get(c) for c in anywhere_order):
+        print("【Anywhere】")
+        for cat in anywhere_order:
+            entries = anywhere_buckets.get(cat, [])
+            print_one_line(label_anywhere.get(cat, cat), entries)
+
+    if any(combat_buckets.get(c) for c in combat_order):
+        print("【Combat】")
+        for cat in combat_order:
+            entries = combat_buckets.get(cat, [])
+            print_one_line(label_combat.get(cat, cat), entries)
+
+    return shown_names
+
+
+def choose_item() -> str:
+    """
+    ITEM_LIST から番号でアイテムを選ばせて、選ばれた「アイテム名」を返す。
+    Effect分類つき表示版。
+    """
+    if not ITEM_LIST:
+        print("使用可能なアイテムがありません。")
+        return ""
+
+    print("使用するアイテムを選んでください。")
+    menu_order = build_grouped_item_menu(ITEM_LIST, items_by_name)
+
+    if not menu_order:
+        print("使用可能なアイテムがありません。")
+        return ""
+
+    while True:
+        s = input(f"番号を入力してください (1-{len(menu_order)}): ").strip()
+        if s.isdigit():
+            n = int(s)
+            if 1 <= n <= len(menu_order):
+                return menu_order[n - 1]
+        print("入力が正しくありません。")
+
+
+def is_out_of_battle(state: BattleActorState) -> bool:
+    """そのキャラが戦闘から離脱しているかどうかを判定する"""
+    return (
+        state.hp <= 0
+        or Status.KO in state.statuses
+        or Status.PETRIFY in state.statuses
+    )
+
+
+def simulate_battle_once(
+    char_name: str,
+    enemy_name: str,
+    char_stats: ff3_calc.FinalCharacterStats,
+    enemy_stats: ff3_calc.FinalEnemyStats,
+    enemy_json: dict,
+    spells_by_name: dict | None = None,
+    char_attack_kind: str = "physical",
+    spell_name: str | None = None,
+    max_turns: int = 100,
+    rng: random.Random | None = None,
+) -> tuple[str, int]:
+    """
+    1バトル分を最後までシミュレートして結果を返す。
+    """
+    if rng is None:
+        rng = random.Random()
+
+    char_state = ff3_calc.BattleActorState(
+        hp=char_stats.max_hp,
+        max_hp=char_stats.max_hp,
+    )
+    enemy_state = ff3_calc.BattleActorState(
+        hp=enemy_stats.hp,
+        max_hp=enemy_stats.hp,
+    )
+
+    for turn in range(1, max_turns + 1):
+        if char_attack_kind == "magic":
+            if spells_by_name is None or spell_name is None:
+                raise ValueError("magic 攻撃をする場合は spells_by_name と spell_name が必要です。")
+
+            result = ff3_calc.simulate_one_turn_with_spell_name(
+                char_name=char_name,
+                enemy_name=enemy_name,
+                char_stats=char_stats,
+                enemy_stats=enemy_stats,
+                enemy_json=enemy_json,
+                char_state=char_state,
+                enemy_state=enemy_state,
+                spell_name=spell_name,
+                spells_by_name=spells_by_name,
+                job=job_data,
+                rng=rng,
+            )
+        else:
+            result = ff3_calc.simulate_one_turn(
+                char_name=char_name,
+                enemy_name=enemy_name,
+                char_stats=char_stats,
+                enemy_stats=enemy_stats,
+                enemy_json=enemy_json,
+                char_state=char_state,
+                enemy_state=enemy_state,
+                char_attack_kind="physical",
+                char_weapon_hand="main",
+                rng=rng,
+            )
+
+        char_state = result.char_state
+        enemy_state = result.enemy_state
+
+        char_out = is_out_of_battle(char_state)
+        enemy_out = is_out_of_battle(enemy_state)
+
+        if char_out and enemy_out:
+            return "draw", turn
+        elif enemy_out:
+            return "char", turn
+        elif char_out:
+            return "enemy", turn
+
+    return "draw", max_turns
+
+
+def simulate_many_battles(
+    n_trials: int,
+    char_name: str,
+    enemy_name: str,
+    char_stats: ff3_calc.FinalCharacterStats,
+    enemy_stats: ff3_calc.FinalEnemyStats,
+    enemy_json: dict,
+    spells_by_name: dict | None = None,
+    char_attack_kind: str = "physical",
+    spell_name: str | None = None,
+    max_turns: int = 100,
+    seed: int | None = None,
+) -> dict:
+    """
+    同じ条件で n_trials 回バトルを行い、勝率や平均ターン数を集計する。
+    """
+    rng = random.Random(seed)
+
+    wins_char = 0
+    wins_enemy = 0
+    draws = 0
+    turn_list: list[int] = []
+
+    for _ in range(n_trials):
+        winner, turns = simulate_battle_once(
+            char_name=char_name,
+            enemy_name=enemy_name,
+            char_stats=char_stats,
+            enemy_stats=enemy_stats,
+            enemy_json=enemy_json,
+            spells_by_name=spells_by_name,
+            char_attack_kind=char_attack_kind,
+            spell_name=spell_name,
+            max_turns=max_turns,
+            rng=rng,
+        )
+        turn_list.append(turns)
+
+        if winner == "char":
+            wins_char += 1
+        elif winner == "enemy":
+            wins_enemy += 1
+        else:
+            draws += 1
+
+    total = n_trials
+    win_rate_char = wins_char / total if total > 0 else 0.0
+    win_rate_enemy = wins_enemy / total if total > 0 else 0.0
+    draw_rate = draws / total if total > 0 else 0.0
+    avg_turns = sum(turn_list) / len(turn_list) if turn_list else 0.0
+
+    return {
+        "trials": total,
+        "wins_char": wins_char,
+        "wins_enemy": wins_enemy,
+        "draws": draws,
+        "win_rate_char": win_rate_char,
+        "win_rate_enemy": win_rate_enemy,
+        "draw_rate": draw_rate,
+        "average_turns": avg_turns,
+    }
+
+# =========================
+# JSON 読み込み
+# =========================
+monsters = load_monsters(Path("ffiii_monsters.json"))
+weapons  = load_weapons(Path("ffiii_weapons.json"))
+armors   = load_armors(Path("ffiii_armors.json"))
+spells   = load_spells(Path("ffiii_spells.json"))
+items_by_name = load_items(Path("ffiii_items.json"))
+jobs_by_name  = ff3_calc.load_jobs(Path("ffiii_jobs_compact.json"))
+
+with Path("ffiii_savedata.json").open(encoding="utf-8") as f:
+    save = json.load(f)
+
+# =========================
+# パーティ先頭キャラを取得
+# =========================
+party_entry = save["party"][0]
+job_name = party_entry["job"]
+job_data = jobs_by_name[job_name]
+
+
+# CastBy を併用したい場合の job → code
+JOB_CAST_CODE = {
+    "Red Mage": "RM",
+    "White Mage": "WM",
+    "Black Mage": "BM",
+    "Evoker": "Ev",
+    "Devout": "De",
+    "Magus": "Ma",
+    "Summoner": "Su",
+    "Sage": "Sa",
+}
+
+# =========================
+# 召喚魔法の子Spellsを展開した辞書
+# =========================
+spells_expanded = expand_spells_for_summons(spells)
+
+# そのジョブが使える魔法名
+allowed_names = allowed_spell_names_for_job(job_data)
+cast_code = JOB_CAST_CODE.get(job_name)
+
+# 魔法メニュー構築（★ allowed_names / cast_code はここで渡す）
+MAGIC_LIST = build_magic_list(
+    spells_expanded,
+    allowed_names=allowed_names,
+    cast_code=cast_code,
+)
+
+# アイテム一覧（ff3_calc に build_item_list がある場合）
+if build_item_list is None:
+    print("※ build_item_list が ff3_calc に無いため ITEM_LIST は空です。必要なら自作してください。")
+    ITEM_LIST = []
+else:
+    # ★ party_entry（キャラの所持品）を渡す必要がある！
+    ITEM_LIST: List[Tuple[str, str]] = build_item_list(items_by_name, save)
+
+
+# =========================
+# セーブデータ → キャラ最終ステ
+# =========================
+base, eq, char_state = character_from_party_entry(party_entry, jobs_by_name)
+char_final = compute_character_final_stats(base, eq, weapons, armors)
+
+# =========================
+# 敵の例：名前で選ぶ（必要に応じて変更）
+# =========================
+enemy_name = "Flyer"  # ←好きな敵名に変えてください
+enemy_json = monsters[enemy_name]
+enemy_final = compute_enemy_final_stats(enemy_json)
+
+enemy_state = BattleActorState(
+    hp=enemy_final.hp,
+    max_hp=enemy_final.hp,
+)
+
+print(f"キャラ: {party_entry['name']} / ジョブ: {job_name}")
+print(f"敵: {enemy_name}")
+print(f"魔法数: {len(MAGIC_LIST)} / アイテム数: {len(ITEM_LIST)}")
+
+rng = random.Random()
+
+for turn in range(1, 11):
+
+    # 離脱チェック
+    if is_out_of_battle(char_state):
+        print("ルーネスは戦闘不能状態のため、戦闘を続行できません。")
+        break
+    if is_out_of_battle(enemy_state):
+        print(f"{enemy_json['name']}はすでに戦闘不能です。")
+        break
+
+    # ターン開始表示
+    print(
+        f"--- Turn {turn} ---\n"
+        + ff3_calc.format_state_line("ルーネス", char_state)
+        + " / "
+        + ff3_calc.format_state_line(enemy_json["name"], enemy_state)
+    )
+
+    # ※旧「1/2/3で攻撃種別を選ぶ」UIは廃止
+    # print("攻撃方法を選んでください。")
+    # print("  1: 物理攻撃")
+    # print("  2: 魔法攻撃")
+    # print("  3: アイテムを使う")
+    # mode = input("番号を入力してください (1/2/3): ").strip()
+
+    # --- ジョブの戦闘コマンドメニュー（Job.raw から取る） ---
+    commands = [
+        job_data.raw[f"BattleCommand{i}"]["Command"]
+        for i in range(1, 5)
+        if job_data.raw.get(f"BattleCommand{i}")
+    ]
+    
+    print("使用するコマンドを選んでください。")
+    for idx, cmd in enumerate(commands, start=1):
+        print(f"  {idx}: {cmd}")
+    
+    while True:
+        s = input(f"番号を入力してください (1-{len(commands)}): ").strip()
+        if s.isdigit() and 1 <= int(s) <= len(commands):
+            selected_command = commands[int(s) - 1]
+            break
+        print("入力が正しくありません。")
+    
+    normalized_kind = ff3_calc.normalize_battle_command(selected_command)
+
+    if not commands:
+        commands = ["Fight", "Defend", "Item", "Run"]
+
+# コマンド実行
+    if normalized_kind == "physical":
+        result_turn = ff3_calc.simulate_one_turn(
+            char_name="ルーネス",
+            enemy_name=enemy_json["name"],
+            char_stats=char_final,
+            enemy_stats=enemy_final,
+            enemy_json=enemy_json,
+            char_state=char_state,
+            enemy_state=enemy_state,
+            char_battle_command=selected_command,
+            rng=rng,
+        )
+
+    elif normalized_kind == "magic":
+        spell_name = choose_magic(char_state)
+        if not spell_name:
+            print("魔法が選択されなかったため、物理攻撃を行います。")
+            result_turn = ff3_calc.simulate_one_turn(
+                char_name="ルーネス",
+                enemy_name=enemy_json["name"],
+                char_stats=char_final,
+                enemy_stats=enemy_final,
+                enemy_json=enemy_json,
+                char_state=char_state,
+                enemy_state=enemy_state,
+                char_battle_command="Fight",
+                rng=rng,
+            )
+        else:
+            result_turn = ff3_calc.simulate_one_turn_with_spell_name(
+                char_name="ルーネス",
+                enemy_name=enemy_json["name"],
+                char_stats=char_final,
+                enemy_stats=enemy_final,
+                enemy_json=enemy_json,
+                char_state=char_state,
+                enemy_state=enemy_state,
+                spell_name=spell_name,
+                spells_by_name=spells_expanded,
+                job=job_data,
+                rng=rng,
+            )
+
+    elif normalized_kind == "item":
+        ITEM_LIST = ff3_calc.build_item_list(items_by_name, save, in_battle=True)
+        ITEM_LIST = [
+            (name, itype, qty)
+            for (name, itype, qty) in ITEM_LIST
+            if is_item_visible_in_context(items_by_name.get(name, {}), in_combat=True)
+        ]
+
+        if not ITEM_LIST:
+            print("使用可能なアイテムがないため、物理攻撃を行います。")
+            result_turn = ff3_calc.simulate_one_turn(
+                char_name="ルーネス",
+                enemy_name=enemy_json["name"],
+                char_stats=char_final,
+                enemy_stats=enemy_final,
+                enemy_json=enemy_json,
+                char_state=char_state,
+                enemy_state=enemy_state,
+                char_battle_command="Fight",
+                rng=rng,
+            )
+        else:
+            item_name = choose_item()
+            result_turn = ff3_calc.simulate_one_turn_with_item_name(
+                char_name="ルーネス",
+                enemy_name=enemy_json["name"],
+                char_stats=char_final,
+                enemy_stats=enemy_final,
+                enemy_json=enemy_json,
+                char_state=char_state,
+                enemy_state=enemy_state,
+                item_name=item_name,
+                items_by_name=items_by_name,
+                rng=rng,
+                save=save,
+            )
+
+    elif normalized_kind == "defend":
+        result_turn = ff3_calc.simulate_one_turn(
+            char_name="ルーネス",
+            enemy_name=enemy_json["name"],
+            char_stats=char_final,
+            enemy_stats=enemy_final,
+            enemy_json=enemy_json,
+            char_state=char_state,
+            enemy_state=enemy_state,
+            char_battle_command="Defend",
+            rng=rng,
+        )
+
+    elif normalized_kind == "run":
+        result_turn = ff3_calc.simulate_one_turn(
+            char_name="ルーネス",
+            enemy_name=enemy_json["name"],
+            char_stats=char_final,
+            enemy_stats=enemy_final,
+            enemy_json=enemy_json,
+            char_state=char_state,
+            enemy_state=enemy_state,
+            char_battle_command="Run",
+            rng=rng,
+        )
+
+    else:
+        print(f"《{selected_command}》は未実装のため、物理攻撃として扱います。")
+        result_turn = ff3_calc.simulate_one_turn(
+            char_name="ルーネス",
+            enemy_name=enemy_json["name"],
+            char_stats=char_final,
+            enemy_stats=enemy_final,
+            enemy_json=enemy_json,
+            char_state=char_state,
+            enemy_state=enemy_state,
+            char_battle_command="Fight",
+            rng=rng,
+        )
+
+    # ログ表示
+    for line in result_turn.logs:
+        print(line)
+
+    # ★戦闘終了理由の一般化
+    if result_turn.end_reason != "continue":
+        if result_turn.end_reason == "escaped":
+            print("戦闘から離脱しました。")
+        elif result_turn.end_reason == "enemy_defeated":
+            print(f"{enemy_json['name']}を倒した！")
+        elif result_turn.end_reason == "char_defeated":
+            print("ルーネスは戦闘不能になった…")
+        elif result_turn.end_reason == "forced_end":
+            print("イベントにより戦闘が終了しました。")
+        break
+
+    # 状態更新
+    char_state = result_turn.char_state
+    enemy_state = result_turn.enemy_state
+
+    # ターン後の離脱チェック
+    if is_out_of_battle(char_state) or is_out_of_battle(enemy_state):
+        break

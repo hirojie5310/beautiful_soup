@@ -1,0 +1,30 @@
+以下のモジュールに分割しているとき、
+
+battle_sim: バトル/ラウンド/ターン全体を回す関数
+char_build: キャラ構築
+constants: 世界のルールそのもの ゲーム仕様・ロジック定数
+data_loader: “ファイル → 生dict” まで（I/Oと最低限のindex化）
+debug_utils: 開発用ツール
+elements: 属性
+enemy_build: 敵構築
+enums: 変数のような機能を持つ一意の定数
+initiative: 行動順
+input_ui: ユーザー入力
+inventory: アイテム関連（在庫系）
+item_effects: アイテム関連（効果系）
+life_check: 生存確認＋ターゲット選択
+logging: ログ出力
+magic_aoe: 全体化
+magic_damage: 魔法関連
+magic_menu: メニュー生成まわり
+models: Job / Character / Enemy などデータクラス（dataclass定義 +（必要なら）from_dict 系）
+phys_damage: 通常攻撃関連
+runtime_state: 実行時状態（一括ロードして保持（グローバル即時I/Oは避ける））
+spell_repo: 魔法定義の検索（「魔法DB参照で補完する」処理）
+start_of_turn: ターン開始
+state_view: 状態を表示
+status_effects: 状態異常, バフ/デバフ
+turn_logic: 1キャラor1敵の行動フェーズ
+
+…のモジュールに格納した以下の関数等の中に、別のモジュールに格納した方がよいものはあるでしょうか。
+

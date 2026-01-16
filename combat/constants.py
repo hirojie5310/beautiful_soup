@@ -1,0 +1,73 @@
+# ============================================================
+# constants: 世界のルールそのもの ゲーム仕様・ロジック定数
+# 属性相性、コマンド種別、状態異常種別 ❌ 基本変更しない
+
+# JOB_CAST_CODE: 「そのジョブが実際に詠唱できる魔法」に絞り込むためのキー
+# OFFENSIVE_WHITE: 白魔法の中でも「攻撃魔法」として扱う魔法名の集合（HolyやAero系など）で、白魔ダメージ計算対象の判定に使われる
+# OFFENSIVE_WHITE_ELEMENTS: 白魔法を名前ではなく「属性」で攻撃判定するための属性集合（holy/air）で、SpellInfoにnameが無い場合の代替判定に使われる
+# COMMAND_TO_KIND: 戦闘コマンド文字列（Fight,Magic,Item,Runなど）をBattleKindに正規化変換するための対応表
+# _ELEMENT_SYNONYMS: 属性名の同義語（例:fire=flameなど）を正規化・展開するための対応辞書で、属性相性計算の統一処理に使用される
+# STATUS_NAME_MAP: AoE状態異常専用関数用
+# MASTER_SPELLS_BY_NAME（宣言だけ置く（中身の代入は data_loader 側））: spells.jsonから読み込んだ魔法定義を「魔法名→魔法JSON」の辞書として全体共有するためのグローバルキャッシュ
+# ============================================================
+
+from typing import Dict, Any
+
+from combat.enums import Status
+from combat.enums import BattleKind
+
+
+# CastBy を併用したい場合の job → code
+JOB_CAST_CODE = {
+    "Red Mage": "RM",
+    "White Mage": "WM",
+    "Black Mage": "BM",
+    "Evoker": "Ev",
+    "Devout": "De",
+    "Magus": "Ma",
+    "Summoner": "Su",
+    "Sage": "Sa",
+}
+
+# 白魔で「攻撃扱い」する名前と属性
+OFFENSIVE_WHITE = {"holy", "aero", "aeroga"}  # 必要なら追加
+OFFENSIVE_WHITE_ELEMENTS = {"holy", "air"}  # Aero系/ホーリーの属性
+
+COMMAND_TO_KIND: Dict[str, BattleKind] = {
+    # 物理
+    "Fight": "physical",
+    "Attack": "physical",
+    "Sing": "physical",  # ★ 追加：Bard の Sing は Fight と同じ物理攻撃
+    # 魔法
+    "Magic": "magic",
+    # アイテム
+    "Item": "item",
+    # 防御
+    "Defend": "defend",
+    # ジャンプ
+    "Jump": "jump",
+    # 逃走（表記揺れを全部吸収）
+    "Run": "run",
+    "Flee": "run",
+    "Run(Flee)": "run",
+    "Run (Flee)": "run",
+}
+
+_ELEMENT_SYNONYMS = {
+    "air": {"air", "wind"},
+    "wind": {"air", "wind"},
+    "thunder": {"thunder", "lightning"},
+    "lightning": {"thunder", "lightning"},
+}
+
+# AoE状態異常専用関数用
+STATUS_NAME_MAP = {
+    "paralysis": Status.PARALYZE,
+    # 必要なら追加
+    # "confusion": Status.CONFUSION,
+    # "toad": Status.TOAD,
+    # ...
+}
+
+# spells.json の name → spell 定義を保持するためのグローバル
+MASTER_SPELLS_BY_NAME: Dict[str, Dict[str, Any]] = {}

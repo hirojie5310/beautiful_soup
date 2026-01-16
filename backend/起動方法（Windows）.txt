@@ -1,0 +1,30 @@
+起動方法（Windows）:
+backendフォルダで以下を実行します。
+
+例：venv作成〜起動
+(base) C:\Users\hirot>subst X: "C:\Users\hirot\iCloudDrive\iCloud~AsheKube~Carnets"
+(base) C:\Users\hirot>X:
+(base) X:\>cd beautiful_soup/backend
+python -m venv .venv
+.\.venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port 8000
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload --reload-dir .
+
+(.venv) (base) X:\beautiful_soup\backend>uvicorn main:app --host 0.0.0.0 --port 8000
+INFO:     Started server process [34708]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+
+
+<Windows_IP>の確認方法:
+ipconfig
+(base) C:\Users\hirot>ipconfig
+--------------------
+iPhone Safari：
+http://<Windows_IP=192.168.3.25>:8000/ を開く
+
+{"message":"FastAPI is running"}
+と表示されれば成功
+

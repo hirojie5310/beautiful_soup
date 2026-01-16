@@ -1,0 +1,2404 @@
+{
+  "meta": {
+    "generated_at": "2025-11-13T22:18:14.393050",
+    "count": 64,
+    "error_count": 0,
+    "source": "https://guides.gamercorner.net/ffiii/armors/"
+  },
+  "armors": [
+    {
+      "name": "Leather Shield",
+      "Type": "Shield",
+      "ArmorType": "Shield",
+      "Defense": 3,
+      "Evasion": 0.03,
+      "BaseMagicDefense": 2,
+      "Price": "40 gil",
+      "Value": 20,
+      "EquippedBy": [
+        "OK",
+        "Wa",
+        "RM",
+        "Kn",
+        "Th",
+        "Dr",
+        "Vi",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Ur",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Leather Shield",
+          "Map": "Altar Cave B3",
+          "Notes": "West side of main hall",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Leather Shield",
+          "Map": "Altar Cave B3",
+          "Notes": "Past rock wall",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Leather Shield",
+          "Map": "Castle Sasune",
+          "Notes": "Hidden west room chest in main keep 3F",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Onion Shield",
+      "Type": "Shield",
+      "ArmorType": "Shield",
+      "Defense": 48,
+      "Evasion": 0.48,
+      "BaseMagicDefense": 48,
+      "Value": 32750,
+      "EquippedBy": [
+        "OK"
+      ],
+      "StatusImmunities": [
+        "Poison",
+        "Blind",
+        "Mini",
+        "Silence",
+        "Toad",
+        "Petrification",
+        "KO",
+        "Confusion",
+        "Sleep",
+        "Paralysis",
+        "Partial Petrification"
+      ],
+      "Monsters": [
+        {
+          "Name": "Green Dragon",
+          "HP": "10,000",
+          "Gil": "2,900 gil",
+          "Steal Rate": "-",
+          "Drop Chance": "9.4%"
+        },
+        {
+          "Name": "Red Dragon",
+          "HP": "15,000",
+          "Gil": "5,800 gil",
+          "Steal Rate": "-",
+          "Drop Chance": "1.6%"
+        }
+      ]
+    },
+    {
+      "name": "Mythril Shield",
+      "Type": "Shield",
+      "ArmorType": "Shield",
+      "Defense": 5,
+      "Evasion": 0.07,
+      "BaseMagicDefense": 7,
+      "Price": "180 gil",
+      "Value": 90,
+      "EquippedBy": [
+        "OK",
+        "Wa",
+        "RM",
+        "Kn",
+        "Th",
+        "Dr",
+        "Vi",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Kazus",
+          "Shop": "Armor"
+        },
+        {
+          "Map": "Canaan",
+          "Shop": "Armor"
+        }
+      ]
+    },
+    {
+      "name": "Ice Shield",
+      "Type": "Shield",
+      "ArmorType": "Shield",
+      "Defense": 8,
+      "Evasion": 0.09,
+      "BaseMagicDefense": 8,
+      "Price": "1,800 gil",
+      "Value": 900,
+      "ElementalResist": [
+        "Fire"
+      ],
+      "EquippedBy": [
+        "OK",
+        "Wa",
+        "RM",
+        "Kn",
+        "Th",
+        "Dr",
+        "Vi",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Dwarven Hollow",
+          "Shop": "Armor"
+        }
+      ]
+    },
+    {
+      "name": "Heroic Shield",
+      "Type": "Shield",
+      "ArmorType": "Shield",
+      "Defense": 10,
+      "Evasion": 0.1,
+      "BaseMagicDefense": 12,
+      "Price": "3,500 gil",
+      "Value": 1750,
+      "EquippedBy": [
+        "Kn",
+        "Dr",
+        "Vi",
+        "Ni"
+      ],
+      "StatusImmunities": [
+        "Petrification",
+        "Sleep"
+      ],
+      "Shops": [
+        {
+          "Map": "Amur",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Heroic Shield",
+          "Map": "Dwarven Hollow",
+          "Notes": "Chest in lower area",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Demon Shield",
+      "Type": "Shield",
+      "ArmorType": "Shield",
+      "Defense": 12,
+      "Evasion": 0.14,
+      "BaseMagicDefense": 18,
+      "Price": "12,500 gil",
+      "Value": 6250,
+      "EquippedBy": [
+        "MK",
+        "Ni"
+      ],
+      "StatusImmunities": [
+        "Toad",
+        "Confusion"
+      ],
+      "Shops": [
+        {
+          "Map": "Falgabard",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Demon Shield",
+          "Map": "Falgabard",
+          "Notes": "Grass on southeast island",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Diamond Shield",
+      "Type": "Shield",
+      "ArmorType": "Shield",
+      "Defense": 13,
+      "Evasion": 0.14,
+      "BaseMagicDefense": 15,
+      "Price": "18,000 gil",
+      "Value": 9000,
+      "ElementalResist": [
+        "Lightning"
+      ],
+      "EquippedBy": [
+        "Kn",
+        "Dr",
+        "Vi",
+        "Ni"
+      ],
+      "StatusImmunities": [
+        "Toad",
+        "Confusion"
+      ],
+      "Shops": [
+        {
+          "Map": "Ancient Ruins B1",
+          "Shop": "Armor"
+        },
+        {
+          "Map": "The Invincible",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Diamond Shield",
+          "Map": "Sunken Cave B2",
+          "Notes": "West chest",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Diamond Shield",
+          "Map": "Sunken Cave B3",
+          "Notes": "Chest on southeast island",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Diamond Shield",
+          "Map": "Temple of Time B3",
+          "Notes": "Chest in west room",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Aegis Shield",
+      "Type": "Shield",
+      "ArmorType": "Shield",
+      "Defense": 16,
+      "Evasion": 0.16,
+      "BaseMagicDefense": 25,
+      "Bonus": "Agility +5",
+      "Value": 14000,
+      "EquippedBy": [
+        "Kn",
+        "Dr",
+        "Vi",
+        "Ni"
+      ],
+      "StatusImmunities": [
+        "Toad",
+        "Petrification",
+        "Confusion",
+        "Sleep"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Aegis Shield",
+          "Map": "Sunken Cave B3",
+          "Notes": "Top right chest in hidden room",
+          "Guarded By": "Zombie Dragon"
+        },
+        {
+          "Treasure": "Aegis Shield",
+          "Map": "Saronia Catacombs 3F",
+          "Notes": "Right northeast path chest",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Aegis Shield",
+          "Map": "Lake Dohr B2",
+          "Notes": "Chest in northern group",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Genji Shield",
+      "Type": "Shield",
+      "ArmorType": "Shield",
+      "Defense": 20,
+      "Evasion": 0.18,
+      "BaseMagicDefense": 35,
+      "Bonus": "Agility +5, Strength +5",
+      "Value": 19000,
+      "EquippedBy": [
+        "MK",
+        "Ni"
+      ],
+      "StatusImmunities": [
+        "Poison",
+        "Toad",
+        "Petrification",
+        "Confusion",
+        "Sleep",
+        "Partial Petrification"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Genji Shield",
+          "Map": "Cave of Shadows B6",
+          "Notes": "South chest",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Crystal Shield",
+      "Type": "Shield",
+      "ArmorType": "Shield",
+      "Defense": 20,
+      "Evasion": 0.2,
+      "BaseMagicDefense": 30,
+      "Bonus": "Vitality +5, Agility +5, Strength +5",
+      "Price": "50,000 gil",
+      "Value": 25000,
+      "EquippedBy": [
+        "OK",
+        "Wa",
+        "RM",
+        "Kn",
+        "Dr",
+        "Vi",
+        "MK",
+        "Ni"
+      ],
+      "StatusImmunities": [
+        "Mini",
+        "Toad",
+        "Petrification",
+        "Confusion",
+        "Sleep"
+      ],
+      "Shops": [
+        {
+          "Map": "Eureka B7",
+          "Shop": "Weapons & Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Crystal Shield",
+          "Map": "Ancient's Maze Left side",
+          "Notes": "Chest in eastern alcove",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Crystal Shield",
+          "Map": "Crystal Tower 7F",
+          "Notes": "Northwest chest",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Leather Cap",
+      "Type": "Helm",
+      "ArmorType": "Helm",
+      "Defense": 1,
+      "Evasion": 0.01,
+      "BaseMagicDefense": 1,
+      "Price": "15 gil",
+      "Value": 7,
+      "EquippedBy": [
+        "OK",
+        "Wa",
+        "Mo",
+        "WM",
+        "BM",
+        "RM",
+        "Ra",
+        "Kn",
+        "Th",
+        "Sc",
+        "Ge",
+        "Dr",
+        "Vi",
+        "BB",
+        "Ev",
+        "Ba",
+        "Ma",
+        "De",
+        "Su",
+        "Sa",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Ur",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Leather Cap ×4",
+          "Map": "Altar Cave B3",
+          "Notes": "Starting equipment",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Onion Helm",
+      "Type": "Helm",
+      "ArmorType": "Helm",
+      "Defense": 48,
+      "Evasion": 0.48,
+      "BaseMagicDefense": 48,
+      "Value": 32750,
+      "ElementalResist": [
+        "Fire",
+        "Cold",
+        "Air",
+        "Earth",
+        "Recovery"
+      ],
+      "EquippedBy": [
+        "OK"
+      ],
+      "StatusImmunities": [
+        "Poison",
+        "Blind",
+        "Mini",
+        "Silence",
+        "Toad",
+        "Petrification",
+        "KO",
+        "Confusion",
+        "Sleep",
+        "Paralysis",
+        "Partial Petrification"
+      ],
+      "Monsters": [
+        {
+          "Name": "Green Dragon",
+          "HP": "10,000",
+          "Gil": "2,900 gil",
+          "Steal Rate": "-",
+          "Drop Chance": "9.4%"
+        },
+        {
+          "Name": "Yellow Dragon",
+          "HP": "10,000",
+          "Gil": "5,400 gil",
+          "Steal Rate": "-",
+          "Drop Chance": "4.7%"
+        }
+      ]
+    },
+    {
+      "name": "Mythril Helm",
+      "Type": "Helm",
+      "ArmorType": "Helm",
+      "Defense": 2,
+      "Evasion": 0.04,
+      "BaseMagicDefense": 4,
+      "Price": "130 gil",
+      "Value": 65,
+      "EquippedBy": [
+        "OK",
+        "Wa",
+        "RM",
+        "Kn",
+        "Th",
+        "Dr",
+        "Vi",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Kazus",
+          "Shop": "Armor"
+        },
+        {
+          "Map": "Canaan",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Mythril Helm",
+          "Map": "Kazus",
+          "Notes": "Grass in northwest",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Shell Helm",
+      "Type": "Helm",
+      "ArmorType": "Helm",
+      "Defense": 3,
+      "Evasion": 0.05,
+      "BaseMagicDefense": 5,
+      "Value": 225,
+      "EquippedBy": [
+        "OK",
+        "Wa",
+        "Kn",
+        "Dr",
+        "Vi",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Shell Helm",
+          "Map": "Nepto Temple B1",
+          "Notes": "South chest in west side room",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Ice Helm",
+      "Type": "Helm",
+      "ArmorType": "Helm",
+      "Defense": 4,
+      "Evasion": 0.06,
+      "BaseMagicDefense": 6,
+      "Price": "1,200 gil",
+      "Value": 600,
+      "ElementalResist": [
+        "Fire"
+      ],
+      "EquippedBy": [
+        "Wa",
+        "RM",
+        "Ra",
+        "Kn",
+        "Th",
+        "Dr",
+        "Vi",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Dwarven Hollow",
+          "Shop": "Armor"
+        }
+      ]
+    },
+    {
+      "name": "Headband",
+      "Type": "Helm",
+      "ArmorType": "Helm",
+      "Defense": 4,
+      "Evasion": 0.06,
+      "BaseMagicDefense": 4,
+      "Price": "1,200 gil",
+      "Value": 600,
+      "EquippedBy": [
+        "Mo",
+        "BB",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Armor"
+        }
+      ]
+    },
+    {
+      "name": "Scholar Hat",
+      "Type": "Helm",
+      "ArmorType": "Helm",
+      "Defense": 5,
+      "Evasion": 0.1,
+      "BaseMagicDefense": 6,
+      "Price": "7,500 gil",
+      "Value": 3750,
+      "EquippedBy": [
+        "WM",
+        "BM",
+        "Sc",
+        "Ma",
+        "De",
+        "Sa",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Southwest Saronia",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Scholar Hat",
+          "Map": "Dwarven Hollow",
+          "Notes": "Chest in lower area",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Scholar Hat",
+          "Map": "Saronia Castle",
+          "Notes": "Chest in secret room in tower bedroom",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Black Cowl",
+      "Type": "Helm",
+      "ArmorType": "Helm",
+      "Defense": 5,
+      "Evasion": 0.08,
+      "BaseMagicDefense": 5,
+      "Bonus": "Strength +5",
+      "Price": "2,000 gil",
+      "Value": 1000,
+      "EquippedBy": [
+        "Th",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Amur",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Black Cowl",
+          "Map": "Amur",
+          "Notes": "Grassy Island",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Chakra Band",
+      "Type": "Helm",
+      "ArmorType": "Helm",
+      "Defense": 6,
+      "Evasion": 0.1,
+      "BaseMagicDefense": 6,
+      "Bonus": "Vitality +5, Strength +5",
+      "Price": "2,000 gil",
+      "Value": 1000,
+      "EquippedBy": [
+        "Mo",
+        "BB",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Amur",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Chakra Band",
+          "Map": "Ancient Ruins B2",
+          "Notes": "Chest in southeast room",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Viking Helm",
+      "Type": "Helm",
+      "ArmorType": "Helm",
+      "Defense": 7,
+      "Evasion": 0.1,
+      "BaseMagicDefense": 7,
+      "Price": "3,000 gil",
+      "Value": 1500,
+      "EquippedBy": [
+        "Vi",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Amur",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Viking Helm",
+          "Map": "Saronia Castle",
+          "Notes": "Chest in tower secret basement",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Dragon Helm",
+      "Type": "Helm",
+      "ArmorType": "Helm",
+      "Defense": 7,
+      "Evasion": 0.1,
+      "BaseMagicDefense": 7,
+      "Value": 4000,
+      "EquippedBy": [
+        "Dr",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Dragon Helm",
+          "Map": "Southeast Saronia",
+          "Notes": "Chest in north area on top floor of Dragon Spire",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Dragon Helm",
+          "Map": "Southeast Saronia",
+          "Notes": "Chest in north area on top floor of Dragon Spire",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Dragon Helm",
+          "Map": "Southeast Saronia",
+          "Notes": "Chest in south area on top floor of Dragon Spire",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Dragon Helm",
+          "Map": "Southeast Saronia",
+          "Notes": "Chest in south area on top floor of Dragon Spire",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Dragon Helm",
+          "Map": "Saronia Castle",
+          "Notes": "Chest in tower secret basement",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Feathered Hat",
+      "Type": "Helm",
+      "ArmorType": "Helm",
+      "Defense": 7,
+      "Evasion": 0.1,
+      "BaseMagicDefense": 8,
+      "Bonus": "Agility +5",
+      "Price": "8,000 gil",
+      "Value": 4000,
+      "EquippedBy": [
+        "Ra",
+        "Sc",
+        "Ge",
+        "Ev",
+        "Ba",
+        "Ma",
+        "De",
+        "Su",
+        "Sa",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Duster",
+          "Shop": "Armor"
+        }
+      ]
+    },
+    {
+      "name": "Diamond Helm",
+      "Type": "Helm",
+      "ArmorType": "Helm",
+      "Defense": 8,
+      "Evasion": 0.12,
+      "BaseMagicDefense": 9,
+      "Price": "20,000 gil",
+      "Value": 10000,
+      "ElementalResist": [
+        "Lightning"
+      ],
+      "EquippedBy": [
+        "Kn",
+        "Dr",
+        "Vi",
+        "Ni"
+      ],
+      "StatusImmunities": [
+        "Toad",
+        "Confusion"
+      ],
+      "Shops": [
+        {
+          "Map": "Ancient Ruins B1",
+          "Shop": "Armor"
+        },
+        {
+          "Map": "The Invincible",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Diamond Helm",
+          "Map": "Sunken Cave B3",
+          "Notes": "Chest on southeast island",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Diamond Helm",
+          "Map": "Temple of Time B1",
+          "Notes": "Chest in east room",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Genji Helm",
+      "Type": "Helm",
+      "ArmorType": "Helm",
+      "Defense": 10,
+      "Evasion": 0.15,
+      "BaseMagicDefense": 11,
+      "Value": 16000,
+      "EquippedBy": [
+        "MK",
+        "Ni"
+      ],
+      "StatusImmunities": [
+        "Poison",
+        "Toad",
+        "Petrification",
+        "Confusion",
+        "Sleep",
+        "Partial Petrification"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Genji Helm",
+          "Map": "Cave of Shadows B7",
+          "Notes": "North chest",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Crystal Helm",
+      "Type": "Helm",
+      "ArmorType": "Helm",
+      "Defense": 12,
+      "Evasion": 0.15,
+      "BaseMagicDefense": 15,
+      "Price": "50,000 gil",
+      "Value": 25000,
+      "EquippedBy": [
+        "OK",
+        "Wa",
+        "RM",
+        "Kn",
+        "Dr",
+        "Vi",
+        "MK",
+        "Ni"
+      ],
+      "StatusImmunities": [
+        "Mini",
+        "Toad",
+        "Petrification",
+        "Confusion",
+        "Sleep"
+      ],
+      "Shops": [
+        {
+          "Map": "Eureka B7",
+          "Shop": "Weapons & Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Crystal Helm",
+          "Map": "Ancient's Maze Center",
+          "Notes": "Chest on western path",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Crystal Helm",
+          "Map": "Crystal Tower 7F",
+          "Notes": "Northeast chest",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Ribbon",
+      "Type": "Helm",
+      "ArmorType": "Helm",
+      "Defense": 9,
+      "Evasion": 0.1,
+      "BaseMagicDefense": 10,
+      "Value": 5,
+      "ElementalResist": [
+        "Fire",
+        "Cold",
+        "Air",
+        "Earth",
+        "Recovery"
+      ],
+      "EquippedBy": [
+        "OK",
+        "Wa",
+        "Mo",
+        "WM",
+        "BM",
+        "RM",
+        "Ra",
+        "Kn",
+        "Th",
+        "Sc",
+        "Ge",
+        "Dr",
+        "Vi",
+        "BB",
+        "MK",
+        "Ev",
+        "Ba",
+        "Ma",
+        "De",
+        "Su",
+        "Sa",
+        "Ni"
+      ],
+      "StatusImmunities": [
+        "Poison",
+        "Blind",
+        "Mini",
+        "Silence",
+        "Toad",
+        "Petrification",
+        "KO",
+        "Confusion",
+        "Sleep",
+        "Paralysis",
+        "Partial Petrification"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Ribbon",
+          "Map": "Eureka B2",
+          "Notes": "Chest in secret west area",
+          "Guarded By": "Ninja"
+        },
+        {
+          "Treasure": "Ribbon",
+          "Map": "World of Darkness Northwest",
+          "Notes": "West chest",
+          "Guarded By": "Xande's Clone"
+        },
+        {
+          "Treasure": "Ribbon",
+          "Map": "World of Darkness Northeast",
+          "Notes": "Northeast chest",
+          "Guarded By": "Xande's Clone"
+        },
+        {
+          "Treasure": "Ribbon",
+          "Map": "World of Darkness Southwest",
+          "Notes": "Southwest chest",
+          "Guarded By": "Xande's Clone"
+        },
+        {
+          "Treasure": "Ribbon",
+          "Map": "World of Darkness Southeast",
+          "Notes": "Northeast chest",
+          "Guarded By": "Xande's Clone"
+        }
+      ]
+    },
+    {
+      "name": "Vest",
+      "Type": "Armor",
+      "ArmorType": "Armor",
+      "Defense": 1,
+      "BaseMagicDefense": 0,
+      "Price": "50 gil",
+      "Value": 25,
+      "EquippedBy": [
+        "OK",
+        "Wa",
+        "Mo",
+        "WM",
+        "BM",
+        "RM",
+        "Ra",
+        "Kn",
+        "Th",
+        "Sc",
+        "Ge",
+        "Dr",
+        "Vi",
+        "BB",
+        "Ev",
+        "Ba",
+        "Ma",
+        "De",
+        "Su",
+        "Sa",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Ur",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Vest ×4",
+          "Map": "Altar Cave B3",
+          "Notes": "Starting equipment",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Vest",
+          "Map": "Tozus",
+          "Notes": "Second shelf from right in Dr. Shelco's house",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Leather Armor",
+      "Type": "Armor",
+      "ArmorType": "Armor",
+      "Defense": 2,
+      "Evasion": 0.01,
+      "BaseMagicDefense": 1,
+      "Price": "95 gil",
+      "Value": 47,
+      "EquippedBy": [
+        "OK",
+        "Wa",
+        "Mo",
+        "WM",
+        "BM",
+        "RM",
+        "Ra",
+        "Kn",
+        "Th",
+        "Sc",
+        "Ge",
+        "Dr",
+        "Vi",
+        "BB",
+        "Ev",
+        "Ba",
+        "Ma",
+        "De",
+        "Su",
+        "Sa",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Ur",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Leather Armor",
+          "Map": "Ur",
+          "Notes": "Chest in storeroom 2F",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Leather Armor",
+          "Map": "Ur",
+          "Notes": "Chest in storeroom 2F",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Onion Armor",
+      "Type": "Armor",
+      "ArmorType": "Armor",
+      "Defense": 48,
+      "Evasion": 0.48,
+      "BaseMagicDefense": 48,
+      "Value": 32750,
+      "EquippedBy": [
+        "OK"
+      ],
+      "StatusImmunities": [
+        "Poison",
+        "Blind",
+        "Mini",
+        "Silence",
+        "Toad",
+        "Petrification",
+        "KO",
+        "Confusion",
+        "Sleep",
+        "Paralysis",
+        "Partial Petrification"
+      ],
+      "Monsters": [
+        {
+          "Name": "Yellow Dragon",
+          "HP": "10,000",
+          "Gil": "5,400 gil",
+          "Steal Rate": "-",
+          "Drop Chance": "9.4%"
+        },
+        {
+          "Name": "Green Dragon",
+          "HP": "10,000",
+          "Gil": "2,900 gil",
+          "Steal Rate": "-",
+          "Drop Chance": "4.7%"
+        }
+      ]
+    },
+    {
+      "name": "Mythril Armor",
+      "Type": "Armor",
+      "ArmorType": "Armor",
+      "Defense": 3,
+      "Evasion": 0.03,
+      "BaseMagicDefense": 3,
+      "Price": "350 gil",
+      "Value": 175,
+      "EquippedBy": [
+        "OK",
+        "Wa",
+        "RM",
+        "Ra",
+        "Kn",
+        "Dr",
+        "Vi",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Kazus",
+          "Shop": "Armor"
+        },
+        {
+          "Map": "Canaan",
+          "Shop": "Armor"
+        }
+      ]
+    },
+    {
+      "name": "Shell Armor",
+      "Type": "Armor",
+      "ArmorType": "Armor",
+      "Defense": 4,
+      "Evasion": 0.04,
+      "BaseMagicDefense": 4,
+      "Price": "1,250 gil",
+      "Value": 625,
+      "EquippedBy": [
+        "Wa",
+        "Ra",
+        "Kn",
+        "Dr",
+        "Vi",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Shell Armor",
+          "Map": "Nepto Temple B1",
+          "Notes": "West chest in west side room",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Ice Armor",
+      "Type": "Armor",
+      "ArmorType": "Armor",
+      "Defense": 5,
+      "Evasion": 0.06,
+      "BaseMagicDefense": 4,
+      "Price": "2,400 gil",
+      "Value": 1200,
+      "ElementalResist": [
+        "Fire"
+      ],
+      "EquippedBy": [
+        "Wa",
+        "Ra",
+        "Kn",
+        "Dr",
+        "Vi",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Dwarven Hollow",
+          "Shop": "Armor"
+        }
+      ]
+    },
+    {
+      "name": "Flame Mail",
+      "Type": "Armor",
+      "ArmorType": "Armor",
+      "Defense": 5,
+      "Evasion": 0.06,
+      "BaseMagicDefense": 4,
+      "Price": "2,400 gil",
+      "Value": 1200,
+      "ElementalResist": [
+        "Cold"
+      ],
+      "EquippedBy": [
+        "Wa",
+        "Ra",
+        "Kn",
+        "Dr",
+        "Vi",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Flame Mail",
+          "Map": "Tower of Owen 9F",
+          "Notes": "Northwest chest",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Kenpo Gi",
+      "Type": "Armor",
+      "ArmorType": "Armor",
+      "Defense": 6,
+      "Evasion": 0.08,
+      "BaseMagicDefense": 3,
+      "Price": "2,000 gil",
+      "Value": 1000,
+      "EquippedBy": [
+        "Mo",
+        "BB",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Armor"
+        },
+        {
+          "Map": "Dwarven Hollow",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Kenpo Gi",
+          "Map": "Tokkul",
+          "Notes": "Chest in secret area of elder's house",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Black Garb",
+      "Type": "Armor",
+      "ArmorType": "Armor",
+      "Defense": 8,
+      "Evasion": 0.7,
+      "BaseMagicDefense": 5,
+      "Bonus": "Agility +5",
+      "Price": "3,800 gil",
+      "Value": 1900,
+      "EquippedBy": [
+        "Th",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Amur",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Black Garb",
+          "Map": "Amur",
+          "Notes": "Grassy Island",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Mage Robe",
+      "Type": "Armor",
+      "ArmorType": "Armor",
+      "Defense": 9,
+      "Evasion": 0.07,
+      "BaseMagicDefense": 7,
+      "Price": "2,000 gil",
+      "Value": 1000,
+      "EquippedBy": [
+        "WM",
+        "BM",
+        "RM",
+        "Ev",
+        "Ma",
+        "De",
+        "Su",
+        "Sa",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Village of the Ancients",
+          "Shop": "Armor"
+        },
+        {
+          "Map": "Dwarven Hollow",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Mage Robe",
+          "Map": "Gulgan Gulch",
+          "Notes": "Chest in secret room downstairs",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Viking Mail",
+      "Type": "Armor",
+      "ArmorType": "Armor",
+      "Defense": 10,
+      "Evasion": 0.08,
+      "BaseMagicDefense": 7,
+      "Price": "4,000 gil",
+      "Value": 2000,
+      "EquippedBy": [
+        "Vi",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Amur",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Viking Mail",
+          "Map": "Saronia Castle",
+          "Notes": "Chest in tower secret basement",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Black Belt Gi",
+      "Type": "Armor",
+      "ArmorType": "Armor",
+      "Defense": 11,
+      "Evasion": 0.1,
+      "BaseMagicDefense": 5,
+      "Bonus": "Agility +5",
+      "Price": "3,800 gil",
+      "Value": 1900,
+      "EquippedBy": [
+        "Mo",
+        "BB",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Amur",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Black Belt Gi",
+          "Map": "Ancient Ruins B2",
+          "Notes": "Chest in southwest room",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Knight Armor",
+      "Type": "Armor",
+      "ArmorType": "Armor",
+      "Defense": 12,
+      "Evasion": 0.09,
+      "BaseMagicDefense": 7,
+      "Value": 3750,
+      "EquippedBy": [
+        "Kn",
+        "Ni"
+      ],
+      "StatusImmunities": [
+        "Petrification",
+        "Sleep"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Knight Armor",
+          "Map": "Dwarven Hollow",
+          "Notes": "Chest in lower area",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Dragon Mail",
+      "Type": "Armor",
+      "ArmorType": "Armor",
+      "Defense": 15,
+      "Evasion": 0.1,
+      "BaseMagicDefense": 7,
+      "Value": 4000,
+      "EquippedBy": [
+        "Dr",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Dragon Mail",
+          "Map": "Southwest Saronia",
+          "Notes": "Given by middle island old man with Alus in party",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Dragon Mail",
+          "Map": "Southeast Saronia",
+          "Notes": "Chest in north area on top floor of Dragon Spire",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Dragon Mail",
+          "Map": "Southeast Saronia",
+          "Notes": "Chest in north area on top floor of Dragon Spire",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Dragon Mail",
+          "Map": "Southeast Saronia",
+          "Notes": "Chest in south area on top floor of Dragon Spire",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Bard Vest",
+      "Type": "Armor",
+      "ArmorType": "Armor",
+      "Defense": 15,
+      "Evasion": 0.12,
+      "BaseMagicDefense": 7,
+      "Price": "5,500 gil",
+      "Value": 2750,
+      "EquippedBy": [
+        "Ba",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Duster",
+          "Shop": "Armor"
+        }
+      ]
+    },
+    {
+      "name": "Scholar Robe",
+      "Type": "Armor",
+      "ArmorType": "Armor",
+      "Defense": 15,
+      "Evasion": 0.12,
+      "BaseMagicDefense": 7,
+      "Price": "5,500 gil",
+      "Value": 2750,
+      "EquippedBy": [
+        "WM",
+        "BM",
+        "Sc",
+        "Ma",
+        "De",
+        "Sa",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Southwest Saronia",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Scholar Robe",
+          "Map": "Castle Argus",
+          "Notes": "Chest in northeast tower",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Scholar Robe",
+          "Map": "Dwarven Hollow",
+          "Notes": "Chest in lower area",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Gaia Vest",
+      "Type": "Armor",
+      "ArmorType": "Armor",
+      "Defense": 16,
+      "Evasion": 0.12,
+      "BaseMagicDefense": 8,
+      "Price": "4,200 gil",
+      "Value": 2100,
+      "EquippedBy": [
+        "Ge",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Duster",
+          "Shop": "Armor"
+        },
+        {
+          "Map": "Southwest Saronia",
+          "Shop": "Armor"
+        },
+        {
+          "Map": "The Invincible",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Gaia Vest",
+          "Map": "Saronia Castle",
+          "Notes": "Chest in tower secret basement",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Gaia Vest",
+          "Map": "Saronia Catacombs 3F",
+          "Notes": "Left northeast path chest",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Demon Mail",
+      "Type": "Armor",
+      "ArmorType": "Armor",
+      "Defense": 17,
+      "Evasion": 0.15,
+      "BaseMagicDefense": 9,
+      "Price": "25,000 gil",
+      "Value": 12500,
+      "EquippedBy": [
+        "MK",
+        "Ni"
+      ],
+      "StatusImmunities": [
+        "Toad",
+        "Confusion"
+      ],
+      "Shops": [
+        {
+          "Map": "Falgabard",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Demon Mail",
+          "Map": "Falgabard",
+          "Notes": "Grass on southeast island",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Demon Mail",
+          "Map": "Falgabard Cave",
+          "Notes": "Chest in southeast hidden area",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Diamond Mail",
+      "Type": "Armor",
+      "ArmorType": "Armor",
+      "Defense": 18,
+      "Evasion": 0.1,
+      "BaseMagicDefense": 10,
+      "Price": "33,000 gil",
+      "Value": 16500,
+      "ElementalResist": [
+        "Lightning"
+      ],
+      "EquippedBy": [
+        "Kn",
+        "Dr",
+        "Vi",
+        "Ni"
+      ],
+      "StatusImmunities": [
+        "Toad",
+        "Confusion"
+      ],
+      "Shops": [
+        {
+          "Map": "Ancient Ruins B1",
+          "Shop": "Armor"
+        },
+        {
+          "Map": "The Invincible",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Diamond Mail",
+          "Map": "Sunken Cave B3",
+          "Notes": "Chest on northwest island",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Diamond Mail",
+          "Map": "Temple of Time B2",
+          "Notes": "Chest in southeast room",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Reflect Mail",
+      "Type": "Armor",
+      "ArmorType": "Armor",
+      "Defense": 20,
+      "Evasion": 0.12,
+      "BaseMagicDefense": 12,
+      "Value": 17500,
+      "EquippedBy": [
+        "Kn",
+        "Dr",
+        "Vi",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Reflect Mail",
+          "Map": "Sunken Cave B3",
+          "Notes": "Bottom left chest in hidden room",
+          "Guarded By": "Death Claw"
+        },
+        {
+          "Treasure": "Reflect Mail",
+          "Map": "Saronia Catacombs 3F",
+          "Notes": "Southwest path chest",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Reflect Mail",
+          "Map": "Ancient Ruins B1",
+          "Notes": "Chest in east room",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Reflect Mail",
+          "Map": "Lake Dohr B3",
+          "Notes": "Chest in northeast group",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "White Robe",
+      "Type": "Armor",
+      "ArmorType": "Armor",
+      "Defense": 20,
+      "Evasion": 0.12,
+      "BaseMagicDefense": 14,
+      "Bonus": "Mind +5",
+      "Price": "7,000 gil",
+      "Value": 3500,
+      "EquippedBy": [
+        "WM",
+        "RM",
+        "Ev",
+        "De",
+        "Su",
+        "Sa",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Southwest Saronia",
+          "Shop": "Armor"
+        },
+        {
+          "Map": "The Invincible",
+          "Shop": "Armor"
+        }
+      ]
+    },
+    {
+      "name": "Black Robe",
+      "Type": "Armor",
+      "ArmorType": "Armor",
+      "Defense": 20,
+      "Evasion": 0.12,
+      "BaseMagicDefense": 14,
+      "Bonus": "Intelligence +5",
+      "Price": "7,000 gil",
+      "Value": 3500,
+      "EquippedBy": [
+        "BM",
+        "RM",
+        "Ev",
+        "Ma",
+        "Su",
+        "Sa",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Southwest Saronia",
+          "Shop": "Armor"
+        },
+        {
+          "Map": "The Invincible",
+          "Shop": "Armor"
+        }
+      ]
+    },
+    {
+      "name": "Genji Armor",
+      "Type": "Armor",
+      "ArmorType": "Armor",
+      "Defense": 24,
+      "Evasion": 0.2,
+      "BaseMagicDefense": 15,
+      "Value": 20000,
+      "EquippedBy": [
+        "MK",
+        "Ni"
+      ],
+      "StatusImmunities": [
+        "Poison",
+        "Toad",
+        "Petrification",
+        "Confusion",
+        "Sleep",
+        "Partial Petrification"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Genji Armor",
+          "Map": "Cave of Shadows B8",
+          "Notes": "East chest",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Crystal Mail",
+      "Type": "Armor",
+      "ArmorType": "Armor",
+      "Defense": 28,
+      "Evasion": 0.2,
+      "BaseMagicDefense": 18,
+      "Price": "65,000 gil",
+      "Value": 32500,
+      "EquippedBy": [
+        "OK",
+        "Wa",
+        "RM",
+        "Kn",
+        "Dr",
+        "Vi",
+        "MK",
+        "Ni"
+      ],
+      "StatusImmunities": [
+        "Mini",
+        "Toad",
+        "Petrification",
+        "Confusion",
+        "Sleep"
+      ],
+      "Shops": [
+        {
+          "Map": "Eureka B7",
+          "Shop": "Weapons & Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Crystal Mail",
+          "Map": "Ancient's Maze Left side",
+          "Notes": "Central chest",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Crystal Mail",
+          "Map": "Crystal Tower 6F",
+          "Notes": "Northeast chest",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Rusty Mail",
+      "Type": "Armor",
+      "ArmorType": "Armor",
+      "Defense": 0,
+      "BaseMagicDefense": 0,
+      "Value": 50,
+      "Treasures": [
+        {
+          "Treasure": "Rusty Mail",
+          "Map": "Saronia Castle",
+          "Notes": "Chest in secret room in tower bedroom",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Rusty Mail",
+          "Map": "Saronia Castle",
+          "Notes": "Chest in secret room in tower bedroom",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Rusty Mail",
+          "Map": "Saronia Castle",
+          "Notes": "Chest in secret room in tower bedroom",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Rusty Mail",
+          "Map": "Saronia Castle",
+          "Notes": "Chest in secret room in tower bedroom",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Rusty Mail",
+          "Map": "Saronia Castle",
+          "Notes": "Chest in tower secret basement",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Bronze Bracers",
+      "Type": "Gloves",
+      "ArmorType": "Gloves",
+      "Defense": 1,
+      "Evasion": 0.02,
+      "BaseMagicDefense": 3,
+      "Price": "80 gil",
+      "Value": 40,
+      "EquippedBy": [
+        "WM",
+        "BM",
+        "RM",
+        "Sc",
+        "Ge",
+        "Ev",
+        "Ma",
+        "De",
+        "Su",
+        "Sa",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Ur",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Bronze Bracers",
+          "Map": "Altar Cave B2",
+          "Notes": "South chest in pit room",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Onion Gauntlets",
+      "Type": "Gloves",
+      "ArmorType": "Gloves",
+      "Defense": 32,
+      "Evasion": 0.32,
+      "BaseMagicDefense": 32,
+      "Bonus": "Vitality +5, Agility +5, Strength +5",
+      "Value": 32750,
+      "EquippedBy": [
+        "OK"
+      ],
+      "StatusImmunities": [
+        "Poison",
+        "Blind",
+        "Mini",
+        "Silence",
+        "Toad",
+        "Petrification",
+        "KO",
+        "Confusion",
+        "Sleep",
+        "Paralysis",
+        "Partial Petrification"
+      ],
+      "Monsters": [
+        {
+          "Name": "Yellow Dragon",
+          "HP": "10,000",
+          "Gil": "5,400 gil",
+          "Steal Rate": "-",
+          "Drop Chance": "9.4%"
+        }
+      ]
+    },
+    {
+      "name": "Mythril Gloves",
+      "Type": "Gloves",
+      "ArmorType": "Gloves",
+      "Defense": 1,
+      "Evasion": 0.05,
+      "BaseMagicDefense": 2,
+      "Price": "120 gil",
+      "Value": 60,
+      "EquippedBy": [
+        "OK",
+        "Wa",
+        "RM",
+        "Kn",
+        "Dr",
+        "Vi",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Kazus",
+          "Shop": "Armor"
+        },
+        {
+          "Map": "Canaan",
+          "Shop": "Armor"
+        }
+      ]
+    },
+    {
+      "name": "Mythril Bracers",
+      "Type": "Gloves",
+      "ArmorType": "Gloves",
+      "Defense": 2,
+      "Evasion": 0.07,
+      "BaseMagicDefense": 3,
+      "Price": "120 gil",
+      "Value": 60,
+      "EquippedBy": [
+        "WM",
+        "BM",
+        "RM",
+        "Sc",
+        "Ge",
+        "Ev",
+        "Ma",
+        "De",
+        "Su",
+        "Sa",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Kazus",
+          "Shop": "Armor"
+        },
+        {
+          "Map": "Canaan",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Mythril Bracers",
+          "Map": "Tozus",
+          "Notes": "Rightmost shelf in Dr. Shelco's house",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Mythril Bracers",
+          "Map": "Tozus",
+          "Notes": "Chest near hidden stairs in Dr. Shelco's house",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Thief Gloves",
+      "Type": "Gloves",
+      "ArmorType": "Gloves",
+      "Defense": 3,
+      "Evasion": 0.09,
+      "BaseMagicDefense": 4,
+      "Bonus": "Strength +5",
+      "Price": "2,500 gil",
+      "Value": 1250,
+      "EquippedBy": [
+        "Th",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Amur",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Thief Gloves",
+          "Map": "Amur",
+          "Notes": "Grassy Island",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Gauntlets",
+      "Type": "Gloves",
+      "ArmorType": "Gloves",
+      "Defense": 2,
+      "Evasion": 0.08,
+      "BaseMagicDefense": 3,
+      "Value": 1250,
+      "EquippedBy": [
+        "Kn",
+        "Dr",
+        "Vi",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Gauntlets",
+          "Map": "Dwarven Hollow",
+          "Notes": "Chest in lower area",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Power Bracers",
+      "Type": "Gloves",
+      "ArmorType": "Gloves",
+      "Defense": 4,
+      "Evasion": 0.11,
+      "BaseMagicDefense": 1,
+      "Bonus": "Strength +5",
+      "Value": 1250,
+      "EquippedBy": [
+        "Wa",
+        "Mo",
+        "RM",
+        "Ra",
+        "Kn",
+        "Th",
+        "Sc",
+        "Ge",
+        "Dr",
+        "Vi",
+        "BB",
+        "Ba",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Power Bracers",
+          "Map": "Sewers B4",
+          "Notes": "West chest in west hidden room",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Rune Bracers",
+      "Type": "Gloves",
+      "ArmorType": "Gloves",
+      "Defense": 5,
+      "Evasion": 0.1,
+      "BaseMagicDefense": 6,
+      "Price": "5,000 gil",
+      "Value": 2500,
+      "EquippedBy": [
+        "WM",
+        "BM",
+        "RM",
+        "Sc",
+        "Ge",
+        "Ev",
+        "Ma",
+        "De",
+        "Su",
+        "Sa",
+        "Ni"
+      ],
+      "Shops": [
+        {
+          "Map": "Duster",
+          "Shop": "Armor"
+        },
+        {
+          "Map": "Southwest Saronia",
+          "Shop": "Armor"
+        }
+      ]
+    },
+    {
+      "name": "Diamond Bracers",
+      "Type": "Gloves",
+      "ArmorType": "Gloves",
+      "Defense": 6,
+      "Evasion": 0.12,
+      "BaseMagicDefense": 6,
+      "Price": "10,000 gil",
+      "Value": 5000,
+      "ElementalResist": [
+        "Lightning"
+      ],
+      "EquippedBy": [
+        "WM",
+        "BM",
+        "RM",
+        "Sc",
+        "Ge",
+        "Ev",
+        "Ma",
+        "De",
+        "Su",
+        "Sa",
+        "Ni"
+      ],
+      "StatusImmunities": [
+        "Toad",
+        "Confusion"
+      ],
+      "Shops": [
+        {
+          "Map": "Ancient Ruins B1",
+          "Shop": "Armor"
+        },
+        {
+          "Map": "The Invincible",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Diamond Bracers",
+          "Map": "Sunken Cave B3",
+          "Notes": "Chest on northwest island",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Diamond Bracers",
+          "Map": "Temple of Time B1",
+          "Notes": "Chest in west room",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Diamond Gloves",
+      "Type": "Gloves",
+      "ArmorType": "Gloves",
+      "Defense": 6,
+      "Evasion": 0.1,
+      "BaseMagicDefense": 5,
+      "Price": "15,000 gil",
+      "Value": 7500,
+      "ElementalResist": [
+        "Lightning"
+      ],
+      "EquippedBy": [
+        "Kn",
+        "Dr",
+        "Vi",
+        "Ni"
+      ],
+      "StatusImmunities": [
+        "Toad",
+        "Confusion"
+      ],
+      "Shops": [
+        {
+          "Map": "Ancient Ruins B1",
+          "Shop": "Armor"
+        },
+        {
+          "Map": "The Invincible",
+          "Shop": "Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Diamond Gloves",
+          "Map": "Sunken Cave B3",
+          "Notes": "Chest on west island",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Diamond Gloves",
+          "Map": "Temple of Time B2",
+          "Notes": "Chest in northwest room",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Protect Ring",
+      "Type": "Gloves",
+      "ArmorType": "Gloves",
+      "Defense": 7,
+      "Evasion": 0.15,
+      "BaseMagicDefense": 7,
+      "Bonus": "Vitality +5",
+      "Value": 15000,
+      "EquippedBy": [
+        "OK",
+        "Wa",
+        "Mo",
+        "WM",
+        "BM",
+        "RM",
+        "Ra",
+        "Kn",
+        "Th",
+        "Sc",
+        "Ge",
+        "Dr",
+        "Vi",
+        "BB",
+        "Ev",
+        "Ba",
+        "Ma",
+        "De",
+        "Su",
+        "Sa",
+        "Ni"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Protect Ring",
+          "Map": "Temple of Time B3",
+          "Notes": "Chest at bottom of secret waterfall",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Protect Ring",
+          "Map": "Temple of Time B3",
+          "Notes": "Chest at bottom of secret waterfall",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Protect Ring",
+          "Map": "Ancient's Maze Right side",
+          "Notes": "Northeast chest",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Genji Gloves",
+      "Type": "Gloves",
+      "ArmorType": "Gloves",
+      "Defense": 9,
+      "Evasion": 0.15,
+      "BaseMagicDefense": 7,
+      "Value": 15000,
+      "EquippedBy": [
+        "MK",
+        "Ni"
+      ],
+      "StatusImmunities": [
+        "Poison",
+        "Toad",
+        "Petrification",
+        "Confusion",
+        "Sleep",
+        "Partial Petrification"
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Genji Gloves",
+          "Map": "Cave of Shadows B3",
+          "Notes": "Southeast chest in east room",
+          "Guarded By": "-"
+        }
+      ]
+    },
+    {
+      "name": "Crystal Gloves",
+      "Type": "Gloves",
+      "ArmorType": "Gloves",
+      "Defense": 10,
+      "Evasion": 0.15,
+      "BaseMagicDefense": 10,
+      "Price": "50,000 gil",
+      "Value": 25000,
+      "EquippedBy": [
+        "OK",
+        "Wa",
+        "RM",
+        "Kn",
+        "Dr",
+        "Vi",
+        "MK",
+        "Ni"
+      ],
+      "StatusImmunities": [
+        "Mini",
+        "Toad",
+        "Petrification",
+        "Confusion",
+        "Sleep"
+      ],
+      "Shops": [
+        {
+          "Map": "Eureka B7",
+          "Shop": "Weapons & Armor"
+        }
+      ],
+      "Treasures": [
+        {
+          "Treasure": "Crystal Gloves",
+          "Map": "Ancient's Maze Left side",
+          "Notes": "Northwest chest",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Crystal Gloves",
+          "Map": "Crystal Tower 7F",
+          "Notes": "Southwest chest",
+          "Guarded By": "-"
+        }
+      ]
+    }
+  ],
+  "errors": []
+}
