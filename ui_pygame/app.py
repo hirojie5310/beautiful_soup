@@ -74,6 +74,7 @@ from ui_pygame.logic import (
     build_item_candidates_for_battle as build_item_candidates_for_battle_fn,
     make_planned_action,
 )
+from ui_pygame.portrait_cache import PortraitCache
 
 from scenes.menu import open_menu_pygame
 
@@ -93,6 +94,7 @@ class BattleAppConfig:
 
     # ★追加
     audio_dir: str = "assets/sounds/"
+    face_dir: str = "assets/images/faces/"
 
     # ★BGM 定義（論理名 → ファイル名）
     bgm_enemy_select: str = "Fortune_Teller2"
@@ -125,6 +127,22 @@ def run_battle_app(
     audio = AudioManager(base_dir=cfg.audio_dir)
 
     state = init_runtime_state()
+
+    print("[DBG spells type]", type(state.spells), "len=", len(state.spells))
+    k = next(iter(state.spells))
+    print("[DBG spells key sample]", repr(k))
+    print("[DBG spells value keys]", list(state.spells[k].keys())[:15])
+    print(
+        "[DBG spells value sample]",
+        {
+            kk: state.spells[k].get(kk)
+            for kk in ["name", "Type", "Level", "Effect", "Target"]
+        },
+    )
+    print("[DBG has 'Flare' key?]", "Flare" in state.spells)
+    print("[DBG has 'flare' key?]", "flare" in state.spells)
+    print("[DBG has 'Flare ' key?]", "Flare " in state.spells)
+
     spells_expanded = expand_spells_for_summons(state.spells)
 
     level_table = LevelTable("assets/data/level_exp.csv")
@@ -133,6 +151,8 @@ def run_battle_app(
     se_confirm = pygame.mixer.Sound(cfg.se_confirm_path)
     se_enter.set_volume(cfg.se_enter_volume)
     se_confirm.set_volume(cfg.se_confirm_volume)
+
+    portrait_cache = PortraitCache(base_dir=cfg.face_dir)
 
     app_running = True
     while app_running:
@@ -187,7 +207,10 @@ def run_battle_app(
                 save_dict=state.save,
                 save_path=SAVE_PATH,  # ←あなたの実ファイルパスに合わせて
                 jobs_by_name=state.jobs_by_name,
+                portrait_cache=portrait_cache,  # ★追加
                 recalc_stats_fn=recalc_stats_fn,  # ★追加
+                build_magic_fn=build_magic_fn,
+                spells_by_name=state.spells,  # ★追加（ここが元の state.spells）
             )
             enemy_names = pick_enemy_names(selected, state.monsters, k_min=2, k_max=6)
 
@@ -494,14 +517,17 @@ def choose_location_pygame(
     *,
     party_avg_lv: int,
     caption="Select Location",
-    party_members=None,
+    party_members: Sequence[PartyMemberRuntime],
     level_table=None,
     weapons=None,
     armors=None,  # ★追加
     save_dict=None,
     save_path=None,
     jobs_by_name=None,
+    portrait_cache: PortraitCache,  # ★追加
     recalc_stats_fn=None,  # ★追加
+    build_magic_fn=None,  # ★追加
+    spells_by_name=None,  # ★追加
 ):
     """
     操作:
@@ -577,7 +603,10 @@ def choose_location_pygame(
                         weapons=weapons,
                         armors=armors,
                         jobs_by_name=jobs_by_name,
+                        portrait_cache=portrait_cache,  # ★追加
                         recalc_stats_fn=recalc_stats_fn,
+                        build_magic_fn=build_magic_fn,
+                        spells_by_name=spells_by_name,  # ★ここが重要
                     )  # ← game_state等は後述
                     continue
 

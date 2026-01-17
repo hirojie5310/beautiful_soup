@@ -195,7 +195,7 @@ def prompt_save_progress_and_write_pygame(
         lines.append(f"    {jl_str}, SP {bsp} -> {asp}")
 
     lines.append("")
-    lines.append("Y: Save   N(or ESC): Cancel")
+    lines.append("Y / Enter: Save N / Esc: Cancel")
 
     ok = _prompt_lines_yes_no(screen, font, caption, lines)
     if not ok:
@@ -223,8 +223,8 @@ def _prompt_lines_yes_no(
         for ev in pygame.event.get():
             if ev.type == pygame.QUIT:
                 return False
-            if ev.type == pygame.KEYUP:
-                if ev.key == pygame.K_y:
+            if ev.type == pygame.KEYDOWN:
+                if ev.key in (pygame.K_y, pygame.K_RETURN, pygame.K_KP_ENTER):
                     return True
                 if ev.key in (pygame.K_n, pygame.K_ESCAPE):
                     return False

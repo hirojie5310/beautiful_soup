@@ -29,6 +29,7 @@ from typing import (
     Optional,
     Literal,
     Dict,
+    Tuple,
     Any,
     List,
     Set,
@@ -46,6 +47,8 @@ from combat.enums import Status, ElementRelation, BattleEndReason, MagicType, Ba
 TargetSide: TypeAlias = Literal["enemy", "ally", "self"]
 # 「魔法メニューに並ぶ1行」という意味を持つデータ
 MagicCandidate: TypeAlias = tuple[str, MagicType, int]  # (name, type, level)
+# (name, lv, cost)
+SpellTuple = Tuple[str, int, int]  # (name, lv, cost) 例
 
 
 # 戦闘イベントの型定義
@@ -211,6 +214,9 @@ class FinalCharacterStats:
     elemental_weaks: FrozenSet[str] = field(default_factory=frozenset)
     elemental_absorbs: FrozenSet[str] = field(default_factory=frozenset)
 
+    # 追加：防具によるステータス異常耐性
+    status_immunities: FrozenSet[str] = field(default_factory=frozenset)  # ★追加
+
     # ★追加：武器の属性（手ごと）
     main_weapon_elements: List[str] = field(default_factory=list)
     off_weapon_elements: List[str] = field(default_factory=list)
@@ -323,6 +329,7 @@ class PartyMemberRuntime:
     base: "BaseCharacter"  # ★追加
     stats: "FinalCharacterStats"
     state: "BattleActorState"
+    portrait_key: Optional[str] = None  # ★追加（例: "runeth", "refia"）
 
     equipment_logs: List[str] = field(default_factory=list)
     equipment: Optional["EquipmentSet"] = None
@@ -334,6 +341,14 @@ class PartyMemberRuntime:
     @property
     def max_hp(self) -> int:
         return self.state.max_hp if self.state.max_hp is not None else self.state.hp
+
+    @property
+    def mp_pool(self) -> Dict[int, int]:
+        return self.state.mp_pool
+
+    @property
+    def max_mp_pool(self) -> Dict[int, int]:
+        return self.state.max_mp_pool
 
     @property
     def mp(self) -> int:

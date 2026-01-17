@@ -31,7 +31,48 @@ JOB_CAST_CODE = {
 
 # 白魔で「攻撃扱い」する名前と属性
 OFFENSIVE_WHITE = {"holy", "aero", "aeroga"}  # 必要なら追加
-OFFENSIVE_WHITE_ELEMENTS = {"holy", "air"}  # Aero系/ホーリーの属性
+OFFENSIVE_WHITE_ELEMENTS = {"holy", "air"}
+
+# フィールド使用対象魔法（小文字で統一）
+FIELD_MAGIC_WHITELIST = {
+    "warp",
+    "teleport",
+    # 回復
+    "cure",
+    "cura",
+    "curaga",
+    "curaja",
+    # 蘇生
+    "raise",
+    "arise",
+    # 状態回復
+    "poisona",
+    "blindna",
+    "stona",
+    "esuna",
+    # 状態付与（フィールド用）
+    "mini",
+    "toad",
+    # 情報系
+    "sight",
+}
+
+# フィールドで「対象を選ぶ」必要がある魔法
+FIELD_MAGIC_TARGET_REQUIRED = {
+    "cure",
+    "cura",
+    "curaga",
+    "curaja",
+    "raise",
+    "arise",
+    "poisona",
+    "blindna",
+    "stona",
+    "mini",
+    "toad",
+    # esuna は作品によって「単体/全体」が揺れるので、必要なら入れてください
+    "esuna",
+}
 
 COMMAND_TO_KIND: Dict[str, BattleKind] = {
     # 物理
@@ -71,3 +112,18 @@ STATUS_NAME_MAP = {
 
 # spells.json の name → spell 定義を保持するためのグローバル
 MASTER_SPELLS_BY_NAME: Dict[str, Dict[str, Any]] = {}
+
+# 状態異常の短縮名
+STATUS_ABBR = {
+    "Poison": "POI",
+    "Blind": "BLD",
+    "Mini": "MIN",
+    "Silence": "SIL",
+    "Toad": "TOA",
+    "Petrification": "STN",
+    "KO": "KO",
+    "Confusion": "CON",
+    "Sleep": "SLP",
+    "Paralysis": "PAR",
+    "Partial Petrification": "PST",
+}

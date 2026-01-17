@@ -14,7 +14,7 @@
 
 import json
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Dict, Any, Sequence
 
 from combat.models import Job, JobLevelStats, EquipmentSet, PartyMemberRuntime
 
@@ -110,7 +110,7 @@ def save_savedata(path: Path, save: dict) -> None:
 
 
 def apply_party_equipment_to_save(
-    save: Dict[str, Any], party: List[PartyMemberRuntime]
+    save: Dict[str, Any], party: Sequence[PartyMemberRuntime]
 ) -> None:
     """
     party(Runtime) の装備を save(dict) の party[].equipment に反映する（破壊的更新）

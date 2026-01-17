@@ -1,0 +1,113 @@
+
+Black Magic
+      "name": "Flare",
+      "Effect": "Deal damage",
+      "name": "Death",
+      "Effect": "Inflict KO",
+      "name": "Meteor",
+      "Effect": "Deal damage",
+      "name": "Quake",
+      "Effect": "Deal Earth damage",
+      "name": "Breakga",
+      "Effect": "Inflict Petrification",
+      "name": "Drain",
+      "Effect": "Absorb HP from target",
+      "name": "Firaga",
+      "Effect": "Deal Fire damage",
+      "name": "Bio",
+      "Effect": "Deal damage",
+      "name": "Warp", *
+      "Effect": "Teleport to any previous dungeon floor, or inflict KO in battle",
+      "name": "Thundaga",
+      "Effect": "Deal Lightning damage",
+      "name": "Raze",
+      "Effect": "Inflict KO",
+      "name": "Erase",
+      "Effect": "Remove Reflect (doesn't work)",
+      "name": "Break",
+      "Effect": "Deal damage and inflict Partial Petrification (1/2)",
+      "name": "Blizzaga",
+      "Effect": "Deal Ice damage",
+      "name": "Shade",
+      "Effect": "Inflict Paralysis",
+      "name": "Fira",
+      "Effect": "Deal Fire damage",
+      "name": "Blizzara",
+      "Effect": "Deal Ice damage",
+      "name": "Thundara",
+      "Effect": "Deal Lightning damage",
+      "name": "Thunder",
+      "Effect": "Deal Lightning damage",
+      "name": "Poison",
+      "Effect": "Deal damage and inflict Poison",
+      "name": "Blind",
+      "Effect": "Inflict Blind",
+      "name": "Fire",
+      "Effect": "Deal Fire damage",
+      "name": "Blizzard",
+      "Effect": "Deal Ice damage",
+      "name": "Sleep",
+      "Effect": "Inflict Sleep",
+
+White Magic
+      "name": "Tornado",
+      "Effect": "Set target's HP to critical",
+      "name": "Arise", *
+      "Effect": "Revive from KO with full HP",
+      "name": "Holy",
+      "Effect": "Deal Holy damage",
+      "name": "Curaja", *
+      "Effect": "Restore target's HP",
+      "name": "Esuna", *
+      "Effect": "Cure all status ailments",
+      "name": "Reflect",
+      "Effect": "Grant Reflect",
+      "name": "Aeroga",
+      "Effect": "Deal Air and Ice damage",
+      "name": "Stona", *
+      "Effect": "Cure Petrification and Partial Petrification",
+      "name": "Haste",
+      "Effect": "Enhance Accuracy and Attack Multiplier",
+      "name": "Curaga", *
+      "Effect": "Restore target's HP",
+      "name": "Raise", *
+      "Effect": "Revive from KO",
+      "name": "Protect",
+      "Effect": "Enhance Defense and Magic Defense",
+      "name": "Libra",
+      "Effect": "View target's HP",
+      "name": "Confuse",
+      "Effect": "Inflict Confusion",
+      "name": "Silence",
+      "Effect": "Inflict Silence",
+      "name": "Cura", *
+      "Effect": "Restore target's HP",
+      "name": "Teleport", *
+      "Effect": "Teleport to dungeon exit, or inflict KO in battle",
+      "name": "Blindna", *
+      "Effect": "Cure Blind",
+      "name": "Aero",
+      "Effect": "Deal Air and Ice damage",
+      "name": "Toad", *
+      "Effect": "Turn target into a toad",
+      "name": "Mini", *
+      "Effect": "Miniaturize target",
+      "name": "Cure", *
+      "Effect": "Restore target's HP",
+      "name": "Poisona", *
+      "Effect": "Cure Poison",
+      "name": "Sight", *
+      "Effect": "View local map",
+
+Summon Magic
+      "name": "Bahamut",
+      "Effect": "Summon Bahamut",
+      "name": "Leviathan",
+      "Effect": "Summon Leviathan",
+…
+      "name": "Chocobo",
+      "Effect": "Summon Chocobo",
+
+
+
+

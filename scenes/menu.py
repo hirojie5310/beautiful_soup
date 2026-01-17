@@ -1,12 +1,25 @@
 from __future__ import annotations
 import pygame
 from dataclasses import dataclass
-from typing import List, Callable, Optional, Dict, Any
+from typing import List, Callable, Optional, Dict, Any, Sequence, Tuple
 from copy import deepcopy
 from pathlib import Path
 import time
+from collections import defaultdict, Counter
 
-from combat.models import PartyMemberRuntime, EquipmentSet, FinalCharacterStats
+
+from combat.enums import Status
+from combat.constants import (
+    STATUS_ABBR,
+    FIELD_MAGIC_WHITELIST,
+    FIELD_MAGIC_TARGET_REQUIRED,
+)
+from combat.models import (
+    PartyMemberRuntime,
+    EquipmentSet,
+    FinalCharacterStats,
+    SpellTuple,
+)
 from combat.char_build import (
     compute_character_final_stats,
     build_name_index,
@@ -21,6 +34,9 @@ from combat.data_loader import (
     apply_party_job_to_save,
 )
 
+from ui_pygame.portrait_cache import PortraitCache
+from ui_pygame.logic import make_cast_field_magic_fn
+
 
 @dataclass
 class GameState:
@@ -31,7 +47,7 @@ class GameState:
 def open_menu_pygame(
     screen,
     font,
-    party,
+    party: Sequence[PartyMemberRuntime],  # ★これを追加
     *,
     save_dict: Optional[Dict[str, Any]] = None,
     save_path: Optional[Path] = None,
@@ -39,11 +55,29 @@ def open_menu_pygame(
     weapons=None,
     armors=None,
     jobs_by_name=None,  # ★追加
+    portrait_cache: PortraitCache,  # ★追加
     recalc_stats_fn=None,
+    build_magic_fn: Optional[Callable[[int], list[tuple[str, int, int]]]] = None,
+    spells_by_name: Optional[dict[str, dict]] = None,  # ★追加
 ):
     clock = pygame.time.Clock()
-    items = ["そうび", "ステータス", "ジョブ", "セーブ", "もどる"]
-    idx = 0
+    items = [
+        "アイテム",
+        "まほう",
+        "そうび",
+        "ステータス",
+        "ならびかえ",
+        "ジョブ",
+        "セーブ",
+    ]  # 画像に寄せるなら
+    mode = "menu"  # "menu" or "row"
+    idx = 0  # 右メニュー選択
+    member_idx = 0  # 左キャラ選択（ならべかえ用）
+
+    # 色
+    WHITE = (255, 255, 255)
+    GRAY = (140, 140, 140)
+    HP_GREEN = (60, 255, 80)
 
     while True:
         for event in pygame.event.get():
@@ -52,89 +86,276 @@ def open_menu_pygame(
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    return  # メニューを閉じてMap選択へ戻る
+                    if mode == "row":
+                        mode = "menu"  # ならべかえ解除
+                    else:
+                        return  # メニュー終了
+                    continue
 
-                if event.key == pygame.K_UP:
-                    idx = (idx - 1) % len(items)
-                elif event.key == pygame.K_DOWN:
-                    idx = (idx + 1) % len(items)
+                if mode == "menu":
+                    if event.key == pygame.K_UP:
+                        idx = (idx - 1) % len(items)
+                    elif event.key == pygame.K_DOWN:
+                        idx = (idx + 1) % len(items)
 
-                elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_z):
-                    choice = items[idx]
-                    if choice == "そうび":
-                        if weapons is None or armors is None or recalc_stats_fn is None:
-                            show_toast_message(
-                                screen, font, "Equip unavailable", duration=1.0
-                            )
+                    elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_z):
+                        choice = items[idx]
+
+                        if choice == "ならびかえ":
+                            mode = "row"
+                            idx = items.index("ならびかえ")
+                            member_idx = 0
                             continue
-                        open_equip_pygame(
-                            screen,
-                            font,
-                            party,
-                            weapons_by_name=weapons,
-                            armors_by_name=armors,
-                            save_dict=save_dict,  # ★追加（= state.save）
-                        )
-                    elif choice == "ステータス":
-                        open_status_pygame(
-                            screen,
-                            font,
-                            party,
-                            level_table=level_table,
-                            weapons=weapons,
-                        )
-                    elif choice == "ジョブ":
-                        if jobs_by_name is None or recalc_stats_fn is None:
-                            show_toast_message(
-                                screen, font, "Job unavailable", duration=1.0
+                        # ここから下は今までの choice 分岐（そうび/ステータス/ジョブ/セーブ…）
+
+                        elif choice == "まほう":
+                            # print(f"[DBG build_magic_fn]{build_magic_fn}")
+                            # print(f"[DBG spells_by_name]{spells_by_name}")
+                            if build_magic_fn is None or spells_by_name is None:
+                                show_toast_message(
+                                    screen, font, "Magic unavailable", duration=1.0
+                                )
+                                continue
+
+                            cast_field_magic_fn = make_cast_field_magic_fn(
+                                party=party,
+                                spells_by_name=spells_by_name,
+                                build_magic_fn=build_magic_fn,
+                                save_dict=save_dict,
+                                toast=lambda msg: show_toast_message(
+                                    screen, font, msg, duration=1.0
+                                ),
                             )
-                            continue
-                        if weapons is None or armors is None or recalc_stats_fn is None:
-                            show_toast_message(
-                                screen, font, "Equip unavailable", duration=1.0
+
+                            open_magic_pygame(
+                                screen,
+                                font,
+                                party,
+                                portrait_cache=portrait_cache,
+                                build_magic_fn=build_magic_fn,
+                                spells_by_name=spells_by_name,
+                                cast_field_magic_fn=cast_field_magic_fn,
                             )
-                            continue
-                        open_job_pygame(
-                            screen,
-                            font,
-                            party,
-                            jobs_by_name=jobs_by_name,
-                            weapons_by_name=weapons,
-                            armors_by_name=armors,
-                            recalc_stats_fn=recalc_stats_fn,
-                            save_dict=save_dict,  # ★追加（OptionalでもOK）
-                        )
-                    elif choice == "セーブ":
-                        if save_dict is None or save_path is None:
-                            # ここで画面に「Save is unavailable」など表示して return でもOK
+                        if choice == "そうび":
+                            if (
+                                weapons is None
+                                or armors is None
+                                or recalc_stats_fn is None
+                            ):
+                                show_toast_message(
+                                    screen, font, "Equip unavailable", duration=1.0
+                                )
+                                continue
+                            open_equip_pygame(
+                                screen,
+                                font,
+                                party,
+                                weapons_by_name=weapons,
+                                armors_by_name=armors,
+                                save_dict=save_dict,  # ★追加（= state.save）
+                            )
+                        elif choice == "ステータス":
+                            open_status_pygame(
+                                screen,
+                                font,
+                                party,
+                                level_table=level_table,
+                                weapons=weapons,
+                                portrait_cache=portrait_cache,
+                            )
+                        elif choice == "ジョブ":
+                            if jobs_by_name is None or recalc_stats_fn is None:
+                                show_toast_message(
+                                    screen, font, "Job unavailable", duration=1.0
+                                )
+                                continue
+                            if (
+                                weapons is None
+                                or armors is None
+                                or recalc_stats_fn is None
+                            ):
+                                show_toast_message(
+                                    screen, font, "Equip unavailable", duration=1.0
+                                )
+                                continue
+                            open_job_pygame(
+                                screen,
+                                font,
+                                party,
+                                jobs_by_name=jobs_by_name,
+                                weapons_by_name=weapons,
+                                armors_by_name=armors,
+                                recalc_stats_fn=recalc_stats_fn,
+                                save_dict=save_dict,  # ★追加（OptionalでもOK）
+                            )
+                        elif choice == "セーブ":
+                            if save_dict is None or save_path is None:
+                                # ここで画面に「Save is unavailable」など表示して return でもOK
+                                return
+                            apply_party_equipment_to_save(save_dict, party)
+                            apply_party_job_to_save(save_dict, party)  # ★追加
+                            save_savedata(save_path, save_dict)
+                            show_toast_message(screen, font, "Saved!", duration=1.0)
+                        elif choice == "もどる":
                             return
-                        apply_party_equipment_to_save(save_dict, party)
-                        apply_party_job_to_save(save_dict, party)  # ★追加
-                        save_savedata(save_path, save_dict)
-                        show_toast_message(screen, font, "Saved!", duration=1.0)
-                    elif choice == "もどる":
-                        return
+
+                elif mode == "row":
+                    if event.key == pygame.K_UP:
+                        member_idx = (member_idx - 1) % min(4, len(members))
+                    elif event.key == pygame.K_DOWN:
+                        member_idx = (member_idx + 1) % min(4, len(members))
+                    elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_z):
+                        ch = members[member_idx]
+                        # front/back をトグル
+                        ch.base.row = "back" if ch.base.row == "front" else "front"
+                        if hasattr(ch.stats, "row"):
+                            ch.stats.row = ch.base.row
+
+                        # save_dict にも反映（nameで照合）
+                        if isinstance(save_dict, dict):
+                            sp_list = save_dict.get("party", [])
+                            for sp in sp_list:
+                                if sp.get("name") == ch.name:
+                                    sp["row"] = ch.base.row
+                                    break
 
         # ---- draw ----
         screen.fill((0, 0, 0))
-        title = font.render("Menu", True, (255, 255, 255))
-        screen.blit(title, (screen.get_width() // 2 - title.get_width() // 2, 40))
+        w, h = screen.get_width(), screen.get_height()
 
-        y = 120
-        for i, t in enumerate(items):
-            prefix = "▶ " if i == idx else "  "
-            color = (255, 255, 255) if i == idx else (140, 140, 140)
-            row = font.render(prefix + t, True, color)
-            screen.blit(row, (screen.get_width() // 2 - 120, y))
-            y += font.get_linesize() + 10
+        # ========== レイアウト（固定） ==========
+        margin = 24
+        left_w = int(w * 0.62)
+        right_w = w - left_w - margin * 3
 
-        # ---------- ヘルプ（画面下） ----------
-        help_text = "↑↓: Select   Enter: OK   Esc: Back"
-        help_surf = font.render(help_text, True, (160, 160, 160))
-        screen.blit(
-            help_surf,
-            (16, screen.get_height() - help_surf.get_height() - 12),
+        party_rect = pygame.Rect(margin, margin, left_w, int(h * 0.62))
+        cmd_rect = pygame.Rect(
+            party_rect.right + margin, margin, right_w, int(h * 0.62)
         )
+        bottom_rect = pygame.Rect(
+            margin,
+            party_rect.bottom + margin,
+            left_w,
+            h - (party_rect.bottom + margin * 2),
+        )
+        # 右下にもう1枚欲しければ bottom_rect を2分割する
+
+        draw_window(screen, party_rect)
+        draw_window(screen, cmd_rect)
+        draw_window(screen, bottom_rect)
+
+        # ========== 左：パーティ情報 ==========
+        pad = 18
+        x0 = party_rect.x + pad
+        y0 = party_rect.y + pad
+
+        # 1人分の行高
+        row_h = 90
+        face_size = 64
+        gap = 74
+
+        # party が list ならそのまま、オブジェクトなら party.members 等に合わせて調整
+        members = party
+
+        for i, ch in enumerate(members[:4]):
+            ry = y0 + i * row_h
+
+            # 顔枠
+            shift = 0 if ch.base.row == "front" else 24
+            face_rect = pygame.Rect(x0 + shift, ry, face_size, face_size)
+
+            # 「ならびかえ」モードの矢印表示（face_rect 作成後）
+            if mode == "row" and i == member_idx:
+                arrow = font.render("▶", True, WHITE)
+                screen.blit(arrow, (x0 - arrow.get_width() - 10, ry + 18))
+
+            inner = face_rect.inflate(-4, -4)
+
+            key = getattr(ch, "portrait_key", None)
+            if key:
+                face = portrait_cache.get(key)
+                img = pygame.transform.scale(face, (inner.w, inner.h))
+                screen.blit(img, inner.topleft)
+            else:
+                pygame.draw.rect(screen, (60, 60, 60), inner)
+
+            # 文字開始位置は「前列の基準位置」で固定
+            tx = (x0 + face_size) + gap
+
+            # 名前（上段左）
+            name_s = font.render(get_name(ch), True, WHITE)
+            screen.blit(name_s, (tx, ry))
+
+            # 職業 + LV（上段右寄せ）
+            job = get_job_name(ch)
+            lv = get_level(ch)
+            joblv_text = f"{job}  LV {lv}"
+            joblv_s = font.render(joblv_text, True, WHITE)
+            screen.blit(joblv_s, (party_rect.right - pad - joblv_s.get_width(), ry))
+
+            # ラベル
+            label_s = font.render("HP", True, WHITE)
+            screen.blit(label_s, (tx, ry + font.get_linesize() + 6))
+            label_s = font.render("MP", True, WHITE)
+            screen.blit(label_s, (tx, ry + font.get_linesize() * 2 + 6))
+
+            # HP
+            hp, mhp = ch.hp, ch.max_hp
+            hp_s = font.render(f"{hp}/{mhp}", True, HP_GREEN)
+            screen.blit(hp_s, (tx + 160, ry + font.get_linesize() + 6))
+
+            # MP（L1〜L8 現在値だけ）
+            mp_vals = [str(ch.mp_pool.get(lv, 0)) for lv in range(1, 9)]
+            one_line = "/".join(mp_vals)
+
+            # 右端（はみ出し防止のため）
+            max_w = party_rect.right - pad - (tx + 60)
+
+            if font.size(one_line)[0] <= max_w:
+                mp_s = font.render(one_line, True, WHITE)
+                screen.blit(mp_s, (tx + 60, ry + font.get_linesize() * 2 + 6))
+            else:
+                line1 = "/".join(mp_vals[:4])
+                line2 = "/".join(mp_vals[4:])
+                mp1 = font.render(line1, True, WHITE)
+                mp2 = font.render(line2, True, WHITE)
+                screen.blit(mp1, (tx + 60, ry + font.get_linesize() * 2 + 6))
+                screen.blit(mp2, (tx + 60, ry + font.get_linesize() * 3 + 6))
+
+        # ========== 右：コマンド ==========
+        cx = cmd_rect.x + pad
+        cy = cmd_rect.y + pad
+
+        title = font.render("アイテム", True, WHITE)  # 右上に固定タイトルを置くなら
+        # screen.blit(title, (cx, cy))
+
+        # コマンド行
+        line_h = font.get_linesize() + 10
+        list_top = cy  # + title.get_height() + 10  # タイトルを出すなら少し下げる
+
+        for i, t in enumerate(items):
+            if mode == "row":
+                # rowモード中は「ならびかえ」だけ白、それ以外は固定グレー
+                color = WHITE if t == "ならびかえ" else GRAY
+            else:
+                # 通常時は選択中だけ白
+                color = WHITE if i == idx else GRAY
+
+            text = font.render(t, True, color)
+            screen.blit(text, (cx + 28, list_top + i * line_h))
+
+        # カーソル（▶）は通常時だけ表示
+        if mode == "menu":
+            cursor = font.render("▶", True, WHITE)
+            screen.blit(cursor, (cx, list_top + idx * line_h))
+
+        # ========== 下：ヘルプ/所持金など ==========
+        if mode == "menu":
+            help_text = "↑↓: Select   Enter: OK   Esc: Back"
+        else:
+            help_text = "↑↓: Select   Enter: Toggle Row   Esc: End"
+        help_surf = font.render(help_text, True, GRAY)
+        screen.blit(help_surf, (bottom_rect.x + pad, bottom_rect.y + pad))
 
         pygame.display.flip()
         clock.tick(60)
@@ -231,7 +452,9 @@ def open_equip_pygame(
         clock.tick(60)
 
 
-def open_status_pygame(screen, font, party, *, level_table, weapons):
+def open_status_pygame(
+    screen, font, party, *, level_table, weapons, portrait_cache: PortraitCache
+):
     clock = pygame.time.Clock()
     idx = 0
     page = 0  # 0: status, 1: equipment
@@ -275,6 +498,31 @@ def open_status_pygame(screen, font, party, *, level_table, weapons):
         acc_value = int(round(sum(accs) / len(accs)))
         return atk_value, acc_value, len(powers)
 
+    # 簡易折り返し（最大幅 max_w を超えたら次行へ）
+    def blit_wrap(text, x, y, max_w, color=(220, 220, 220)):
+        words = text.split("/")
+        cur = ""
+        yy = y
+        for w in words:
+            cand = (cur + "/" + w) if cur else w
+            if font.size(cand)[0] <= max_w:
+                cur = cand
+            else:
+                blit_line(cur, x, yy, color)
+                yy += line_h
+                cur = w
+        if cur:
+            blit_line(cur, x, yy, color)
+            yy += line_h
+        return yy
+
+    def fmt_status_imm(imm) -> str:
+        if not imm:
+            return "-"
+        # 表示順を安定させる
+        labels = [STATUS_ABBR.get(s, str(s)[:3].upper()) for s in sorted(imm)]
+        return "/".join(labels)
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -315,6 +563,19 @@ def open_status_pygame(screen, font, party, *, level_table, weapons):
         # ---- draw ----
         screen.fill((0, 0, 0))
 
+        # ★portrait（左上に表示）
+        face_size = 64
+        face_rect = pygame.Rect(60, 20, face_size, face_size)
+        inner = face_rect.inflate(-4, -4)
+
+        key = getattr(actor, "portrait_key", None)
+        if key:
+            face = portrait_cache.get(key)
+            img = pygame.transform.scale(face, (inner.w, inner.h))
+            screen.blit(img, inner.topleft)
+        else:
+            pygame.draw.rect(screen, (60, 60, 60), inner)
+
         title = font.render(f"{actor.name}   {actor.job.name}", True, (255, 255, 255))
         screen.blit(title, (screen.get_width() // 2 - title.get_width() // 2, 30))
 
@@ -323,7 +584,7 @@ def open_status_pygame(screen, font, party, *, level_table, weapons):
         screen.blit(pl, (screen.get_width() // 2 - pl.get_width() // 2, 60))
 
         xL = 80
-        xR = screen.get_width() // 2 + 80
+        xR = screen.get_width() // 2
 
         if page == 0:
             # -------- Page 0: ステータス --------
@@ -332,10 +593,16 @@ def open_status_pygame(screen, font, party, *, level_table, weapons):
             y += line_h
             blit_line(f"HP: {actor.hp}/{actor.max_hp}", xL, y)
             y += line_h
-            blit_line(f"MP: {actor.mp}/{actor.max_mp}", xL, y)
-            y += line_h
-            y += line_h
 
+            mp_pool = getattr(actor, "mp_pool", None)
+            if mp_pool is None:
+                mp_pool = getattr(actor.state, "mp_pool", {})
+            mp_vals = [f"{mp_pool.get(lv, 0):2d}" for lv in range(1, 9)]
+            mp_text = "/".join(mp_vals)
+            blit_line(f"MP: {mp_text}", xL, y)
+
+            y += line_h
+            y += line_h
             blit_line(f"ちから    {st.strength}", xL, y)
             y += line_h
             blit_line(f"すばやさ  {st.agility}", xL, y)
@@ -346,6 +613,12 @@ def open_status_pygame(screen, font, party, *, level_table, weapons):
             y += line_h
             blit_line(f"せいしん  {st.mind}", xL, y)
             y += line_h
+
+            row_label = "FRONT" if base.row == "front" else "BACK"
+            blit_line(f"ROW: {row_label}", xL, y)
+            y += line_h
+            # ステータス異常
+            draw_status_badges(screen, font, actor, xL, y)
 
             # 右側（要望反映）
             y2 = margin_top
@@ -373,20 +646,53 @@ def open_status_pygame(screen, font, party, *, level_table, weapons):
             y2 += line_h
 
         else:
-            # -------- Page 1: 装備 --------
-            y = margin_top
-            blit_line("そうび", xL, y, (255, 255, 255))
-            y += line_h
-            blit_line(f"right_hand: {eq.main_hand or 'なし'}", xL, y)
-            y += line_h
-            blit_line(f"left_hand : {eq.off_hand  or 'なし'}", xL, y)
-            y += line_h
-            blit_line(f"head      : {eq.head     or 'なし'}", xL, y)
-            y += line_h
-            blit_line(f"body      : {eq.body     or 'なし'}", xL, y)
-            y += line_h
-            blit_line(f"arm       : {eq.arms     or 'なし'}", xL, y)
-            y += line_h
+            # -------- Page 1: 装備 + 属性 --------
+            yL = margin_top
+            blit_line("そうび", xL, yL, (255, 255, 255))
+            yL += line_h
+
+            blit_line(f"main_hand: {eq.main_hand or 'なし'}", xL, yL)
+            yL += line_h
+            blit_line(f"off_hand : {eq.off_hand  or 'なし'}", xL, yL)
+            yL += line_h
+            blit_line(f"head      : {eq.head     or 'なし'}", xL, yL)
+            yL += line_h
+            blit_line(f"body      : {eq.body     or 'なし'}", xL, yL)
+            yL += line_h
+            blit_line(f"arm       : {eq.arms     or 'なし'}", xL, yL)
+            yL += line_h
+
+            # --- 右カラムに属性表示 ---
+            def fmt_elems(elems) -> str:
+                if not elems:
+                    return "-"
+                return "/".join(sorted(elems))
+
+            yR = margin_top
+            blit_line("ぶき ぞくせい", xR, yR, (255, 255, 255))
+            yR += line_h
+            max_w = screen.get_width() - xR - 40
+            yR = blit_wrap("main: " + fmt_elems(st.main_weapon_elements), xR, yR, max_w)
+            max_w = screen.get_width() - xR - 40
+            yR = blit_wrap("off : " + fmt_elems(st.off_weapon_elements), xR, yR, max_w)
+
+            blit_line("ぼうぐ たいせい", xR, yR, (255, 255, 255))
+            yR += line_h
+            max_w = screen.get_width() - xR - 40
+            yR = blit_wrap("RES : " + fmt_elems(st.elemental_resists), xR, yR, max_w)
+            max_w = screen.get_width() - xR - 40
+            yR = blit_wrap("NULL: " + fmt_elems(st.elemental_nulls), xR, yR, max_w)
+            max_w = screen.get_width() - xR - 40
+            yR = blit_wrap("WEAK: " + fmt_elems(st.elemental_weaks), xR, yR, max_w)
+            max_w = screen.get_width() - xR - 40
+            yR = blit_wrap("ABS : " + fmt_elems(st.elemental_absorbs), xR, yR, max_w)
+
+            blit_line("じょうたい むこう", xR, yR, (255, 255, 255))
+            yR += line_h
+
+            imm = getattr(st, "status_immunities", frozenset())
+            max_w = screen.get_width() - xR - 40
+            yR = blit_wrap("IMM : " + fmt_status_imm(imm), xR, yR, max_w)
 
         hint = font.render("← →: Switch / TAB: Page / ESC: Back", True, (180, 180, 180))
         screen.blit(
@@ -1207,3 +1513,462 @@ def open_job_pygame(
 
         pygame.display.flip()
         clock.tick(60)
+
+
+import pygame
+
+
+def draw_window(
+    surface: pygame.Surface,
+    rect: pygame.Rect,
+    *,
+    fill=(0, 40, 140),
+    border_outer=(230, 230, 230),
+    border_inner=(80, 80, 80),
+):
+    """FFっぽい二重枠ウィンドウ（9-sliceなしの簡易版）"""
+    pygame.draw.rect(surface, border_outer, rect, border_radius=8)
+    inner = rect.inflate(-6, -6)
+    pygame.draw.rect(surface, border_inner, inner, border_radius=6)
+    body = rect.inflate(-10, -10)
+    pygame.draw.rect(surface, fill, body, border_radius=4)
+
+
+def get_name(ch) -> str:
+    return ch.name
+
+
+def get_job_name(ch) -> str:
+    return ch.job.name
+
+
+def get_level(ch) -> int:
+    # 通常レベル
+    return int(ch.base.level)
+
+
+def get_job_level(ch) -> int:
+    # FF3風の表示ならこっちが “LV”
+    return int(ch.base.job_level)
+
+
+def get_hp(ch):
+    return int(ch.hp), int(ch.max_hp)
+
+
+def get_mp(ch):
+    return int(ch.mp), int(ch.max_mp)
+
+
+def get_portrait_surface(ch):
+    # portrait を実装したらここで返す
+    return getattr(ch, "portrait_surface", None)
+
+
+def draw_status_badges(screen, font, actor, x, y, color=(255, 255, 255)):
+    statuses = getattr(actor.state, "statuses", set()) or set()
+    label_by_status = {
+        Status.POISON: "POI",
+        Status.BLIND: "BLD",
+        Status.SILENCE: "SIL",
+        Status.PARALYZE: "PAR",
+        Status.SLEEP: "SLP",
+        Status.MINI: "MIN",
+        Status.TOAD: "TOA",
+        Status.PETRIFY: "STN",
+        Status.KO: "KO",
+    }
+    xx = x
+    for st in statuses:
+        lab = label_by_status.get(st)
+        if not lab:
+            continue
+        s = font.render(lab, True, color)
+        screen.blit(s, (xx, y))
+        xx += s.get_width() + 10
+
+
+def fmt_elems(elems) -> str:
+    if not elems:
+        return "-"
+    # 表示順を安定させたいなら sorted
+    return "/".join(sorted(elems))
+
+
+# 表示用：Lvごとの魔法リストを作る（データ整形）
+def group_spells_by_level(spells: list[tuple[str, int, int]]) -> dict[int, list[str]]:
+    """
+    spells: (name, lv, cost) の列を Lv(1..8) -> [name,...] にまとめる
+    表示はまず名前だけ（必要なら cost 表示も後で追加）
+    """
+    out: dict[int, list[str]] = {i: [] for i in range(1, 9)}
+
+    for name, lv0, cost in spells:
+        lv = int(lv0)
+
+        # build_magic_fn が 0..7 を返しているので 1..8 に補正
+        # if 0 <= lv <= 7:
+        # lv += 1
+
+        if 1 <= lv <= 8:
+            out[lv].append(str(name))
+
+    # 表示が安定するように並び順を揃える（任意）
+    # for lv in range(1, 9):
+    # out[lv].sort()
+
+    return out
+
+
+# まほう画面（Lv1〜8を上から表示、魔法名は右側に折り返し表示）
+def open_magic_pygame(
+    screen: pygame.Surface,
+    font: pygame.font.Font,
+    party,
+    *,
+    portrait_cache,
+    build_magic_fn,  # member_idx -> [(name, lv, cost)]
+    spells_by_name: dict[str, dict],  # ★追加
+    cast_field_magic_fn: Callable[[int, str, int | None], bool] | None = None,
+):
+    clock = pygame.time.Clock()
+
+    member_idx = 0
+    lv_idx = 1  # 1..8
+    mode = "level"  # "level" | "spell" | "target"
+    spell_sel = 0  # spell list cursor
+    target_sel = 0  # target cursor
+
+    WHITE = (255, 255, 255)
+    GRAY = (150, 150, 150)
+
+    line_h = font.get_linesize() + 10
+
+    # spells_by_name は "Flare" のように大文字始まりキーなので、
+    # 小文字正規化で引ける index を一度作っておく（高速＆安全）
+    spells_key_lut = {str(k).strip().lower(): k for k in spells_by_name.keys()}
+
+    def blit_line(text, x, y, color=WHITE):
+        surf = font.render(text, True, color)
+        screen.blit(surf, (x, y))
+
+    def _canon_spell_name(name: str) -> str:
+        return str(name).strip().lower()
+
+    def _spell_lookup(name: str) -> dict:
+        # 1) そのまま
+        sp = spells_by_name.get(name)
+        if sp:
+            return sp
+        # 2) 小文字正規化で引く
+        k = spells_key_lut.get(_canon_spell_name(name))
+        return spells_by_name.get(k, {}) if k else {}
+
+    def magic_mark(spell: dict) -> str:
+        t = str(spell.get("Type", ""))
+        if "White" in t:
+            return "〇"
+        if "Black" in t:
+            return "●"
+        if "Summon" in t:
+            return "◎"
+        return "・"
+
+    # 対象が必要かどうかの判定
+    def needs_target_by_name(spell_name: str) -> bool:
+        return _canon_spell_name(spell_name) in FIELD_MAGIC_TARGET_REQUIRED
+
+    def target_candidates_for_field(spell_name: str, party) -> list[int]:
+        """
+        フィールドでの対象候補（indexのリスト）を返す。
+        最低限の絞り込み：
+          - Raise/Arise: KO（hp<=0）だけ
+          - それ以外（回復/治療系）: 生存（hp>0）だけ
+        さらに細かい「状態異常にかかってる人だけ」などは後で追加可能。
+        """
+        sn = str(spell_name).strip().lower()
+
+        is_revive = sn in ("raise", "arise")
+        cand = []
+        for i, ch in enumerate(party[:4]):
+            hp = int(getattr(ch, "hp", 0))
+            if is_revive:
+                if hp <= 0:
+                    cand.append(i)
+            else:
+                if hp > 0:
+                    cand.append(i)
+
+        # 候補が空だと操作不能になるので、空なら全員(先頭4人)にフォールバック
+        if not cand:
+            cand = list(range(min(4, len(party))))
+        return cand
+
+    def can_cast_now(actor, lv: int, cost: int) -> bool:
+        """
+        MPが足りるか（将来、Silence等の制限を追加してもOK）
+        """
+        battle = getattr(actor, "battle", None)
+        mp_pool = getattr(actor, "mp_pool", None) or (battle.mp_pool if battle else {})
+        return int(mp_pool.get(lv, 0)) >= int(cost)
+
+    # 魔法名→コスト・Lv を引ける辞書を作る
+    def build_magic_cost_map(
+        spells_raw: list[tuple[str, int, int]],
+    ) -> dict[str, tuple[int, int]]:
+        # name -> (lv, cost)
+        out: dict[str, tuple[int, int]] = {}
+        for name, lv, cost in spells_raw:
+            out[str(name)] = (int(lv), int(cost))
+        return out
+
+    while True:
+        # -------- data build（先に作っておく：Enter処理で cur_list を使うため）--------
+        actor = party[member_idx]
+        spells_raw = build_magic_fn(member_idx)  # [(name, lv, cost)]
+
+        spells_by_lv = {lv: [] for lv in range(1, 9)}
+        for name, lv, cost in spells_raw:
+            if _canon_spell_name(name) not in FIELD_MAGIC_WHITELIST:
+                continue
+            sp = _spell_lookup(name)
+            if not sp:
+                continue
+            lv_real = int(sp.get("Level", lv) or lv)
+            if not (1 <= lv_real <= 8):
+                continue
+            spells_by_lv[lv_real].append((name, lv_real, int(cost), sp))
+
+        # ★C) 表示順を安定化：名前順（必要なら Type→名前 などに変更OK）
+        for lv in range(1, 9):
+            spells_by_lv[lv].sort(key=lambda t: t[0])
+
+        cur_list = spells_by_lv.get(lv_idx, [])
+
+        # 選択位置のクランプ
+        if mode == "spell":
+            spell_sel = min(spell_sel, max(0, len(cur_list) - 1)) if cur_list else 0
+
+        selected_spell = None
+        if cur_list and mode in ("spell", "target"):
+            selected_spell = cur_list[spell_sel]  # (name, lv, cost, sp_dict)
+
+        # -------- input --------
+        for ev in pygame.event.get():
+            if ev.type == pygame.QUIT:
+                raise SystemExit
+            if ev.type != pygame.KEYDOWN:
+                continue
+
+            if ev.key == pygame.K_ESCAPE:
+                if mode == "target":
+                    mode = "spell"
+                elif mode == "spell":
+                    mode = "level"
+                else:
+                    return
+                continue
+
+            if ev.key == pygame.K_LEFT:
+                member_idx = (member_idx - 1) % len(party)
+                spell_sel = 0
+                target_sel = 0
+                mode = "level"
+                continue
+            elif ev.key == pygame.K_RIGHT:
+                member_idx = (member_idx + 1) % len(party)
+                spell_sel = 0
+                target_sel = 0
+                mode = "level"
+                continue
+
+            if ev.key == pygame.K_UP:
+                if mode == "level":
+                    lv_idx = 8 if lv_idx == 1 else lv_idx - 1
+                    spell_sel = 0
+                elif mode == "spell":
+                    spell_sel = max(0, spell_sel - 1)
+                elif mode == "target":
+                    name, lv, cost, sp = (
+                        cur_list[spell_sel] if cur_list else ("", 1, 0, {})
+                    )
+                    cands = target_candidates_for_field(name, party)
+                    n = max(1, len(cands))
+                    target_sel = (target_sel - 1) % n
+                continue
+
+            if ev.key == pygame.K_DOWN:
+                if mode == "level":
+                    lv_idx = 1 if lv_idx == 8 else lv_idx + 1
+                    spell_sel = 0
+                elif mode == "spell":
+                    spell_sel = spell_sel + 1  # 後でclamp
+                elif mode == "target":
+                    name, lv, cost, sp = (
+                        cur_list[spell_sel] if cur_list else ("", 1, 0, {})
+                    )
+                    cands = target_candidates_for_field(name, party)
+                    n = max(1, len(cands))
+                    target_sel = (target_sel + 1) % n
+                continue
+
+            ##
+            elif ev.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_z):
+                if mode == "level":
+                    mode = "spell"
+                    spell_sel = 0
+                    continue
+
+                elif mode == "spell":
+                    if not cur_list:
+                        continue
+
+                    name, lv, cost, sp = cur_list[spell_sel]
+
+                    # MP不足ならここで弾く（任意）
+                    if not can_cast_now(actor, lv, cost):
+                        # show_toast_message(...) 等
+                        continue
+
+                    # ★ここが修正点：Target文字列は見ず、名前で対象要否を決める
+                    if needs_target_by_name(name):
+                        mode = "target"
+                        target_sel = 0
+                        continue
+                    else:
+                        # 対象なしで実行
+                        # cast_field_magic_fn があるなら呼ぶ / 無いならDBGだけ
+                        print(
+                            f"[DBG] CAST field magic: caster={actor.name} spell={name} target=None"
+                        )
+                        # cast_field_magic_fn(member_idx, name, None)
+                        mode = "spell"
+                        continue
+
+                elif mode == "target":
+                    if not selected_spell:
+                        mode = "spell"
+                        continue
+
+                    name, lv, cost, sp = selected_spell
+                    tgt_idx = target_sel
+
+                    print(
+                        f"[DBG] CAST field magic: caster={actor.name} spell={name} target={tgt_idx}"
+                    )
+                    # cast_field_magic_fn(member_idx, name, tgt_idx)
+                    if cast_field_magic_fn:
+                        ok = cast_field_magic_fn(member_idx, name, tgt_idx)
+                        # ok に応じてトーストやSEなど
+
+                    mode = "spell"
+                    continue
+                ##
+
+        # MP pool（描画用）
+        battle = getattr(actor, "battle", None)
+        mp_pool = getattr(actor, "mp_pool", None) or (battle.mp_pool if battle else {})
+        max_mp_pool = getattr(actor, "max_mp_pool", None) or (
+            battle.max_mp_pool if battle else {}
+        )
+
+        # -------- draw --------
+        screen.fill((0, 0, 0))
+        w, h = screen.get_size()
+
+        margin = 24
+        top_h = int(h * 0.68)
+        bottom_h = h - top_h - margin * 2
+
+        top_rect = pygame.Rect(margin, margin, w - margin * 2, top_h)
+        bottom_rect = pygame.Rect(
+            margin, top_rect.bottom + margin, w - margin * 2, bottom_h
+        )
+
+        draw_window(screen, top_rect)
+        draw_window(screen, bottom_rect)
+
+        title_y = top_rect.y + 18
+        blit_line(actor.name, top_rect.x + 24, title_y, WHITE)
+        blit_line("まほう", top_rect.x + 200, title_y, WHITE)
+
+        x_lv = top_rect.x + 28
+        x_mp = x_lv + 70
+        x_list = x_mp + 140
+        y0 = top_rect.y + 70
+
+        cursor = font.render("▶", True, WHITE)
+
+        # 左：Lv/MP
+        for lv in range(1, 9):
+            y = y0 + (lv - 1) * line_h
+            if mode == "level" and lv == lv_idx:
+                screen.blit(cursor, (x_lv - 24, y))
+            blit_line(f"{lv}", x_lv, y, WHITE)
+            cur = int(mp_pool.get(lv, 0))
+            mx = int(max_mp_pool.get(lv, 0))
+            blit_line(f"{cur}/{mx}", x_mp, y, WHITE)
+
+        # 右：選択Lvの魔法一覧（縦リスト）
+        y = y0
+        max_show = 8
+        lst = cur_list[:max_show]
+
+        if not lst:
+            blit_line("-", x_list, y, GRAY)
+        else:
+            for i, (name, lv, cost, sp) in enumerate(lst):
+                if mode == "spell" and i == spell_sel:
+                    screen.blit(cursor, (x_list - 24, y))
+
+                mark = magic_mark(sp)
+
+                # MP足りない魔法はグレー固定（選択カーソルは出るが色で抑制）
+                enabled = can_cast_now(actor, lv, cost)
+                color = (
+                    WHITE if (mode == "spell" and i == spell_sel and enabled) else GRAY
+                )
+                if not enabled:
+                    color = GRAY
+
+                blit_line(f"{mark}{name}", x_list, y, color)
+                y += line_h
+
+        # target mode: 対象選択
+        if mode == "target" and selected_spell:
+            name, lv, cost, sp = selected_spell
+            blit_line("たいしょう", top_rect.right - 220, y0, WHITE)
+            ty = y0 + line_h
+            for i, ch in enumerate(party[:4]):
+                if i == target_sel:
+                    screen.blit(cursor, (top_rect.right - 220 - 24, ty))
+
+                # 任意：KO中などは薄く
+                is_dead = getattr(ch, "hp", 1) <= 0
+                col = GRAY if is_dead else WHITE
+                blit_line(ch.name, top_rect.right - 220, ty, col)
+                ty += line_h
+
+        # bottom strip（あなたの既存コードをそのまま挿入）
+        # ...
+
+        if mode == "level":
+            hint_text = "← →: Switch  ↑ ↓: Level  Enter: Select  ESC: Back"
+        elif mode == "spell":
+            hint_text = "↑ ↓: Spell  Enter: OK  ESC: Back"
+        else:
+            hint_text = "↑ ↓: Target  Enter: OK  ESC: Back"
+
+        hint = font.render(hint_text, True, GRAY)
+        screen.blit(hint, (w // 2 - hint.get_width() // 2, h - 60))
+
+        pygame.display.flip()
+        clock.tick(60)
+
+
+# 魔法名の正規化
+def is_field_usable(spell: dict) -> bool:
+    name = str(spell.get("name", "")).strip().lower()
+    if name in FIELD_MAGIC_WHITELIST:
+        return True
+    return False

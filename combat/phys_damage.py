@@ -178,6 +178,12 @@ def physical_damage_char_to_enemy(
     if blind:
         hit_percent //= 2
 
+    # ★後列ペナルティ：近距離武器のみ Hit% 半減（LongRangeは除外）
+    if char.row == "back":
+        is_long = char.off_long if hand == "off" else char.main_long
+        if not is_long:
+            hit_percent //= 2
+
     # ネットヒット数
     net_hits = _calc_net_hits(
         atk_multiplier=atk_mul,
@@ -212,6 +218,7 @@ def physical_damage_char_to_enemy(
         if roll_critical(char.agility, rng):
             is_crit = True
             dmg *= 2
+            dmg = max(dmg, 0)
 
     return AttackResult(damage=dmg, hit_count=hit_count, is_critical=is_crit)
 
@@ -274,6 +281,10 @@ def physical_damage_enemy_to_char(
     if attacker_is_blind:
         hit_percent //= 2
 
+    # ★後列ペナルティ：後列を狙う物理攻撃は Hit% 半減
+    if char.row == "back":
+        hit_percent //= 2
+
     net_hits = _calc_net_hits(
         atk_multiplier=enemy.attack_multiplier,
         hit_percent=hit_percent,
@@ -291,10 +302,6 @@ def physical_damage_enemy_to_char(
     )
 
     dmg = base_per_hit * net_hits
-    if char.row == "back":
-        dmg *= 0.5
-    dmg = max(int(dmg), 0)
-
     is_crit = False
     if not use_expectation:
         if rng is None:
@@ -302,5 +309,7 @@ def physical_damage_enemy_to_char(
         if roll_critical(enemy.level, rng, base_chance=1 / 20, agi_bonus_div=9999):
             is_crit = True
             dmg *= 2
+
+    dmg = max(int(dmg), 0)
 
     return (dmg, is_crit, net_hits) if return_crit else dmg

@@ -60,13 +60,14 @@ def build_party_members_from_save(
         job_name = r.job_name
         job = r.job
 
-        print("[DBG eq]", entry.get("name"), "eq:", eq)
-
         char_final = compute_character_final_stats(
             base, eq, weapons, armors, job_name=job_name
         )
 
         char_name = entry.get("name", "キャラ")
+        portrait_key = entry.get("portrait_key")
+
+        print("[DBG eq]", entry.get("name"), "eq:", eq, "poryrait_key:", portrait_key)
 
         party_members.append(
             PartyMemberRuntime(
@@ -77,6 +78,7 @@ def build_party_members_from_save(
                 state=char_state,
                 equipment=eq,
                 equipment_logs=eq_logs,
+                portrait_key=portrait_key,
             )
         )
 
@@ -427,20 +429,20 @@ def armor_stats(
     name: Optional[str],
     *,
     normalizer: Callable[[str], str] = normalize_name,
-) -> Tuple[int, float, int, bool, List[str], List[str]]:
+) -> Tuple[int, float, int, bool, List[str], List[str], list[str]]:
     """
     防具名 → (Defense, Evasion(0.0〜1.0), MagicDefense, 盾フラグ,
               属性耐性リスト, 属性無効リスト)
     該当無しなら (0, 0.0, 0, False, [], [])。
     """
     if not name:
-        return 0, 0.0, 0, False, [], []
+        return 0, 0.0, 0, False, [], [], []
 
     key = normalizer(name)
     a = armors_by_name_norm.get(key)
     if a is None:
         print(f"[warn] armor not found: {name} (norm={key})")
-        return 0, 0.0, 0, False, [], []
+        return 0, 0.0, 0, False, [], [], []
 
     defense = int(a.get("Defense", 0))
     evasion = float(a.get("Evasion", 0.0))
@@ -451,7 +453,10 @@ def armor_stats(
     elem_resist = parse_elements(a.get("ElementalResist"))
     elem_null = parse_elements(a.get("ElementalNull"))
 
-    return defense, evasion, mdef, is_shield, elem_resist, elem_null
+    status_imm = a.get("StatusImmunities", []) or []
+    if not isinstance(status_imm, list):
+        status_imm = []
+    return defense, evasion, mdef, is_shield, elem_resist, elem_null, status_imm
 
 
 # ============================================================
@@ -537,10 +542,13 @@ def compute_character_final_stats(
     shield_count = 0
     elem_resist_total: set[str] = set()  # ★ 追加
     elem_null_total: set[str] = set()  # ★追加（現状は空のまま）
+    status_imm_total: set[str] = set()
 
     # 盾は off_hand に入る可能性が高いので、防具としても見る
     for slot in (eq.off_hand, eq.head, eq.body, eq.arms):
-        d, e, m, is_shield, elem_resist, elem_null = armor_stats(armors_norm, slot)
+        d, e, m, is_shield, elem_resist, elem_null, status_imm = armor_stats(
+            armors_norm, slot
+        )
         total_def += d
         total_eva += e
         total_mdef += m
@@ -548,6 +556,7 @@ def compute_character_final_stats(
             shield_count += 1
         elem_resist_total.update(elem_resist)  # ★ ここで耐性収集
         elem_null_total.update(elem_null)
+        status_imm_total.update(status_imm)  # ★追加
 
     # 防御力 = 防具合計 + Vit//2
     defense = total_def + base.vitality // 2
@@ -614,6 +623,7 @@ def compute_character_final_stats(
         elemental_nulls=frozenset(elem_null_total),
         elemental_weaks=frozenset(),
         elemental_absorbs=frozenset(),
+        status_immunities=frozenset(status_imm_total),  # ★追加
     )
 
     # ★ 追加：武器属性を共通パーサで正規化

@@ -70,6 +70,7 @@ def build_party_magic_lists_from_party(
         )
         out.append(magic_list)
 
+    # print(f"[DBG build_party_magic_lists_from_party]{out}")
     return out
 
 

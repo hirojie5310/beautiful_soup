@@ -3,16 +3,16 @@
     {
       "name": "Runeth",
       "level": 35,
-      "exp": 201516,
-      "job": "Knight",
+      "exp": 208136,
+      "job": "Sage",
       "job_level": {
-        "level": 6,
-        "skill_point": 64
+        "level": 97,
+        "skill_point": 83
       },
       "job_levels": {
         "Sage": {
           "level": 97,
-          "skill_point": 47
+          "skill_point": 83
         },
         "Bard": {
           "level": 12,
@@ -23,8 +23,8 @@
           "skill_point": 12
         },
         "Knight": {
-          "level": 6,
-          "skill_point": 64
+          "level": 7,
+          "skill_point": 0
         }
       },
       "hp": 245,
@@ -44,16 +44,16 @@
       "vitality": 18,
       "intelligence": 10,
       "mind": 11,
-      "row": "front",
+      "row": "back",
       "equipment": {
-        "main_hand": "Moonring Blade",
-        "off_hand": "Crystal Shield",
-        "head": "Crystal Helm",
-        "body": "Crystal Mail",
-        "arms": "Crystal Gloves"
+        "main_hand": "Omnirod",
+        "off_hand": "Elder Staff",
+        "head": "Ribbon",
+        "body": "Black Robe",
+        "arms": "Protect Ring"
       },
       "status_effects": {
-        "Poison": false,
+        "Poison": true,
         "Blind": false,
         "Mini": false,
         "Silence": false,
@@ -68,16 +68,16 @@
         "Partial Petrification (Full)": false
       },
       "image_name": "ch_Runeth",
-      "portrait_key": "ch_Runeth_face"
+      "portrait_key": "runeth"
     },
     {
       "name": "Refia",
-      "level": 34,
-      "exp": 199699,
+      "level": 35,
+      "exp": 206319,
       "job": "Ninja",
       "job_level": {
-        "level": 12,
-        "skill_point": 51
+        "level": 13,
+        "skill_point": 71
       },
       "job_levels": {
         "Dragoon": {
@@ -85,8 +85,8 @@
           "skill_point": 54
         },
         "Ninja": {
-          "level": 12,
-          "skill_point": 51
+          "level": 13,
+          "skill_point": 71
         },
         "Black Belt": {
           "level": 8,
@@ -134,10 +134,10 @@
         "Partial Petrification (Full)": false
       },
       "image_name": "ch_Refia",
-      "portrait_key": "ch_Refia_face"
+      "portrait_key": "refia"
     }
   ],
-  "gold": 1520,
+  "gil": 1520,
   "map": {
     "map": "grassland",
     "surface": "Grassland",
