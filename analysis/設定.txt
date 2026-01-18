@@ -1,0 +1,17 @@
+        planned_actions = ask_actions_for_party(  # input_ui
+            party_members=party_members,
+            enemies=enemies,
+            spells_by_name=spells_expanded,
+            items_by_name=state.items_by_name,
+            party_magic_lists=party_magic_lists,
+            save=state.save,
+        )
+
+
+def build_enemies(
+    *,
+    enemy_defs_by_name: Dict[str, Dict[str, Any]],  # = 旧 state.monsters 相当
+    spells_by_name: Dict[str, Dict[str, Any]],  # = 旧 state.spells 相当
+    enemy_names: Iterable[str],
+    difficulty: int = 0,
+) -> List[EnemyRuntime]:

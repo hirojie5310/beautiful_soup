@@ -13,6 +13,7 @@ from combat.constants import (
     STATUS_ABBR,
     FIELD_MAGIC_WHITELIST,
     FIELD_MAGIC_TARGET_REQUIRED,
+    FIELD_ITEM_TARGET_REQUIRED,
 )
 from combat.models import (
     PartyMemberRuntime,
@@ -35,7 +36,71 @@ from combat.data_loader import (
 )
 
 from ui_pygame.portrait_cache import PortraitCache
-from ui_pygame.logic import make_cast_field_magic_fn
+from ui_pygame.logic import make_cast_field_magic_fn, make_use_field_item_fn
+from ui_pygame.field_effects import (
+    get_battle_state,
+    sync_equipment_to_save,
+    FIELD_ITEM_TYPES,
+)
+
+
+# --- Elixir ---
+def can_affect_elixir(ch) -> bool:
+    # HP or MP が1つでも欠けていれば有効
+    if ch.hp < ch.max_hp:
+        return True
+    st = ch.state
+    for lv in range(1, 9):
+        if st.mp_pool.get(lv, 0) < st.max_mp_pool.get(lv, 0):
+            return True
+    return False
+
+
+# --- 通常HP回復 ---
+def can_affect_hp_heal(ch) -> bool:
+    # 生存していて、HPが減っている
+    return ch.hp > 0 and ch.hp < ch.max_hp
+
+
+# --- 状態回復 ---
+def can_affect_antidote(ch) -> bool:
+    return Status.POISON in ch.state.statuses
+
+
+def can_affect_eyedrops(ch) -> bool:
+    return Status.BLIND in ch.state.statuses
+
+
+def can_affect_echoherbs(ch) -> bool:
+    return Status.SILENCE in ch.state.statuses
+
+
+def can_affect_goldneedle(ch) -> bool:
+    return (
+        Status.PETRIFY in ch.state.statuses
+        or Status.PARTIAL_PETRIFY in ch.state.statuses
+    )
+
+
+# --- 蘇生 ---
+def can_affect_phoenix_down(ch) -> bool:
+    return ch.hp <= 0
+
+
+ITEM_AFFECT_CHECKERS = {
+    # HP回復
+    "potion": can_affect_hp_heal,
+    "hi potion": can_affect_hp_heal,
+    # HP+MP全回復
+    "elixir": can_affect_elixir,
+    # 状態回復
+    "antidote": can_affect_antidote,
+    "eye drops": can_affect_eyedrops,
+    "echo herbs": can_affect_echoherbs,
+    "gold needle": can_affect_goldneedle,
+    # 蘇生
+    "phoenix down": can_affect_phoenix_down,
+}
 
 
 @dataclass
@@ -59,6 +124,7 @@ def open_menu_pygame(
     recalc_stats_fn=None,
     build_magic_fn: Optional[Callable[[int], list[tuple[str, int, int]]]] = None,
     spells_by_name: Optional[dict[str, dict]] = None,  # ★追加
+    items_by_name: Optional[dict[str, dict]] = None,  # ★追加
 ):
     clock = pygame.time.Clock()
     items = [
@@ -78,6 +144,16 @@ def open_menu_pygame(
     WHITE = (255, 255, 255)
     GRAY = (140, 140, 140)
     HP_GREEN = (60, 255, 80)
+
+    # make_use_field_item_fn を冒頭で1回だけ作る
+    use_field_item_fn = None
+    if items_by_name is not None:
+        use_field_item_fn = make_use_field_item_fn(
+            party=party,
+            items_by_name=items_by_name,
+            save_dict=save_dict,
+            toast=lambda msg: show_toast_message(screen, font, msg, duration=1.0),
+        )
 
     while True:
         for event in pygame.event.get():
@@ -107,6 +183,22 @@ def open_menu_pygame(
                             member_idx = 0
                             continue
                         # ここから下は今までの choice 分岐（そうび/ステータス/ジョブ/セーブ…）
+
+                        elif choice == "アイテム":
+                            if items_by_name is None:
+                                show_toast_message(
+                                    screen, font, "Item unavailable", duration=1.0
+                                )
+                                continue
+
+                            open_item_pygame(
+                                screen,
+                                font,
+                                party,
+                                save_dict=save_dict,
+                                items_by_name=items_by_name,
+                                use_field_item_fn=use_field_item_fn,
+                            )
 
                         elif choice == "まほう":
                             # print(f"[DBG build_magic_fn]{build_magic_fn}")
@@ -923,22 +1015,6 @@ def open_equip_candidate_pygame(
             return getattr(cur_eq, slot) is None
         return getattr(cur_eq, slot) == name
 
-    def sync_equipment_to_save(a):
-        if save_dict is None:
-            return
-        for sp in save_dict.get("party", []):
-            if sp.get("name") != a.name:
-                continue
-            eq = a.equipment
-            sp["equipment"] = {
-                "main_hand": getattr(eq, "main_hand", None) if eq else None,
-                "off_hand": getattr(eq, "off_hand", None) if eq else None,
-                "head": getattr(eq, "head", None) if eq else None,
-                "body": getattr(eq, "body", None) if eq else None,
-                "arms": getattr(eq, "arms", None) if eq else None,
-            }
-            return
-
     def clamp():
         nonlocal top
         if idx < top:
@@ -982,7 +1058,7 @@ def open_equip_candidate_pygame(
                         show_toast_message(screen, font, eq_logs[0], duration=1.0)
 
                     actor.stats = recalc_stats_fn(actor)  # ★再計算
-                    sync_equipment_to_save(actor)  # ★追加：save に即反映
+                    sync_equipment_to_save(actor, save_dict)  # ★追加：save に即反映
                     return
 
             if event.type == pygame.MOUSEWHEEL:
@@ -1708,9 +1784,8 @@ def open_magic_pygame(
         """
         MPが足りるか（将来、Silence等の制限を追加してもOK）
         """
-        battle = getattr(actor, "battle", None)
-        mp_pool = getattr(actor, "mp_pool", None) or (battle.mp_pool if battle else {})
-        return int(mp_pool.get(lv, 0)) >= int(cost)
+        mp_pool = actor.mp_pool  # PartyMemberRuntimeのpropertyで state.mp_pool に届く
+        return int(mp_pool.get(lv, 0)) >= 1
 
     # 魔法名→コスト・Lv を引ける辞書を作る
     def build_magic_cost_map(
@@ -1721,6 +1796,14 @@ def open_magic_pygame(
         for name, lv, cost in spells_raw:
             out[str(name)] = (int(lv), int(cost))
         return out
+
+    def _ui_mp_pool(actor):
+        st = get_battle_state(actor)
+        return st.mp_pool if st is not None else {}
+
+    def _ui_max_mp_pool(actor):
+        st = get_battle_state(actor)
+        return st.max_mp_pool if st is not None else {}
 
     while True:
         # -------- data build（先に作っておく：Enter処理で cur_list を使うため）--------
@@ -1737,7 +1820,7 @@ def open_magic_pygame(
             lv_real = int(sp.get("Level", lv) or lv)
             if not (1 <= lv_real <= 8):
                 continue
-            spells_by_lv[lv_real].append((name, lv_real, int(cost), sp))
+            spells_by_lv[lv_real].append((name, lv_real, 1, sp))
 
         # ★C) 表示順を安定化：名前順（必要なら Type→名前 などに変更OK）
         for lv in range(1, 9):
@@ -1841,7 +1924,10 @@ def open_magic_pygame(
                         print(
                             f"[DBG] CAST field magic: caster={actor.name} spell={name} target=None"
                         )
-                        # cast_field_magic_fn(member_idx, name, None)
+                        if cast_field_magic_fn:
+                            cast_field_magic_fn(member_idx, name, None)
+                        else:
+                            print("[DBG] cast_field_magic_fn is None")
                         mode = "spell"
                         continue
 
@@ -1856,21 +1942,21 @@ def open_magic_pygame(
                     print(
                         f"[DBG] CAST field magic: caster={actor.name} spell={name} target={tgt_idx}"
                     )
+                    # 対象を指定して実行
                     # cast_field_magic_fn(member_idx, name, tgt_idx)
                     if cast_field_magic_fn:
                         ok = cast_field_magic_fn(member_idx, name, tgt_idx)
                         # ok に応じてトーストやSEなど
+                    else:
+                        print("[DBG] cast_field_magic_fn is None")
 
                     mode = "spell"
                     continue
                 ##
 
         # MP pool（描画用）
-        battle = getattr(actor, "battle", None)
-        mp_pool = getattr(actor, "mp_pool", None) or (battle.mp_pool if battle else {})
-        max_mp_pool = getattr(actor, "max_mp_pool", None) or (
-            battle.max_mp_pool if battle else {}
-        )
+        mp_pool = _ui_mp_pool(actor)
+        max_mp_pool = _ui_max_mp_pool(actor)
 
         # -------- draw --------
         screen.fill((0, 0, 0))
@@ -1943,10 +2029,17 @@ def open_magic_pygame(
                 if i == target_sel:
                     screen.blit(cursor, (top_rect.right - 220 - 24, ty))
 
-                # 任意：KO中などは薄く
+                # 対象選択描画で色を切り替える
+                spell_name, lv, cost, sp = selected_spell
+                will_affect = field_spell_will_affect(spell_name, ch)
+                # 完全に選べないケース（例：HP0で回復魔法など）
                 is_dead = getattr(ch, "hp", 1) <= 0
-                col = GRAY if is_dead else WHITE
+                if not will_affect:
+                    col = GRAY
+                else:
+                    col = WHITE
                 blit_line(ch.name, top_rect.right - 220, ty, col)
+
                 ty += line_h
 
         # bottom strip（あなたの既存コードをそのまま挿入）
@@ -1972,3 +2065,304 @@ def is_field_usable(spell: dict) -> bool:
     if name in FIELD_MAGIC_WHITELIST:
         return True
     return False
+
+
+# 状態異常回復用の判定
+def field_spell_will_affect(spell_name: str, actor) -> bool:
+    """
+    フィールド魔法を actor に使ったとき、実際に効果があるか？
+    （HPやStatusが変化するか）
+    """
+    sn = spell_name.strip().lower()
+
+    state = actor.state  # PartyMemberRuntime 前提
+
+    # --- 状態異常回復 ---
+    if sn == "poisona":
+        return Status.POISON in state.statuses
+
+    if sn == "blindna":
+        return Status.BLIND in state.statuses
+
+    if sn == "stona":
+        return (
+            Status.PETRIFY in state.statuses or Status.PARTIAL_PETRIFY in state.statuses
+        )
+
+    if sn == "esuna":
+        ESUNA_SET = {
+            Status.POISON,
+            Status.BLIND,
+            Status.MINI,
+            Status.SILENCE,
+            Status.TOAD,
+            Status.CONFUSION,
+            Status.SLEEP,
+            Status.PARALYZE,
+            Status.PETRIFY,
+            Status.PARTIAL_PETRIFY,
+        }
+        return any(st in state.statuses for st in ESUNA_SET)
+
+    # --- HP回復 ---
+    if sn in ("cure", "cura", "curaga", "curaja"):
+        return state.hp > 0 and state.hp < actor.max_hp
+
+    # --- 蘇生 ---
+    if sn in ("raise", "arise"):
+        return state.hp <= 0 or Status.KO in state.statuses
+
+    return True  # その他はとりあえず有効扱い
+
+
+### --------------------------- ITEM
+
+
+# フィールドで表示・使用できるアイテム一覧を作る
+def iter_field_inventory(
+    save_dict: Optional[dict],
+) -> list[tuple[str, str, int]]:
+    """
+    フィールド用アイテム一覧:
+      [(item_name, item_type, count), ...]
+    item_type は "Anywhere" or "Field"
+    """
+    inv = (save_dict or {}).get("inventory", {})
+    out: list[tuple[str, str, int]] = []
+    for itype in FIELD_ITEM_TYPES:
+        bucket = inv.get(itype, {})
+        if isinstance(bucket, dict):
+            for name, cnt in bucket.items():
+                c = int(cnt or 0)
+                if c > 0:
+                    out.append((str(name), itype, c))
+    # 表示順：名前順（好みで）
+    out.sort(key=lambda t: t[0])
+    return out
+
+
+# 所持数を 1 減らす（0になったら消す or 0のまま）
+def dec_inventory_item(save_dict: dict, item_name: str, item_type: str) -> bool:
+    """
+    inventory[item_type][item_name] を 1 減らす。
+    成功したら True。
+    """
+    inv = (save_dict or {}).get("inventory", {})
+    bucket = inv.get(item_type, {})
+    if not isinstance(bucket, dict):
+        return False
+    cur = int(bucket.get(item_name, 0) or 0)
+    if cur <= 0:
+        return False
+    nxt = cur - 1
+    if nxt <= 0:
+        bucket.pop(item_name, None)  # 0になったら消す方式
+    else:
+        bucket[item_name] = nxt
+    return True
+
+
+# 判定関数
+def needs_target_item(item_name: str) -> bool:
+    return item_name.strip().lower() in FIELD_ITEM_TARGET_REQUIRED
+
+
+# メニュー「アイテム」
+def open_item_pygame(
+    screen: pygame.Surface,
+    font: pygame.font.Font,
+    party,
+    *,
+    save_dict: Optional[dict],
+    items_by_name: dict[str, dict],
+    use_field_item_fn,  # make_use_field_item_fn(...) の戻り値
+):
+    clock = pygame.time.Clock()
+
+    member_idx = 0
+    mode = "item"  # "item" | "target"
+    item_sel = 0
+    target_sel = 0
+
+    WHITE = (255, 255, 255)
+    GRAY = (150, 150, 150)
+
+    line_h = font.get_linesize() + 10
+
+    def blit_line(text, x, y, color=WHITE):
+        surf = font.render(text, True, color)
+        screen.blit(surf, (x, y))
+
+    def canon(s: str) -> str:
+        return str(s).strip().lower()
+
+    # --- 対象が必要なアイテム ---
+    def needs_target(item_name: str) -> bool:
+        return canon(item_name) in FIELD_ITEM_TARGET_REQUIRED
+
+    # --- 対象候補 ---
+    def target_candidates(item_name: str):
+        sn = canon(item_name)
+        is_revive = sn == "phoenix down"
+        cand = []
+        for i, ch in enumerate(party[:4]):
+            hp = int(ch.hp)
+            if is_revive:
+                if hp <= 0:
+                    cand.append(i)
+            else:
+                if hp > 0:
+                    cand.append(i)
+        return cand if cand else list(range(min(4, len(party))))
+
+    # 効果がある対象だけ白表示
+    def can_affect(item_name: str, ch) -> bool:
+        fn = ITEM_AFFECT_CHECKERS.get(canon(item_name))
+        if fn:
+            return fn(ch)
+        return True  # 未定義アイテムは「使える」扱い
+
+    while True:
+        # -------- data build --------
+        actor = party[member_idx]
+
+        # [(item_name, item_type, count), ...]
+        items = iter_field_inventory(save_dict)
+
+        item_sel = min(item_sel, max(0, len(items) - 1)) if items else 0
+
+        selected_item = items[item_sel] if items else None
+        # (name, item_type, count)
+
+        # -------- input --------
+        for ev in pygame.event.get():
+            if ev.type == pygame.QUIT:
+                raise SystemExit
+            if ev.type != pygame.KEYDOWN:
+                continue
+
+            if ev.key == pygame.K_ESCAPE:
+                if mode == "target":
+                    mode = "item"
+                else:
+                    return
+                continue
+
+            if ev.key == pygame.K_LEFT:
+                member_idx = (member_idx - 1) % len(party)
+                item_sel = 0
+                mode = "item"
+                continue
+
+            if ev.key == pygame.K_RIGHT:
+                member_idx = (member_idx + 1) % len(party)
+                item_sel = 0
+                mode = "item"
+                continue
+
+            if ev.key == pygame.K_UP:
+                if mode == "item":
+                    item_sel = max(0, item_sel - 1)
+                elif mode == "target":
+                    target_sel = (target_sel - 1) % len(cands)
+                continue
+
+            if ev.key == pygame.K_DOWN:
+                if mode == "item":
+                    item_sel += 1
+                elif mode == "target":
+                    target_sel = (target_sel + 1) % len(cands)
+                continue
+
+            if ev.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_z):
+                if not selected_item:
+                    continue
+
+                name, item_type, count = selected_item
+
+                if mode == "item":
+                    if needs_target(name):
+                        mode = "target"
+                        target_sel = 0
+                        continue
+                    else:
+                        # 対象なしで使用
+                        use_field_item_fn(
+                            member_idx,
+                            name,
+                            None,
+                            item_type,
+                        )
+                        continue
+
+                elif mode == "target":
+                    cands = target_candidates(name)
+                    tgt_idx = cands[target_sel]
+
+                    use_field_item_fn(
+                        member_idx,
+                        name,
+                        tgt_idx,
+                        item_type,
+                    )
+                    mode = "item"
+                    continue
+
+        # -------- draw --------
+        screen.fill((0, 0, 0))
+        w, h = screen.get_size()
+
+        margin = 24
+        rect = pygame.Rect(margin, margin, w - margin * 2, h - margin * 2)
+        draw_window(screen, rect)
+
+        title_y = rect.y + 18
+        blit_line(actor.name, rect.x + 24, title_y)
+        blit_line("アイテム", rect.x + 200, title_y)
+
+        x_list = rect.x + 48
+        y0 = rect.y + 70
+        cursor = font.render("▶", True, WHITE)
+
+        # --- アイテム一覧 ---
+        y = y0
+        for i, (name, item_type, count) in enumerate(items[:10]):
+            if mode == "item" and i == item_sel:
+                screen.blit(cursor, (x_list - 24, y))
+
+            color = WHITE
+            if count <= 0:
+                color = GRAY
+
+            blit_line(f"{name}", x_list, y, color)
+            blit_line(f"x{count}", x_list + 200, y, color)
+            y += line_h
+
+        # --- 対象選択 ---
+        if mode == "target" and selected_item:
+            name, _, _ = selected_item
+            cands = target_candidates(name)
+
+            tx = rect.right - 220
+            ty = y0
+            blit_line("たいしょう", tx, ty)
+            ty += line_h
+
+            for i, idx in enumerate(cands):
+                ch = party[idx]
+                ok = can_affect(name, ch)
+                col = WHITE if ok else GRAY
+                if i == target_sel:
+                    screen.blit(cursor, (tx - 24, ty))
+                blit_line(ch.name, tx, ty, col)
+                ty += line_h
+
+        hint = font.render(
+            "↑↓: Select  ←→: Member  Enter: OK  ESC: Back",
+            True,
+            GRAY,
+        )
+        screen.blit(hint, (w // 2 - hint.get_width() // 2, h - 40))
+
+        pygame.display.flip()
+        clock.tick(60)

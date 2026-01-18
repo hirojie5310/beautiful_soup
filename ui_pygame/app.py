@@ -211,6 +211,7 @@ def run_battle_app(
                 recalc_stats_fn=recalc_stats_fn,  # ★追加
                 build_magic_fn=build_magic_fn,
                 spells_by_name=state.spells,  # ★追加（ここが元の state.spells）
+                items_by_name=state.items_by_name,  # ★追加
             )
             enemy_names = pick_enemy_names(selected, state.monsters, k_min=2, k_max=6)
 
@@ -528,6 +529,7 @@ def choose_location_pygame(
     recalc_stats_fn=None,  # ★追加
     build_magic_fn=None,  # ★追加
     spells_by_name=None,  # ★追加
+    items_by_name=None,  # ★追加
 ):
     """
     操作:
@@ -607,6 +609,7 @@ def choose_location_pygame(
                         recalc_stats_fn=recalc_stats_fn,
                         build_magic_fn=build_magic_fn,
                         spells_by_name=spells_by_name,  # ★ここが重要
+                        items_by_name=items_by_name,
                     )  # ← game_state等は後述
                     continue
 

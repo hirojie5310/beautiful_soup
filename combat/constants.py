@@ -74,6 +74,39 @@ FIELD_MAGIC_TARGET_REQUIRED = {
     "esuna",
 }
 
+# 状態名
+STATUS_ENUM_BY_KEY = {
+    "poison": Status.POISON,
+    "blind": Status.BLIND,
+    "mini": Status.MINI,
+    "silence": Status.SILENCE,
+    "toad": Status.TOAD,
+    "confusion": Status.CONFUSION,
+    "sleep": Status.SLEEP,
+    "paralysis": Status.PARALYZE,
+    "petrification": Status.PETRIFY,
+    "partial petrification": Status.PARTIAL_PETRIFY,  # あなたのEnum名に合わせて
+    "ko": Status.KO,
+}
+
+# 「対象が必要なアイテム」ホワイトリスト
+FIELD_ITEM_TARGET_REQUIRED = {
+    # 回復
+    "potion",
+    "hi potion",
+    "elixir",
+    # 状態回復
+    "antidote",  # Poisona :contentReference[oaicite:4]{index=4}
+    "echo herbs",  # 沈黙回復（データに存在）:contentReference[oaicite:5]{index=5}
+    "mallet",  # Mini
+    "maiden's kiss",  # Toad
+    "gold needle",  # 石化/部分石化回復
+    "eye drops",  # Blind
+    # 蘇生
+    "phoenix down",
+}
+
+
 COMMAND_TO_KIND: Dict[str, BattleKind] = {
     # 物理
     "Fight": "physical",

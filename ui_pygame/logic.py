@@ -12,12 +12,22 @@
 # ============================================================
 
 from typing import Any, List, Optional, Tuple, cast, Callable
-from combat.models import PlannedAction, TargetSide
 from combat.enums import BattleKind
+from combat.constants import FIELD_ITEM_TARGET_REQUIRED, STATUS_ENUM_BY_KEY
+from combat.models import PlannedAction, TargetSide
 from combat.inventory import build_item_list, is_item_visible_in_context
 from combat.input_ui import normalize_battle_command
 from ui_pygame.state import BattleUIState
 from ui_pygame.ui_types import CommandCandidate
+from ui_pygame.field_effects import (
+    get_battle_state,
+    set_hp,
+    clear_status,
+    sync_hp_status_to_save,
+    sync_mp_to_save,
+    dec_inventory_item,
+    FIELD_ITEM_TYPES,
+)
 
 
 SPECIAL_NO_TARGET = {"Cheer", "Scare", "Flee", "Terrain", "Boost"}
@@ -156,22 +166,22 @@ def clamp(n: int, lo: int, hi: int) -> int:
 # あなたの状態異常 enum/文字列に合わせてここだけ調整してください
 # savedata/status_effects のキー名と合わせるのがコツです
 STATUS_KEY_BY_SPELL = {
-    "Poisona": "Poison",
-    "Blindna": "Blind",
-    "Stona": "Petrification",  # Partial Petrification も消すなら下で追加
+    "Poisona": "poison",
+    "Blindna": "blind",
+    "Stona": "petrification",  # Partial Petrification も消すなら下で追加
 }
 
 ESUNA_CURES = {
-    "Poison",
-    "Blind",
-    "Mini",
-    "Silence",
-    "Toad",
-    "Petrification",
-    "Partial Petrification",
-    "Confusion",
-    "Sleep",
-    "Paralysis",
+    "poison",
+    "blind",
+    "mini",
+    "silence",
+    "toad",
+    "petrification",
+    "partial petrification",
+    "confusion",
+    "sleep",
+    "paralysis",
 }
 
 HEAL_SPELLS = {"Cure", "Cura", "Curaga", "Curaja"}
@@ -190,21 +200,19 @@ def make_cast_field_magic_fn(
 ) -> Callable[[int, str, Optional[int]], bool]:
 
     def _get_cost(caster_idx: int, spell_name: str) -> tuple[int, int] | None:
-        # build_magic_fn から (lv,cost) を引く
-        for n, lv, cost in build_magic_fn(caster_idx):
+        # build_magic_fn から lv だけ引いて、cost は常に 1
+        for n, lv, _cost in build_magic_fn(caster_idx):
             if str(n) == spell_name:
-                return int(lv), int(cost)
+                return int(lv), 1
         return None
 
     def _mp_pool(actor):
-        battle = getattr(actor, "battle", None)
-        return getattr(actor, "mp_pool", None) or (battle.mp_pool if battle else {})
+        st = get_battle_state(actor)
+        return st.mp_pool if st is not None else {}
 
     def _max_mp_pool(actor):
-        battle = getattr(actor, "battle", None)
-        return getattr(actor, "max_mp_pool", None) or (
-            battle.max_mp_pool if battle else {}
-        )
+        st = get_battle_state(actor)
+        return st.max_mp_pool if st is not None else {}
 
     def _consume_mp(actor, lv: int, cost: int) -> bool:
         mp_pool = _mp_pool(actor)
@@ -212,65 +220,6 @@ def make_cast_field_magic_fn(
         if cur < cost:
             return False
         mp_pool[lv] = cur - cost
-        return True
-
-    def _sync_mp_to_save(actor):
-        # savedata 側に mp dict を持たせる想定（あなたの設計）
-        if not isinstance(save_dict, dict):
-            return
-        sp_list = save_dict.get("party", [])
-        for sp in sp_list:
-            if sp.get("name") == actor.name:
-                mp_pool = _mp_pool(actor)
-                sp["mp"] = {f"L{i}MP": int(mp_pool.get(i, 0)) for i in range(1, 9)}
-                break
-
-    def _sync_hp_status_to_save(actor):
-        if not isinstance(save_dict, dict):
-            return
-        sp_list = save_dict.get("party", [])
-        for sp in sp_list:
-            if sp.get("name") == actor.name:
-                sp["hp"] = int(actor.hp)
-                # status_effects は dict として保持してる想定
-                # actor 側に runtime の status_effects を持ってないなら、save 側だけ更新でもOK
-                break
-
-    def _get_status_effects_dict(actor) -> dict:
-        # ここはあなたの設計に合わせて：
-        # - battle.statuses (set[Status]) しかないなら、それを savedata形式(dict)に変換する必要がある
-        # - 既に actor に status_effects(dict) があるならそれを使う
-        se = getattr(actor, "status_effects", None)
-        if isinstance(se, dict):
-            return se
-        # 無ければ save_dict 側を直接いじる方式にする（簡易）
-        if isinstance(save_dict, dict):
-            for sp in save_dict.get("party", []):
-                if sp.get("name") == actor.name:
-                    d = sp.get("status_effects")
-                    if isinstance(d, dict):
-                        return d
-                    sp["status_effects"] = {}
-                    return sp["status_effects"]
-        return {}
-
-    def _clear_status(actor, key: str) -> bool:
-        se = _get_status_effects_dict(actor)
-        if key in se:
-            se.pop(key, None)
-            return True
-        return False
-
-    def _set_hp(actor, new_hp: int) -> bool:
-        old = int(actor.hp)
-        new_hp = max(0, min(int(new_hp), int(actor.max_hp)))
-        if new_hp == old:
-            return False
-        actor.hp = new_hp
-        # battle 側も同期したいなら：
-        battle = getattr(actor, "battle", None)
-        if battle is not None and hasattr(battle, "hp"):
-            battle.hp = new_hp
         return True
 
     def _heal_amount(spell_name: str, caster) -> int:
@@ -334,9 +283,9 @@ def make_cast_field_magic_fn(
         if spell_name in HEAL_SPELLS:
             amt = _heal_amount(spell_name, caster)
             if amt >= 9999:
-                changed = _set_hp(tgt_actor, tgt_actor.max_hp) or changed
+                changed = set_hp(tgt_actor, tgt_actor.max_hp) or changed
             else:
-                changed = _set_hp(tgt_actor, int(tgt_actor.hp) + amt) or changed
+                changed = set_hp(tgt_actor, int(tgt_actor.hp) + amt) or changed
 
         # ---- Raise / Arise ----
         elif spell_name in RAISE_SPELLS:
@@ -344,10 +293,10 @@ def make_cast_field_magic_fn(
                 changed = False
             else:
                 if spell_name == "Arise":
-                    changed = _set_hp(tgt_actor, tgt_actor.max_hp)
+                    changed = set_hp(tgt_actor, tgt_actor.max_hp)
                 else:
                     # Raise は半分回復などにしたければここを変更
-                    changed = _set_hp(tgt_actor, max(1, tgt_actor.max_hp // 2))
+                    changed = set_hp(tgt_actor, max(1, tgt_actor.max_hp // 2))
 
                 # KO/石化などを savedata 側で持ってるならここで解除
                 # changed = _clear_status(tgt_actor, "KO") or changed
@@ -355,15 +304,18 @@ def make_cast_field_magic_fn(
         # ---- Single status cure ----
         elif spell_name in STATUS_KEY_BY_SPELL:
             key = STATUS_KEY_BY_SPELL[spell_name]
-            changed = _clear_status(tgt_actor, key) or changed
+            changed = clear_status(tgt_actor, key, save_dict) or changed
             # Stona で Partial Petrification も消したいなら
             if spell_name == "Stona":
-                changed = _clear_status(tgt_actor, "Partial Petrification") or changed
+                changed = (
+                    clear_status(tgt_actor, "Partial Petrification", save_dict)
+                    or changed
+                )
 
         # ---- Esuna ----
         elif spell_name == "Esuna":
             for k in list(ESUNA_CURES):
-                changed = _clear_status(tgt_actor, k) or changed
+                changed = clear_status(tgt_actor, k, save_dict) or changed
 
         if not changed:
             if toast:
@@ -376,11 +328,260 @@ def make_cast_field_magic_fn(
             return False
 
         # savedata 同期（任意）
-        _sync_mp_to_save(caster)
-        _sync_hp_status_to_save(tgt_actor)
+        sync_mp_to_save(caster, save_dict, toast)
+        sync_hp_status_to_save(tgt_actor, save_dict)
 
         if toast:
-            toast(f"{spell_name} OK")
+            mp_pool = _mp_pool(caster)
+            max_mp_pool = _max_mp_pool(caster)
+            remain = int(mp_pool.get(lv, 0))
+            maxmp = int(max_mp_pool.get(lv, remain))
+            toast(f"{spell_name} OK (MP{lv} {remain}/{maxmp})")
+
+        print("[DBG] cast_field_magic called", caster_idx, spell_name, target_idx)
+
         return True
 
     return cast_field_magic
+
+
+# アイテム使用ロジック（効果発現＋個数-1）
+def make_use_field_item_fn(
+    *,
+    party,
+    items_by_name: dict[str, dict],
+    save_dict: Optional[dict] = None,
+    toast: Optional[Callable[[str], None]] = None,
+) -> Callable[[int, str, Optional[int], Optional[str]], bool]:
+
+    def _canon(s: str) -> str:
+        return str(s).strip().lower()
+
+    def _needs_target(item_name: str) -> bool:
+        return _canon(item_name) in FIELD_ITEM_TARGET_REQUIRED
+
+    def _find_item_type(item_name: str, hint: str | None) -> str | None:
+        if hint in FIELD_ITEM_TYPES:
+            return hint
+        if not isinstance(save_dict, dict):
+            return None
+        inv = save_dict.get("inventory", {})
+        for itype in FIELD_ITEM_TYPES:
+            b = inv.get(itype, {})
+            if isinstance(b, dict) and int(b.get(item_name, 0) or 0) > 0:
+                return itype
+        return None
+
+    def _heal_amount_by_item(item_name: str) -> int:
+        n = _canon(item_name)
+        if n == "potion":
+            return 90
+        if n in ("hi-potion", "hi potion"):
+            return 360
+        # if n == "elixir":  # ← 消す（ElixirはSpellEffectで処理する）
+        #     return 9999
+        return 0
+
+    def _toast(msg: str) -> None:
+        if toast:
+            toast(msg)
+
+    # Elixir（HP+MP全回復）
+    def _restore_mp_all(tgt) -> bool:
+        """MPを全回復。1つでも増えたらTrue"""
+        st = get_battle_state(
+            tgt
+        )  # field_effects.py の get_battle_state を import 済み前提
+        if st is None:
+            return False
+        changed = False
+        for lv in range(1, 9):
+            cur = int(st.mp_pool.get(lv, 0))
+            mx = int(st.max_mp_pool.get(lv, cur))
+            if cur < mx:
+                st.mp_pool[lv] = mx
+                changed = True
+        return changed
+
+    def _restore_mp_by_level(tgt, lv: int, amount: int) -> bool:
+        """指定LvのMPを amount 回復（maxでクランプ）。増えたらTrue"""
+        st = get_battle_state(tgt)
+        if st is None:
+            return False
+        lv = int(lv)
+        if not (1 <= lv <= 8):
+            return False
+        cur = int(st.mp_pool.get(lv, 0))
+        mx = int(st.max_mp_pool.get(lv, cur))
+        newv = min(mx, cur + int(amount))
+        if newv == cur:
+            return False
+        st.mp_pool[lv] = newv
+        return True
+
+    # Ether 系（MP回復）
+    def _mp_restore_by_item(item_name: str) -> tuple[int, int]:
+        """
+        (lv, amount) を返す。該当しなければ (0,0)
+        例:
+        ether -> Lv1 +1
+        hi-ether -> Lv2 +1
+        """
+        n = _canon(item_name)
+        if n == "ether":
+            return (1, 1)
+        if n in ("hi-ether", "hi ether"):
+            return (2, 1)
+        return (0, 0)
+
+    def use_field_item(
+        user_idx: int,
+        item_name: str,
+        target_idx: int | None,
+        item_type_hint: str | None = None,
+    ) -> bool:
+        item = items_by_name.get(item_name, {})
+        if not item:
+            _toast("Item not found")
+            return False
+
+        itype_data = item.get("ItemType")
+        if itype_data not in FIELD_ITEM_TYPES:
+            _toast("Cannot use here")
+            return False
+
+        inv_type = _find_item_type(item_name, item_type_hint)
+        if inv_type is None:
+            _toast("Not in inventory")
+            return False
+
+        # 対象
+        tgt = None
+        if _needs_target(item_name):
+            if target_idx is None:
+                _toast("Target required")
+                return False
+            tgt = party[target_idx]
+
+        changed = False
+        msg: str | None = None  # ★成功時に表示するメッセージ
+
+        spell_eff = item.get("SpellEffect")
+
+        # -------------------------
+        # (A) 回復アイテム
+        # -------------------------
+        amt = _heal_amount_by_item(item_name)
+        if amt > 0:
+            if tgt is None:
+                _toast("Target required")
+                return False
+
+            before = int(tgt.hp)
+
+            if amt >= 9999:
+                changed_hp = set_hp(tgt, tgt.max_hp)
+                changed_mp = _restore_mp_all(tgt)  # ★追加
+                changed = (changed_hp or changed_mp) or changed
+            else:
+                changed = set_hp(tgt, int(tgt.hp) + amt) or changed
+
+            after = int(tgt.hp)
+            healed = max(0, after - before)
+
+            if changed:
+                # FFっぽい文言（日本語に寄せる）
+                if amt >= 9999:
+                    msg = f"{tgt.name} は HPとMPが ぜんかいふくした！"
+                else:
+                    msg = f"{tgt.name} の HPが {healed} かいふくした！"
+
+        # -------------------------
+        # (B) SpellEffect 系（状態回復/蘇生など）
+        # -------------------------
+        elif isinstance(spell_eff, str) and spell_eff:
+            se = str(spell_eff)
+
+            if se == "Poisona":
+                if tgt is None:
+                    _toast("Target required")
+                    return False
+                changed = clear_status(tgt, "poison", save_dict) or changed
+                if changed:
+                    msg = f"{tgt.name} の どく が なおった！"
+
+            elif se == "Blindna":
+                if tgt is None:
+                    _toast("Target required")
+                    return False
+                changed = clear_status(tgt, "blind", save_dict) or changed
+                if changed:
+                    msg = f"{tgt.name} の くらやみ が なおった！"
+
+            elif se == "Stona":
+                if tgt is None:
+                    _toast("Target required")
+                    return False
+                changed = clear_status(tgt, "petrification", save_dict) or changed
+                changed = (
+                    clear_status(tgt, "partial petrification", save_dict) or changed
+                )
+                if changed:
+                    msg = f"{tgt.name} の せきか が なおった！"
+
+            elif se in ("Raise", "Arise"):
+                if tgt is None:
+                    _toast("Target required")
+                    return False
+
+                if int(tgt.hp) > 0:
+                    changed = False
+                else:
+                    # KO解除（あなたのキーに合わせる）
+                    clear_status(tgt, "ko", save_dict)
+                    before = int(tgt.hp)
+                    changed = set_hp(tgt, max(1, tgt.max_hp // 2)) or changed
+                    if changed:
+                        msg = f"{tgt.name} は いきかえった！"
+
+            elif se == "Elixir":
+                if tgt is None:
+                    _toast("Target required")
+                    return False
+
+                changed_hp = set_hp(tgt, tgt.max_hp)
+                changed_mp = _restore_mp_all(tgt)
+                changed = (changed_hp or changed_mp) or changed
+
+                if changed:
+                    msg = f"{tgt.name} は HPとMPが ぜんかいふくした！"
+
+            else:
+                _toast("Not implemented")
+                return False
+
+        else:
+            _toast("Not implemented")
+            return False
+
+        # 効果なし
+        if not changed:
+            _toast("No effect")
+            return False
+
+        # 個数-1
+        if isinstance(save_dict, dict):
+            if not dec_inventory_item(save_dict, inv_type, item_name):
+                _toast("Inventory error")
+                return False
+
+        # save反映
+        if tgt is not None and isinstance(save_dict, dict):
+            sync_hp_status_to_save(tgt, save_dict)
+            sync_mp_to_save(tgt, save_dict)  # ★追加
+
+        # ★成功メッセージ（なければ従来通り）
+        _toast(msg or f"{item_name} OK")
+        return True
+
+    return use_field_item
