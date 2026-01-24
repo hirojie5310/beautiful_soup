@@ -1,11 +1,10 @@
 from __future__ import annotations
 import pygame
 from dataclasses import dataclass
-from typing import List, Callable, Optional, Dict, Any, Sequence, Tuple
+from typing import List, Callable, Optional, Dict, Any, Sequence
 from copy import deepcopy
 from pathlib import Path
 import time
-from collections import defaultdict, Counter
 
 
 from combat.enums import Status
@@ -19,13 +18,10 @@ from combat.models import (
     PartyMemberRuntime,
     EquipmentSet,
     FinalCharacterStats,
-    SpellTuple,
 )
 from combat.char_build import (
     compute_character_final_stats,
     build_name_index,
-    weapon_stats,
-    armor_stats,
     strip_illegal_equipment_for_job,
     apply_job_equipment_restrictions,
 )
@@ -42,6 +38,8 @@ from ui_pygame.field_effects import (
     sync_equipment_to_save,
     FIELD_ITEM_TYPES,
 )
+
+from system.cp_system import compute_job_change_cp_cost
 
 
 # --- Elixir ---
@@ -117,6 +115,7 @@ def open_menu_pygame(
     save_dict: Optional[Dict[str, Any]] = None,
     save_path: Optional[Path] = None,
     level_table=None,
+    job_attr=None,
     weapons=None,
     armors=None,
     jobs_by_name=None,  # ★追加
@@ -144,6 +143,7 @@ def open_menu_pygame(
     WHITE = (255, 255, 255)
     GRAY = (140, 140, 140)
     HP_GREEN = (60, 255, 80)
+    YELLOW = (255, 220, 60)
 
     # make_use_field_item_fn を冒頭で1回だけ作る
     use_field_item_fn = None
@@ -274,11 +274,13 @@ def open_menu_pygame(
                                 screen,
                                 font,
                                 party,
+                                job_attr=job_attr,
                                 jobs_by_name=jobs_by_name,
                                 weapons_by_name=weapons,
                                 armors_by_name=armors,
                                 recalc_stats_fn=recalc_stats_fn,
                                 save_dict=save_dict,  # ★追加（OptionalでもOK）
+                                portrait_cache=portrait_cache,
                             )
                         elif choice == "セーブ":
                             if save_dict is None or save_path is None:
@@ -320,9 +322,9 @@ def open_menu_pygame(
         left_w = int(w * 0.62)
         right_w = w - left_w - margin * 3
 
-        party_rect = pygame.Rect(margin, margin, left_w, int(h * 0.62))
+        party_rect = pygame.Rect(margin, margin, left_w, int(h * 0.72))
         cmd_rect = pygame.Rect(
-            party_rect.right + margin, margin, right_w, int(h * 0.62)
+            party_rect.right + margin, margin, right_w, int(h * 0.54)
         )
         bottom_rect = pygame.Rect(
             margin,
@@ -386,18 +388,18 @@ def open_menu_pygame(
             screen.blit(joblv_s, (party_rect.right - pad - joblv_s.get_width(), ry))
 
             # ラベル
-            label_s = font.render("HP", True, WHITE)
-            screen.blit(label_s, (tx, ry + font.get_linesize() + 6))
+            label_s = font.render("HP", True, HP_GREEN)
+            screen.blit(label_s, (tx, ry + font.get_linesize()))
             label_s = font.render("MP", True, WHITE)
-            screen.blit(label_s, (tx, ry + font.get_linesize() * 2 + 6))
+            screen.blit(label_s, (tx, ry + font.get_linesize() * 2))
 
             # HP
             hp, mhp = ch.hp, ch.max_hp
             hp_s = font.render(f"{hp}/{mhp}", True, HP_GREEN)
-            screen.blit(hp_s, (tx + 160, ry + font.get_linesize() + 6))
+            screen.blit(hp_s, (tx + 160, ry + font.get_linesize()))
 
             # MP（L1〜L8 現在値だけ）
-            mp_vals = [str(ch.mp_pool.get(lv, 0)) for lv in range(1, 9)]
+            mp_vals = [f"{ch.mp_pool.get(lv, 0):2d}" for lv in range(1, 9)]
             one_line = "/".join(mp_vals)
 
             # 右端（はみ出し防止のため）
@@ -405,14 +407,14 @@ def open_menu_pygame(
 
             if font.size(one_line)[0] <= max_w:
                 mp_s = font.render(one_line, True, WHITE)
-                screen.blit(mp_s, (tx + 60, ry + font.get_linesize() * 2 + 6))
+                screen.blit(mp_s, (tx + 60, ry + font.get_linesize() * 2))
             else:
                 line1 = "/".join(mp_vals[:4])
                 line2 = "/".join(mp_vals[4:])
                 mp1 = font.render(line1, True, WHITE)
                 mp2 = font.render(line2, True, WHITE)
-                screen.blit(mp1, (tx + 60, ry + font.get_linesize() * 2 + 6))
-                screen.blit(mp2, (tx + 60, ry + font.get_linesize() * 3 + 6))
+                screen.blit(mp1, (tx + 60, ry + font.get_linesize() * 2))
+                screen.blit(mp2, (tx + 60, ry + font.get_linesize() * 3))
 
         # ========== 右：コマンド ==========
         cx = cmd_rect.x + pad
@@ -446,8 +448,45 @@ def open_menu_pygame(
             help_text = "↑↓: Select   Enter: OK   Esc: Back"
         else:
             help_text = "↑↓: Select   Enter: Toggle Row   Esc: End"
+
+        # --- Gil / CP 取得 ---
+        gil = 0
+        cp = 0
+        if isinstance(save_dict, dict):
+            try:
+                gil = int(save_dict.get("gil", 0))
+            except (TypeError, ValueError):
+                gil = 0
+            try:
+                cp = int(save_dict.get("CP", 0))
+            except (TypeError, ValueError):
+                cp = 0
+
+        # --- ヘルプ表示（左） ---
         help_surf = font.render(help_text, True, GRAY)
         screen.blit(help_surf, (bottom_rect.x + pad, bottom_rect.y + pad))
+
+        # --- GIL 表示（右端） ---
+        gil_text = f"GIL {gil:,}"
+        gil_surf = font.render(gil_text, True, WHITE)
+
+        gil_x = bottom_rect.right - pad - gil_surf.get_width()
+        gil_y = bottom_rect.y + pad
+        screen.blit(gil_surf, (gil_x, gil_y))
+
+        # --- CP 表示（GIL の左） ---
+        if cp >= 255:
+            cp_text = "CP MAX"
+        else:
+            cp_text = f"CP {cp}/255"
+        cp_color = YELLOW if cp >= 255 else WHITE
+        cp_surf = font.render(cp_text, True, cp_color)
+
+        # GIL の左に余白をあけて配置
+        gap = 16  # CP と GIL の間隔（お好みで）
+        cp_x = gil_x - gap - cp_surf.get_width()
+        cp_y = gil_y
+        screen.blit(cp_surf, (cp_x, cp_y))
 
         pygame.display.flip()
         clock.tick(60)
@@ -840,7 +879,7 @@ JOB_NAME_TO_CODE = {
     "Summoner": "Su",
     "Sage": "Sa",
     "Ninja": "Ni",
-    "Dark Knight": "MK",  # JSON内で MK 表記になっています :contentReference[oaicite:2]{index=2}
+    "Mystic Knight": "MK",  # JSON内で MK 表記になっています :contentReference[oaicite:2]{index=2}
 }
 
 
@@ -1247,14 +1286,20 @@ def open_job_pygame(
     font,
     party,
     *,
+    job_attr: Optional[Dict[str, Dict[str, int]]] = None,
     jobs_by_name: dict,
     weapons_by_name: dict,
     armors_by_name: dict,
     recalc_stats_fn,
     save_dict: dict | None = None,
+    portrait_cache: PortraitCache,
 ):
     clock = pygame.time.Clock()
     actor_idx = 0
+
+    # 色
+    WHITE = (255, 255, 255)
+    GRAY = (140, 140, 140)
 
     job_names = sorted(list(jobs_by_name.keys()))
     if not job_names:
@@ -1445,6 +1490,39 @@ def open_job_pygame(
 
                     sp = find_save_entry_for_actor(a)
 
+                    # ===== CPチェック =====
+                    to_lv = get_saved_job_lv(sp, new_job_name) or 1
+                    if not isinstance(job_attr, dict):
+                        need_cp = 0
+                    else:
+                        need_cp = compute_job_change_cp_cost(
+                            from_job=old_job,
+                            to_job=new_job_name,
+                            to_job_level=to_lv,
+                            job_attr=job_attr,
+                        )
+
+                    have_cp = 0
+                    if isinstance(save_dict, dict):
+                        try:
+                            have_cp = int(save_dict.get("CP", 0))
+                        except (TypeError, ValueError):
+                            have_cp = 0
+
+                    if have_cp < need_cp:
+                        show_toast_message(
+                            screen,
+                            font,
+                            f"Not enough CP ({need_cp} needed)",
+                            duration=1.2,
+                            text_color=(255, 80, 80),
+                        )
+                        continue
+
+                    # CP消費
+                    if isinstance(save_dict, dict):
+                        save_dict["CP"] = max(0, have_cp - need_cp)
+
                     # 1) 変更前ジョブの進行を保存
                     if sp is not None:
                         job_levels = ensure_job_levels_dict(sp)
@@ -1508,47 +1586,89 @@ def open_job_pygame(
         a = actor()
         sp = find_save_entry_for_actor(a)
 
-        title = font.render(f"Job  /  {a.name}", True, (255, 255, 255))
+        # ★portrait（左上に表示）
+        face_size = 64
+        face_rect = pygame.Rect(
+            screen.get_width() // 2 - face_size // 2, 20, face_size, face_size
+        )
+        inner = face_rect.inflate(-4, -4)
+
+        key = getattr(a, "portrait_key", None)
+        if key:
+            face = portrait_cache.get(key)
+            img = pygame.transform.scale(face, (inner.w, inner.h))
+            screen.blit(img, inner.topleft)
+        else:
+            pygame.draw.rect(screen, (60, 60, 60), inner)
+
+        # キャラ名
+        title = font.render(f"{a.name}", True, WHITE)
         screen.blit(title, (16, 16))
 
-        cur = font.render(
-            f"Current: {a.job.name}  (JobLv {a.base.job_level}  SP {a.base.job_skill_point})",
-            True,
-            (180, 180, 180),
-        )
-        screen.blit(cur, (16, 16 + line_h))
+        # 現在ジョブ
+        job_txt = font.render(f"{a.job.name}", True, GRAY)
+        screen.blit(job_txt, (16, 16 + line_h))
+
+        # CP
+        cp = int(save_dict.get("CP", 0)) if save_dict else 0
+        cp_txt = font.render(f"CP {cp}/255", True, (255, 220, 60))
+        screen.blit(cp_txt, (screen.get_width() - 160, 16))
 
         hint = font.render(
             "←→: Character  ↑↓: Job  Enter: Set  ESC: Back", True, (160, 160, 160)
         )
         screen.blit(hint, (16, 16 + line_h * 2))
 
-        # ---------- list ----------
+        # ---------- job list (2 columns) ----------
         y0 = 16 + header_h
-        visible = job_names[top : top + max_rows]
-        for i, jn in enumerate(visible):
-            real_i = top + i
-            is_sel = real_i == sel_idx
-            prefix = "▶ " if is_sel else "  "
-            color = (255, 255, 255) if is_sel else (140, 140, 140)
+        jobs = job_names
+        num_rows = (len(jobs) + 1) // 2
 
-            # ★表示：Bard (Lv12)
-            saved_lv = get_saved_job_lv(sp, jn)
-            if saved_lv is not None:
-                label = f"{jn} (Lv{saved_lv})"
-            else:
-                label = jn
+        start_x = 40
+        start_y = y0
+        col_w = 300
+        row_h = line_h
 
-            # ★NEW マーク
-            if is_new_job(sp, jn):
-                label += " NEW"
+        for row in range(num_rows):
+            for col in range(2):
+                idx = row * 2 + col
+                if idx >= len(jobs):
+                    continue
 
-            # ★現在ジョブマーク
-            if jn == a.job.name:
-                label += " [E]"
+                jn = jobs[idx]
+                is_sel = idx == sel_idx
 
-            row = font.render(prefix + label, True, color)
-            screen.blit(row, (16, y0 + i * line_h))
+                x = start_x + col * col_w
+                y = start_y + row * row_h
+
+                prefix = "▶ " if is_sel else "  "
+                color = (255, 255, 255) if is_sel else (140, 140, 140)
+
+                # JobLv
+                saved_lv = get_saved_job_lv(sp, jn) or 1
+
+                # 必要CP
+                need_cp = 0
+                if isinstance(job_attr, dict):
+                    need_cp = compute_job_change_cp_cost(
+                        from_job=a.job.name,
+                        to_job=jn,
+                        to_job_level=saved_lv,
+                        job_attr=job_attr,
+                    )
+
+                label = f"{jn}  Lv{saved_lv}  CP{need_cp}"
+
+                # NEW
+                # if is_new_job(sp, jn):
+                # label += " NEW"
+
+                # 現在ジョブ
+                if jn == a.job.name:
+                    label += " [E]"
+
+                surf = font.render(prefix + label, True, color)
+                screen.blit(surf, (x, y))
 
         # ---------- status diff preview ----------
         # 選択中ジョブが現在ジョブと違う時だけプレビュー表示
@@ -1582,6 +1702,27 @@ def open_job_pygame(
                     s = font.render(f"{key}: {txt}", True, col)
                     screen.blit(s, (bx, yy))
                     yy += line_h
+
+                # ===== CPプレビュー =====
+                to_lv = get_saved_job_lv(sp, sel_job) or 1
+                if not isinstance(job_attr, dict):
+                    need_cp = 0
+                else:
+                    need_cp = compute_job_change_cp_cost(
+                        from_job=a.job.name,
+                        to_job=sel_job,
+                        to_job_level=to_lv,
+                        job_attr=job_attr,
+                    )
+
+                have_cp = 0
+                if isinstance(save_dict, dict):
+                    have_cp = int(save_dict.get("CP", 0))
+
+                cp_color = (255, 80, 80) if have_cp < need_cp else (255, 220, 60)
+                cp_text = f"CP {need_cp}  (Have {have_cp})"
+                cp_surf = font.render(cp_text, True, cp_color)
+                screen.blit(cp_surf, (bx, yy + 4))
 
             except Exception:
                 # プレビュー計算で例外が出ても画面は落とさない

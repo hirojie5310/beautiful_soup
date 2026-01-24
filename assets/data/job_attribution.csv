@@ -1,0 +1,23 @@
+job,magic_battle,right_wrong
+Onion Knight,0,0
+Warrior,-1,1
+Monk,-1,-1
+White Mage,1,1
+Black Mage,1,-1
+Red Mage,0,2
+Ranger,-1,3
+Knight,0,4
+Thief,-1,-3
+Scholar,2,2
+Geomancer,2,-4
+Dragoon,-3,3
+Viking,-3,-3
+Black Belt,-6,0
+Mystic Knight,0,-6
+Evoker,5,0
+Bard,3,3
+Magus,4,-4
+Devout,4,4
+Summoner,7,-8
+Sage,7,7
+Ninja,-8,-8

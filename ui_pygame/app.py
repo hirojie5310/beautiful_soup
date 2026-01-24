@@ -6,6 +6,7 @@ import copy
 from pathlib import Path
 from dataclasses import dataclass
 from typing import cast, Sequence, Callable
+from collections import Counter
 
 import pygame
 
@@ -28,24 +29,19 @@ from combat.enemy_build import build_enemies
 from combat.life_check import is_out_of_battle
 from combat.input_ui import normalize_battle_command
 from combat.enemy_selection import (
-    LocationMonsters,
     build_location_index,
     pick_enemy_names,
     calc_party_avg_level,
     danger_label,
 )
-from combat.progression import (
-    compute_exp_reward,
-    apply_victory_exp_rewards,
-    persist_party_progress_to_save,
-)
-from combat.progression import apply_victory_exp_rewards, persist_party_progress_to_save
+from combat.progression import apply_victory_rewards
 from combat.save_prompt import (
     save_savedata_with_backup,
-    diff_party_progress,
     prompt_save_progress_and_write_pygame,
+    _toast_pygame,
 )
 from system.exp_system import LevelTable
+from system.cp_system import load_job_attribution
 
 from ui_pygame.logic import get_job_commands
 from ui_pygame.render.hub import draw_header
@@ -62,14 +58,12 @@ from ui_pygame.render.enemy_panel import draw_enemy_panel
 from ui_pygame.render.command_panel import draw_command_panel
 from ui_pygame.render.enemy_panel import draw_enemy_panel
 from ui_pygame.render.log_panel import draw_log_panel
-from ui_pygame.render.log_scroll import calc_log_scroll_max, handle_mousewheel
 from ui_pygame.audio_manager import AudioManager
 
 
 from ui_pygame.app_context import BattleAppContext  # ctx を定義した場所
 from ui_pygame.logic import (
     reset_target_flags,
-    find_next_unfilled,
     build_magic_candidates_for_member as build_magic_candidates_for_member_idx,
     build_item_candidates_for_battle as build_item_candidates_for_battle_fn,
     make_planned_action,
@@ -106,8 +100,10 @@ class BattleAppConfig:
     # ★SE 定義
     se_enter_path: str = "assets/sounds/se/se_enter.ogg"
     se_confirm_path: str = "assets/sounds/se/se_confirm.ogg"
+    se_rareitem_path: str = "assets/sounds/se/se_rareitem.ogg"
     se_enter_volume: float = 0.35
     se_confirm_volume: float = 0.6
+    se_rareitem_volume: float = 0.6
 
 
 def run_battle_app(
@@ -146,11 +142,14 @@ def run_battle_app(
     spells_expanded = expand_spells_for_summons(state.spells)
 
     level_table = LevelTable("assets/data/level_exp.csv")
+    job_attr = load_job_attribution("assets/data/job_attribution.csv")
 
     se_enter = pygame.mixer.Sound(cfg.se_enter_path)
     se_confirm = pygame.mixer.Sound(cfg.se_confirm_path)
+    se_rareitem = pygame.mixer.Sound(cfg.se_rareitem_path)
     se_enter.set_volume(cfg.se_enter_volume)
     se_confirm.set_volume(cfg.se_confirm_volume)
+    se_rareitem.set_volume(cfg.se_rareitem_volume)
 
     portrait_cache = PortraitCache(base_dir=cfg.face_dir)
 
@@ -202,6 +201,7 @@ def run_battle_app(
                 party_avg_lv=party_avg_lv,
                 party_members=party_members,
                 level_table=level_table,  # ★追加
+                job_attr=job_attr,  # ★追加
                 weapons=state.weapons,  # ★追加
                 armors=state.armors,  # ★追加
                 save_dict=state.save,
@@ -226,6 +226,7 @@ def run_battle_app(
             "spells_expanded": spells_expanded,
             "se_enter": se_enter,
             "se_confirm": se_confirm,
+            "se_rareitem": se_rareitem,
             "ctx_kwargs": dict(
                 normalize_battle_command=normalize_battle_command,
                 reset_target_flags=reset_target_flags,
@@ -259,25 +260,21 @@ def run_battle_app(
         # ★戦闘後処理（勝利時）
         # =========================
         if end_reason == "enemy_defeated":
-            # ① exp/level 反映（余りが出たら加算なしの仕様は apply_victory_exp_rewards 側で）
-            apply_victory_exp_rewards(
-                party_members,
-                enemies,
+            # 事実の確定（ロジック）
+            victory = apply_victory_rewards(
+                party_members=party_members,
+                enemies=enemies,
+                state=state,
                 level_table=level_table,
-                weapons=state.weapons,
-                armors=state.armors,
             )
-
-            # 勝利直後、persist の「前」
-            print("[DBG] before persist save eq:", state.save["party"][0]["equipment"])
-
-            # ② runtimeの成長を save に書き戻す（state.save を更新）
-            persist_party_progress_to_save(state.save, party_members)
-
-            # persist の「後」
-            print("[DBG] after persist save eq:", state.save["party"][0]["equipment"])
-
-            # ③ 差分表示 → 保存確認 → 保存
+            # 演出・表示（UI）
+            show_victory_result_pygame(
+                screen,
+                font,
+                victory,
+                ctx_base=ctx_base,
+            )
+            # 永続化の確認（UX）差分表示 → 保存確認 → 保存
             prompt_save_progress_and_write_pygame(
                 screen=screen,
                 font=font,
@@ -520,6 +517,7 @@ def choose_location_pygame(
     caption="Select Location",
     party_members: Sequence[PartyMemberRuntime],
     level_table=None,
+    job_attr=None,
     weapons=None,
     armors=None,  # ★追加
     save_dict=None,
@@ -602,6 +600,7 @@ def choose_location_pygame(
                         save_dict=save_dict,
                         save_path=save_path,
                         level_table=level_table,
+                        job_attr=job_attr,
                         weapons=weapons,
                         armors=armors,
                         jobs_by_name=jobs_by_name,
@@ -770,3 +769,85 @@ def prompt_save_yes_no_pygame(screen, font, caption: str) -> bool:
                     return True
                 if ev.key == pygame.K_n or ev.key == pygame.K_ESCAPE:
                     return False
+
+
+RARE_ITEMS = {"Elixir", "Yoichi Arrow", "Onion Shield", "Onion Helm", "Onion Armor", "Onion Sword"}
+
+# ★戦闘勝利結果表示
+def show_victory_result_pygame(
+    screen,
+    font,
+    victory,
+    ctx_base,
+):
+    ui = BattleUIState()
+    ui.se_rareitem = ctx_base.get("se_rareitem")
+
+    # ① EXP
+    _toast_pygame(
+        screen,
+        font,
+        f"EXP +{victory['gained_exp']}",
+        ms=1000,
+    )
+
+    # ② LvUP
+    for name, old_lv, new_lv in victory["levelups"]:
+        _toast_pygame(
+            screen,
+            font,
+            f"{name} Lv{old_lv} → Lv{new_lv}!",
+            ms=1000,
+        )
+
+    # ③ Gil
+    if victory["gained_gil"] > 0:
+        _toast_pygame(
+            screen,
+            font,
+            f"{victory['gained_gil']} ギルを手に入れた！",
+            ms=1000,
+        )
+
+    # ④ CP
+    if victory["gained_cp"] > 0:
+        _toast_pygame(
+            screen,
+            font,
+            f"{victory['gained_cp']} CPを手に入れた！",
+            ms=1000,
+        )
+
+    # ⑤ Drop Item
+    dropped_items = victory.get("dropped_item", [])
+    if dropped_items:
+        loot_counter = Counter(dropped_items)
+
+        for item, count in loot_counter.items():
+            if item not in RARE_ITEMS:
+                if count == 1:
+                    msg = f"{item} を手に入れた！"
+                else:
+                    msg = f"{item} を{count}こ手に入れた！"
+
+                _toast_pygame(
+                    screen,
+                    font,
+                    msg,
+                    ms=1000,
+                )
+
+        for item, count in loot_counter.items():
+            if item in RARE_ITEMS:
+                ui.se_rareitem.play()
+                if count == 1:
+                    msg = f"✨ {item} を手に入れた！ ✨"
+                else:
+                    msg = f"✨ {item} を{count}こ手に入れた！ ✨"
+
+                _toast_pygame(
+                    screen,
+                    font,
+                    msg,
+                    ms=1500,
+                )

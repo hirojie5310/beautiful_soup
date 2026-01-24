@@ -5,7 +5,7 @@
 # InputMode: UIの入力モード（normal/targeting/menu/paused）
 # ============================================================
 
-from typing import TypedDict, Literal
+from typing import Literal
 from dataclasses import dataclass
 
 from combat.enums import BattleKind

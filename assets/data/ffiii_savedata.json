@@ -2,17 +2,17 @@
   "party": [
     {
       "name": "Runeth",
-      "level": 35,
-      "exp": 208136,
+      "level": 38,
+      "exp": 275801,
       "job": "Sage",
       "job_level": {
-        "level": 97,
-        "skill_point": 83
+        "level": 99,
+        "skill_point": 99
       },
       "job_levels": {
         "Sage": {
-          "level": 97,
-          "skill_point": 83
+          "level": 99,
+          "skill_point": 99
         },
         "Bard": {
           "level": 12,
@@ -27,17 +27,17 @@
           "skill_point": 0
         }
       },
-      "hp": 245,
+      "hp": 1928,
       "max_hp": 260,
       "mp": {
-        "L1MP": 9,
-        "L2MP": 4,
-        "L3MP": 3,
-        "L4MP": 3,
-        "L5MP": 3,
-        "L6MP": 2,
-        "L7MP": 2,
-        "L8MP": 2
+        "L1MP": 45,
+        "L2MP": 38,
+        "L3MP": 30,
+        "L4MP": 22,
+        "L5MP": 17,
+        "L6MP": 13,
+        "L7MP": 8,
+        "L8MP": 4
       },
       "strength": 22,
       "agility": 17,
@@ -71,13 +71,13 @@
       "portrait_key": "runeth"
     },
     {
-      "name": "Refia",
-      "level": 35,
-      "exp": 206319,
-      "job": "Ninja",
+      "name": "Arc",
+      "level": 37,
+      "exp": 258784,
+      "job": "Geomancer",
       "job_level": {
-        "level": 13,
-        "skill_point": 71
+        "level": 5,
+        "skill_point": 52
       },
       "job_levels": {
         "Dragoon": {
@@ -87,6 +87,76 @@
         "Ninja": {
           "level": 13,
           "skill_point": 71
+        },
+        "Black Belt": {
+          "level": 8,
+          "skill_point": 68
+        },
+        "Geomancer": {
+          "level": 5,
+          "skill_point": 52
+        }
+      },
+      "hp": 245,
+      "max_hp": 260,
+      "mp": {
+        "L1MP": 9,
+        "L2MP": 4,
+        "L3MP": 3,
+        "L4MP": 3,
+        "L5MP": 3,
+        "L6MP": 2,
+        "L7MP": 1,
+        "L8MP": 1
+      },
+      "strength": 22,
+      "agility": 17,
+      "vitality": 18,
+      "intelligence": 10,
+      "mind": 11,
+      "row": "front",
+      "equipment": {
+        "main_hand": "Rune Bell",
+        "off_hand": "Rune Bell",
+        "head": "Ribbon",
+        "body": "Gaia Vest",
+        "arms": "Protect Ring"
+      },
+      "status_effects": {
+        "Poison": false,
+        "Blind": false,
+        "Mini": false,
+        "Silence": false,
+        "Toad": false,
+        "Petrification": false,
+        "KO": false,
+        "Confusion": false,
+        "Sleep": false,
+        "Paralysis": false,
+        "Partial Petrification (1/3)": false,
+        "Partial Petrification (1/2)": false,
+        "Partial Petrification (Full)": false
+      },
+      "image_name": "ch_Arc",
+      "portrait_key": "arc"
+    },
+    {
+      "name": "Refia",
+      "level": 38,
+      "exp": 292784,
+      "job": "Ninja",
+      "job_level": {
+        "level": 20,
+        "skill_point": 59
+      },
+      "job_levels": {
+        "Dragoon": {
+          "level": 97,
+          "skill_point": 54
+        },
+        "Ninja": {
+          "level": 20,
+          "skill_point": 59
         },
         "Black Belt": {
           "level": 8,
@@ -135,9 +205,80 @@
       },
       "image_name": "ch_Refia",
       "portrait_key": "refia"
+    },
+    {
+      "name": "Ingus",
+      "level": 38,
+      "exp": 273984,
+      "job": "Bard",
+      "job_level": {
+        "level": 8,
+        "skill_point": 56
+      },
+      "job_levels": {
+        "Dragoon": {
+          "level": 97,
+          "skill_point": 54
+        },
+        "Ninja": {
+          "level": 13,
+          "skill_point": 71
+        },
+        "Black Belt": {
+          "level": 8,
+          "skill_point": 68
+        },
+        "Bard": {
+          "level": 8,
+          "skill_point": 56
+        }
+      },
+      "hp": 245,
+      "max_hp": 260,
+      "mp": {
+        "L1MP": 9,
+        "L2MP": 4,
+        "L3MP": 3,
+        "L4MP": 3,
+        "L5MP": 3,
+        "L6MP": 2,
+        "L7MP": 1,
+        "L8MP": 1
+      },
+      "strength": 22,
+      "agility": 17,
+      "vitality": 18,
+      "intelligence": 10,
+      "mind": 11,
+      "row": "back",
+      "equipment": {
+        "main_hand": "Loki Harp",
+        "off_hand": null,
+        "head": "Ribbon",
+        "body": "Bard Vest",
+        "arms": "Protect Ring"
+      },
+      "status_effects": {
+        "Poison": false,
+        "Blind": false,
+        "Mini": false,
+        "Silence": false,
+        "Toad": false,
+        "Petrification": false,
+        "KO": false,
+        "Confusion": false,
+        "Sleep": false,
+        "Paralysis": false,
+        "Partial Petrification (1/3)": false,
+        "Partial Petrification (1/2)": false,
+        "Partial Petrification (Full)": false
+      },
+      "image_name": "ch_Ingus",
+      "portrait_key": "ingus"
     }
   ],
-  "gil": 1520,
+  "gil": 209575,
+  "CP": 255,
   "map": {
     "map": "grassland",
     "surface": "Grassland",
@@ -153,8 +294,9 @@
     "Anywhere": {
       "Potion": 5,
       "Hi Potion": 2,
-      "Elixir": 2,
-      "Antidote": 3
+      "Elixir": 9,
+      "Antidote": 3,
+      "Onion Helm": 1
     },
     "Field": {
       "Magic Key": 1,
@@ -163,7 +305,7 @@
     "Combat": {
       "Antarctic Wind": 2,
       "Zeus's Wrath": 1,
-      "Raven's Yawn": 1,
+      "Raven's Yawn": 2,
       "Black Hole": 2,
       "Black Musk": 2,
       "Devil's Sigh": 2,
@@ -174,6 +316,9 @@
       "Lilith's Kiss": 2,
       "Shining Curtain": 2,
       "Turtle Shell": 2
+    },
+    "Equipment": {
+      "Onion Sword": 1
     }
   },
   "event_flag": {
@@ -190,5 +335,6 @@
     "village": {
       "well_item": true
     }
-  }
+  },
+  "item_stock": {}
 }

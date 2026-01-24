@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from typing import Iterable, Any, Tuple, List, Optional, Dict
+import random
 
-from combat.models import PartyMemberRuntime, EquipmentSet, PlannedAction, Job
+from combat.constants import ITEM_CATEGORY_MAP
+from combat.models import PartyMemberRuntime, EquipmentSet, PlannedAction
 from combat.char_build import compute_character_final_stats
 from system.exp_system import LevelTable
 
@@ -326,3 +328,223 @@ def command_name_for_job_sp(action: PlannedAction) -> Optional[str]:
         return None
 
     return None
+
+
+# ---------------------- Gil
+
+
+# Gil報酬を計算
+def compute_gil_reward(enemies: Iterable[Any]) -> int:
+    """
+    敵リストから総ギルを合計して返す。
+    EnemyRuntime.json["Gil"] を想定。
+    欠損や不正値は 0 扱い。
+    """
+    total = 0
+    for e in enemies:
+        gil_val = 0
+        j = getattr(e, "json", None)
+        if isinstance(j, dict):
+            raw = j.get("Gil", 0)
+            try:
+                gil_val = int(raw)
+            except (TypeError, ValueError):
+                gil_val = 0
+        if gil_val > 0:
+            total += gil_val
+    return total
+
+
+# 勝利時のギル報酬を save_dict に加算
+def apply_victory_gil_reward(
+    save_dict: dict,
+    enemies: Iterable[Any],
+) -> int:
+    """
+    勝利時のギル報酬を save_dict["gil"] に加算する。
+    戻り値: 獲得ギル
+    """
+    if not isinstance(save_dict, dict):
+        return 0
+
+    gained = compute_gil_reward(enemies)
+    if gained <= 0:
+        return 0
+
+    current = save_dict.get("gil", 0)
+    try:
+        current = int(current)
+    except (TypeError, ValueError):
+        current = 0
+
+    save_dict["gil"] = current + gained
+    return gained
+
+
+# ---------------------- CP
+CP_MAX = 255
+
+
+# CP報酬を計算
+def compute_cp_reward(enemies: Iterable[Any]) -> int:
+    """
+    敵リストから総CPを合計して返す。
+    EnemyRuntime.json["CP"] を想定。
+    欠損や不正値は 0 扱い。
+    """
+    total = 0
+    for e in enemies:
+        cp_val = 0
+        j = getattr(e, "json", None)
+        if isinstance(j, dict):
+            raw = j.get("CP", 0)
+            try:
+                cp_val = int(raw)
+            except (TypeError, ValueError):
+                cp_val = 0
+        if cp_val > 0:
+            total += cp_val
+    return total
+
+
+# 勝利時のCP報酬を save_dict に加算
+def apply_victory_cp_reward(
+    save_dict: dict,
+    enemies: Iterable[Any],
+) -> int:
+    """
+    勝利時のCP報酬を save_dict["CP"] に加算する（上限255）。
+    戻り値: 実際に増えたCP
+    """
+    if not isinstance(save_dict, dict):
+        return 0
+
+    gained = compute_cp_reward(enemies)
+    if gained <= 0:
+        return 0
+
+    try:
+        current = int(save_dict.get("CP", 0))
+    except (TypeError, ValueError):
+        current = 0
+
+    new_cp = min(CP_MAX, current + gained)
+    actual_gained = new_cp - current
+
+    save_dict["CP"] = new_cp
+    return actual_gained
+
+
+# ---------------------- Drop Item
+
+# 単体の敵からドロップ判定
+def roll_drops(enemy):
+    """
+    enemy: EnemyRuntime
+    return: 入手したアイテム名のリスト
+    """
+    obtained_items = []
+
+    # ★ EnemyRuntime が持つ raw json を参照
+    dropped_items = enemy.json.get("Dropped Items")
+    if not dropped_items:
+        return obtained_items
+
+    for drop in dropped_items:
+        item_name = drop["Item"]
+        drop_rate = drop["DropRate"]
+
+        if random.random() < drop_rate:
+            obtained_items.append(item_name)
+
+    return obtained_items
+
+
+
+# 戦闘終了時：倒した敵全体を処理
+def process_battle_drops(defeated_monsters, item_stock):
+    """
+    defeated_monsters: 倒した敵データのリスト
+    item_stock: 所持品dict（通常の dict を想定）
+    return: 今回の戦闘で入手したアイテム一覧
+    """
+    battle_loot = []
+
+    for monster in defeated_monsters:
+        drops = roll_drops(monster)
+        for item in drops:
+            # dict 前提で安全に加算
+            item_stock[item] = item_stock.get(item, 0) + 1
+            battle_loot.append(item)
+
+    return battle_loot
+
+
+# item_stock → inventory に反映
+def apply_item_stock_to_inventory(save_data: dict):
+    inventory = save_data.setdefault("inventory", {})
+    item_stock = save_data.get("item_stock", {})
+
+    for item, count in item_stock.items():
+        if count <= 0:
+            continue
+
+        category = ITEM_CATEGORY_MAP.get(item, "Anywhere")
+        category_inv = inventory.setdefault(category, {})
+        category_inv[item] = category_inv.get(item, 0) + count
+
+    # ★ 反映後はクリア（重要）
+    save_data["item_stock"] = {}
+
+
+# 全体の報酬適用 -----------------------------------------
+def apply_victory_rewards(
+    *,
+    party_members,
+    enemies,
+    state,
+    level_table,
+) -> dict:
+    """
+    戻り値: 「この戦闘で何が起きたか」をまとめた事実データ
+    """
+
+    # EXP / Lv
+    levelups = apply_victory_exp_rewards(
+        party_members,
+        enemies,
+        level_table=level_table,
+        weapons=state.weapons,
+        armors=state.armors,
+    )
+
+    # Gil
+    gained_gil = apply_victory_gil_reward(
+        save_dict=state.save,
+        enemies=enemies,
+    )
+
+    # CP
+    gained_cp = apply_victory_cp_reward(
+        save_dict=state.save,
+        enemies=enemies,
+    )
+
+    # --- ★ここが重要：item_stock を必ず初期化 ---
+    item_stock = state.save.setdefault("item_stock", {})
+
+    # Drop Item
+    battle_loot = process_battle_drops(enemies, item_stock)
+
+    # runtime → save
+    persist_party_progress_to_save(state.save, party_members)
+
+    total_exp = compute_exp_reward(enemies)
+
+    return {
+        "gained_exp": total_exp,
+        "gained_gil": gained_gil,
+        "gained_cp": gained_cp,
+        "dropped_item": battle_loot,
+        "levelups": levelups,  # [(name, old_lv, new_lv), ...]
+    }

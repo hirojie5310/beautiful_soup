@@ -18,10 +18,7 @@ from combat.enemy_selection import (
     danger_label,
     calc_party_avg_level,
 )
-from combat.progression import (
-    apply_victory_exp_rewards,
-    persist_party_progress_to_save,
-)
+from combat.progression import apply_victory_rewards
 from combat.save_prompt import prompt_save_progress_and_write, restore_backup_by_choice
 
 
@@ -163,16 +160,13 @@ def main():
 
     # --- 戦闘終了後の報酬適用（ここで一回だけ） ---
     if end_reason == "enemy_defeated":
-        levelups = apply_victory_exp_rewards(
-            party_members,
-            enemies,
+        # 勝利処理
+        victory = apply_victory_rewards(
+            party_members=party_members,
+            enemies=enemies,
+            state=state,
             level_table=level_table,
-            weapons=state.weapons,
-            armors=state.armors,
         )
-
-        # ★書き戻し（次戦闘で再読込しても反映される）
-        persist_party_progress_to_save(state.save, party_members)
 
         # ★保存確認 → OKなら書き出し
         save_path = Path("assets/data/ffiii_savedata.json")

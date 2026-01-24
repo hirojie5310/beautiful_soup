@@ -13,7 +13,7 @@
 
 from typing import Any, List, Optional, Tuple, cast, Callable
 from combat.enums import BattleKind
-from combat.constants import FIELD_ITEM_TARGET_REQUIRED, STATUS_ENUM_BY_KEY
+from combat.constants import FIELD_ITEM_TARGET_REQUIRED
 from combat.models import PlannedAction, TargetSide
 from combat.inventory import build_item_list, is_item_visible_in_context
 from combat.input_ui import normalize_battle_command

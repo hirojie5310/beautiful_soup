@@ -9,7 +9,6 @@
 from typing import Dict, Any, List, Iterable, Optional
 
 from combat.models import FinalEnemyStats, EnemyRuntime, BattleActorState
-from combat.runtime_state import RuntimeState
 from combat.spell_repo import enrich_monster_spells
 
 

@@ -9,7 +9,7 @@
 # expand_spells_for_summons	spells.json内のSummonMagic（親：Bahamut等）を、子召喚魔法へ展開する
 # ============================================================
 
-from typing import Optional, Dict, Any, Tuple, List, Iterable, Sequence, cast
+from typing import Optional, Dict, Any, Tuple, List, Iterable
 from collections import defaultdict
 
 from combat.constants import JOB_CAST_CODE

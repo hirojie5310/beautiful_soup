@@ -106,6 +106,21 @@ FIELD_ITEM_TARGET_REQUIRED = {
     "phoenix down",
 }
 
+# アイテムカテゴリ判定テーブル
+ITEM_CATEGORY_MAP = {
+    "Potion": "Anywhere",
+    "Hi Potion": "Anywhere",
+    "Elixir": "Anywhere",
+    "Antidote": "Anywhere",
+
+    "Zeus's Wrath": "Combat",
+    "Raven's Yawn": "Combat",
+    "Devil's Sigh": "Combat",
+
+    "Gysahl Greens": "Field",
+
+    "Onion Sword": "Equipment",  # ← inventoryに入れない選択肢もアリ
+}
 
 COMMAND_TO_KIND: Dict[str, BattleKind] = {
     # 物理

@@ -13,7 +13,7 @@ import pygame
 from dataclasses import dataclass, field
 from typing import Any, List, Optional, Tuple, Sequence
 
-from combat.models import PlannedAction, TargetSide, BattleEvent
+from combat.models import PlannedAction, TargetSide
 
 from ui_pygame.ui_types import CommandCandidate
 from ui_pygame.ui_events import UiEvent
@@ -108,6 +108,7 @@ class BattleUIState:
     # サウンドエフェクト
     se_enter: Any | None = None  # pygame.mixer.Sound オブジェクトなど
     se_confirm: Any | None = None  # pygame.mixer.Sound オブジェクトなど
+    se_rareitem: Any | None = None  # pygame.mixer.Sound オブジェクトなど
 
     # BGM 状態
     current_bgm: str | None = None  # "battle", "victory", "requiem"
