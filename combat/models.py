@@ -325,6 +325,7 @@ class EnemyUnit:
 @dataclass
 class PartyMemberRuntime:
     name: str
+    level: int
     job: "Job"
     base: "BaseCharacter"  # ★追加
     stats: "FinalCharacterStats"

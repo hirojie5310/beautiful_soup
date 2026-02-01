@@ -25,21 +25,30 @@ from combat.char_build import (
     strip_illegal_equipment_for_job,
     apply_job_equipment_restrictions,
 )
-from combat.data_loader import (
+from assets.data.data_loader import (
     save_savedata,
     apply_party_equipment_to_save,
     apply_party_job_to_save,
 )
 
-from ui_pygame.portrait_cache import PortraitCache
+from ui_pygame.assets_py.portrait_cache import PortraitCache
+from ui_pygame.assets_py.status_icon_cashe import StatusIconCache
 from ui_pygame.logic import make_cast_field_magic_fn, make_use_field_item_fn
 from ui_pygame.field_effects import (
     get_battle_state,
     sync_equipment_to_save,
     FIELD_ITEM_TYPES,
 )
+from ui_pygame.render.status_icons import draw_status_icons, draw_status_immune_icons
 
 from system.cp_system import compute_job_change_cp_cost
+
+
+# 色
+WHITE = (255, 255, 255)
+GRAY = (140, 140, 140)
+HP_GREEN = (60, 255, 80)
+YELLOW = (255, 220, 60)
 
 
 # --- Elixir ---
@@ -101,6 +110,18 @@ ITEM_AFFECT_CHECKERS = {
 }
 
 
+def canon(s: str) -> str:
+    return str(s).strip().lower()
+
+
+# 効果がある対象だけ白表示
+def can_affect(item_name: str, ch) -> bool:
+    fn = ITEM_AFFECT_CHECKERS.get(canon(item_name))
+    if fn:
+        return fn(ch)
+    return True  # 未定義アイテムは「使える」扱い
+
+
 @dataclass
 class GameState:
     party: List[PartyMemberRuntime]
@@ -120,10 +141,12 @@ def open_menu_pygame(
     armors=None,
     jobs_by_name=None,  # ★追加
     portrait_cache: PortraitCache,  # ★追加
+    status_icon_cache: StatusIconCache,  # ★追加
     recalc_stats_fn=None,
     build_magic_fn: Optional[Callable[[int], list[tuple[str, int, int]]]] = None,
     spells_by_name: Optional[dict[str, dict]] = None,  # ★追加
     items_by_name: Optional[dict[str, dict]] = None,  # ★追加
+    ui_se: dict[str, pygame.mixer.Sound],
 ):
     clock = pygame.time.Clock()
     items = [
@@ -138,12 +161,6 @@ def open_menu_pygame(
     mode = "menu"  # "menu" or "row"
     idx = 0  # 右メニュー選択
     member_idx = 0  # 左キャラ選択（ならべかえ用）
-
-    # 色
-    WHITE = (255, 255, 255)
-    GRAY = (140, 140, 140)
-    HP_GREEN = (60, 255, 80)
-    YELLOW = (255, 220, 60)
 
     # make_use_field_item_fn を冒頭で1回だけ作る
     use_field_item_fn = None
@@ -198,6 +215,9 @@ def open_menu_pygame(
                                 save_dict=save_dict,
                                 items_by_name=items_by_name,
                                 use_field_item_fn=use_field_item_fn,
+                                portrait_cache=portrait_cache,
+                                status_icon_cache=status_icon_cache,
+                                ui_se=ui_se,  # ★追加
                             )
 
                         elif choice == "まほう":
@@ -224,9 +244,11 @@ def open_menu_pygame(
                                 font,
                                 party,
                                 portrait_cache=portrait_cache,
+                                status_icon_cache=status_icon_cache,
                                 build_magic_fn=build_magic_fn,
                                 spells_by_name=spells_by_name,
                                 cast_field_magic_fn=cast_field_magic_fn,
+                                ui_se=ui_se,  # ★追加
                             )
                         if choice == "そうび":
                             if (
@@ -245,6 +267,8 @@ def open_menu_pygame(
                                 weapons_by_name=weapons,
                                 armors_by_name=armors,
                                 save_dict=save_dict,  # ★追加（= state.save）
+                                portrait_cache=portrait_cache,
+                                status_icon_cache=status_icon_cache,
                             )
                         elif choice == "ステータス":
                             open_status_pygame(
@@ -254,6 +278,7 @@ def open_menu_pygame(
                                 level_table=level_table,
                                 weapons=weapons,
                                 portrait_cache=portrait_cache,
+                                status_icon_cache=status_icon_cache,
                             )
                         elif choice == "ジョブ":
                             if jobs_by_name is None or recalc_stats_fn is None:
@@ -281,6 +306,7 @@ def open_menu_pygame(
                                 recalc_stats_fn=recalc_stats_fn,
                                 save_dict=save_dict,  # ★追加（OptionalでもOK）
                                 portrait_cache=portrait_cache,
+                                status_icon_cache=status_icon_cache,
                             )
                         elif choice == "セーブ":
                             if save_dict is None or save_path is None:
@@ -379,6 +405,15 @@ def open_menu_pygame(
             # 名前（上段左）
             name_s = font.render(get_name(ch), True, WHITE)
             screen.blit(name_s, (tx, ry))
+
+            # draw_status_badges(screen, font, actor, xL, y)
+            draw_status_icons(
+                screen,
+                ch,
+                status_icon_cache,
+                x=tx + 100,
+                y=ry + 6,
+            )
 
             # 職業 + LV（上段右寄せ）
             job = get_job_name(ch)
@@ -499,99 +534,597 @@ def open_equip_pygame(
     *,
     weapons_by_name,
     armors_by_name,
-    save_dict: dict | None = None,  # ★追加
+    save_dict=None,
+    portrait_cache: PortraitCache,
+    status_icon_cache: StatusIconCache,
 ):
     clock = pygame.time.Clock()
+
     actor_idx = 0
-    slots = ["main_hand", "off_hand", "head", "body", "arms"]
+    slots = ["main_hand", "off_hand", "unequip_all", "head", "body", "arms"]
     slot_idx = 0
+
+    mode = "slot"  # "slot" | "candidate"
+    cand_idx = 0
+    cand_top = 0
+
     line_h = font.get_linesize() + 8
 
-    def recalc_stats(actor):
-        eq = actor.equipment or EquipmentSet()
-        return compute_character_final_stats(
-            base=actor.base,
-            eq=eq,
-            weapons_by_name=weapons_by_name,
-            armors_by_name=armors_by_name,
-            job_name=actor.job.name,
-        )
-
     while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                raise SystemExit
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    return
-
-                if event.key == pygame.K_LEFT:
-                    actor_idx = (actor_idx - 1) % len(party)
-                elif event.key == pygame.K_RIGHT:
-                    actor_idx = (actor_idx + 1) % len(party)
-                elif event.key == pygame.K_UP:
-                    slot_idx = (slot_idx - 1) % len(slots)
-                elif event.key == pygame.K_DOWN:
-                    slot_idx = (slot_idx + 1) % len(slots)
-
-                elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_z):
-                    actor = party[actor_idx]
-                    slot = slots[slot_idx]
-                    open_equip_candidate_pygame(
-                        screen,
-                        font,
-                        actor,
-                        slot,
-                        weapons_by_name=weapons_by_name,
-                        armors_by_name=armors_by_name,
-                        recalc_stats_fn=lambda a=actor: recalc_stats(a),
-                        save_dict=save_dict,  # ★追加：ここで渡す
-                    )
-                    continue
-
         actor = party[actor_idx]
         eq = actor.equipment or EquipmentSet()
 
-        screen.fill((0, 0, 0))
-        title = font.render(actor.name, True, (255, 255, 255))
-        screen.blit(title, (screen.get_width() // 2 - title.get_width() // 2, 50))
-
-        y = 160
-        x = screen.get_width() // 2 - 220
-
-        def get_slot_value(slot_name: str) -> str:
-            return getattr(eq, slot_name) or "なし"
-
-        for i, s in enumerate(slots):
-            is_sel = i == slot_idx
-            prefix = "▶ " if is_sel else "  "
-            color = (255, 255, 255) if is_sel else (140, 140, 140)
-            row = font.render(f"{prefix}{s}: {get_slot_value(s)}", True, color)
-            screen.blit(row, (x, y + i * line_h))
-
-        hint = font.render(
-            "← →: Switch / ↑↓: Select / Enter: Choose / ESC: Back",
-            True,
-            (180, 180, 180),
+        # ★ 下部候補は「slot が選ばれているときだけ」作る
+        candidates = build_equip_candidates(
+            actor,
+            slots[slot_idx],
+            weapons_by_name=weapons_by_name,
+            armors_by_name=armors_by_name,
         )
+
+        # ---------------- input ----------------
+        for ev in pygame.event.get():
+            if ev.type == pygame.QUIT:
+                raise SystemExit
+
+            if ev.type == pygame.KEYDOWN:
+                if ev.key == pygame.K_ESCAPE:
+                    if mode == "candidate":
+                        mode = "slot"
+                    else:
+                        return
+
+                elif ev.key == pygame.K_LEFT:
+                    actor_idx = (actor_idx - 1) % len(party)
+                    slot_idx = 0
+                    mode = "slot"
+
+                elif ev.key == pygame.K_RIGHT:
+                    actor_idx = (actor_idx + 1) % len(party)
+                    slot_idx = 0
+                    mode = "slot"
+
+                elif ev.key == pygame.K_UP:
+                    if mode == "slot":
+                        slot_idx = (slot_idx - 1) % len(slots)
+                    else:
+                        cand_idx = (cand_idx - 1) % len(candidates)
+                        cand_top = clamp_scroll(
+                            cand_idx, cand_top, max_rows, len(candidates)
+                        )
+
+                elif ev.key == pygame.K_DOWN:
+                    if mode == "slot":
+                        slot_idx = (slot_idx + 1) % len(slots)
+                    else:
+                        cand_idx = (cand_idx + 1) % len(candidates)
+                        cand_top = clamp_scroll(
+                            cand_idx, cand_top, max_rows, len(candidates)
+                        )
+
+                elif ev.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_z):
+                    if mode == "slot":
+                        # ★ ここで unequip_all を特別扱い
+                        if slots[slot_idx] == "unequip_all":
+                            # 全装備解除
+                            if actor.equipment is None:
+                                actor.equipment = EquipmentSet()
+
+                            actor.equipment.main_hand = None
+                            actor.equipment.off_hand = None
+                            actor.equipment.head = None
+                            actor.equipment.body = None
+                            actor.equipment.arms = None
+
+                            actor.equipment, _ = apply_job_equipment_restrictions(
+                                actor.equipment, actor.job
+                            )
+
+                            actor.stats = compute_character_final_stats(
+                                base=actor.base,
+                                eq=actor.equipment,
+                                weapons_by_name=weapons_by_name,
+                                armors_by_name=armors_by_name,
+                                job_name=actor.job.name,
+                            )
+                            sync_equipment_to_save(actor, save_dict)
+
+                            # SEや演出を入れるならここ
+                            # play_se("unequip")
+
+                            # ★ candidate には入らない
+                            mode = "slot"
+
+                        else:
+                            # 通常スロット → 候補選択へ
+                            mode = "candidate"
+                            cand_idx = 0
+                            cand_top = 0
+
+                    else:
+                        # ★ 装備確定（既存処理）
+                        kind, name, _ = candidates[cand_idx]
+
+                        if actor.equipment is None:
+                            actor.equipment = EquipmentSet()
+
+                        if kind == "none":
+                            setattr(actor.equipment, slots[slot_idx], None)
+                        else:
+                            setattr(actor.equipment, slots[slot_idx], name)
+
+                        actor.equipment, logs = apply_job_equipment_restrictions(
+                            actor.equipment, actor.job
+                        )
+
+                        actor.stats = compute_character_final_stats(
+                            base=actor.base,
+                            eq=actor.equipment,
+                            weapons_by_name=weapons_by_name,
+                            armors_by_name=armors_by_name,
+                            job_name=actor.job.name,
+                        )
+                        sync_equipment_to_save(actor, save_dict)
+
+                        mode = "slot"
+
+        # ---------------- draw ----------------
+        screen.fill((0, 0, 0))
+        w, h = screen.get_width(), screen.get_height()
+        margin = 24
+        line_h = font.get_linesize()
+        slots_y = 120
+
+        # ========== 全体共通描画 ==========
+        top_height = line_h * 4  # ← かなり圧縮できる
+        top_y = 80
+        candidate_y = top_y + top_height + 16
+        max_rows = (h - candidate_y - 80) // line_h
+
+        left_slots = ["main_hand", "off_hand", "unequip_all"]
+        right_slots = ["head", "body", "arms"]
+
+        # 上部：現在の装備表示
+        top_end_y = draw_equip_current_2col(
+            screen,
+            font,
+            actor,
+            eq,
+            left_slots=left_slots,
+            right_slots=right_slots,
+            slot_idx=slot_idx,
+            x=80,
+            y=slots_y,
+            col_w=w * 0.6,
+            line_h=line_h,
+            portrait_cache=portrait_cache,
+        )
+
+        # draw 側がシンプルになるように calc_preview_stats をここで定義（kind, nameのみ）
+        calc_preview = lambda kind, name: calc_preview_stats(
+            actor,
+            slot=slots[slot_idx],
+            item_kind=kind,
+            item_name=name,
+            weapons_by_name=weapons_by_name,
+            armors_by_name=armors_by_name,
+        )
+        # 下部：装備候補表示（★「上段の直下」から始める）
+        candidate_y = top_end_y + margin
+        max_rows = 8
+        if slots[slot_idx] == "unequip_all":
+            # 下段は描かない or 説明テキスト
+            hint = font.render("すべての装備をはずします", True, (160, 160, 160))
+            screen.blit(
+                hint,
+                (
+                    w // 2 - hint.get_width() // 2,
+                    h - 30,
+                ),
+            )
+        else:
+            draw_equip_candidates(
+                screen,
+                font,
+                actor,
+                slots[slot_idx],
+                candidates,
+                idx=cand_idx,
+                top=cand_top,
+                max_rows=max_rows,
+                base_stats=actor.stats,
+                calc_preview_stats_fn=calc_preview,
+                x=80,
+                y=candidate_y + 2,
+                col_w=w * 0.6,
+                line_h=line_h,
+            )
+
+        # 差分表示（mode が candidate のときだけ）
+        # if mode == "candidate" and slots[slot_idx] != "unequip_all":
+        kind, name, _ = candidates[cand_idx]
+        preview = calc_preview(kind, name)
+        draw_equip_status_compare(
+            screen,
+            font,
+            base_stats=actor.stats,
+            preview_stats=preview,
+            icon_cache=status_icon_cache,
+            x=margin + w * 0.6 + 20,
+            y=slots_y,
+            w=w - ((margin + w * 0.6 + 8) + margin * 2),
+            line_h=line_h,
+        )
+
+        # 下部ヒント
+        hint = font.render("↑↓: Select  Enter: Equip  ESC: Back", True, (180, 180, 180))
         screen.blit(
             hint,
-            (screen.get_width() // 2 - hint.get_width() // 2, screen.get_height() - 60),
+            (w // 2 - hint.get_width() // 2, h - 60),
         )
 
         pygame.display.flip()
         clock.tick(60)
 
 
+# 上部：現在の装備表示
+def draw_equip_current_2col(
+    screen,
+    font,
+    actor,
+    eq,
+    left_slots,
+    right_slots,
+    slot_idx,
+    *,
+    x,
+    y,
+    col_w,
+    line_h,
+    portrait_cache: PortraitCache,
+):
+    def blit_line(text, x, y, color=(220, 220, 220)):
+        surf = font.render(text, True, color)
+        screen.blit(surf, (x, y))
+
+    w = screen.get_width()
+    rows = max(len(left_slots), len(right_slots)) + 1
+
+    left_x = 80
+    rect_width = col_w
+    right_x = rect_width // 2 + 40
+
+    # portrait
+    face_size = 64
+    face_rect = pygame.Rect(60, 20, face_size, face_size)
+    inner = face_rect.inflate(-4, -4)
+
+    key = getattr(actor, "portrait_key", None)
+    if key:
+        face = portrait_cache.get(key)
+        img = pygame.transform.scale(face, (inner.w, inner.h))
+        screen.blit(img, inner.topleft)
+
+    # title
+    title_y = 30
+    title = font.render(f"{actor.name}   {actor.job.name}", True, (255, 255, 255))
+    screen.blit(
+        title,
+        (w // 2 - title.get_width() // 2, title_y),
+    )
+
+    pl = font.render("EQUIPMENT", True, (160, 160, 160))
+    screen.blit(
+        pl,
+        (w // 2 - pl.get_width() // 2, title_y + 30),
+    )
+
+    slots_y = y
+
+    margin = 24
+    slots_y = 120
+
+    # 上部枠
+    upper_h = int(line_h * rows) + 20
+    upper_rect = pygame.Rect(margin, slots_y - 10, rect_width, upper_h)
+    draw_window(screen, upper_rect)
+
+    st = actor.stats
+    blit_line(
+        f"こうげき・・  {st.main_power} / {st.off_power}  ぼうぎょ・・ {st.defense}",
+        80,
+        slots_y,
+    )
+
+    # 左カラム
+    for i, slot in enumerate(left_slots):
+        is_sel = i == slot_idx
+        prefix = "▶ " if is_sel else "  "
+        color = (255, 255, 255) if is_sel else (140, 140, 140)
+
+        if slot == "unequip_all":
+            text = f"{prefix}そうびのかいじょ"
+        else:
+            val = getattr(eq, slot) or "なし"
+            text = f"{prefix}{slot}: {val}"
+
+        screen.blit(
+            font.render(text, True, color), (left_x, slots_y + (i + 1) * line_h)
+        )
+
+    # 右カラム
+    for i, slot in enumerate(right_slots):
+        idx = len(left_slots) + i
+        is_sel = idx == slot_idx
+        prefix = "▶ " if is_sel else "  "
+        color = (255, 255, 255) if is_sel else (140, 140, 140)
+
+        val = getattr(eq, slot) or "なし"
+        text = f"{prefix}{slot}: {val}"
+
+        screen.blit(
+            font.render(text, True, color), (right_x, slots_y + (i + 1) * line_h)
+        )
+
+    # ★ 上段で実際に使った最下端を返す
+    bottom_y = slots_y + rows * line_h
+
+    return bottom_y
+
+
+# 下部：装備候補表示
+def draw_equip_candidates(
+    screen,
+    font,
+    actor,
+    slot,
+    candidates,
+    *,
+    idx,
+    top,
+    max_rows,
+    base_stats,
+    calc_preview_stats_fn,
+    x,
+    y,
+    col_w,
+    line_h,
+):
+    w = screen.get_width()
+    margin = 24
+
+    # 下部枠
+    under_h = int(line_h * max_rows) + 20
+    under_rect = pygame.Rect(margin, y - 10, col_w, under_h)
+    draw_window(screen, under_rect)
+
+    """
+    下部：選択中 slot の装備候補一覧＋差分表示
+    """
+    visible = candidates[top : top + max_rows]
+
+    can_scroll_up = top > 0
+    can_scroll_down = top + max_rows < len(candidates)
+
+    for i, (kind, name, data) in enumerate(visible):
+        real_i = top + i
+        is_sel = real_i == idx
+        prefix = "▶ " if is_sel else "  "
+
+        # 装備中判定
+        cur = actor.equipment
+        equipped = False
+        if cur:
+            if kind == "none":
+                equipped = getattr(cur, slot) is None
+            else:
+                equipped = getattr(cur, slot) == name
+
+        # 色
+        if is_sel:
+            color = (255, 255, 255)
+        elif equipped:
+            color = (120, 180, 255)  # 装備中（青）
+        else:
+            color = (140, 140, 140)
+
+        # --- 表示テキスト ---
+        if kind == "none":
+            left_text = f"{prefix}{name}{' [E]' if equipped else ''}"
+        elif kind == "weapon":
+            atk = int(data.get("BasePower", 0) or 0)
+            acc = int(round((data.get("BaseAccuracy", 0) or 0) * 100))
+            left_text = (
+                f"{prefix}{name}{' [E]' if equipped else ''}  " f"ATK:{atk}  ACC:{acc}%"
+            )
+        else:  # armor
+            d = int(data.get("Defense", 0) or 0)
+            eva = int(round((data.get("Evasion", 0) or 0) * 100))
+            mdef = int(data.get("BaseMagicDefense", 0) or 0)
+            left_text = (
+                f"{prefix}{name}{' [E]' if equipped else ''}  "
+                f"DEF:{d}  EVA:{eva}%  MDEF:{mdef}"
+            )
+
+        surf = font.render(left_text, True, color)
+        screen.blit(surf, (x, y + i * line_h))
+
+        # --- 差分表示（選択中のみ） ---
+        if is_sel:
+            preview = calc_preview_stats_fn(kind, name)
+            diffs = []
+
+            if slot in ("main_hand", "off_hand"):
+                d, col = diff_text_and_color(base_stats.main_power, preview.main_power)
+                if d:
+                    diffs.append(("ATK" + d, col))
+
+                if slot == "off_hand":
+                    d2, col2 = diff_text_and_color(base_stats.defense, preview.defense)
+                    if d2:
+                        diffs.append(("DEF" + d2, col2))
+            else:
+                d, col = diff_text_and_color(base_stats.defense, preview.defense)
+                if d:
+                    diffs.append(("DEF" + d, col))
+
+            dx = x + surf.get_width() + 12
+            for txt, col in diffs:
+                s = font.render(txt, True, col)
+                screen.blit(s, (dx, y + i * line_h))
+                dx += s.get_width() + 10
+
+    # ★ ループが終わってから一度だけ描画
+    arrow_color = (120, 120, 120)
+    arrow_x = x - 24
+    arrow_y_top = y - line_h
+    arrow_y_bottom = y + max_rows * line_h
+
+    if can_scroll_up:
+        up = font.render("▲", True, arrow_color)
+        screen.blit(up, (arrow_x, arrow_y_top))
+
+    if can_scroll_down:
+        down = font.render("▼", True, arrow_color)
+        screen.blit(down, (arrow_x, arrow_y_bottom))
+
+
+# 装備情報比較表示
+def draw_equip_status_compare(
+    screen,
+    font,
+    *,
+    base_stats,
+    preview_stats,
+    icon_cache,  # ← 追加
+    x,
+    y,
+    w,
+    line_h,
+):
+    def blit(text, x, y, color=(220, 220, 220)):
+        surf = font.render(text, True, color)
+        screen.blit(surf, (x, y))
+
+    def stat_line(label, now, new, x, y):
+        diff = new - now
+        if diff > 0:
+            col = (80, 255, 80)
+            d = f"(+{diff})"
+        elif diff < 0:
+            col = (255, 80, 80)
+            d = f"({diff})"
+        else:
+            col = (160, 160, 160)
+            d = ""
+
+        blit(f"{label:5} {now} → {new} {d}", x, y, col)
+
+    cur_y = y
+
+    # ---- 枠 ----
+    rect = pygame.Rect(x - 12, y - 10, w + 24, line_h * 13 + 20)
+    draw_window(screen, rect)
+
+    blit("STATUS", x, cur_y, (180, 180, 180))
+    cur_y += line_h
+
+    # ---- 数値系 ----
+    stat_line("ATK", base_stats.main_power, preview_stats.main_power, x, cur_y)
+    cur_y += line_h
+
+    stat_line("DEF", base_stats.defense, preview_stats.defense, x, cur_y)
+    cur_y += line_h
+
+    stat_line(
+        "EVA", base_stats.evasion_percent, preview_stats.evasion_percent, x, cur_y
+    )
+    cur_y += line_h
+
+    stat_line("MDEF", base_stats.magic_defense, preview_stats.magic_defense, x, cur_y)
+    cur_y += line_h
+
+    # ---- 武器特性 ----
+    flags = []
+    if preview_stats.main_two:
+        flags.append("Two-Handed")
+    if preview_stats.main_long:
+        flags.append("Long Range")
+
+    if flags:
+        cur_y += line_h // 2
+        blit("[Weapon]", x, cur_y, (160, 160, 160))
+        cur_y += line_h
+        for f in flags:
+            blit(f"- {f}", x + 16, cur_y)
+            cur_y += line_h
+
+    # ---- 属性・耐性 ----
+    def list_block(title, items):
+        nonlocal cur_y
+        if not items:
+            return
+        cur_y += line_h // 2
+        blit(title, x, cur_y, (160, 160, 160))
+        cur_y += line_h
+        blit(", ".join(items), x + 16, cur_y)
+        cur_y += line_h
+
+    list_block("[Elements]", preview_stats.main_weapon_elements)
+    list_block("[Resist]", preview_stats.elemental_resists)
+    list_block("[Null]", preview_stats.elemental_nulls)
+    list_block("[Weak]", preview_stats.elemental_weaks)
+    list_block("[Absorb]", preview_stats.elemental_absorbs)
+
+    # ステータス異常耐性 アイコンで表示
+    if preview_stats.status_immunities:
+        cur_y += line_h // 2
+        blit("[Status Immune]", x, cur_y, (160, 160, 160))
+        cur_y += line_h
+
+        draw_status_immune_icons(
+            screen,
+            preview_stats.status_immunities,
+            icon_cache=icon_cache,  # ← open_equip_pygame から渡す
+            x=x + 16,
+            y=cur_y,
+            spacing=4,
+        )
+        cur_y += line_h
+
+
+# スクロール用ユーティリティ
+def clamp_scroll(idx, top, max_rows, total):
+    """
+    idx: 現在選択インデックス
+    top: 表示開始インデックス
+    max_rows: 画面に表示できる最大行数
+    total: 候補総数
+    """
+    if idx < top:
+        top = idx
+    elif idx >= top + max_rows:
+        top = idx - max_rows + 1
+
+    top = max(0, min(top, max(0, total - max_rows)))
+    return top
+
+
 def open_status_pygame(
-    screen, font, party, *, level_table, weapons, portrait_cache: PortraitCache
+    screen,
+    font,
+    party,
+    *,
+    level_table,
+    weapons,
+    portrait_cache: PortraitCache,
+    status_icon_cache: StatusIconCache,
 ):
     clock = pygame.time.Clock()
     idx = 0
-    page = 0  # 0: status, 1: equipment
 
     line_h = font.get_linesize() + 6
-    margin_top = 90
+    margin_top = 130
 
     def blit_line(text, x, y, color=(220, 220, 220)):
         surf = font.render(text, True, color)
@@ -665,8 +1198,6 @@ def open_status_pygame(
                     idx = (idx - 1) % len(party)
                 elif event.key == pygame.K_RIGHT:
                     idx = (idx + 1) % len(party)
-                elif event.key in (pygame.K_TAB, pygame.K_UP, pygame.K_DOWN):
-                    page = 1 - page
 
         # --- actor取得後の計算 ---
         actor = party[idx]
@@ -693,6 +1224,9 @@ def open_status_pygame(
 
         # ---- draw ----
         screen.fill((0, 0, 0))
+        w, h = screen.get_width(), screen.get_height()
+        margin = 24
+        line_h = font.get_linesize()
 
         # ★portrait（左上に表示）
         face_size = 64
@@ -707,128 +1241,97 @@ def open_status_pygame(
         else:
             pygame.draw.rect(screen, (60, 60, 60), inner)
 
+        # title
         title = font.render(f"{actor.name}   {actor.job.name}", True, (255, 255, 255))
-        screen.blit(title, (screen.get_width() // 2 - title.get_width() // 2, 30))
+        screen.blit(title, (w // 2 - title.get_width() // 2, 30))
 
-        page_label = "STATUS" if page == 0 else "EQUIPMENT"
+        page_label = "STATUS"
         pl = font.render(page_label, True, (160, 160, 160))
-        screen.blit(pl, (screen.get_width() // 2 - pl.get_width() // 2, 60))
+        screen.blit(pl, (w // 2 - pl.get_width() // 2, 60))
 
+        # 全体枠
+        rect = pygame.Rect(
+            margin,
+            face_size + margin * 2,
+            w - margin * 2,
+            h - (face_size + margin * 5),
+        )
+        draw_window(screen, rect)
+
+        # -------- ステータス --------
         xL = 80
-        xR = screen.get_width() // 2
+        xR = w // 2
 
-        if page == 0:
-            # -------- Page 0: ステータス --------
-            y = margin_top
-            blit_line(f"LEVEL  {base.level}", xL, y)
-            y += line_h
-            blit_line(f"HP: {actor.hp}/{actor.max_hp}", xL, y)
-            y += line_h
+        y = margin_top
+        blit_line(f"LEVEL  {base.level}", xL, y)
+        y += line_h
+        blit_line(f"HP: {actor.hp}/{actor.max_hp}", xL, y)
+        y += line_h
 
-            mp_pool = getattr(actor, "mp_pool", None)
-            if mp_pool is None:
-                mp_pool = getattr(actor.state, "mp_pool", {})
-            mp_vals = [f"{mp_pool.get(lv, 0):2d}" for lv in range(1, 9)]
-            mp_text = "/".join(mp_vals)
-            blit_line(f"MP: {mp_text}", xL, y)
+        mp_pool = getattr(actor, "mp_pool", None)
+        if mp_pool is None:
+            mp_pool = getattr(actor.state, "mp_pool", {})
+        mp_vals = [f"{mp_pool.get(lv, 0):2d}" for lv in range(1, 9)]
+        mp_text = "/".join(mp_vals)
+        blit_line(f"MP: {mp_text}", xL, y)
 
-            y += line_h
-            y += line_h
-            blit_line(f"ちから    {st.strength}", xL, y)
-            y += line_h
-            blit_line(f"すばやさ  {st.agility}", xL, y)
-            y += line_h
-            blit_line(f"たいりょく {st.vitality}", xL, y)
-            y += line_h
-            blit_line(f"ちせい    {st.intelligence}", xL, y)
-            y += line_h
-            blit_line(f"せいしん  {st.mind}", xL, y)
-            y += line_h
+        y += line_h
+        y += line_h
+        blit_line(f"ちから    {st.strength}", xL, y)
+        y += line_h
+        blit_line(f"すばやさ  {st.agility}", xL, y)
+        y += line_h
+        blit_line(f"たいりょく {st.vitality}", xL, y)
+        y += line_h
+        blit_line(f"ちせい    {st.intelligence}", xL, y)
+        y += line_h
+        blit_line(f"せいしん  {st.mind}", xL, y)
+        y += line_h
 
-            row_label = "FRONT" if base.row == "front" else "BACK"
-            blit_line(f"ROW: {row_label}", xL, y)
-            y += line_h
-            # ステータス異常
-            draw_status_badges(screen, font, actor, xL, y)
+        row_label = "FRONT" if base.row == "front" else "BACK"
+        blit_line(f"ROW: {row_label}", xL, y)
+        y += line_h
+        # ステータス異常
+        blit_line(f"STATUS:", xL, y)
+        # draw_status_badges(screen, font, actor, xL, y)
+        draw_status_icons(
+            screen,
+            actor,
+            status_icon_cache,
+            x=xL + 80,
+            y=y + 6,
+        )
 
-            # 右側（要望反映）
-            y2 = margin_top
-            blit_line(f"じゅくれんど  {base.job_level}", xR, y2)
-            y2 += line_h
-            blit_line(f"EXP  {base.total_exp}", xR, y2)
-            y2 += line_h
-            blit_line(f"つぎのレベルまで  {exp_to_next}", xR, y2)
-            y2 += line_h
-            y2 += line_h
+        # 右側（要望反映）
+        y2 = margin_top
+        blit_line(f"じゅくれんど  {base.job_level}", xR, y2)
+        y2 += line_h
+        blit_line(f"EXP  {base.total_exp}", xR, y2)
+        y2 += line_h
+        blit_line(f"つぎのレベルまで  {exp_to_next}", xR, y2)
+        y2 += line_h
+        y2 += line_h
 
-            blit_line(f"こうげき  {atk_times}かい…  {atk_value}", xR, y2)
-            y2 += line_h
-            blit_line(f"めいちゅうりつ …  {acc_value}%", xR, y2)
-            y2 += line_h
-            blit_line(f"ぼうぎょ  {def_times}かい…  {st.defense}", xR, y2)
-            y2 += line_h
-            blit_line(f"かいひりつ …  {st.evasion_percent}%", xR, y2)
-            y2 += line_h
+        blit_line(f"こうげき  {atk_times}かい…  {atk_value}", xR, y2)
+        y2 += line_h
+        blit_line(f"めいちゅうりつ …  {acc_value}%", xR, y2)
+        y2 += line_h
+        blit_line(f"ぼうぎょ  {def_times}かい…  {st.defense}", xR, y2)
+        y2 += line_h
+        blit_line(f"かいひりつ …  {st.evasion_percent}%", xR, y2)
+        y2 += line_h
 
-            # あると便利（既存の右側項目）
-            blit_line(f"まほうぼうぎょ …  {st.magic_defense}", xR, y2)
-            y2 += line_h
-            blit_line(f"まほうかいひりつ …  {st.magic_resistance}%", xR, y2)
-            y2 += line_h
+        # あると便利（既存の右側項目）
+        blit_line(f"まほうぼうぎょ …  {st.magic_defense}", xR, y2)
+        y2 += line_h
+        blit_line(f"まほうかいひりつ …  {st.magic_resistance}%", xR, y2)
+        y2 += line_h
 
-        else:
-            # -------- Page 1: 装備 + 属性 --------
-            yL = margin_top
-            blit_line("そうび", xL, yL, (255, 255, 255))
-            yL += line_h
-
-            blit_line(f"main_hand: {eq.main_hand or 'なし'}", xL, yL)
-            yL += line_h
-            blit_line(f"off_hand : {eq.off_hand  or 'なし'}", xL, yL)
-            yL += line_h
-            blit_line(f"head      : {eq.head     or 'なし'}", xL, yL)
-            yL += line_h
-            blit_line(f"body      : {eq.body     or 'なし'}", xL, yL)
-            yL += line_h
-            blit_line(f"arm       : {eq.arms     or 'なし'}", xL, yL)
-            yL += line_h
-
-            # --- 右カラムに属性表示 ---
-            def fmt_elems(elems) -> str:
-                if not elems:
-                    return "-"
-                return "/".join(sorted(elems))
-
-            yR = margin_top
-            blit_line("ぶき ぞくせい", xR, yR, (255, 255, 255))
-            yR += line_h
-            max_w = screen.get_width() - xR - 40
-            yR = blit_wrap("main: " + fmt_elems(st.main_weapon_elements), xR, yR, max_w)
-            max_w = screen.get_width() - xR - 40
-            yR = blit_wrap("off : " + fmt_elems(st.off_weapon_elements), xR, yR, max_w)
-
-            blit_line("ぼうぐ たいせい", xR, yR, (255, 255, 255))
-            yR += line_h
-            max_w = screen.get_width() - xR - 40
-            yR = blit_wrap("RES : " + fmt_elems(st.elemental_resists), xR, yR, max_w)
-            max_w = screen.get_width() - xR - 40
-            yR = blit_wrap("NULL: " + fmt_elems(st.elemental_nulls), xR, yR, max_w)
-            max_w = screen.get_width() - xR - 40
-            yR = blit_wrap("WEAK: " + fmt_elems(st.elemental_weaks), xR, yR, max_w)
-            max_w = screen.get_width() - xR - 40
-            yR = blit_wrap("ABS : " + fmt_elems(st.elemental_absorbs), xR, yR, max_w)
-
-            blit_line("じょうたい むこう", xR, yR, (255, 255, 255))
-            yR += line_h
-
-            imm = getattr(st, "status_immunities", frozenset())
-            max_w = screen.get_width() - xR - 40
-            yR = blit_wrap("IMM : " + fmt_status_imm(imm), xR, yR, max_w)
-
-        hint = font.render("← →: Switch / TAB: Page / ESC: Back", True, (180, 180, 180))
+        # 下部ヒント
+        hint = font.render("← →: Switch / ESC: Back", True, (180, 180, 180))
         screen.blit(
             hint,
-            (screen.get_width() // 2 - hint.get_width() // 2, screen.get_height() - 60),
+            (w // 2 - hint.get_width() // 2, h - 60),
         )
 
         pygame.display.flip()
@@ -954,289 +1457,33 @@ def build_equip_candidates(actor, slot, *, weapons_by_name, armors_by_name):
     return out
 
 
-# 候補一覧UI
-def open_equip_candidate_pygame(
-    screen,
-    font,
-    actor,
-    slot,
-    *,
-    weapons_by_name,
-    armors_by_name,
-    recalc_stats_fn,
-    save_dict: dict | None = None,  # ★追加
+def calc_preview_stats(
+    actor, *, slot, item_kind, item_name, weapons_by_name, armors_by_name
 ):
-    # 現在の装備ステータス（比較用）
-    base_stats = actor.stats
+    # 装備をコピー（本体は絶対に触らない）
+    eq_preview = deepcopy(actor.equipment or EquipmentSet())
 
-    clock = pygame.time.Clock()
-    candidates = build_equip_candidates(
-        actor,
-        slot,
+    if item_kind == "none":
+        setattr(eq_preview, slot, None)
+    else:
+        setattr(eq_preview, slot, item_name)
+
+    return compute_character_final_stats(
+        base=actor.base,
+        eq=eq_preview,
         weapons_by_name=weapons_by_name,
         armors_by_name=armors_by_name,
+        job_name=actor.job.name,
     )
 
-    idx = 0
-    top = 0
-    line_h = font.get_linesize() + 6
-    header_h = line_h * 4
-    max_rows = max(5, (screen.get_height() - header_h - 70) // line_h)
 
-    # 候補一覧の先頭で一回だけ作る
-    weapons_norm = build_name_index(weapons_by_name)
-    armors_norm = build_name_index(armors_by_name)
-
-    def calc_preview_stats(item_kind, item_name):
-        # 装備をコピー（本体は絶対に触らない）
-        eq_preview = deepcopy(actor.equipment or EquipmentSet())
-
-        if item_kind == "none":
-            setattr(eq_preview, slot, None)
-        else:
-            setattr(eq_preview, slot, item_name)
-
-        return compute_character_final_stats(
-            base=actor.base,
-            eq=eq_preview,
-            weapons_by_name=weapons_by_name,
-            armors_by_name=armors_by_name,
-            job_name=actor.job.name,
-        )
-
-    def diff_text_and_color(now: int, new: int):
-        d = new - now
-        if d > 0:
-            return f"(+{d})", (80, 255, 80)  # 緑
-        if d < 0:
-            return f"({d})", (255, 80, 80)  # 赤
-        return "", (180, 180, 180)
-
-    def blit_row_with_diffs(
-        x: int,
-        y: int,
-        left_text: str,
-        left_color,
-        diffs: list[tuple[str, tuple[int, int, int]]],
-    ):
-        left_surf = font.render(left_text, True, left_color)
-        screen.blit(left_surf, (x, y))
-
-        dx = x + left_surf.get_width() + 12
-        for text, col in diffs:
-            if not text:
-                continue
-            surf = font.render(text, True, col)
-            screen.blit(surf, (dx, y))
-            dx += surf.get_width() + 10
-
-    # slot に応じて差分対象を切り替える
-    def primary_diff(now: FinalCharacterStats, new: FinalCharacterStats, slot: str):
-        """
-        slot に応じて、表示すべき主要ステータスの差分を返す
-        戻り値: (diff_text, diff_color)
-        """
-        # 武器系：攻撃力を主に見る（平均表示にしたいならここを差し替え）
-        if slot in ("main_hand", "off_hand"):
-            return diff_text_and_color(now.main_power, new.main_power)
-
-        # 防具系：防御力を見る
-        if slot in ("head", "body", "arms"):
-            return diff_text_and_color(now.defense, new.defense)
-
-        # 保険
-        return "", (180, 180, 180)
-
-    cur_eq = actor.equipment or EquipmentSet()
-
-    def is_currently_equipped(kind, name):
-        if kind == "none":
-            return getattr(cur_eq, slot) is None
-        return getattr(cur_eq, slot) == name
-
-    def clamp():
-        nonlocal top
-        if idx < top:
-            top = idx
-        elif idx >= top + max_rows:
-            top = idx - max_rows + 1
-        top = max(0, min(top, max(0, len(candidates) - max_rows)))
-
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                raise SystemExit
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    return
-
-                if event.key == pygame.K_UP:
-                    idx = (idx - 1) % len(candidates)
-                    clamp()
-                elif event.key == pygame.K_DOWN:
-                    idx = (idx + 1) % len(candidates)
-                    clamp()
-
-                elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_z):
-                    kind, name, _ = candidates[idx]
-
-                    if actor.equipment is None:
-                        actor.equipment = EquipmentSet()
-
-                    if kind == "none":
-                        setattr(actor.equipment, slot, None)
-                    else:
-                        setattr(actor.equipment, slot, name)
-
-                    # ★ロード時と同じ制限を即適用
-                    new_eq, eq_logs = apply_job_equipment_restrictions(
-                        actor.equipment, actor.job
-                    )
-                    actor.equipment = new_eq
-                    if eq_logs:
-                        show_toast_message(screen, font, eq_logs[0], duration=1.0)
-
-                    actor.stats = recalc_stats_fn(actor)  # ★再計算
-                    sync_equipment_to_save(actor, save_dict)  # ★追加：save に即反映
-                    return
-
-            if event.type == pygame.MOUSEWHEEL:
-                idx = (idx - event.y) % len(candidates)
-                clamp()
-
-        # ---- draw ----
-        screen.fill((0, 0, 0))
-
-        title = font.render(f"{actor.name}  /  {slot}", True, (255, 255, 255))
-        screen.blit(title, (16, 16))
-
-        cur = actor.equipment or EquipmentSet()
-        now_name = getattr(cur, slot) or "なし"
-        curtxt = font.render(f"Current: {now_name}", True, (180, 180, 180))
-        screen.blit(curtxt, (16, 16 + line_h))
-
-        hint = font.render(
-            "↑↓/Wheel: Select  Enter: Equip  ESC: Back", True, (160, 160, 160)
-        )
-        screen.blit(hint, (16, 16 + line_h * 2))
-
-        y0 = 16 + header_h
-        visible = candidates[top : top + max_rows]
-        for i, (kind, name, data) in enumerate(visible):
-            real_i = top + i
-            is_sel = real_i == idx
-            prefix = "▶ " if is_sel else "  "
-            color = (255, 255, 255) if is_sel else (140, 140, 140)
-
-            if kind == "none" or data is None:
-                equipped = is_currently_equipped(kind, name)
-                if is_sel:
-                    left_color = (255, 255, 255)
-                elif equipped:
-                    left_color = (120, 180, 255)  # 装備中（青）
-                else:
-                    left_color = (140, 140, 140)
-                mark = " [E]" if equipped else ""
-                left_text = f"{prefix}{name}{mark}"
-
-                diffs = []
-                if is_sel:
-                    preview = calc_preview_stats("none", None)
-                    t, c = diff_text_and_color(base_stats.defense, preview.defense)
-                    if t:
-                        diffs.append((f"DEF{t}", c))
-
-                blit_row_with_diffs(16, y0 + i * line_h, left_text, left_color, diffs)
-                continue
-
-            if kind == "weapon":
-                atk = int(data.get("BasePower", 0) or 0)
-                acc = int(round((data.get("BaseAccuracy", 0) or 0) * 100))
-
-                equipped = is_currently_equipped(kind, name)
-                if is_sel:
-                    left_color = (255, 255, 255)
-                elif equipped:
-                    left_color = (120, 180, 255)  # 装備中（青）
-                else:
-                    left_color = (140, 140, 140)
-                mark = " [E]" if equipped else ""
-                left_text = f"{prefix}{name}{mark}  ATK:{atk}  ACC:{acc}%"
-
-                diffs = []
-
-                if is_sel:
-                    preview = calc_preview_stats(kind, name)
-
-                    # 攻撃差分（従来通り）
-                    t1, c1 = diff_text_and_color(
-                        base_stats.main_power, preview.main_power
-                    )
-                    if t1:
-                        diffs.append((f"ATK{t1}", c1))
-
-                    # ★off_hand のときは防御差分も出す（盾を持てなくなる等の影響が見える）
-                    if slot == "off_hand":
-                        t2, c2 = diff_text_and_color(
-                            base_stats.defense, preview.defense
-                        )
-                        if t2:
-                            diffs.append((f"DEF{t2}", c2))
-
-                blit_row_with_diffs(
-                    16,
-                    y0 + i * line_h,
-                    left_text,
-                    left_color,
-                    diffs,
-                )
-                continue
-
-            if kind == "armor":
-                d = int(data.get("Defense", 0) or 0)
-                eva = int(round((data.get("Evasion", 0) or 0) * 100))
-                mdef = int(data.get("BaseMagicDefense", 0) or 0)
-
-                equipped = is_currently_equipped(kind, name)
-                if is_sel:
-                    left_color = (255, 255, 255)
-                elif equipped:
-                    left_color = (120, 180, 255)  # 装備中（青）
-                else:
-                    left_color = (140, 140, 140)
-                mark = " [E]" if equipped else ""
-                left_text = f"{prefix}{name}{mark}  DEF:{d}  EVA:{eva}%  MDEF:{mdef}"
-
-                diffs = []
-                if is_sel:
-                    preview = calc_preview_stats(kind, name)
-                    t1, c1 = diff_text_and_color(base_stats.defense, preview.defense)
-                    if t1:
-                        diffs.append((f"DEF{t1}", c1))
-
-                    t2, c2 = diff_text_and_color(
-                        base_stats.evasion_percent, preview.evasion_percent
-                    )
-                    if t2:
-                        diffs.append((f"EVA{t2}", c2))
-
-                    t3, c3 = diff_text_and_color(
-                        base_stats.magic_defense, preview.magic_defense
-                    )
-                    if t3:
-                        diffs.append((f"MDEF{t3}", c3))
-
-                blit_row_with_diffs(16, y0 + i * line_h, left_text, left_color, diffs)
-                continue
-
-            else:
-                text = f"{prefix}{name}"
-
-            row = font.render(text, True, color)
-            screen.blit(row, (16, y0 + i * line_h))
-
-        pygame.display.flip()
-        clock.tick(60)
+def diff_text_and_color(now: int, new: int):
+    d = new - now
+    if d > 0:
+        return f"(+{d})", (80, 255, 80)  # 緑
+    if d < 0:
+        return f"({d})", (255, 80, 80)  # 赤
+    return "", (180, 180, 180)
 
 
 def show_toast_message(
@@ -1293,13 +1540,10 @@ def open_job_pygame(
     recalc_stats_fn,
     save_dict: dict | None = None,
     portrait_cache: PortraitCache,
+    status_icon_cache: StatusIconCache,
 ):
     clock = pygame.time.Clock()
     actor_idx = 0
-
-    # 色
-    WHITE = (255, 255, 255)
-    GRAY = (140, 140, 140)
 
     job_names = sorted(list(jobs_by_name.keys()))
     if not job_names:
@@ -1308,7 +1552,7 @@ def open_job_pygame(
     sel_idx = 0
     top = 0
     line_h = font.get_linesize() + 6
-    header_h = line_h * 4
+    header_h = line_h * 3.5
     max_rows = max(
         5, (screen.get_height() - header_h - 110) // line_h
     )  # ★プレビュー分少し確保
@@ -1579,19 +1823,43 @@ def open_job_pygame(
                             party,
                             weapons_by_name=weapons_by_name,
                             armors_by_name=armors_by_name,
+                            portrait_cache=portrait_cache,
+                            status_icon_cache=status_icon_cache,
                         )
 
         # ---- draw ----
         screen.fill((0, 0, 0))
-        a = actor()
-        sp = find_save_entry_for_actor(a)
+        w, h = screen.get_width(), screen.get_height()
 
         # ★portrait（左上に表示）
         face_size = 64
-        face_rect = pygame.Rect(
-            screen.get_width() // 2 - face_size // 2, 20, face_size, face_size
-        )
+        face_rect = pygame.Rect(60, 20, face_size, face_size)
         inner = face_rect.inflate(-4, -4)
+
+        # ========== レイアウト（固定） ==========
+        margin = 24
+        left_w = int(w * 0.65)
+        right_w = w - left_w - margin * 3
+
+        job_rect = pygame.Rect(
+            margin,
+            face_size + margin * 2,
+            left_w,
+            h - face_size - margin * 3,
+        )
+        exp_rect = pygame.Rect(
+            job_rect.right + margin,
+            face_size + margin * 2,
+            right_w,
+            h - face_size - margin * 3,
+        )
+
+        draw_window(screen, job_rect)
+        draw_window(screen, exp_rect)
+        # =======================================
+
+        a = actor()
+        sp = find_save_entry_for_actor(a)
 
         key = getattr(a, "portrait_key", None)
         if key:
@@ -1601,22 +1869,20 @@ def open_job_pygame(
         else:
             pygame.draw.rect(screen, (60, 60, 60), inner)
 
-        # キャラ名
-        title = font.render(f"{a.name}", True, WHITE)
-        screen.blit(title, (16, 16))
+        # キャラ名＋ジョブ名（中央上）
+        title = font.render(f"{a.name}   {a.job.name}", True, WHITE)
+        screen.blit(title, (screen.get_width() // 2 - title.get_width() // 2, 30))
 
-        # 現在ジョブ
-        job_txt = font.render(f"{a.job.name}", True, GRAY)
-        screen.blit(job_txt, (16, 16 + line_h))
+        page_label = "JOB"
+        pl = font.render(page_label, True, GRAY)
+        screen.blit(pl, (screen.get_width() // 2 - pl.get_width() // 2, 60))
 
         # CP
         cp = int(save_dict.get("CP", 0)) if save_dict else 0
         cp_txt = font.render(f"CP {cp}/255", True, (255, 220, 60))
         screen.blit(cp_txt, (screen.get_width() - 160, 16))
 
-        hint = font.render(
-            "←→: Character  ↑↓: Job  Enter: Set  ESC: Back", True, (160, 160, 160)
-        )
+        hint = font.render("←→: Character  ↑↓: Job  Enter: Set  ESC: Back", True, GRAY)
         screen.blit(hint, (16, 16 + line_h * 2))
 
         # ---------- job list (2 columns) ----------
@@ -1844,9 +2110,11 @@ def open_magic_pygame(
     party,
     *,
     portrait_cache,
+    status_icon_cache: StatusIconCache,
     build_magic_fn,  # member_idx -> [(name, lv, cost)]
     spells_by_name: dict[str, dict],  # ★追加
     cast_field_magic_fn: Callable[[int, str, int | None], bool] | None = None,
+    ui_se: dict[str, pygame.mixer.Sound],
 ):
     clock = pygame.time.Clock()
 
@@ -1855,9 +2123,6 @@ def open_magic_pygame(
     mode = "level"  # "level" | "spell" | "target"
     spell_sel = 0  # spell list cursor
     target_sel = 0  # target cursor
-
-    WHITE = (255, 255, 255)
-    GRAY = (150, 150, 150)
 
     line_h = font.get_linesize() + 10
 
@@ -2079,17 +2344,17 @@ def open_magic_pygame(
 
                     name, lv, cost, sp = selected_spell
                     tgt_idx = target_sel
+                    ch = party[tgt_idx]
 
-                    print(
-                        f"[DBG] CAST field magic: caster={actor.name} spell={name} target={tgt_idx}"
-                    )
-                    # 対象を指定して実行
-                    # cast_field_magic_fn(member_idx, name, tgt_idx)
+                    # ★ 無効対象チェック
+                    if not field_spell_will_affect(name, ch):
+                        ui_se["invalid"].play()  # ★ブブー
+                        continue
+
+                    # 有効なら実行
                     if cast_field_magic_fn:
-                        ok = cast_field_magic_fn(member_idx, name, tgt_idx)
-                        # ok に応じてトーストやSEなど
-                    else:
-                        print("[DBG] cast_field_magic_fn is None")
+                        ui_se["confirm"].play()
+                        cast_field_magic_fn(member_idx, name, tgt_idx)
 
                     mode = "spell"
                     continue
@@ -2102,86 +2367,103 @@ def open_magic_pygame(
         # -------- draw --------
         screen.fill((0, 0, 0))
         w, h = screen.get_size()
-
         margin = 24
-        top_h = int(h * 0.68)
-        bottom_h = h - top_h - margin * 2
 
-        top_rect = pygame.Rect(margin, margin, w - margin * 2, top_h)
-        bottom_rect = pygame.Rect(
-            margin, top_rect.bottom + margin, w - margin * 2, bottom_h
+        # タイトル
+        page_label = "MAGIC"
+        pl = font.render(page_label, True, GRAY)
+        screen.blit(pl, (w // 2 - pl.get_width() // 2, margin))
+
+        # ====== 左右ペイン（ITEM画面と同型） ======
+        left_w = int(w * 0.6)
+        right_w = w - left_w - margin * 3
+
+        left_rect = pygame.Rect(
+            margin,
+            pl.get_height() + margin * 2,
+            left_w,
+            h - pl.get_height() * 2 - margin * 3,
+        )
+        right_rect = pygame.Rect(
+            left_rect.right + margin,
+            pl.get_height() + margin * 2,
+            right_w,
+            h - pl.get_height() * 2 - margin * 3,
         )
 
-        draw_window(screen, top_rect)
-        draw_window(screen, bottom_rect)
+        draw_window(screen, left_rect)
+        draw_window(screen, right_rect)
 
-        title_y = top_rect.y + 18
-        blit_line(actor.name, top_rect.x + 24, title_y, WHITE)
-        blit_line("まほう", top_rect.x + 200, title_y, WHITE)
+        # ====== 左ペイン：Lv / MP / 魔法一覧 ======
+        title_y = left_rect.y + 18
+        blit_line(actor.name, left_rect.x + 24, title_y, WHITE)
+        blit_line("まほう", left_rect.x + 200, title_y, WHITE)
 
-        x_lv = top_rect.x + 28
+        x_lv = left_rect.x + 28
         x_mp = x_lv + 70
         x_list = x_mp + 140
-        y0 = top_rect.y + 70
+        y0 = left_rect.y + 70
 
         cursor = font.render("▶", True, WHITE)
 
-        # 左：Lv/MP
+        # --- Lv / MP ---
         for lv in range(1, 9):
             y = y0 + (lv - 1) * line_h
             if mode == "level" and lv == lv_idx:
                 screen.blit(cursor, (x_lv - 24, y))
-            blit_line(f"{lv}", x_lv, y, WHITE)
-            cur = int(mp_pool.get(lv, 0))
-            mx = int(max_mp_pool.get(lv, 0))
-            blit_line(f"{cur}/{mx}", x_mp, y, WHITE)
+            blit_line(f"{lv}", x_lv, y)
+            blit_line(f"{mp_pool.get(lv,0)}/{max_mp_pool.get(lv,0)}", x_mp, y)
 
-        # 右：選択Lvの魔法一覧（縦リスト）
+        # --- 魔法リスト ---
         y = y0
-        max_show = 8
-        lst = cur_list[:max_show]
+        for i, (name, lv, cost, sp) in enumerate(cur_list[:8]):
+            if mode == "spell" and i == spell_sel:
+                screen.blit(cursor, (x_list - 24, y))
 
-        if not lst:
-            blit_line("-", x_list, y, GRAY)
-        else:
-            for i, (name, lv, cost, sp) in enumerate(lst):
-                if mode == "spell" and i == spell_sel:
-                    screen.blit(cursor, (x_list - 24, y))
+            enabled = can_cast_now(actor, lv, cost)
+            color = WHITE if enabled else GRAY
+            mark = magic_mark(sp)
+            blit_line(f"{mark}{name}", x_list, y, color)
+            y += line_h
 
-                mark = magic_mark(sp)
-
-                # MP足りない魔法はグレー固定（選択カーソルは出るが色で抑制）
-                enabled = can_cast_now(actor, lv, cost)
-                color = (
-                    WHITE if (mode == "spell" and i == spell_sel and enabled) else GRAY
-                )
-                if not enabled:
-                    color = GRAY
-
-                blit_line(f"{mark}{name}", x_list, y, color)
-                y += line_h
-
-        # target mode: 対象選択
+        # ====== 右ペイン：ミニステータス ======
         if mode == "target" and selected_spell:
             name, lv, cost, sp = selected_spell
-            blit_line("たいしょう", top_rect.right - 220, y0, WHITE)
-            ty = y0 + line_h
-            for i, ch in enumerate(party[:4]):
-                if i == target_sel:
-                    screen.blit(cursor, (top_rect.right - 220 - 24, ty))
+            cands = target_candidates_for_field(name, party)
 
-                # 対象選択描画で色を切り替える
-                spell_name, lv, cost, sp = selected_spell
-                will_affect = field_spell_will_affect(spell_name, ch)
-                # 完全に選べないケース（例：HP0で回復魔法など）
-                is_dead = getattr(ch, "hp", 1) <= 0
-                if not will_affect:
-                    col = GRAY
-                else:
-                    col = WHITE
-                blit_line(ch.name, top_rect.right - 220, ty, col)
+            draw_party_ministatus(
+                screen,
+                right_rect,
+                party,
+                font,
+                portrait_cache,
+                status_icon_cache,
+                selected_idx=cands[target_sel] if cands else None,
+                cursor=cursor,
+                spell_name=name,  # ★ここだけ
+            )
+        else:
+            draw_party_ministatus(
+                screen,
+                right_rect,
+                party,
+                font,
+                portrait_cache,
+                status_icon_cache,
+            )
 
-                ty += line_h
+        # ★魔法説明（spell / target 両方で表示）
+        spell_for_desc = None
+        if selected_spell:
+            spell_for_desc = selected_spell[0]  # name
+
+        draw_magic_description(
+            screen,
+            right_rect,
+            font,
+            spell_name=spell_for_desc,
+            spells_by_name=spells_by_name,
+        )
 
         # bottom strip（あなたの既存コードをそのまま挿入）
         # ...
@@ -2317,6 +2599,9 @@ def open_item_pygame(
     save_dict: Optional[dict],
     items_by_name: dict[str, dict],
     use_field_item_fn,  # make_use_field_item_fn(...) の戻り値
+    portrait_cache: PortraitCache,
+    status_icon_cache: StatusIconCache,
+    ui_se: dict[str, pygame.mixer.Sound],
 ):
     clock = pygame.time.Clock()
 
@@ -2324,18 +2609,13 @@ def open_item_pygame(
     mode = "item"  # "item" | "target"
     item_sel = 0
     target_sel = 0
-
-    WHITE = (255, 255, 255)
-    GRAY = (150, 150, 150)
+    target_cands = []  # ★追加
 
     line_h = font.get_linesize() + 10
 
     def blit_line(text, x, y, color=WHITE):
         surf = font.render(text, True, color)
         screen.blit(surf, (x, y))
-
-    def canon(s: str) -> str:
-        return str(s).strip().lower()
 
     # --- 対象が必要なアイテム ---
     def needs_target(item_name: str) -> bool:
@@ -2355,13 +2635,6 @@ def open_item_pygame(
                 if hp > 0:
                     cand.append(i)
         return cand if cand else list(range(min(4, len(party))))
-
-    # 効果がある対象だけ白表示
-    def can_affect(item_name: str, ch) -> bool:
-        fn = ITEM_AFFECT_CHECKERS.get(canon(item_name))
-        if fn:
-            return fn(ch)
-        return True  # 未定義アイテムは「使える」扱い
 
     while True:
         # -------- data build --------
@@ -2385,34 +2658,27 @@ def open_item_pygame(
             if ev.key == pygame.K_ESCAPE:
                 if mode == "target":
                     mode = "item"
+                    target_cands = []  # ★追加
                 else:
                     return
-                continue
-
-            if ev.key == pygame.K_LEFT:
-                member_idx = (member_idx - 1) % len(party)
-                item_sel = 0
-                mode = "item"
-                continue
-
-            if ev.key == pygame.K_RIGHT:
-                member_idx = (member_idx + 1) % len(party)
-                item_sel = 0
-                mode = "item"
                 continue
 
             if ev.key == pygame.K_UP:
                 if mode == "item":
                     item_sel = max(0, item_sel - 1)
+                    target_cands = []  # ★保険
                 elif mode == "target":
-                    target_sel = (target_sel - 1) % len(cands)
+                    if target_cands:
+                        target_sel = (target_sel - 1) % len(target_cands)
                 continue
 
             if ev.key == pygame.K_DOWN:
                 if mode == "item":
                     item_sel += 1
+                    target_cands = []  # ★保険
                 elif mode == "target":
-                    target_sel = (target_sel + 1) % len(cands)
+                    if target_cands:
+                        target_sel = (target_sel + 1) % len(target_cands)
                 continue
 
             if ev.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_z):
@@ -2424,6 +2690,7 @@ def open_item_pygame(
                 if mode == "item":
                     if needs_target(name):
                         mode = "target"
+                        target_cands = target_candidates(name)  # ★ここ
                         target_sel = 0
                         continue
                     else:
@@ -2437,8 +2704,13 @@ def open_item_pygame(
                         continue
 
                 elif mode == "target":
-                    cands = target_candidates(name)
-                    tgt_idx = cands[target_sel]
+                    tgt_idx = target_cands[target_sel]
+                    ch = party[tgt_idx]
+
+                    if not can_affect(name, ch):
+                        ui_se["invalid"].play()  # ★ブブー
+                        # 効果なし → 何もしない（SE鳴らすならここ）
+                        continue
 
                     use_field_item_fn(
                         member_idx,
@@ -2447,22 +2719,39 @@ def open_item_pygame(
                         item_type,
                     )
                     mode = "item"
+                    target_cands = []
                     continue
 
         # -------- draw --------
         screen.fill((0, 0, 0))
         w, h = screen.get_size()
-
         margin = 24
-        rect = pygame.Rect(margin, margin, w - margin * 2, h - margin * 2)
-        draw_window(screen, rect)
 
-        title_y = rect.y + 18
-        blit_line(actor.name, rect.x + 24, title_y)
-        blit_line("アイテム", rect.x + 200, title_y)
+        # タイトル
+        page_label = "ITEM"
+        pl = font.render(page_label, True, GRAY)
+        screen.blit(pl, (screen.get_width() // 2 - pl.get_width() // 2, margin))
 
-        x_list = rect.x + 48
-        y0 = rect.y + 70
+        # ========== レイアウト（固定） ==========
+        left_w = int(w * 0.6)
+        right_w = w - left_w - margin * 3
+        left_rect = pygame.Rect(
+            margin,
+            pl.get_height() + margin * 2,
+            left_w,
+            h - pl.get_height() * 2 - margin * 3,
+        )
+        right_rect = pygame.Rect(
+            left_rect.right + margin,
+            pl.get_height() + margin * 2,
+            right_w,
+            h - pl.get_height() * 2 - margin * 3,
+        )
+        draw_window(screen, left_rect)
+        draw_window(screen, right_rect)
+
+        x_list = left_rect.x + 48
+        y0 = left_rect.y + 70
         cursor = font.render("▶", True, WHITE)
 
         # --- アイテム一覧 ---
@@ -2479,27 +2768,41 @@ def open_item_pygame(
             blit_line(f"x{count}", x_list + 200, y, color)
             y += line_h
 
-        # --- 対象選択 ---
-        if mode == "target" and selected_item:
-            name, _, _ = selected_item
-            cands = target_candidates(name)
+        # --- 右ウィンドウ ---
+        if mode == "target" and selected_item is not None:
+            draw_party_ministatus(
+                screen,
+                right_rect,
+                party,
+                font,
+                portrait_cache,
+                status_icon_cache,
+                selected_idx=target_cands[target_sel] if target_cands else None,
+                cursor=cursor,
+                item_name=selected_item[0],  # ★ここ
+            )
+        else:
+            draw_party_ministatus(
+                screen,
+                right_rect,
+                party,
+                font,
+                portrait_cache,
+                status_icon_cache,
+            )
 
-            tx = rect.right - 220
-            ty = y0
-            blit_line("たいしょう", tx, ty)
-            ty += line_h
-
-            for i, idx in enumerate(cands):
-                ch = party[idx]
-                ok = can_affect(name, ch)
-                col = WHITE if ok else GRAY
-                if i == target_sel:
-                    screen.blit(cursor, (tx - 24, ty))
-                blit_line(ch.name, tx, ty, col)
-                ty += line_h
+            # ★アイテム説明（itemモードのみ）
+            if selected_item:
+                draw_item_description(
+                    screen,
+                    right_rect,
+                    font,
+                    item_name=selected_item[0],
+                    items_by_name=items_by_name,
+                )
 
         hint = font.render(
-            "↑↓: Select  ←→: Member  Enter: OK  ESC: Back",
+            "↑↓: Select  Enter: OK  ESC: Back",
             True,
             GRAY,
         )
@@ -2507,3 +2810,185 @@ def open_item_pygame(
 
         pygame.display.flip()
         clock.tick(60)
+
+
+# ミニステータス表示
+def draw_party_ministatus(
+    screen,
+    rect,
+    party,
+    font,
+    portrait_cache,
+    status_icon_cache,
+    *,
+    selected_idx=None,
+    cursor=None,
+    item_name=None,
+    spell_name=None,
+):
+    """
+    パーティのミニステータス表示（共通UI部品）
+
+    - selected_idx : 対象選択中のキャラ index
+    - item_name    : アイテム対象選択時（効果判定に使用）
+    - spell_name   : 魔法対象選択時（効果判定に使用）
+
+    UIは「効果があるかどうか」だけを見て描画する。
+    ロジック判断は can_affect / field_spell_will_affect 側の責務。
+    """
+    padding = 16
+    row_h = 80
+
+    x0 = rect.x + padding
+    y = rect.y + padding
+
+    for i, ch in enumerate(party[:4]):
+        # --- 効果判定（UIは結果のみ利用） ---
+        effective = True
+        if item_name is not None:
+            effective = can_affect(item_name, ch)
+        elif spell_name is not None:
+            effective = field_spell_will_affect(spell_name, ch)
+
+        text_color = WHITE if effective else GRAY
+
+        # --- カーソル ---
+        if selected_idx == i and cursor:
+            screen.blit(cursor, (x0 - 24, y + 24))
+
+        # --- ポートレート ---
+        face_rect = pygame.Rect(x0, y, 48, 48)
+        key = getattr(ch, "portrait_key", None)
+
+        if key:
+            face = portrait_cache.get(key)
+            img = pygame.transform.scale(face, face_rect.size)
+
+            if not effective:
+                img = img.copy()
+                img.fill((0, 0, 0, 120), special_flags=pygame.BLEND_RGBA_SUB)
+
+            screen.blit(img, face_rect)
+        else:
+            pygame.draw.rect(screen, (60, 60, 60), face_rect)
+
+        tx = x0 + 56
+        ty = y
+
+        # --- 上段：名前 ---
+        screen.blit(
+            font.render(ch.name, True, text_color),
+            (tx, ty),
+        )
+
+        # --- ステータス異常アイコン ---
+        draw_status_icons(
+            screen,
+            ch,
+            status_icon_cache,
+            x=tx + 100,
+            y=ty + 6,
+        )
+
+        # --- 下段：HP ---
+        hp_text = f"{int(ch.hp)}/{int(ch.max_hp)}"
+        screen.blit(
+            font.render(hp_text, True, text_color),
+            (tx, ty + 28),
+        )
+
+        y += row_h
+
+
+# アイテム説明文表示
+def draw_item_description(
+    screen,
+    rect,
+    font,
+    *,
+    item_name: str,
+    items_by_name: dict,
+):
+    padding = 16
+    line_h = font.get_linesize() + 6
+
+    item = items_by_name.get(item_name)
+    if not item:
+        return
+
+    spell_info = item.get("SpellInfo", {})
+    effect = spell_info.get("Effect")
+    if not effect:
+        return
+
+    # 回復量計算
+    base = spell_info.get("BasePower")
+    mult = spell_info.get("Multiplier")
+    heal_amount = None
+    if base is not None and mult is not None:
+        heal_amount = base * mult
+
+    # 右ウィンドウ下部
+    y = rect.bottom - padding - line_h * 3
+    x = rect.x + padding
+
+    # 1行目：アイテム名
+    screen.blit(font.render(item_name, True, WHITE), (x, y))
+    y += line_h
+
+    # 2行目：効果説明
+    screen.blit(font.render(effect, True, WHITE), (x, y))
+    y += line_h
+
+    # 3行目：数値（ある場合のみ）
+    if heal_amount is not None:
+        screen.blit(
+            font.render(f"+{heal_amount} HP", True, WHITE),
+            (x, y),
+        )
+
+
+def draw_magic_description(
+    screen,
+    rect,
+    font,
+    *,
+    spell_name: str | None,
+    spells_by_name: dict[str, dict],
+):
+    """
+    右ペイン下部に魔法の効果説明を表示する
+    """
+    if not spell_name:
+        return
+
+    # 小文字正規化で引く（open_magic_pygame と同じ思想）
+    key = str(spell_name).strip().lower()
+    spell = None
+    for k, v in spells_by_name.items():
+        if str(k).strip().lower() == key:
+            spell = v
+            break
+
+    if not spell:
+        return
+
+    padding = 16
+    x = rect.x + padding
+    y = rect.bottom - 80  # 下寄せ（高さはお好みで）
+
+    effect = str(spell.get("Effect", ""))
+    base = spell.get("BasePower")
+
+    lines = []
+
+    if effect:
+        lines.append(effect)
+
+    # FF3風：数値は「威力」表記にする
+    if base is not None:
+        lines.append(f"Power {int(base)}")
+
+    for i, line in enumerate(lines):
+        surf = font.render(line, True, WHITE)
+        screen.blit(surf, (x, y + i * (font.get_linesize() + 4)))

@@ -57,3 +57,16 @@ class Status(Enum):
     PARTIAL_PETRIFY = auto()
 
     # 必要に応じて SLEEP などを追加
+
+
+class World(Enum):
+    FLOATING_CONTINENT = "Floating Continent"
+    WORLD = "World"
+    DARKNESS = "World of Darkness"
+
+    @classmethod
+    def from_str(cls, value: str) -> "World":
+        for w in cls:
+            if w.value == value:
+                return w
+        raise ValueError(f"Unknown world: {value}")

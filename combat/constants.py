@@ -89,6 +89,22 @@ STATUS_ENUM_BY_KEY = {
     "ko": Status.KO,
 }
 
+
+STATUS_ICON_KEY_BY_ENUM = {
+    Status.POISON: "poison",
+    Status.BLIND: "blind",
+    Status.MINI: "mini",
+    Status.SILENCE: "silence",
+    Status.TOAD: "toad",
+    Status.CONFUSION: "confusion",
+    Status.SLEEP: "sleep",
+    Status.PARALYZE: "paralysis",
+    Status.PETRIFY: "petrify",
+    Status.PARTIAL_PETRIFY: "petrify",  # ★統合表示
+    Status.KO: "ko",
+}
+
+
 # 「対象が必要なアイテム」ホワイトリスト
 FIELD_ITEM_TARGET_REQUIRED = {
     # 回復
@@ -112,13 +128,10 @@ ITEM_CATEGORY_MAP = {
     "Hi Potion": "Anywhere",
     "Elixir": "Anywhere",
     "Antidote": "Anywhere",
-
     "Zeus's Wrath": "Combat",
     "Raven's Yawn": "Combat",
     "Devil's Sigh": "Combat",
-
     "Gysahl Greens": "Field",
-
     "Onion Sword": "Equipment",  # ← inventoryに入れない選択肢もアリ
 }
 

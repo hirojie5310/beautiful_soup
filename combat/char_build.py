@@ -70,6 +70,7 @@ def build_party_members_from_save(
         party_members.append(
             PartyMemberRuntime(
                 name=char_name,
+                level=base.level,
                 job=job,  # ← job_data 取り直し不要
                 base=base,  # ★追加
                 stats=char_final,
@@ -396,7 +397,7 @@ def weapon_stats(
     key = normalizer(name)
     w = weapons_by_name_norm.get(key)
     if w is None:
-        print(f"[warn] weapon not found: {name} (norm={key})")
+        # print(f"[warn] weapon not found: {name} (norm={key})")
         return 0, 0, False, False, []
 
     power = int(w.get("BasePower", 0))
@@ -439,7 +440,7 @@ def armor_stats(
     key = normalizer(name)
     a = armors_by_name_norm.get(key)
     if a is None:
-        print(f"[warn] armor not found: {name} (norm={key})")
+        # print(f"[warn] armor not found: {name} (norm={key})")
         return 0, 0.0, 0, False, [], [], []
 
     defense = int(a.get("Defense", 0))

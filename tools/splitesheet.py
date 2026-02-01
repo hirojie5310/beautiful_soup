@@ -2,20 +2,20 @@ from pathlib import Path
 from PIL import Image
 
 # ========= 設定 =========
-SRC_PATH = "assets/Enemies_Large48_48.png"  # 入力ファイル
-OUT_DIR = Path("enemy_sprites")  # 出力フォルダ
+SRC_PATH = r"C:\Users\hirot\iCloudDrive\iCloud~AsheKube~Carnets\beautiful_soup\tools\Font_Icons(2).png"  # 入力ファイル
+OUT_DIR = Path("icons")  # 出力フォルダ
 
-SPRITE_W = 48
-SPRITE_H = 48
-GAP_X = 8
-GAP_Y = 8
+SPRITE_W = 8
+SPRITE_H = 8
+GAP_X = 0
+GAP_Y = 0
 
 # 左上の余白がある場合はここを調整（ないなら0のままでOK）
 MARGIN_X = 0
 MARGIN_Y = 0
 
 # 1行目18枚、2行目16枚（合計34）
-ROW_COUNTS = [12, 12, 12, 12, 12, 12, 12, 12, 3]
+ROW_COUNTS = [16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16]
 
 # 出力ファイル名を 001.png ～ 034.png にする（必要なら "1.png" 形式にも変更可）
 ZERO_PAD = 3

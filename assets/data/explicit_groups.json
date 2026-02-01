@@ -1,0 +1,358 @@
+{
+  "Altar Cave": {
+    "world": "Floating Continent",
+    "order": 1,
+    "locations": [
+      "Altar Cave B1",
+      "Altar Cave B2",
+      "Altar Cave B3",
+      "Altar Cave Crystal Room"
+    ]
+  },
+
+  "Floating Continent": {
+    "world": "Floating Continent",
+    "order": 2,
+    "locations": [
+      "Floating Continent Near Castle Argus",
+      "Floating Continent Near desert",
+      "Floating Continent Near Lake Dohr",
+      "Floating Continent Near Ur",
+      "Floating Continent North of Gulgan Gulch",
+      "Floating Continent Seas"
+    ]
+  },
+
+  "Ur": {
+    "world": "Floating Continent",
+    "order": 3,
+    "locations": ["Ur"]
+  },
+
+  "Mythril Mines": {
+    "world": "Floating Continent",
+    "order": 4,
+    "locations": [
+      "Mythril Mines B1",
+      "Mythril Mines B2"
+    ]
+  },
+
+  "Castle Sasune": {
+    "world": "Floating Continent",
+    "order": 5,
+    "locations": ["Castle Sasune"]
+  },
+
+  "Sealed Cave": {
+    "world": "Floating Continent",
+    "order": 6,
+    "locations": [
+      "Sealed Cave B1",
+      "Sealed Cave B2",
+      "Sealed Cave B3"
+    ]
+  },
+
+  "Dragon's Peak": {
+    "world": "Floating Continent",
+    "order": 7,
+    "locations": ["Dragon's Peak"]
+  },
+
+  "Tozus Tunnel": {
+    "world": "Floating Continent",
+    "order": 8,
+    "locations": [
+      "Tozus Tunnel B1",
+      "Tozus Tunnel B2"
+    ]
+  },
+
+  "Nepto Temple": {
+    "world": "Floating Continent",
+    "order": 9,
+    "locations": [
+      "Nepto Temple B1",
+      "Nepto Temple B2"
+    ]
+  },
+
+  "Tower of Owen": {
+    "world": "Floating Continent",
+    "order": 10,
+    "locations": [
+      "Tower of Owen Base",
+      "Tower of Owen 1F",
+      "Tower of Owen 2F",
+      "Tower of Owen 3F",
+      "Tower of Owen 4F",
+      "Tower of Owen 5F",
+      "Tower of Owen 6F",
+      "Tower of Owen 7F",
+      "Tower of Owen 8F",
+      "Tower of Owen 9F",
+      "Tower of Owen 10F"
+    ]
+  },
+
+  "Subterranean Lake": {
+    "world": "Floating Continent",
+    "order": 11,
+    "locations": [
+      "Subterranean Lake B1",
+      "Subterranean Lake B2",
+      "Subterranean Lake B3"
+    ]
+  },
+
+  "Molten Cave": {
+    "world": "Floating Continent",
+    "order": 12,
+    "locations": [
+      "Molten Cave B1",
+      "Molten Cave B2",
+      "Molten Cave B3",
+      "Molten Cave Crystal Room"
+    ]
+  },
+
+  "Hein's Castle": {
+    "world": "Floating Continent",
+    "order": 13,
+    "locations": [
+      "Hein's Castle 1F",
+      "Hein's Castle 2F",
+      "Hein's Castle 3F",
+      "Hein's Castle 4F",
+      "Hein's Castle 5F"
+    ]
+  },
+
+  "Flooded World": {
+    "world": "World",
+    "order": 14,
+    "locations": ["Flooded World"]
+  },
+
+  "Cave of Tides": {
+    "world": "World",
+    "order": 15,
+    "locations": [
+      "Cave of Tides B1",
+      "Cave of Tides B2",
+      "Cave of Tides B3",
+      "Cave of Tides B4",
+      "Cave of Tides Crystal Room"
+    ]
+  },
+
+  "World Map": {
+    "world": "World",
+    "order": 16,
+    "locations": [
+      "World Map Near Amur",
+      "World Map Near Ancient's Maze",
+      "World Map Near Doga's Manor",
+      "World Map Near Saronia",
+      "World Map Underwater",
+      "World Map Seas"
+    ]
+  },
+
+  "Sewers": {
+    "world": "World",
+    "order": 17,
+    "locations": [
+      "Sewers B1",
+      "Sewers B2",
+      "Sewers B3",
+      "Sewers B4"
+    ]
+  },
+
+  "Goldor Manor": {
+    "world": "World",
+    "order": 18,
+    "locations": [
+      "Goldor Manor 1F",
+      "Goldor Manor 2F",
+      "Goldor Manor Crystal Room"
+    ]
+  },
+
+  "Saronia": {
+    "world": "World",
+    "order": 19,
+    "locations": [
+      "Saronia Castle",
+      "Southeast Saronia",
+      "Southwest Saronia"
+    ]
+  },
+
+  "Cave of the Circle": {
+    "world": "World",
+    "order": 20,
+    "locations": [
+      "Cave of the Circle B1",
+      "Cave of the Circle B2",
+      "Cave of the Circle B3"
+    ]
+  },
+
+  "Sunken Cave": {
+    "world": "World",
+    "order": 21,
+    "locations": [
+      "Sunken Cave B1",
+      "Sunken Cave B2",
+      "Sunken Cave B3"
+    ]
+  },
+
+  "Saronia Catacombs": {
+    "world": "World",
+    "order": 22,
+    "locations": [
+      "Saronia Catacombs 1F",
+      "Saronia Catacombs 2F",
+      "Saronia Catacombs 3F",
+      "Saronia Catacombs 4F"
+    ]
+  },
+
+  "Temple of Time": {
+    "world": "World",
+    "order": 23,
+    "locations": [
+      "Temple of Time B1",
+      "Temple of Time B2",
+      "Temple of Time B3"
+    ]
+  },
+
+  "Ancient Ruins": {
+    "world": "World",
+    "order": 24,
+    "locations": [
+      "Ancient Ruins B1",
+      "Ancient Ruins B2",
+      "Ancient Ruins B3",
+      "Ancient Ruins B4",
+      "Ancient Ruins B5",
+      "Ancient Ruins B6"
+    ]
+  },
+
+  "Falgabard": {
+    "world": "World",
+    "order": 25,
+    "locations": [
+      "Falgabard",
+      "Falgabard Cave"
+    ]
+  },
+
+  "Lake Dohr": {
+    "world": "World",
+    "order": 26,
+    "locations": [
+      "Lake Dohr B1",
+      "Lake Dohr B2",
+      "Lake Dohr B3",
+      "Lake Dohr B4"
+    ]
+  },
+
+  "Cave of Shadows": {
+    "world": "World",
+    "order": 27,
+    "locations": [
+      "Cave of Shadows B1",
+      "Cave of Shadows B2",
+      "Cave of Shadows B3",
+      "Cave of Shadows B4",
+      "Cave of Shadows B5",
+      "Cave of Shadows B6",
+      "Cave of Shadows B7",
+      "Cave of Shadows B8"
+    ]
+  },
+
+  "Bahamut's Lair": {
+    "world": "World",
+    "order": 28,
+    "locations": [
+      "Bahamut's Lair B1",
+      "Bahamut's Lair B2",
+      "Bahamut's Lair B3"
+    ]
+  },
+
+  "Doga's Grotto": {
+    "world": "World",
+    "order": 29,
+    "locations": [
+      "Doga's Grotto B1",
+      "Doga's Grotto B2",
+      "Doga's Grotto B3"
+    ]
+  },
+
+  "Ancient's Maze": {
+    "world": "World",
+    "order": 30,
+    "locations": [
+      "Ancient's Maze Entrance",
+      "Ancient's Maze Left side",
+      "Ancient's Maze Right side",
+      "Ancient's Maze Center",
+      "Ancient's Maze Exit",
+      "Ancient's Maze Crystal Room"
+    ]
+  },
+
+  "Crystal Tower": {
+    "world": "World",
+    "order": 31,
+    "locations": [
+      "Crystal Tower 1F",
+      "Crystal Tower 2F",
+      "Crystal Tower 3F",
+      "Crystal Tower 4F",
+      "Crystal Tower 5F",
+      "Crystal Tower 6F",
+      "Crystal Tower 7F",
+      "Crystal Tower Xande's Throne"
+    ]
+  },
+
+  "Eureka": {
+    "world": "World",
+    "order": 32,
+    "locations": [
+      "Eureka B1",
+      "Eureka B2",
+      "Eureka B3",
+      "Eureka B4",
+      "Eureka B5",
+      "Eureka B6",
+      "Eureka B7"
+    ]
+  },
+
+  "World of Darkness": {
+    "world": "World of Darkness",
+    "order": 33,
+    "locations": [
+      "World of Darkness Center",
+      "World of Darkness Northeast",
+      "World of Darkness Northwest",
+      "World of Darkness Southeast",
+      "World of Darkness Southwest",
+      "World of Darkness Void",
+      "World of Darkness Cloud of Darkness"
+    ]
+  }
+}

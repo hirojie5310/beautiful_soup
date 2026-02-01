@@ -10,6 +10,8 @@ import pygame
 
 from ui_pygame.state import BattleUIState
 from ui_pygame.render.hub import draw_bar
+from ui_pygame.assets_py.status_icon_cashe import StatusIconCache
+from ui_pygame.render.status_icons import draw_status_icons
 
 
 STATUS_ABBR = {
@@ -22,6 +24,7 @@ STATUS_ABBR = {
     "Slow": ("SLW", (200, 160, 120)),
 }
 
+
 def draw_party_panel(
     screen: pygame.Surface,
     font: pygame.font.Font,
@@ -31,6 +34,7 @@ def draw_party_panel(
     ui: BattleUIState,
     *,
     rect: pygame.Rect | None = None,
+    status_icon_cache: "StatusIconCache",
 ):
     """
     PARTYパネル（HPのみ・タイトルなし）
@@ -66,9 +70,7 @@ def draw_party_panel(
     gap = 6
 
     # 名前領域（残りを全部）
-    name_w = content.w - (
-        marker_w + hp_text_w + bar_w + state_w + status_w + gap * 5
-    )
+    name_w = content.w - (marker_w + hp_text_w + bar_w + state_w + status_w + gap * 5)
     name_w = max(60, name_w)
 
     # 文字の縦位置：行中央へ
@@ -94,7 +96,7 @@ def draw_party_panel(
             if 0 <= i < len(planned_actions):
                 action = planned_actions[i]
 
-        is_selected = (i == selected_member_idx)
+        is_selected = i == selected_member_idx
         is_filled = action is not None
 
         # 行背景
@@ -114,6 +116,15 @@ def draw_party_panel(
         # 名前（省略）
         name = _ellipsize(getattr(m, "name", "???"), name_w)
         screen.blit(font.render(name, True, (255, 255, 255)), (tx, ty))
+
+        # ステータスアイコン
+        draw_status_icons(
+            screen,
+            m,
+            status_icon_cache,
+            x=tx + 100,
+            y=ty + 6,
+        )
         tx += name_w + gap
 
         # HP テキスト

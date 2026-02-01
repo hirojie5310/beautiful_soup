@@ -10,6 +10,7 @@ from collections import Counter
 
 import pygame
 
+from assets.data.data_loader import load_explicit_groups
 from ui_pygame.controller import BattleController
 from ui_pygame.state import (
     BattleUIState,
@@ -18,6 +19,7 @@ from ui_pygame.input_handler import handle_keydown
 
 # ここは「今 main がいる場所」から持ってきて import する
 # 例：combat / util / render など、あなたの構成に合わせて import 先を調整
+from combat.enums import World
 from combat.models import PartyMemberRuntime, FinalCharacterStats, EquipmentSet
 from combat.char_build import (
     build_party_members_from_save,
@@ -31,8 +33,9 @@ from combat.input_ui import normalize_battle_command
 from combat.enemy_selection import (
     build_location_index,
     pick_enemy_names,
-    calc_party_avg_level,
-    danger_label,
+    build_groups,
+    LocationGroup,
+    LocationMonsters,
 )
 from combat.progression import apply_victory_rewards
 from combat.save_prompt import (
@@ -68,7 +71,9 @@ from ui_pygame.logic import (
     build_item_candidates_for_battle as build_item_candidates_for_battle_fn,
     make_planned_action,
 )
-from ui_pygame.portrait_cache import PortraitCache
+from ui_pygame.assets_py.portrait_cache import PortraitCache
+from ui_pygame.assets_py.status_icon_cashe import StatusIconCache
+from ui_pygame.assets_py.map_image_cache import load_map_preview
 
 from scenes.menu import open_menu_pygame
 
@@ -89,6 +94,7 @@ class BattleAppConfig:
     # ★追加
     audio_dir: str = "assets/sounds/"
     face_dir: str = "assets/images/faces/"
+    status_icon_dir: str = "assets/images/status_icons/"
 
     # ★BGM 定義（論理名 → ファイル名）
     bgm_enemy_select: str = "Fortune_Teller2"
@@ -101,9 +107,11 @@ class BattleAppConfig:
     se_enter_path: str = "assets/sounds/se/se_enter.ogg"
     se_confirm_path: str = "assets/sounds/se/se_confirm.ogg"
     se_rareitem_path: str = "assets/sounds/se/se_rareitem.ogg"
+    se_invalid: str = "assets/sounds/se/se_invalid.ogg"
     se_enter_volume: float = 0.35
     se_confirm_volume: float = 0.6
     se_rareitem_volume: float = 0.6
+    se_invalid_volume: float = 0.6
 
 
 def run_battle_app(
@@ -121,37 +129,39 @@ def run_battle_app(
 
     pygame.mixer.init()
     audio = AudioManager(base_dir=cfg.audio_dir)
+    ui_se = build_ui_se(cfg)
+    battle_ui_se = {
+        "rareitem": ui_se["rareitem"],
+    }
 
     state = init_runtime_state()
 
-    print("[DBG spells type]", type(state.spells), "len=", len(state.spells))
     k = next(iter(state.spells))
-    print("[DBG spells key sample]", repr(k))
-    print("[DBG spells value keys]", list(state.spells[k].keys())[:15])
-    print(
-        "[DBG spells value sample]",
-        {
-            kk: state.spells[k].get(kk)
-            for kk in ["name", "Type", "Level", "Effect", "Target"]
-        },
-    )
-    print("[DBG has 'Flare' key?]", "Flare" in state.spells)
-    print("[DBG has 'flare' key?]", "flare" in state.spells)
-    print("[DBG has 'Flare ' key?]", "Flare " in state.spells)
 
     spells_expanded = expand_spells_for_summons(state.spells)
 
     level_table = LevelTable("assets/data/level_exp.csv")
     job_attr = load_job_attribution("assets/data/job_attribution.csv")
-
-    se_enter = pygame.mixer.Sound(cfg.se_enter_path)
-    se_confirm = pygame.mixer.Sound(cfg.se_confirm_path)
-    se_rareitem = pygame.mixer.Sound(cfg.se_rareitem_path)
-    se_enter.set_volume(cfg.se_enter_volume)
-    se_confirm.set_volume(cfg.se_confirm_volume)
-    se_rareitem.set_volume(cfg.se_rareitem_volume)
+    explicit_groups = load_explicit_groups("assets/data/explicit_groups.json")
 
     portrait_cache = PortraitCache(base_dir=cfg.face_dir)
+    status_icon_cache = StatusIconCache(cfg.status_icon_dir)
+    # 使用予定のステータス異常を列挙
+    status_icon_cache.preload(
+        [
+            "poison",
+            "blind",
+            "mini",
+            "silence",
+            "toad",
+            "confusion",
+            "sleep",
+            "paralysis",
+            "petrification",
+            "partial petrification",
+            "ko",
+        ]
+    )
 
     app_running = True
     while app_running:
@@ -178,8 +188,18 @@ def run_battle_app(
         )
 
         if enemy_names is None:
-            locations = build_location_index(state.monsters)
-            party_avg_lv = calc_party_avg_level(party_members)
+            flat_locations = build_location_index(state.monsters)
+            # 存在チェック
+            all_locations = {loc.location for loc in flat_locations}
+            for gname, entry in explicit_groups.items():
+                for m in entry["locations"]:
+                    if m not in all_locations:
+                        print(f"[WARN] Unknown location in group '{gname}': {m}")
+
+            groups = build_groups(
+                flat_locations,
+                explicit_groups=explicit_groups,
+            )
 
             # 装備変更後は変更を反映させるため必ず呼ぶ
             def recalc_stats_fn(
@@ -194,6 +214,39 @@ def run_battle_app(
                     job_name=actor.job.name,  # ★ここがポイント
                 )
 
+            while True:
+                group = choose_location_group_pygame(
+                    screen,
+                    font,
+                    groups,
+                    party_members=party_members,
+                    level_table=level_table,
+                    job_attr=job_attr,
+                    weapons=state.weapons,
+                    armors=state.armors,
+                    save_dict=state.save,
+                    save_path=SAVE_PATH,
+                    jobs_by_name=state.jobs_by_name,
+                    portrait_cache=portrait_cache,
+                    status_icon_cache=status_icon_cache,
+                    recalc_stats_fn=recalc_stats_fn,
+                    build_magic_fn=build_magic_fn,
+                    spells_by_name=state.spells,
+                    items_by_name=state.items_by_name,
+                    ui_se=ui_se,
+                )
+
+                selected = choose_location_floor_pygame(
+                    screen,
+                    font,
+                    group.children,
+                    ui_se=ui_se,
+                )
+
+                if selected is not None:
+                    break  # 決定
+
+            """
             selected = choose_location_pygame(
                 screen,
                 font,
@@ -208,11 +261,14 @@ def run_battle_app(
                 save_path=SAVE_PATH,  # ←あなたの実ファイルパスに合わせて
                 jobs_by_name=state.jobs_by_name,
                 portrait_cache=portrait_cache,  # ★追加
+                status_icon_cache=status_icon_cache,  # ★追加
                 recalc_stats_fn=recalc_stats_fn,  # ★追加
                 build_magic_fn=build_magic_fn,
                 spells_by_name=state.spells,  # ★追加（ここが元の state.spells）
                 items_by_name=state.items_by_name,  # ★追加
+                ui_se=ui_se,  # ★これだけ,  # ★追加
             )
+            """
             enemy_names = pick_enemy_names(selected, state.monsters, k_min=2, k_max=6)
 
         enemies = build_enemies(
@@ -224,9 +280,10 @@ def run_battle_app(
         ctx_base = {
             "enemies": enemies,
             "spells_expanded": spells_expanded,
-            "se_enter": se_enter,
-            "se_confirm": se_confirm,
-            "se_rareitem": se_rareitem,
+            "se_enter": ui_se["enter"],
+            "se_confirm": ui_se["confirm"],
+            "se_rareitem": ui_se["rareitem"],
+            "se_invalid": ui_se["invalid"],
             "ctx_kwargs": dict(
                 normalize_battle_command=normalize_battle_command,
                 reset_target_flags=reset_target_flags,
@@ -249,6 +306,7 @@ def run_battle_app(
             party_members,
             state,
             enemy_sprite_cache,
+            status_icon_cache=status_icon_cache,  # ★追加
             ctx_base=ctx_base,
         )
 
@@ -272,7 +330,7 @@ def run_battle_app(
                 screen,
                 font,
                 victory,
-                ctx_base=ctx_base,
+                battle_ui_se=battle_ui_se,
             )
             # 永続化の確認（UX）差分表示 → 保存確認 → 保存
             prompt_save_progress_and_write_pygame(
@@ -299,6 +357,7 @@ def run_one_battle(
     party_members,
     state,
     enemy_sprite_cache,
+    status_icon_cache: StatusIconCache,
     *,
     ctx_base,
 ) -> str:
@@ -464,6 +523,7 @@ def run_one_battle(
             ui.planned_actions,
             ui,
             rect=party_rect,
+            status_icon_cache=status_icon_cache,
         )
 
         # 7) 上HUD：敵パネル（左上）※選択/点滅状態を計算して渡す
@@ -508,13 +568,50 @@ def run_one_battle(
     return end_reason
 
 
-def choose_location_pygame(
-    screen,
-    font,
-    entries,
+def play_se(ui_se: dict | None, key: str):
+    if not ui_se:
+        return
+    snd = ui_se.get(key)
+    if snd:
+        snd.play()
+
+
+LINE_HEIGHT = 28
+LIST_TOP = 80
+VISIBLE_LINES = 12
+
+
+# スクロール計算ヘルパー
+def calc_view_range(cursor: int, total: int, visible: int) -> tuple[int, int]:
+    """
+    表示開始 index と終了 index を返す
+    """
+    if total <= visible:
+        return 0, total
+
+    half = visible // 2
+    start = max(0, cursor - half)
+    end = start + visible
+
+    if end > total:
+        end = total
+        start = end - visible
+
+    return start, end
+
+
+WORLD_COLORS = {
+    World.FLOATING_CONTINENT: (120, 180, 255),
+    World.WORLD: (120, 220, 120),
+    World.DARKNESS: (200, 80, 120),
+}
+
+
+def choose_location_group_pygame(
+    screen: pygame.Surface,
+    font: pygame.font.Font,
+    groups: list[LocationGroup],
     *,
-    party_avg_lv: int,
-    caption="Select Location",
     party_members: Sequence[PartyMemberRuntime],
     level_table=None,
     job_attr=None,
@@ -524,72 +621,25 @@ def choose_location_pygame(
     save_path=None,
     jobs_by_name=None,
     portrait_cache: PortraitCache,  # ★追加
+    status_icon_cache: StatusIconCache,  # ★追加
     recalc_stats_fn=None,  # ★追加
     build_magic_fn=None,  # ★追加
     spells_by_name=None,  # ★追加
     items_by_name=None,  # ★追加
-):
-    """
-    操作:
-      - ↑↓: 選択移動
-      - PageUp/PageDown: 大きく移動
-      - Enter: 決定
-      - Esc: キャンセル（SystemExit）
-      - 文字入力: インクリメンタル検索（Backspaceで削除）
-    """
+    ui_se: dict[str, pygame.mixer.Sound],
+) -> LocationGroup:
+    cursor = 0
     clock = pygame.time.Clock()
+    preview_cache: dict[str, pygame.Surface | None] = {}
 
-    query = ""
-    filtered = list(entries)
-    selected_idx = 0
-    top_idx = 0  # 表示の先頭（スクロール用）
-
-    # 表示行数は画面サイズから計算
-    line_h = font.get_linesize() + 4
-    header_h = line_h * 3
-    help_h = line_h + 16
-    max_rows = max(3, (screen.get_height() - header_h - help_h) // line_h)
-
-    def apply_filter() -> None:
-        nonlocal filtered, selected_idx, top_idx
-        q = query.strip().lower()
-        if not q:
-            filtered = list(entries)
-        else:
-            filtered = [e for e in entries if q in e.location.lower()]
-        if not filtered:
-            selected_idx = 0
-            top_idx = 0
-        else:
-            selected_idx = min(selected_idx, len(filtered) - 1)
-            top_idx = min(top_idx, max(0, len(filtered) - max_rows))
-
-    def clamp_scroll() -> None:
-        nonlocal top_idx
-        if selected_idx < top_idx:
-            top_idx = selected_idx
-        elif selected_idx >= top_idx + max_rows:
-            top_idx = selected_idx - max_rows + 1
-        top_idx = max(0, min(top_idx, max(0, len(filtered) - max_rows)))
-
-    def move(delta: int) -> None:
-        nonlocal selected_idx
-        if not filtered:
-            return
-        selected_idx = (selected_idx + delta) % len(filtered)
-        clamp_scroll()
-
-    # IME含む日本語入力を本気でやるなら別途対応が必要ですが、
-    # まずは英数字の検索で十分ならこれでOKです。
     while True:
+        clock.tick(60)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 raise SystemExit
 
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    raise SystemExit
-
                 # ★追加：Mキーでメニューへ
                 if event.key == pygame.K_m:
                     # ここでメニュー画面へ（戻ってきたらこの画面に復帰）
@@ -605,140 +655,208 @@ def choose_location_pygame(
                         armors=armors,
                         jobs_by_name=jobs_by_name,
                         portrait_cache=portrait_cache,  # ★追加
+                        status_icon_cache=status_icon_cache,  # ★追加
                         recalc_stats_fn=recalc_stats_fn,
                         build_magic_fn=build_magic_fn,
                         spells_by_name=spells_by_name,  # ★ここが重要
                         items_by_name=items_by_name,
+                        ui_se=ui_se,
                     )  # ← game_state等は後述
                     continue
 
-                if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
-                    if filtered:
-                        return filtered[selected_idx]
-                    # 候補0件なら何もしない
-                    continue
-
                 if event.key == pygame.K_UP:
-                    move(-1)
-                    continue
-                if event.key == pygame.K_DOWN:
-                    move(+1)
-                    continue
-                if event.key == pygame.K_PAGEUP:
-                    move(-max_rows)
-                    continue
-                if event.key == pygame.K_PAGEDOWN:
-                    move(+max_rows)
-                    continue
-                if event.key == pygame.K_HOME:
-                    if filtered:
-                        selected_idx = 0
-                        clamp_scroll()
-                    continue
-                if event.key == pygame.K_END:
-                    if filtered:
-                        selected_idx = len(filtered) - 1
-                        clamp_scroll()
-                    continue
+                    cursor = (cursor - 1) % len(groups)
+                    play_se(ui_se, "cursor")
 
-                if event.key == pygame.K_BACKSPACE:
-                    if query:
-                        query = query[:-1]
-                        apply_filter()
-                    continue
+                elif event.key == pygame.K_DOWN:
+                    cursor = (cursor + 1) % len(groups)
+                    play_se(ui_se, "cursor")
 
-                # 文字入力（pygame2の event.unicode が使える）
-                ch = event.unicode
-                if ch and ch.isprintable():
-                    # 制御文字などは除外
-                    if ch not in ("\r", "\n", "\t"):
-                        query += ch
-                        apply_filter()
-                    continue
+                elif event.key in (pygame.K_RETURN, pygame.K_SPACE):
+                    play_se(ui_se, "decide")
+                    return groups[cursor]
 
-            # --- マウスホイール（pygame2） ---
-            if event.type == pygame.MOUSEWHEEL:
-                # event.y: 上に回すと +1, 下に回すと -1
-                # メニュー的には上回し = 選択を上へ なので符号を反転
-                move(-event.y)
-                continue
-
-            # --- 互換用：pygame1系のホイール（button 4/5） ---
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 4:  # wheel up
-                    move(-1)
-                    continue
-                if event.button == 5:  # wheel down
-                    move(+1)
-                    continue
-
-        # ---------- 描画 ----------
+        # --- 描画 ---
         screen.fill((0, 0, 0))
 
-        # タイトル
-        title = font.render(caption, True, (255, 255, 255))
-        screen.blit(title, (16, 12))
+        title = font.render("Select Location", True, (255, 255, 255))
+        screen.blit(title, (40, 20))
 
-        # 検索文字列
-        qtxt = font.render(f"Search: {query}", True, (200, 200, 200))
-        screen.blit(qtxt, (16, 12 + line_h))
+        start, end = calc_view_range(cursor, len(groups), VISIBLE_LINES)
 
-        # 件数
-        cnt = font.render(
-            f"{len(filtered)}/{len(entries)} locations", True, (160, 160, 160)
-        )
-        screen.blit(cnt, (16, 12 + line_h * 2))
+        y = LIST_TOP
+        prev_world: World | None = None  # ★追加
 
-        y0 = 12 + header_h
+        for i in range(start, end):
+            g = groups[i]
 
-        if not filtered:
-            msg = font.render(
-                "No matches. Type to search, Backspace to delete.",
-                True,
-                (255, 180, 180),
-            )
-            screen.blit(msg, (16, y0))
-        else:
-            visible = filtered[top_idx : top_idx + max_rows]
-            for i, e in enumerate(visible):
-                row_idx = top_idx + i
-                is_sel = row_idx == selected_idx
-
-                prefix = "▶ " if is_sel else "  "
-                lv_range = (
-                    f"{e.min_level}"
-                    if e.min_level == e.max_level
-                    else f"{e.min_level}-{e.max_level}"
-                )
-                # 表示部
-                dg = danger_label(e, party_avg_lv)
-
-                text = (
-                    f"{prefix}{e.location}  "
-                    f"(LV: {e.avg_level} / {e.min_level}-{e.max_level}) "
-                    f"(Danger: {dg})"
-                )
-
-                # 例：色分け
-                if dg == "Boss":
-                    color = (255, 80, 80)  # 赤
-                elif dg == "HIGH":
-                    color = (255, 180, 0)  # オレンジ
-                elif dg == "LOW":
-                    color = (120, 200, 255)  # 青
+            # --- ★ world 見出し ---
+            if g.world != prev_world:
+                if g.world is not None:
+                    header_color = WORLD_COLORS.get(g.world, (200, 200, 200))
+                    header_text = f"=== {g.world.value.upper()} ==="
                 else:
-                    color = (220, 220, 220)
+                    header_color = (200, 200, 200)
+                    header_text = "=== UNKNOWN ==="
 
-                row = font.render(text, True, color)
-                screen.blit(row, (16, y0 + i * line_h))
+                header = font.render(header_text, True, header_color)
+                screen.blit(header, (40, y))
+                y += LINE_HEIGHT
+                prev_world = g.world
 
-        # ---------- ヘルプ（画面下） ----------
-        help_text = "M: Menu   Enter: Select   Esc: Quit   ↑↓/Wheel: Move"
-        help_surf = font.render(help_text, True, (160, 160, 160))
-        screen.blit(help_surf, (16, screen.get_height() - help_surf.get_height() - 12))
+            # --- 通常のグループ描画 ---
+            is_sel = i == cursor
+
+            color = (255, 80, 80) if g.boss_count > 0 else (160, 200, 255)
+            if not is_sel:
+                color = tuple(c // 2 for c in color)
+
+            text = f"{g.group_name}  (LV:{g.min_level}-{g.max_level})"
+            surf = font.render(text, True, color)
+
+            if is_sel:
+                screen.blit(font.render("▶", True, color), (20, y))
+
+            screen.blit(surf, (40, y))
+            y += LINE_HEIGHT
+
+        # --- スクロールサイン ---
+        if start > 0:
+            screen.blit(
+                font.render("▲", True, (120, 120, 120)),
+                (360, LIST_TOP - 20),
+            )
+
+        if end < len(groups):
+            screen.blit(
+                font.render("▼", True, (120, 120, 120)),
+                (360, LIST_TOP + VISIBLE_LINES * LINE_HEIGHT),
+            )
+
+        # --- マッププレビュー ---
+        selected_group = groups[cursor]
+        preview = load_map_preview(selected_group.group_name, preview_cache)
+
+        PREVIEW_X = 420
+        PREVIEW_Y = 80
+        PREVIEW_W = 360
+        PREVIEW_H = 240
+
+        pygame.draw.rect(
+            screen,
+            (120, 120, 120),
+            (PREVIEW_X - 2, PREVIEW_Y - 2, PREVIEW_W + 4, PREVIEW_H + 4),
+            1,
+        )
+
+        if preview is not None:
+            img = preview
+            iw, ih = img.get_size()
+
+            scale = min(PREVIEW_W / iw, PREVIEW_H / ih)
+            scaled = pygame.transform.smoothscale(
+                img,
+                (int(iw * scale), int(ih * scale)),
+            )
+
+            screen.blit(
+                scaled,
+                (
+                    PREVIEW_X + (PREVIEW_W - scaled.get_width()) // 2,
+                    PREVIEW_Y + (PREVIEW_H - scaled.get_height()) // 2,
+                ),
+            )
+
+        # --- 下部ヒント ---
+        w, h = screen.get_width(), screen.get_height()
+        hint = font.render(
+            "↑↓: Select  Enter: Decision  M: Menu  ESC: Quit", True, (180, 180, 180)
+        )
+        screen.blit(
+            hint,
+            (w // 2 - hint.get_width() // 2, h - 60),
+        )
 
         pygame.display.flip()
+
+
+def choose_location_floor_pygame(
+    screen: pygame.Surface,
+    font: pygame.font.Font,
+    locations: list[LocationMonsters],
+    *,
+    ui_se=None,
+) -> LocationMonsters | None:
+    assert ui_se is None or isinstance(ui_se, dict)
+
+    cursor = 0
+    clock = pygame.time.Clock()
+
+    while True:
         clock.tick(60)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                raise SystemExit
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    cursor = (cursor - 1) % len(locations)
+                    play_se(ui_se, "cursor")
+
+                elif event.key == pygame.K_DOWN:
+                    cursor = (cursor + 1) % len(locations)
+                    play_se(ui_se, "cursor")
+
+                elif event.key in (pygame.K_RETURN, pygame.K_SPACE):
+                    play_se(ui_se, "decide")
+                    return locations[cursor]
+
+                elif event.key in (pygame.K_ESCAPE, pygame.K_BACKSPACE):
+                    play_se(ui_se, "cancel")
+                    return None
+
+        # --- 描画 ---
+        screen.fill((0, 0, 0))
+
+        title = font.render("Select Floor", True, (255, 255, 255))
+        screen.blit(title, (40, 20))
+
+        start, end = calc_view_range(cursor, len(locations), VISIBLE_LINES)
+
+        y = LIST_TOP
+        for i in range(start, end):
+            loc = locations[i]
+            is_sel = i == cursor
+
+            color = (255, 80, 80) if loc.boss_count > 0 else (160, 200, 255)
+            if not is_sel:
+                color = tuple(c // 2 for c in color)
+
+            # 表示は「階層名だけ」にしてもFFっぽい
+            text = f"{loc.location}  (LV:{loc.min_level}-{loc.max_level})"
+            surf = font.render(text, True, color)
+
+            if is_sel:
+                screen.blit(font.render("▶", True, color), (20, y))
+
+            screen.blit(surf, (40, y))
+            y += LINE_HEIGHT
+
+        # --- スクロールサイン ---
+        if start > 0:
+            screen.blit(
+                font.render("▲", True, (120, 120, 120)),
+                (360, LIST_TOP - 20),
+            )
+
+        if end < len(locations):
+            screen.blit(
+                font.render("▼", True, (120, 120, 120)),
+                (360, LIST_TOP + VISIBLE_LINES * LINE_HEIGHT),
+            )
+
+        pygame.display.flip()
 
 
 def prompt_save_yes_no_pygame(screen, font, caption: str) -> bool:
@@ -771,17 +889,25 @@ def prompt_save_yes_no_pygame(screen, font, caption: str) -> bool:
                     return False
 
 
-RARE_ITEMS = {"Elixir", "Yoichi Arrow", "Onion Shield", "Onion Helm", "Onion Armor", "Onion Sword"}
+RARE_ITEMS = {
+    "Elixir",
+    "Yoichi Arrow",
+    "Onion Shield",
+    "Onion Helm",
+    "Onion Armor",
+    "Onion Sword",
+}
+
 
 # ★戦闘勝利結果表示
 def show_victory_result_pygame(
     screen,
     font,
     victory,
-    ctx_base,
+    battle_ui_se,
 ):
     ui = BattleUIState()
-    ui.se_rareitem = ctx_base.get("se_rareitem")
+    ui.se_rareitem = pygame.mixer.Sound(battle_ui_se["rareitem"])
 
     # ① EXP
     _toast_pygame(
@@ -851,3 +977,20 @@ def show_victory_result_pygame(
                     msg,
                     ms=1500,
                 )
+
+
+# UI 用 SE をまとめたファクトリ関数
+def build_ui_se(cfg: BattleAppConfig) -> dict[str, pygame.mixer.Sound]:
+    ui_se = {
+        "enter": pygame.mixer.Sound(cfg.se_enter_path),
+        "confirm": pygame.mixer.Sound(cfg.se_confirm_path),
+        "rareitem": pygame.mixer.Sound(cfg.se_rareitem_path),
+        "invalid": pygame.mixer.Sound(cfg.se_invalid),
+    }
+
+    ui_se["enter"].set_volume(cfg.se_enter_volume)
+    ui_se["confirm"].set_volume(cfg.se_confirm_volume)
+    ui_se["rareitem"].set_volume(cfg.se_rareitem_volume)
+    ui_se["invalid"].set_volume(cfg.se_rareitem_volume)  # or 専用 volume を後で追加
+
+    return ui_se

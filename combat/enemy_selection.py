@@ -2,8 +2,13 @@
 from __future__ import annotations
 
 import random
+import re
 from dataclasses import dataclass
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Optional
+from collections import defaultdict
+
+from combat.enums import World
+from assets.data.data_loader import ExplicitGroupDef
 
 
 def _safe_int(v: Any, default: int = 0) -> int:
@@ -23,6 +28,111 @@ class LocationMonsters:
     min_level: int
     max_level: int
     boss_count: int  # ← 追加
+
+
+@dataclass
+class LocationGroup:
+    group_name: str
+    children: list[LocationMonsters]
+    avg_level: int
+    min_level: int
+    max_level: int
+    boss_count: int
+    world: World | None = None
+    order: int = 999
+
+
+FLOOR_WORDS = re.compile(r"(B\d+|F\d+|Base|Room|Floor|Hall)$", re.IGNORECASE)
+
+
+def split_location_name(name: str) -> tuple[str, str | None]:
+    if " " not in name:
+        return name, None
+
+    parent, child = name.rsplit(" ", 1)
+
+    # B1 / 2F / Base / Room 等
+    if FLOOR_WORDS.search(child):
+        return parent, child
+
+    # Crystal Room のような複合語対応
+    parts = name.split()
+    for i in range(len(parts) - 1, 0, -1):
+        candidate = " ".join(parts[i:])
+        if FLOOR_WORDS.search(candidate):
+            parent = " ".join(parts[:i])
+            return parent, candidate
+
+    return name, None
+
+
+def build_groups(
+    locations: list[LocationMonsters],
+    *,
+    explicit_groups: dict[str, ExplicitGroupDef] | None = None,
+) -> list[LocationGroup]:
+    used: set[str] = set()
+    groups: list[LocationGroup] = []
+
+    explicit_groups = explicit_groups or {}
+
+    # ① 明示グループ
+    for gname, entry in explicit_groups.items():
+        members = entry["locations"]
+
+        world_str = entry.get("world")
+        world = World.from_str(world_str) if world_str else None
+
+        order = entry.get("order", 999)
+
+        childs = [loc for loc in locations if loc.location in members]
+        if not childs:
+            continue
+
+        group = make_group(gname, childs)
+        group.world = world
+        group.order = order
+
+        groups.append(group)
+
+        used.update(loc.location for loc in childs)
+
+    # ② 残りは自動グループ
+    for loc in locations:
+        if loc.location in used:
+            continue
+
+        group_name, _ = split_location_name(loc.location)
+        groups.append(make_group(group_name, [loc]))
+        used.add(loc.location)
+
+    # order 順で最終ソート（重要）
+    groups.sort(key=lambda g: g.order)
+
+    return groups
+
+
+def make_group(
+    group_name: str,
+    children: list[LocationMonsters],
+) -> LocationGroup:
+    """
+    LocationMonsters の集合から LocationGroup を作る
+    """
+    assert children, "make_group: children must not be empty"
+
+    min_levels = [c.min_level for c in children if c.min_level > 0]
+    max_levels = [c.max_level for c in children if c.max_level > 0]
+    avg_levels = [c.avg_level for c in children if c.avg_level > 0]
+
+    return LocationGroup(
+        group_name=group_name,
+        children=sorted(children, key=lambda c: c.location),
+        min_level=min(min_levels) if min_levels else 0,
+        max_level=max(max_levels) if max_levels else 0,
+        avg_level=int(round(sum(avg_levels) / len(avg_levels))) if avg_levels else 0,
+        boss_count=sum(c.boss_count for c in children),
+    )
 
 
 def build_location_index(

@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from combat.data_loader import (
+from assets.data.data_loader import (
     load_monsters,
     load_weapons,
     load_armors,

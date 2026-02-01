@@ -58,6 +58,7 @@ def build_party_members_from_save(
         party_members.append(
             PartyMemberRuntime(
                 name=char_name,
+                level=base.level,
                 job=job,
                 base=base,
                 stats=char_final,

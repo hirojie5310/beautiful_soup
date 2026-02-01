@@ -5,7 +5,7 @@ import shutil
 import pygame
 from datetime import datetime
 
-from combat.data_loader import save_savedata
+from assets.data.data_loader import save_savedata
 from combat.progression import apply_item_stock_to_inventory
 
 
