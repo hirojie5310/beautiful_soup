@@ -106,9 +106,9 @@ class BattleUIState:
     log_max_keep: int = 100  # LogWindow用最大保持行数
 
     # サウンドエフェクト
-    se_enter: Any | None = None  # pygame.mixer.Sound オブジェクトなど
-    se_confirm: Any | None = None  # pygame.mixer.Sound オブジェクトなど
-    se_rareitem: Any | None = None  # pygame.mixer.Sound オブジェクトなど
+    se_enter: Optional[pygame.mixer.Sound] = None
+    se_confirm: Optional[pygame.mixer.Sound] = None
+    se_rareitem: Optional[pygame.mixer.Sound] = None
 
     # BGM 状態
     current_bgm: str | None = None  # "battle", "victory", "requiem"

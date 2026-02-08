@@ -53,7 +53,7 @@ def handle_keydown(
     # committed 後の共通後処理（必要ならここに寄せる）
     if committed:
         # 確定SE（あるなら）
-        if getattr(ui, "se_confirm", None):
+        if ui.se_confirm is not None:
             ui.se_confirm.play()
 
         ctx.on_committed(ui)

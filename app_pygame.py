@@ -1,11 +1,21 @@
-# main.py
-from ui_pygame.app import run_battle_app, BattleAppConfig
+# app_pygame.py
+# Windowsアプリとしてのエントリーポイント（将来 exe 化（pyinstaller）する場所）
+# Platform Entry Point（実行環境の入口）OS・ランタイム都合のコード置き場
+# config:アプリ設定（論理名）
+# app_pygame.py        ← 実行環境の入口（薄くてOK）
+# ui_pygame/
+#   ├─ app.py          ← pygame専用の起動ラッパ
+#   ├─ game_loop.py    ← ゲーム進行（主役）
+#   ├─ enemy_flow.py
+#   ├─ battle_flow.py
+#   ├─ victory_flow.py
+
+from ui_pygame.app import run_pygame_app
+from ui_pygame.app_context import BattleAppConfig
 
 if __name__ == "__main__":
     cfg = BattleAppConfig(
         fps=60,
         caption="FF3風 Battle Simulator (dev)",
     )
-
-    # enemy_names を渡さない → pygame側で場所選択 & 抽選
-    run_battle_app(config=cfg)
+    run_pygame_app(config=cfg)
