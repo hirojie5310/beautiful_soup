@@ -8,16 +8,19 @@ from random import Random
 
 from combat.runtime_state import RuntimeState
 from combat.battle_sim import simulate_one_round_multi_party  # ←実際の場所に合わせて
-from combat.models import PartyMemberRuntime  # ←実際の場所に合わせて
+from combat.battle_result import BattleResult
 
 # EnemyRuntime / PlannedAction / SideTurnResult の import 先もあなたの構成に合わせて調整してください
 from combat.models import (
+    PartyMemberRuntime,
     PlannedAction,
     EnemyRuntime,  # 例：あなたの実装に合わせる
     SideTurnResult,  # 例：あなたの実装に合わせる
 )
 
 from ui_pygame.ui_events import AudioEvent
+from ui_pygame.battle_context import BattleContext
+from ui_pygame.app_context import BattleAppContext
 
 
 @dataclass
@@ -39,7 +42,8 @@ class BattleController:
         enemies: List[EnemyRuntime],
         state: RuntimeState,
         *,
-        ctx: Any,  # BattleAppContext を渡す（循環import避け）
+        battle_ctx: BattleContext,
+        app_ctx: BattleAppContext,
         save: Optional[dict] = None,
         spells_by_name: Optional[Dict[str, Dict[str, Any]]] = None,
         items_by_name: Optional[Dict[str, Dict[str, Any]]] = None,
@@ -52,7 +56,7 @@ class BattleController:
             if hasattr(ui, "events") and isinstance(ui.events, list):
                 # ボス戦判定
                 is_boss = self._is_boss_battle(enemies)
-                bgm_name = ctx.config.bgm_battle2 if is_boss else ctx.config.bgm_battle1
+                bgm_name = battle_ctx.bgm.boss if is_boss else battle_ctx.bgm.normal
                 ui.events.append(
                     AudioEvent(
                         type="bgm",
@@ -92,27 +96,27 @@ class BattleController:
 
         # ここはあなたの round_result の構造に合わせて
         end_reason = getattr(rr.side_result, "end_reason", "continue")
-        if end_reason != "continue":
+        ui.battle_result = self._map_end_reason_to_result(end_reason)
+        if ui.battle_result != BattleResult.CONTINUE:
             ui.battle_ended = True
-            ui.battle_end_reason = end_reason
             ui.phase = "end"
             ui.input_mode = "end"
             self._clear_planned_actions(ui, party_members)
 
             # ★終了BGM（勝利なら victory、敗北などは停止）
             if hasattr(ui, "events") and isinstance(ui.events, list):
-                if end_reason == "enemy_defeated":
+                if ui.battle_result == BattleResult.ENEMY_DEFEATED:
                     ui.events.append(
                         AudioEvent(
                             type="bgm",
-                            payload={"name": ctx.config.bgm_victory, "fade_ms": 300},
+                            payload={"name": battle_ctx.bgm.victory, "fade_ms": 300},
                         )
                     )
-                elif end_reason == "char_defeated":
+                elif ui.battle_result == BattleResult.PARTY_DEFEATED:
                     ui.events.append(
                         AudioEvent(
                             type="bgm",
-                            payload={"name": ctx.config.bgm_requiem, "fade_ms": 300},
+                            payload={"name": battle_ctx.bgm.requiem, "fade_ms": 300},
                         )
                     )
                 else:
@@ -135,23 +139,23 @@ class BattleController:
         ui.input_mode = "member"
 
         # ターゲット選択状態を必ずクリア（ctxに既にあるならそれを使う）
-        if hasattr(ctx, "reset_target_flags"):
-            ctx.reset_target_flags(ui)
+        if hasattr(app_ctx, "reset_target_flags"):
+            app_ctx.reset_target_flags(ui)
 
         # planned_actions をクリア
         self._clear_planned_actions(ui, party_members)
 
         # 「次に入力すべきキャラ」を再セット（あなたの既存関数を使う）
         # find_next_unfilled(ui) が app 側の関数なら ctx に渡しておくのが一番楽
-        if hasattr(ctx, "find_next_unfilled"):
-            ui.selected_member_idx = ctx.find_next_unfilled(ui) or 0
+        if hasattr(app_ctx, "find_next_unfilled_member_index"):
+            ui.selected_member_idx = app_ctx.find_next_unfilled_member_index(ui)
         else:
             # 保険：0に戻す
             ui.selected_member_idx = 0
 
         # そのキャラのコマンド候補を再計算
-        if hasattr(ctx, "get_job_commands"):
-            ui.command_candidates = ctx.get_job_commands(
+        if hasattr(app_ctx, "get_job_commands"):
+            ui.command_candidates = app_ctx.get_job_commands(
                 party_members[ui.selected_member_idx]
             )
 
@@ -218,3 +222,14 @@ class BattleController:
         if hasattr(ui, "planned_actions"):
             # len を揃えたいなら None 埋めが安全（参照箇所がある場合に備える）
             ui.planned_actions = [None] * len(party_members)
+
+    def _map_end_reason_to_result(self, end_reason: str) -> BattleResult:
+        match end_reason:
+            case "enemy_defeated":
+                return BattleResult.ENEMY_DEFEATED
+            case "char_defeated":
+                return BattleResult.PARTY_DEFEATED
+            case "escape":
+                return BattleResult.ESCAPE
+            case _:
+                return BattleResult.CONTINUE

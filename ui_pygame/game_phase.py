@@ -10,4 +10,5 @@ class GamePhase(Enum):
     ENEMY_SELECT = auto()
     BATTLE = auto()
     VICTORY = auto()
+    GAMEOVER = auto()
     QUIT = auto()

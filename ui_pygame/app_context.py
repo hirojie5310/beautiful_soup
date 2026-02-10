@@ -40,6 +40,8 @@ class BattleAppContext:
 
     make_planned_action: MakePlannedActionFn
 
+    find_next_unfilled_member_index: Callable[[BattleUIState], int]
+
     def on_committed(self, ui: BattleUIState) -> None:
         self.reset_target_flags(ui)
         if self.all_actions_committed(ui):

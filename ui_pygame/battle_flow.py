@@ -4,6 +4,8 @@
 import pygame
 import random
 
+from combat.battle_result import BattleResult
+
 from ui_pygame.battle_context import BattleContext
 from ui_pygame.assets_py.status_icon_cashe import StatusIconCache
 from ui_pygame.controller import BattleController
@@ -33,11 +35,10 @@ def run_one_battle(
     status_icon_cache: StatusIconCache,
     *,
     ctx: BattleContext,
-) -> str:
+) -> BattleResult:
     """
-    return: end_reason (例: 'enemy_defeated', 'party_defeated', 'escape' など)
+    return: BattleResult
     """
-    end_reason = "end"
 
     # enemies は BattleContext から取得
     party_members = ctx.party_members
@@ -67,6 +68,12 @@ def run_one_battle(
                 return i
         return 0
 
+    def find_next_unfilled_member_index(ui: BattleUIState) -> int:
+        for i, act in enumerate(ui.planned_actions):
+            if act is None:
+                return i
+        return 0
+
     ui.selected_member_idx = first_alive_member_index()
     ui.command_candidates = ctx.get_job_commands(party_members[ui.selected_member_idx])
 
@@ -82,6 +89,7 @@ def run_one_battle(
         build_magic_candidates_for_member=ctx.build_magic_candidates_for_member,
         build_item_candidates_for_battle=ctx.build_item_candidates_for_battle,
         make_planned_action=ctx.make_planned_action,
+        find_next_unfilled_member_index=find_next_unfilled_member_index,
     )
 
     running_battle = True
@@ -90,17 +98,15 @@ def run_one_battle(
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                return "quit"
+                return BattleResult.QUIT
 
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                return "quit"
+                return BattleResult.QUIT
 
             # ★戦闘終了後の入力（例：Enterで敵選択へ戻る）
             if ui.phase == "end" and event.type == pygame.KEYDOWN:
                 if event.key in (pygame.K_RETURN, pygame.K_SPACE):
-                    end_reason = getattr(ui, "battle_end_reason", "end")
-                    running_battle = False
-                    break
+                    return ui.battle_result
 
             if ui.phase == "input" and event.type == pygame.KEYDOWN:
                 handle_keydown(ui, event, ui_ctx)
@@ -113,7 +119,8 @@ def run_one_battle(
             party_members=party_members,
             enemies=enemies,
             state=state,
-            ctx=ui_ctx,
+            battle_ctx=ctx,
+            app_ctx=ui_ctx,
             save=state.save,
             spells_by_name=ui.spells_by_name,
             items_by_name=state.items_by_name,
@@ -237,4 +244,4 @@ def run_one_battle(
         pygame.display.flip()
 
     # ★型チェッカー対策（通常ここには来ない想定）
-    return end_reason
+    return BattleResult.CONTINUE

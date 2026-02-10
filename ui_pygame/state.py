@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 from typing import Any, List, Optional, Tuple, Sequence
 
 from combat.models import PlannedAction, TargetSide
+from combat.battle_result import BattleResult
 
 from ui_pygame.ui_types import CommandCandidate
 from ui_pygame.ui_events import UiEvent
@@ -112,6 +113,10 @@ class BattleUIState:
 
     # BGM 状態
     current_bgm: str | None = None  # "battle", "victory", "requiem"
+
+    # ===== 戦闘結果 =====
+    battle_result: BattleResult = BattleResult.CONTINUE
+    battle_ended: bool = False
 
 
 @dataclass

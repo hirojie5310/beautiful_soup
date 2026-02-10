@@ -27,6 +27,7 @@ from combat.models import EnemyRuntime, PartyMemberRuntime
 from combat.life_check import any_char_alive, any_enemy_alive
 
 from ui_pygame.audio.ui_se import BattleSE
+from ui_pygame.audio.ui_bgm import BattleBGM
 
 
 @dataclass
@@ -38,6 +39,9 @@ class BattleContext:
 
     # ===== SE =====
     se: BattleSE
+
+    # ===== BGM =====
+    bgm: BattleBGM
 
     # ===== ロジック関数群（関数ポインタの集合体） =====
     normalize_battle_command: Callable

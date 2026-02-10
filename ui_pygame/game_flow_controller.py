@@ -31,6 +31,8 @@ from ui_pygame.battle_flow import run_one_battle
 from ui_pygame.enemy_flow import choose_location_group_pygame
 from ui_pygame.enemy_flow import choose_location_floor_pygame
 from ui_pygame.victory_flow import show_victory_result_pygame
+from ui_pygame.gameover_flow import show_gameover_screen
+from ui_pygame.game_flow_mapping import BATTLE_RESULT_TO_PHASE
 
 # domain / combat
 from combat.models import (
@@ -65,6 +67,8 @@ from system.cp_system import load_job_attribution
 from assets.data.data_loader import load_explicit_groups
 
 from ui_pygame.audio.ui_se import BattleSE
+from ui_pygame.audio.ui_bgm import BattleBGM
+from ui_pygame.battle_flow import BattleResult
 
 
 SAVE_PATH = Path("assets/data/ffiii_savedata.json")
@@ -122,6 +126,7 @@ class GameFlowController:
     def run(self) -> None:
         while self.phase != GamePhase.QUIT:
             if self.phase == GamePhase.ENEMY_SELECT:
+                self._enter_phase(GamePhase.ENEMY_SELECT)
                 self._run_enemy_select()
 
             elif self.phase == GamePhase.BATTLE:
@@ -129,6 +134,15 @@ class GameFlowController:
 
             elif self.phase == GamePhase.VICTORY:
                 self._run_victory()
+
+            elif self.phase == GamePhase.GAMEOVER:
+                self._run_gameover()
+
+    def _enter_phase(self, phase: GamePhase) -> None:
+        self.phase = phase
+
+        if phase == GamePhase.ENEMY_SELECT:
+            self.audio.play_bgm(self.config.bgm_enemy_select, fade_ms=500)
 
     # 敵選択
     def _run_enemy_select(self) -> None:
@@ -156,14 +170,10 @@ class GameFlowController:
             ctx=ctx,
         )
 
-        if result == "quit":
-            self.phase = GamePhase.QUIT
-        elif result == "enemy_defeated":
+        if result == BattleResult.ENEMY_DEFEATED:
             self._cached_victory = (enemies, party_members)
-            self.phase = GamePhase.VICTORY
-        else:
-            # escape / defeat など
-            self.phase = GamePhase.ENEMY_SELECT
+
+        self.phase = self._next_phase_from_battle_result(result)
 
     # 勝利処理
     def _run_victory(self) -> None:
@@ -227,12 +237,19 @@ class GameFlowController:
             invalid=self.ui_se.get("invalid"),
             rareitem=self.ui_se.get("rareitem"),
         )
+        battle_bgm = BattleBGM(
+            normal=self.config.bgm_battle1,
+            boss=self.config.bgm_battle2,
+            victory=self.config.bgm_victory,
+            requiem=self.config.bgm_requiem,
+        )
 
         return BattleContext(
             enemies=enemies,
             party_members=party_members,
             spells_expanded=self.spells_expanded,
             se=battle_se,
+            bgm=battle_bgm,
             normalize_battle_command=normalize_battle_command,
             reset_target_flags=reset_target_flags,
             is_out_of_battle=is_out_of_battle,
@@ -273,6 +290,13 @@ class GameFlowController:
             save_func=save_savedata_with_backup,
             caption="Save updated Level/EXP to file?",
         )
+
+    # BattleResult から次のフェーズへ
+    def _next_phase_from_battle_result(self, result: BattleResult) -> GamePhase:
+        try:
+            return BATTLE_RESULT_TO_PHASE[result]
+        except KeyError:
+            raise ValueError(f"Unhandled BattleResult: {result}")
 
     # 敵選択UI
     def _select_enemy_names(
@@ -338,3 +362,34 @@ class GameFlowController:
                 break
 
         return pick_enemy_names(selected, self.state.monsters, k_min=2, k_max=6)
+
+    # ゲームオーバー処理
+    def _run_gameover(self) -> None:
+        # 例：BGM は BattleController 側ですでに requiem が鳴っている前提
+        show_gameover_screen(
+            screen=self.screen,
+            font=self.font,
+        )
+
+        waiting = True
+        while waiting:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.phase = GamePhase.QUIT
+                    return
+
+                if event.type == pygame.KEYDOWN:
+                    if event.key in (pygame.K_RETURN, pygame.K_SPACE):
+                        # 方針①：タイトルへ戻る
+                        self._reset_to_initial_state()
+                        self.phase = GamePhase.ENEMY_SELECT
+                        return
+
+                    if event.key == pygame.K_ESCAPE:
+                        self.phase = GamePhase.QUIT
+                        return
+
+    # ゲームオーバー時に状態を初期化
+    def _reset_to_initial_state(self) -> None:
+        self.state = init_runtime_state()
+        self.spells_expanded = expand_spells_for_summons(self.state.spells)
