@@ -110,6 +110,9 @@ class BattleUIState:
     party_attack_anim_step_ms: int = 90
     party_attack_anim_gap_ms: int = 500
     party_attack_anim_gap_elapsed_ms: int = 0
+    resolve_snapshot_ready: bool = False
+    resolve_result_cache: Any = None
+    resolve_events_enqueued: bool = False
 
     # log window
     log_scroll: int = 0  # scroll position for LogWindow

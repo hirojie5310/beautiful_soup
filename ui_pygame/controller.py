@@ -83,23 +83,46 @@ class BattleController:
                 f"[DBG planned] i={i} kind={a.kind} cmd={a.command} target={a.target_side}:{a.target_index} all={getattr(a,'target_all',False)}"
             )
 
+        if not getattr(ui, "resolve_snapshot_ready", False):
+            rr = self._resolve_one_round(
+                party_members=party_members,
+                enemies=enemies,
+                planned_actions=planned_actions,
+                state=state,
+                save=save,
+                spells_by_name=spells_by_name,
+                items_by_name=items_by_name,
+            )
+            ui.resolve_result_cache = rr
+            ui.resolve_snapshot_ready = True
+            ui.resolve_events_enqueued = False
+
+        # FloatingText同期のため、イベントはresolve開始時に先行投入して
+        # apply_battle_events_to_ui 側の actor 同期ロジックで段階表示する。
+        if not getattr(ui, "resolve_events_enqueued", False):
+            rr_cached = cast(ResolveResult, getattr(ui, "resolve_result_cache", None))
+            if rr_cached is not None:
+                self._push_events(ui, rr_cached.events)
+            ui.resolve_events_enqueued = True
+
         if self._update_party_attack_animation(
             ui, party_members, enemies, planned_actions
         ):
             return
 
-        rr = self._resolve_one_round(
-            party_members=party_members,
-            enemies=enemies,
-            planned_actions=planned_actions,
-            state=state,
-            save=save,
-            spells_by_name=spells_by_name,
-            items_by_name=items_by_name,
-        )
+        rr = cast(ResolveResult, getattr(ui, "resolve_result_cache", None))
+        if rr is None:
+            rr = self._resolve_one_round(
+                party_members=party_members,
+                enemies=enemies,
+                planned_actions=planned_actions,
+                state=state,
+                save=save,
+                spells_by_name=spells_by_name,
+                items_by_name=items_by_name,
+            )
 
         self._push_logs(ui, rr.logs)
-        self._push_events(ui, rr.events)
 
         end_reason = getattr(rr.side_result, "end_reason", "continue")
         ui.battle_result = self._map_end_reason_to_result(end_reason)
@@ -108,6 +131,9 @@ class BattleController:
             ui.phase = "end"
             ui.input_mode = "end"
             self._reset_party_attack_animation(ui, len(party_members))
+            ui.resolve_snapshot_ready = False
+            ui.resolve_result_cache = None
+            ui.resolve_events_enqueued = False
             self._clear_planned_actions(ui, party_members)
 
             # Battle End BGM
@@ -145,6 +171,9 @@ class BattleController:
         ui.phase = "input"
         ui.input_mode = "member"
         self._reset_party_attack_animation(ui, len(party_members))
+        ui.resolve_snapshot_ready = False
+        ui.resolve_result_cache = None
+        ui.resolve_events_enqueued = False
 
         # Clear the State of Target Selection
         if hasattr(app_ctx, "reset_target_flags"):
@@ -212,6 +241,9 @@ class BattleController:
         ui.party_attack_anim_elapsed_ms = 0
         ui.party_attack_anim_gap_elapsed_ms = 0
         ui.enemy_acting_highlight_idx = None
+        ui.resolve_snapshot_ready = False
+        ui.resolve_result_cache = None
+        ui.resolve_events_enqueued = False
 
     def _activate_next_attack_anim_actor(self, ui) -> bool:
         if not getattr(ui, "party_attack_anim_queue", None):
