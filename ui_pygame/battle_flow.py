@@ -71,6 +71,8 @@ def run_one_battle(
     ui.enemy_acting_highlight_idx = None
     ui.party_attack_anim_elapsed_ms = 0
     ui.party_attack_anim_step_ms = int(getattr(cfg, "motion_attack_step_ms", 90))
+    ui.party_attack_anim_gap_ms = int(getattr(cfg, "motion_attack_gap_ms", 500))
+    ui.party_attack_anim_gap_elapsed_ms = 0
 
     # ★次に入力すべきメンバー（戦闘可能な先頭）を選ぶ
     def first_alive_member_index() -> int:
@@ -143,6 +145,8 @@ def run_one_battle(
             audio.handle_events(ui.events)
             apply_battle_events_to_ui(ui, ui.events)
             ui.events.clear()
+        else:
+            apply_battle_events_to_ui(ui, [])
 
         # -------- render --------
         # 0) Layout constants

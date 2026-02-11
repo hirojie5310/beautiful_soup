@@ -182,6 +182,8 @@ def _append_enemy_diff_events(
     old_hp_map: List[int],
     old_status_map: List[set],
     events: list[dict],
+    actor_side: str,
+    actor_index: int,
 ) -> None:
     """敵全体のHP/状態異常差分から表示イベントを蓄積する。"""
     for i, e in enumerate(enemies):
@@ -195,6 +197,8 @@ def _append_enemy_diff_events(
                     "type": "damage",
                     "enemy_index": i,
                     "value": delta,
+                    "actor_side": actor_side,
+                    "actor_index": actor_index,
                 }
             )
 
@@ -205,6 +209,8 @@ def _append_enemy_diff_events(
                     "type": "status",
                     "enemy_index": i,
                     "names": added,
+                    "actor_side": actor_side,
+                    "actor_index": actor_index,
                 }
             )
 
@@ -422,6 +428,8 @@ def simulate_one_round_multi_party(
                 old_hp_map=old_hp_map,
                 old_status_map=old_status_map,
                 events=events,
+                actor_side=side,
+                actor_index=idx,
             )
 
             # ★ 行動後：戦闘終了チェック

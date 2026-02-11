@@ -52,13 +52,18 @@ SpellTuple = Tuple[str, int, int]  # (name, lv, cost) 例
 
 
 # 戦闘イベントの型定義
-class DamageEvent(TypedDict):
+class _ActorMetaEvent(TypedDict, total=False):
+    actor_side: Literal["char", "enemy"]
+    actor_index: int
+
+
+class DamageEvent(_ActorMetaEvent):
     type: Literal["damage"]
     enemy_index: int
     value: int
 
 
-class StatusEvent(TypedDict):
+class StatusEvent(_ActorMetaEvent):
     type: Literal["status"]
     enemy_index: int
     names: list[str]

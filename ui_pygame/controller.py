@@ -210,7 +210,23 @@ class BattleController:
         ui.party_attack_anim_queue = []
         ui.party_attack_anim_active = None
         ui.party_attack_anim_elapsed_ms = 0
+        ui.party_attack_anim_gap_elapsed_ms = 0
         ui.enemy_acting_highlight_idx = None
+
+    def _activate_next_attack_anim_actor(self, ui) -> bool:
+        if not getattr(ui, "party_attack_anim_queue", None):
+            return False
+        next_side, next_idx = ui.party_attack_anim_queue.pop(0)
+        ui.party_attack_anim_active = (str(next_side), int(next_idx))
+        ui.party_attack_anim_elapsed_ms = 0
+        ui.party_attack_anim_gap_elapsed_ms = 0
+        if next_side == "char":
+            if 0 <= next_idx < len(ui.party_motion_frame_indices):
+                ui.party_motion_frame_indices[next_idx] = 1
+            ui.enemy_acting_highlight_idx = None
+        else:
+            ui.enemy_acting_highlight_idx = int(next_idx)
+        return True
 
     def _collect_attack_anim_queue(
         self,
@@ -274,24 +290,26 @@ class BattleController:
                 party_members, enemies, planned_actions
             )
             ui.party_attack_anim_elapsed_ms = 0
+            ui.party_attack_anim_gap_elapsed_ms = 0
             ui.enemy_acting_highlight_idx = None
 
         if not ui.party_attack_anim_queue and ui.party_attack_anim_active is None:
             return False
 
-        if ui.party_attack_anim_active is None:
-            next_side, next_idx = ui.party_attack_anim_queue.pop(0)
-            ui.party_attack_anim_active = (str(next_side), int(next_idx))
-            ui.party_attack_anim_elapsed_ms = 0
-            if next_side == "char":
-                if 0 <= next_idx < len(ui.party_motion_frame_indices):
-                    ui.party_motion_frame_indices[next_idx] = 1
-                ui.enemy_acting_highlight_idx = None
-            else:
-                ui.enemy_acting_highlight_idx = int(next_idx)
-            return True
-
         dt_ms = max(0, int(getattr(ui, "dt_ms", 0)))
+        gap_ms = max(0, int(getattr(ui, "party_attack_anim_gap_ms", 500)))
+
+        if ui.party_attack_anim_active is None:
+            if (
+                gap_ms > 0
+                and getattr(ui, "party_attack_anim_gap_elapsed_ms", 0) < gap_ms
+            ):
+                ui.party_attack_anim_gap_elapsed_ms += dt_ms
+                if ui.party_attack_anim_gap_elapsed_ms < gap_ms:
+                    return True
+            ui.party_attack_anim_gap_elapsed_ms = 0
+            return self._activate_next_attack_anim_actor(ui)
+
         ui.party_attack_anim_elapsed_ms += dt_ms
         step_ms = max(1, int(getattr(ui, "party_attack_anim_step_ms", 90)))
         if ui.party_attack_anim_elapsed_ms < step_ms:
@@ -304,20 +322,12 @@ class BattleController:
         if active_side == "enemy":
             ui.enemy_acting_highlight_idx = None
             ui.party_attack_anim_active = None
-            if ui.party_attack_anim_queue:
-                next_side, next_idx = ui.party_attack_anim_queue.pop(0)
-                ui.party_attack_anim_active = (str(next_side), int(next_idx))
-                ui.party_attack_anim_elapsed_ms = 0
-                if next_side == "char":
-                    if 0 <= next_idx < len(ui.party_motion_frame_indices):
-                        ui.party_motion_frame_indices[next_idx] = 1
-                else:
-                    ui.enemy_acting_highlight_idx = int(next_idx)
-                return True
-            return False
+            ui.party_attack_anim_gap_elapsed_ms = 0
+            return bool(ui.party_attack_anim_queue)
 
         if active_idx < 0 or active_idx >= len(ui.party_motion_frame_indices):
             ui.party_attack_anim_active = None
+            ui.party_attack_anim_gap_elapsed_ms = 0
             return bool(ui.party_attack_anim_queue)
 
         frame_idx = int(ui.party_motion_frame_indices[active_idx])
@@ -327,18 +337,8 @@ class BattleController:
 
         ui.party_motion_frame_indices[active_idx] = 0
         ui.party_attack_anim_active = None
-        if ui.party_attack_anim_queue:
-            next_side, next_idx = ui.party_attack_anim_queue.pop(0)
-            ui.party_attack_anim_active = (str(next_side), int(next_idx))
-            ui.party_attack_anim_elapsed_ms = 0
-            if next_side == "char":
-                if 0 <= next_idx < len(ui.party_motion_frame_indices):
-                    ui.party_motion_frame_indices[next_idx] = 1
-                ui.enemy_acting_highlight_idx = None
-            else:
-                ui.enemy_acting_highlight_idx = int(next_idx)
-            return True
-        return False
+        ui.party_attack_anim_gap_elapsed_ms = 0
+        return bool(ui.party_attack_anim_queue)
 
     def _push_logs(self, ui, logs: List[str]) -> None:
         if not logs:

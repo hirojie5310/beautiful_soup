@@ -86,6 +86,7 @@ class BattleUIState:
 
     # event from battle_sim / controller
     events: list[UiEvent] = field(default_factory=list)
+    pending_floating_events: list[UiEvent] = field(default_factory=list)
 
     # log scroll
     scroll: int = 0
@@ -107,6 +108,8 @@ class BattleUIState:
     enemy_acting_highlight_idx: Optional[int] = None
     party_attack_anim_elapsed_ms: int = 0
     party_attack_anim_step_ms: int = 90
+    party_attack_anim_gap_ms: int = 500
+    party_attack_anim_gap_elapsed_ms: int = 0
 
     # log window
     log_scroll: int = 0  # scroll position for LogWindow
