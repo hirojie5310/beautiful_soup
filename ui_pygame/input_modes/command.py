@@ -66,7 +66,7 @@ def _enter_item_menu(ui: BattleUIState, ctx: BattleAppContext) -> None:
 
 def _enter_target_enemy_for_attack(
     ui: BattleUIState, ctx: BattleAppContext, *, kind: BattleKind, command: str
-) -> None:
+) -> bool:
     alive = _alive_enemy_indices(ctx.enemies)
 
     # 生存敵0なら戻す（保険）
@@ -74,7 +74,7 @@ def _enter_target_enemy_for_attack(
         ui.logs.append("[入力] 敵がいません")
         ui.input_mode = "member"
         ctx.reset_target_flags(ui)
-        return
+        return False
 
     # 生存敵が1体だけなら即確定（元の挙動）
     if len(alive) == 1:
@@ -98,14 +98,14 @@ def _enter_target_enemy_for_attack(
         )
 
         ui.input_mode = "member"
-        ctx.on_committed(ui)
-        return
+        return True
 
     # 通常：ターゲット選択へ
     ui.selected_target_all = False  # 物理/特殊は AoE なし
     ui.selected_target_idx = 0
     ui.input_mode = "target_enemy"
     ui.logs.append(f"[入力] ターゲット(敵)選択: {command}")
+    return False
 
 
 def handle_command_keydown(
@@ -176,5 +176,4 @@ def handle_command_keydown(
         return True
 
     # physical/special(対象あり) → 敵ターゲットへ
-    _enter_target_enemy_for_attack(ui, ctx, kind=kind, command=cmd)
-    return False
+    return _enter_target_enemy_for_attack(ui, ctx, kind=kind, command=cmd)
