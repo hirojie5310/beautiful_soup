@@ -21,7 +21,7 @@ def handle_aoe_choice_keydown(
     """
     aoe_choice input_mode の処理（魔法のみ）
     - ↑↓: 0=単体, 1=全体
-    - ESC/BS: magicへ戻る
+    - BACK/BS: magicへ戻る
     - Enter:
         - 全体なら target_enemy へ（target_side スキップ）
         - 単体なら target_side へ
@@ -35,7 +35,7 @@ def handle_aoe_choice_keydown(
         ui.selected_aoe_idx = (ui.selected_aoe_idx + 1) % 2
         return False
 
-    if event.key in (pygame.K_ESCAPE, pygame.K_BACKSPACE):
+    if event.key == pygame.K_BACKSPACE:
         ui.input_mode = "magic"
         ui.selected_target_all = False
         return False

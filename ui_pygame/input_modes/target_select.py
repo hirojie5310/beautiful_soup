@@ -80,7 +80,7 @@ def handle_target_list_keydown(
         )
         return False
 
-    if event.key in (pygame.K_ESCAPE, pygame.K_BACKSPACE):
+    if event.key == pygame.K_BACKSPACE:
         ui.input_mode = on_escape_mode
         # 物理/特殊へ戻る場合だけ AoE を消したい等があるなら、呼び出し側でやるか、
         # ここで条件分岐してもOK
@@ -130,7 +130,7 @@ def handle_target_mode_keydown(
         ui.input_mode = "member"
         return False
 
-    if event.key in (pygame.K_ESCAPE, pygame.K_BACKSPACE):
+    if event.key == pygame.K_BACKSPACE:
         ui.input_mode = config.on_escape_mode
         if config.clear_target_all_on_escape:
             ui.selected_target_all = False

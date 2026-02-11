@@ -2,7 +2,7 @@ from typing import Sequence, cast
 
 from combat.models import BattleEvent as CombatBattleEvent
 
-from ui_pygame.state import BattleUIState, FloatingText
+from ui_pygame.state import BattleUIState, FloatingText, AttackEffect
 from ui_pygame.ui_events import UiEvent, AudioEvent
 
 
@@ -109,6 +109,7 @@ def apply_battle_events_to_ui(ui: BattleUIState, events: Sequence[UiEvent]):
             continue
 
         _append_floating_text_from_combat_event(ui, combat_ev)
+        _append_attack_effect_from_combat_event(ui, combat_ev)
 
     if pending_events:
         active_actor = getattr(ui, "party_attack_anim_active", None)
@@ -119,6 +120,68 @@ def apply_battle_events_to_ui(ui: BattleUIState, events: Sequence[UiEvent]):
                 still_pending.append(pending_ev)
                 continue
             _append_floating_text_from_combat_event(ui, combat_ev)
+            _append_attack_effect_from_combat_event(ui, combat_ev)
         ui.pending_floating_events = still_pending
     else:
         ui.pending_floating_events = []
+
+
+def _append_attack_effect_from_combat_event(
+    ui: BattleUIState, combat_ev: CombatBattleEvent
+) -> None:
+    if combat_ev["type"] != "damage":
+        return
+
+    damage_value = int(combat_ev.get("value", 0))
+    if damage_value <= 0:
+        # 敵→キャラの攻撃は、0ダメージでもヒットエフェクトだけは表示する。
+        is_enemy_to_char = (
+            str(combat_ev.get("actor_side", "")) == "enemy"
+            and str(combat_ev.get("target_side", "")) == "char"
+        )
+        if not is_enemy_to_char:
+            return
+    target_side = str(combat_ev.get("target_side", "enemy"))
+    target_index = int(combat_ev.get("target_index", -1))
+    if target_index < 0:
+        return
+    ui.attack_effects.append(
+        AttackEffect(target_side=target_side, target_index=target_index)
+    )
+
+
+def draw_attack_effects(screen, ui: BattleUIState) -> None:
+    frames = list(getattr(ui, "attack_effect_frames", []))
+    if not frames:
+        return
+
+    alive: list[AttackEffect] = []
+    dt_ms = max(0, int(getattr(ui, "dt_ms", 0)))
+    for eff in getattr(ui, "attack_effects", []):
+        rects = (
+            ui.party_sprite_rects
+            if getattr(eff, "target_side", "enemy") == "char"
+            else ui.enemy_sprite_rects
+        )
+        if not rects:
+            continue
+        if eff.target_index < 0 or eff.target_index >= len(rects):
+            continue
+        if eff.update(dt_ms):
+            alive.append(eff)
+    ui.attack_effects = alive
+
+    for eff in ui.attack_effects:
+        rects = (
+            ui.party_sprite_rects
+            if getattr(eff, "target_side", "enemy") == "char"
+            else ui.enemy_sprite_rects
+        )
+        if not rects or eff.target_index < 0 or eff.target_index >= len(rects):
+            continue
+
+        r = rects[eff.target_index]
+        frame = frames[eff.frame_index(len(frames))]
+        x = r.centerx - frame.get_width() // 2
+        y = r.centery - frame.get_height() // 2
+        screen.blit(frame, (x, y))

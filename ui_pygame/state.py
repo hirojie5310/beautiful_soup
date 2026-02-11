@@ -111,6 +111,8 @@ class BattleUIState:
     party_attack_anim_step_ms: int = 90
     party_attack_anim_gap_ms: int = 500
     party_attack_anim_gap_elapsed_ms: int = 0
+    attack_effects: List[AttackEffect] = field(default_factory=list)
+    attack_effect_frames: List[pygame.Surface] = field(default_factory=list)
     resolve_snapshot_ready: bool = False
     resolve_result_cache: Any = None
     resolve_events_enqueued: bool = False
@@ -153,6 +155,25 @@ class FloatingText:
         if remain >= 250:
             return 255
         return int(255 * (remain / 250))
+
+
+@dataclass
+class AttackEffect:
+    target_side: str
+    target_index: int
+    ttl_ms: int = 180
+    age_ms: int = 0
+
+    def update(self, dt_ms: int) -> bool:
+        self.age_ms += dt_ms
+        return self.age_ms < self.ttl_ms
+
+    def frame_index(self, frame_count: int) -> int:
+        if frame_count <= 1:
+            return 0
+        half = max(1, self.ttl_ms // frame_count)
+        idx = self.age_ms // half
+        return max(0, min(frame_count - 1, int(idx)))
 
 
 @dataclass

@@ -21,7 +21,7 @@ def handle_item_keydown(
     """
     item input_mode の処理
     - ↑↓: アイテム選択
-    - ESC/BS: commandへ戻る
+    - BACK/BS: commandへ戻る
     - Enter: item確定 → target_sideへ
     返り値: 行動が確定したら True（ここでは確定しないので基本 False）
     """
@@ -38,7 +38,7 @@ def handle_item_keydown(
         ui.selected_item_idx = (ui.selected_item_idx + 1) % len(ui.item_candidates)
         return False
 
-    if event.key in (pygame.K_ESCAPE, pygame.K_BACKSPACE):
+    if event.key == pygame.K_BACKSPACE:
         ui.input_mode = "command"
         ui.selected_target_all = False
         return False

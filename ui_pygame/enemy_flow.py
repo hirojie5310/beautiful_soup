@@ -98,6 +98,10 @@ def choose_location_group_pygame(
                     play_se(ui_se, "decide")
                     return groups[cursor]
 
+                elif event.key == pygame.K_ESCAPE:
+                    play_se(ui_se, "cancel")
+                    raise SystemExit
+
         # --- 描画 ---
         screen.fill((0, 0, 0))
 
@@ -234,7 +238,7 @@ def choose_location_floor_pygame(
                     play_se(ui_se, "decide")
                     return locations[cursor]
 
-                elif event.key in (pygame.K_ESCAPE, pygame.K_BACKSPACE):
+                elif event.key == pygame.K_BACKSPACE:
                     play_se(ui_se, "cancel")
                     return None
 

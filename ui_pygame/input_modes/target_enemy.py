@@ -35,8 +35,8 @@ def handle_target_enemy_keydown(
 ) -> bool:
     """
     target_enemy input_mode の処理
-    - magic/item 由来なら ESC/BSP で target_side に戻す
-    - physical/special 由来なら ESC/BSP で command に戻す（その場合 AoE を消す）
+    - magic/item 由来なら BACK/BSP で target_side に戻す
+    - physical/special 由来なら BACK/BSP で command に戻す（その場合 AoE を消す）
     """
 
     enemies = ctx.enemies

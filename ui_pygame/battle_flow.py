@@ -14,6 +14,7 @@ from ui_pygame.app_context import BattleAppContext  # UI専用 ctx
 from ui_pygame.input_handler import handle_keydown
 from ui_pygame.render.floating_texts import (
     draw_floating_texts,
+    draw_attack_effects,
     apply_battle_events_to_ui,
 )
 from ui_pygame.render.hub import draw_header
@@ -36,6 +37,7 @@ def run_one_battle(
     state,
     enemy_sprite_cache,
     party_motion_cache,
+    attack_effect_frames,
     status_icon_cache: StatusIconCache,
     *,
     ctx: BattleContext,
@@ -73,6 +75,8 @@ def run_one_battle(
     ui.party_attack_anim_step_ms = int(getattr(cfg, "motion_attack_step_ms", 90))
     ui.party_attack_anim_gap_ms = int(getattr(cfg, "motion_attack_gap_ms", 500))
     ui.party_attack_anim_gap_elapsed_ms = 0
+    ui.attack_effects = []
+    ui.attack_effect_frames = list(attack_effect_frames)
 
     # ★次に入力すべきメンバー（戦闘可能な先頭）を選ぶ
     def first_alive_member_index() -> int:
@@ -113,9 +117,6 @@ def run_one_battle(
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                return BattleResult.QUIT
-
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 return BattleResult.QUIT
 
             # End phase: confirm with Enter/Space
@@ -234,7 +235,8 @@ def run_one_battle(
             frame_indices=ui.party_motion_frame_indices,
         )
 
-        # Draw floating texts over enemy sprites
+        # Draw attack effects / floating texts over sprites
+        draw_attack_effects(screen, ui)
         draw_floating_texts(screen, font, ui)
 
         # Draw party status panel

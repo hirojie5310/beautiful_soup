@@ -225,6 +225,7 @@ def _append_party_diff_events(
     events: list[dict],
     actor_side: str,
     actor_index: int,
+    focus_target_index: int | None = None,
 ) -> None:
     """パーティ全体のHP/状態異常差分から表示イベントを蓄積する。"""
     for i, member in enumerate(party_members):
@@ -239,6 +240,19 @@ def _append_party_diff_events(
                     "target_side": "char",
                     "target_index": i,
                     "value": delta,
+                    "actor_side": actor_side,
+                    "actor_index": actor_index,
+                }
+            )
+        elif focus_target_index is not None and i == int(focus_target_index):
+            # 0ダメージでも「攻撃が当たった」演出を出したいので、
+            # 対象キャラだけ value=0 のダメージイベントを残す。
+            events.append(
+                {
+                    "type": "damage",
+                    "target_side": "char",
+                    "target_index": i,
+                    "value": 0,
                     "actor_side": actor_side,
                     "actor_index": actor_index,
                 }
@@ -542,6 +556,7 @@ def simulate_one_round_multi_party(
                 events=events,
                 actor_side=side,
                 actor_index=idx,
+                focus_target_index=target_idx,
             )
 
             if all_enemies_defeated(enemies):

@@ -179,7 +179,7 @@ def open_menu_pygame(
                 raise SystemExit
 
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
+                if event.key == pygame.K_BACKSPACE:
                     if mode == "row":
                         mode = "menu"  # ならべかえ解除
                     else:
@@ -481,9 +481,9 @@ def open_menu_pygame(
 
         # ========== 下：ヘルプ/所持金など ==========
         if mode == "menu":
-            help_text = "↑↓: Select   Enter: OK   Esc: Back"
+            help_text = "↑↓: Select   Enter: OK   ESC: Back"
         else:
-            help_text = "↑↓: Select   Enter: Toggle Row   Esc: End"
+            help_text = "↑↓: Select   Enter: Toggle Row   ESC: End"
 
         # --- Gil / CP 取得 ---
         gil = 0
@@ -574,7 +574,7 @@ def open_equip_pygame(
                 raise SystemExit
 
             if ev.type == pygame.KEYDOWN:
-                if ev.key == pygame.K_ESCAPE:
+                if ev.key == pygame.K_BACKSPACE:
                     if mode == "candidate":
                         mode = "slot"
                     else:
@@ -779,7 +779,7 @@ def open_equip_pygame(
         )
 
         # 下部ヒント
-        hint = font.render("↑↓: Select  Enter: Equip  ESC: Back", True, (180, 180, 180))
+        hint = font.render("↑↓: Select  Enter: Equip BS: Back", True, (180, 180, 180))
         screen.blit(
             hint,
             (w // 2 - hint.get_width() // 2, h - 60),
@@ -1214,7 +1214,7 @@ def open_status_pygame(
             if event.type == pygame.QUIT:
                 raise SystemExit
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
+                if event.key == pygame.K_BACKSPACE:
                     return
                 if event.key == pygame.K_LEFT:
                     idx = (idx - 1) % len(party)
@@ -1350,7 +1350,7 @@ def open_status_pygame(
         y2 += line_h
 
         # 下部ヒント
-        hint = font.render("← →: Switch / ESC: Back", True, (180, 180, 180))
+        hint = font.render("← →: Switch / BS: Back", True, (180, 180, 180))
         screen.blit(
             hint,
             (w // 2 - hint.get_width() // 2, h - 60),
@@ -1729,7 +1729,7 @@ def open_job_pygame(
                 raise SystemExit
 
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
+                if event.key == pygame.K_BACKSPACE:
                     return
 
                 if event.key == pygame.K_LEFT:
@@ -1905,7 +1905,7 @@ def open_job_pygame(
         cp_txt = font.render(f"CP {cp}/255", True, (255, 220, 60))
         screen.blit(cp_txt, (screen.get_width() - 160, 16))
 
-        hint = font.render("←→: Character  ↑↓: Job  Enter: Set  ESC: Back", True, GRAY)
+        hint = font.render("←→: Character  ↑↓: Job  Enter: Set  BS: Back", True, GRAY)
         screen.blit(hint, (16, 16 + line_h * 2))
 
         # ---------- job list (2 columns) ----------
@@ -2272,7 +2272,7 @@ def open_magic_pygame(
             if ev.type != pygame.KEYDOWN:
                 continue
 
-            if ev.key == pygame.K_ESCAPE:
+            if ev.key == pygame.K_BACKSPACE:
                 if mode == "target":
                     mode = "spell"
                 elif mode == "spell":
@@ -2492,11 +2492,11 @@ def open_magic_pygame(
         # ...
 
         if mode == "level":
-            hint_text = "← →: Switch  ↑ ↓: Level  Enter: Select  ESC: Back"
+            hint_text = "← →: Switch  ↑ ↓: Level  Enter: Select  BS: Back"
         elif mode == "spell":
-            hint_text = "↑ ↓: Spell  Enter: OK  ESC: Back"
+            hint_text = "↑ ↓: Spell  Enter: OK  BS: Back"
         else:
-            hint_text = "↑ ↓: Target  Enter: OK  ESC: Back"
+            hint_text = "↑ ↓: Target  Enter: OK  BS: Back"
 
         hint = font.render(hint_text, True, GRAY)
         screen.blit(hint, (w // 2 - hint.get_width() // 2, h - 60))
@@ -2678,7 +2678,7 @@ def open_item_pygame(
             if ev.type != pygame.KEYDOWN:
                 continue
 
-            if ev.key == pygame.K_ESCAPE:
+            if ev.key == pygame.K_BACKSPACE:
                 if mode == "target":
                     mode = "item"
                     target_cands = []  # ★追加
@@ -2825,7 +2825,7 @@ def open_item_pygame(
                 )
 
         hint = font.render(
-            "↑↓: Select  Enter: OK  ESC: Back",
+            "↑↓: Select  Enter: OK  BS: Back",
             True,
             GRAY,
         )

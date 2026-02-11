@@ -34,7 +34,7 @@ def handle_target_side_keydown(
         ui.selected_target_side_idx = (ui.selected_target_side_idx + 1) % len(options)
         return False
 
-    if event.key in (pygame.K_ESCAPE, pygame.K_BACKSPACE):
+    if event.key == pygame.K_BACKSPACE:
         ui.input_mode = "magic" if ui.selected_spell_name else "item"
         ui.selected_target_all = False
         return False

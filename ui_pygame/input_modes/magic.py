@@ -32,7 +32,7 @@ def handle_magic_keydown(
         ui.selected_magic_idx = (ui.selected_magic_idx + 1) % len(ui.magic_candidates)
         return False
 
-    if event.key in (pygame.K_ESCAPE, pygame.K_BACKSPACE):
+    if event.key == pygame.K_BACKSPACE:
         ui.input_mode = "command"
         ui.selected_target_all = False
         return False

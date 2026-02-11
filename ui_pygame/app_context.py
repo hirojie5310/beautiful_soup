@@ -88,6 +88,11 @@ class BattleAppConfig:
     motion_frame_w: int = 55
     motion_frame_h: int = 60
     motion_attack_step_ms: int = 90
+    motion_attack_gap_ms: int = 500
+    attack_effect_dir: str = "assets/images/effects"
+    attack_effect_frame_w: int = 41
+    attack_effect_frame_h: int = 44
+    attack_effect_frame_count: int = 2
 
     # ★追加
     audio_dir: str = "assets/sounds/"

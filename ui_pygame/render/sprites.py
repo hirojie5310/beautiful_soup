@@ -76,6 +76,52 @@ def load_party_idle_motion_images(
     return cache
 
 
+def load_attack_effect_frames(
+    folder: str,
+    *,
+    frame_w: int = 41,
+    frame_h: int = 44,
+    frame_count: int = 2,
+) -> list[pygame.Surface]:
+    """
+    Load the first *.png under folder as a horizontal attack-effect sheet.
+    Returns fixed-size frames (defaults: 41x44 x 2).
+    """
+    if not os.path.isdir(folder):
+        return []
+
+    png_files = sorted(
+        fn for fn in os.listdir(folder) if normalize_text_basic(fn).endswith(".png")
+    )
+    if not png_files:
+        return []
+
+    path = os.path.join(folder, png_files[0])
+    sheet = pygame.image.load(path).convert_alpha()
+    if sheet.get_width() <= 0 or sheet.get_height() <= 0:
+        return []
+
+    frames: list[pygame.Surface] = []
+    for frame_idx in range(max(1, frame_count)):
+        src_x = frame_idx * frame_w
+        if src_x >= sheet.get_width():
+            src_x = 0
+        crop_w = min(frame_w, sheet.get_width() - src_x)
+        crop_h = min(frame_h, sheet.get_height())
+        if crop_w <= 0 or crop_h <= 0:
+            continue
+        frame = sheet.subsurface(pygame.Rect(src_x, 0, crop_w, crop_h)).copy()
+        if frame.get_width() != frame_w or frame.get_height() != frame_h:
+            frame = pygame.transform.scale(frame, (frame_w, frame_h))
+        frames.append(frame)
+
+    if not frames:
+        return []
+    while len(frames) < frame_count:
+        frames.append(frames[0].copy())
+    return frames
+
+
 # pygame helper: slice sprite sheet into fixed-size tiles
 def slice_sprite_sheet(
     image_path: str,

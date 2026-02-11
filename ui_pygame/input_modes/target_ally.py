@@ -33,7 +33,7 @@ def handle_target_ally_keydown(
 ) -> bool:
     """
     target_ally input_mode の処理（magic/item由来）
-    - ESC/BSP で target_side に戻る（既存挙動）
+    - BACK/BSP で target_side に戻る（既存挙動）
     """
     party_members = ctx.party_members
     alive = _alive_ally_indices(party_members)

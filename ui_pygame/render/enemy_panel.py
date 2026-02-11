@@ -13,7 +13,9 @@ from ui_pygame.render.hub import draw_bar
 from combat.life_check import is_out_of_battle
 
 
-def _ellipsize(font: pygame.font.Font, text: str, max_px: int, suffix: str = "...") -> str:
+def _ellipsize(
+    font: pygame.font.Font, text: str, max_px: int, suffix: str = "..."
+) -> str:
     """フォント幅を見て末尾を省略する"""
     if font.size(text)[0] <= max_px:
         return text
@@ -29,7 +31,7 @@ def draw_enemy_panel(
     enemies: list,
     *,
     rect: pygame.Rect | None = None,
-    selected_index: int | None = None,   # enemies の実インデックス
+    selected_index: int | None = None,  # enemies の実インデックス
     blink_all: bool = False,
 ):
     """
@@ -79,7 +81,7 @@ def draw_enemy_panel(
     blink_on = (pygame.time.get_ticks() // 300) % 2 == 0
 
     # ★表示対象：実インデックス付きで保持（selected_index対策）
-    show = list(enumerate(enemies))[:6]   # [(enemy_i, enemy_obj), ...]
+    show = list(enumerate(enemies))[:6]  # [(enemy_i, enemy_obj), ...]
 
     old_clip = screen.get_clip()
     screen.set_clip(rect)
@@ -104,7 +106,7 @@ def draw_enemy_panel(
             alive = getattr(e, "hp", 0) > 0
 
             # ★ハイライト判定：実インデックスで比較
-            is_selected = (selected_index == enemy_i)
+            is_selected = selected_index == enemy_i
 
             highlight = False
             if is_selected:
@@ -181,7 +183,7 @@ def draw_target_guide(
     # -------------------------
     if mode == "target_side":
         msg1 = f"{member.name}：対象を選んでください"
-        msg2 = "1=敵  2=味方  3=自分   Backspace/Esc=戻る"
+        msg2 = "1=敵  2=味方  3=自分   Backspace=戻る"
         msg3 = ""
     elif mode == "target_enemy":
         alive_indices = [i for i, e in enumerate(enemies) if getattr(e, "hp", 0) > 0]
@@ -193,7 +195,7 @@ def draw_target_guide(
         else:
             msg1 = f"{member.name}：敵を選択中（生存敵なし）"
 
-        msg2 = "↑↓=選択  Enter=決定   Backspace/Esc=戻る"
+        msg2 = "↑↓=選択  Enter=決定   Backspace=戻る"
         msg3 = "（死んでいる敵は選べません）"
     else:  # target_ally
         alive_indices = [
@@ -207,7 +209,7 @@ def draw_target_guide(
         else:
             msg1 = f"{member.name}：味方を選択中（生存味方なし）"
 
-        msg2 = "↑↓=選択  Enter=決定   Backspace/Esc=戻る"
+        msg2 = "↑↓=選択  Enter=決定   Backspace=戻る"
         msg3 = ""
 
     # -------------------------

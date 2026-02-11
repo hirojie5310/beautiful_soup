@@ -241,6 +241,7 @@ class BattleController:
         ui.party_attack_anim_elapsed_ms = 0
         ui.party_attack_anim_gap_elapsed_ms = 0
         ui.enemy_acting_highlight_idx = None
+        ui.attack_effects = []
         ui.resolve_snapshot_ready = False
         ui.resolve_result_cache = None
         ui.resolve_events_enqueued = False

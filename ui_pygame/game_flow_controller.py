@@ -21,6 +21,7 @@ from ui_pygame.assets_py.status_icon_cashe import StatusIconCache
 from ui_pygame.render.sprites import (
     load_enemy_sprite_images,
     load_party_idle_motion_images,
+    load_attack_effect_frames,
 )
 from ui_pygame.audio.ui_se import build_ui_se
 from ui_pygame.logic import (
@@ -96,6 +97,12 @@ class GameFlowController:
             config.motion_dir,
             frame_w=config.motion_frame_w,
             frame_h=config.motion_frame_h,
+        )
+        self.attack_effect_frames = load_attack_effect_frames(
+            config.attack_effect_dir,
+            frame_w=config.attack_effect_frame_w,
+            frame_h=config.attack_effect_frame_h,
+            frame_count=config.attack_effect_frame_count,
         )
 
         pygame.mixer.init()
@@ -175,6 +182,7 @@ class GameFlowController:
             self.state,
             self.enemy_sprite_cache,
             self.party_motion_cache,
+            self.attack_effect_frames,
             status_icon_cache=self.status_icon_cache,
             ctx=ctx,
         )

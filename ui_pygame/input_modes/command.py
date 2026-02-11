@@ -137,7 +137,7 @@ def handle_command_keydown(
         )
         return False
 
-    if event.key in (pygame.K_ESCAPE, pygame.K_BACKSPACE):
+    if event.key == pygame.K_BACKSPACE:
         ui.input_mode = "member"
         ctx.reset_target_flags(ui)
         return False
