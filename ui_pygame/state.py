@@ -102,8 +102,9 @@ class BattleUIState:
     enemy_sprite_rects: List[pygame.Rect] = field(default_factory=list)
     sprite_cache: dict = field(default_factory=dict)  # sprite cache
     party_motion_frame_indices: List[int] = field(default_factory=list)
-    party_attack_anim_queue: List[int] = field(default_factory=list)
-    party_attack_anim_active_idx: Optional[int] = None
+    party_attack_anim_queue: List[tuple[str, int]] = field(default_factory=list)
+    party_attack_anim_active: Optional[tuple[str, int]] = None
+    enemy_acting_highlight_idx: Optional[int] = None
     party_attack_anim_elapsed_ms: int = 0
     party_attack_anim_step_ms: int = 90
 

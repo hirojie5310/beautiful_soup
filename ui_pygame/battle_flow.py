@@ -67,7 +67,8 @@ def run_one_battle(
     ui.se_invalid = ctx.se.invalid
     ui.party_motion_frame_indices = [0] * len(party_members)
     ui.party_attack_anim_queue = []
-    ui.party_attack_anim_active_idx = None
+    ui.party_attack_anim_active = None
+    ui.enemy_acting_highlight_idx = None
     ui.party_attack_anim_elapsed_ms = 0
     ui.party_attack_anim_step_ms = int(getattr(cfg, "motion_attack_step_ms", 90))
 
@@ -213,6 +214,10 @@ def run_one_battle(
             side="left",
             formation="auto",  # 1-3: 1 column/ 4-6: 3x2
             scale=2,
+            highlighted_index=getattr(ui, "enemy_acting_highlight_idx", None),
+            highlight_pulse_ms=max(
+                1, int(getattr(ui, "party_attack_anim_elapsed_ms", 0))
+            ),
         )
         draw_party_idle_sprites_column(
             screen,

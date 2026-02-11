@@ -190,6 +190,8 @@ def draw_enemy_sprites_formation(
     placeholder_size: tuple[int, int] = (32, 32),
     show_dead_overlay: bool = True,
     name_offset_y: int = 4,
+    highlighted_index: int | None = None,
+    highlight_pulse_ms: int = 0,
 ) -> list[pygame.Rect]:
     """
     area_rect 内に敵スプライトを隊列配置する。
@@ -281,6 +283,17 @@ def draw_enemy_sprites_formation(
         else:
             pygame.draw.rect(screen, (80, 80, 100), r, border_radius=4)
             pygame.draw.rect(screen, (160, 160, 180), r, 2, border_radius=4)
+
+        if highlighted_index is not None and idx == int(highlighted_index) and alive:
+            pulse = 160 + (highlight_pulse_ms % 120)
+            glow = pygame.Surface((w + 10, h + 10), pygame.SRCALPHA)
+            glow.fill((255, 255, 120, min(255, pulse)))
+            screen.blit(
+                glow, (r.left - 5, r.top - 5), special_flags=pygame.BLEND_RGBA_ADD
+            )
+            pygame.draw.rect(
+                screen, (255, 240, 120), r.inflate(6, 6), 2, border_radius=6
+            )
 
         # Name color
         name_col = (240, 240, 240) if alive else (140, 140, 140)

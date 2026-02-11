@@ -9,6 +9,7 @@ from random import Random
 from combat.runtime_state import RuntimeState
 from combat.battle_sim import simulate_one_round_multi_party  # ←実際の場所に合わせて
 from combat.battle_result import BattleResult
+from combat.initiative import calc_initiative
 from combat.life_check import first_alive_enemy_index, is_out_of_battle
 
 # EnemyRuntime / PlannedAction / SideTurnResult の import 先もあなたの構成に合わせて調整してください
@@ -82,7 +83,9 @@ class BattleController:
                 f"[DBG planned] i={i} kind={a.kind} cmd={a.command} target={a.target_side}:{a.target_index} all={getattr(a,'target_all',False)}"
             )
 
-        if self._update_party_attack_animation(ui, party_members, planned_actions):
+        if self._update_party_attack_animation(
+            ui, party_members, enemies, planned_actions
+        ):
             return
 
         rr = self._resolve_one_round(
@@ -205,16 +208,42 @@ class BattleController:
             member_count = 0
         ui.party_motion_frame_indices = [0] * member_count
         ui.party_attack_anim_queue = []
-        ui.party_attack_anim_active_idx = None
+        ui.party_attack_anim_active = None
         ui.party_attack_anim_elapsed_ms = 0
+        ui.enemy_acting_highlight_idx = None
 
     def _collect_attack_anim_queue(
         self,
         party_members: List[PartyMemberRuntime],
+        enemies: List[EnemyRuntime],
         planned_actions: List[Optional[PlannedAction]],
-    ) -> List[int]:
-        queue: List[int] = []
-        for idx, action in enumerate(planned_actions):
+    ) -> List[tuple[str, int]]:
+        rng_state = self.rng.getstate()
+        actors: List[tuple[str, int, int]] = []
+
+        for idx, member in enumerate(party_members):
+            if is_out_of_battle(member.state):
+                continue
+            init = calc_initiative(member.stats.agility, self.rng)
+            actors.append(("char", idx, init))
+
+        for idx, enemy in enumerate(enemies):
+            if is_out_of_battle(enemy.state):
+                continue
+            init = calc_initiative(enemy.stats.agility, self.rng)
+            actors.append(("enemy", idx, init))
+
+        self.rng.setstate(rng_state)
+        actors.sort(key=lambda x: x[2], reverse=True)
+
+        queue: List[tuple[str, int]] = []
+        for side, idx, _ in actors:
+            if side == "enemy":
+                queue.append((side, idx))
+                continue
+            if idx >= len(planned_actions):
+                continue
+            action = planned_actions[idx]
             if action is None:
                 continue
             if action.kind != "physical":
@@ -223,13 +252,14 @@ class BattleController:
                 continue
             if is_out_of_battle(party_members[idx].state):
                 continue
-            queue.append(idx)
+            queue.append((side, idx))
         return queue
 
     def _update_party_attack_animation(
         self,
         ui,
         party_members: List[PartyMemberRuntime],
+        enemies: List[EnemyRuntime],
         planned_actions: List[Optional[PlannedAction]],
     ) -> bool:
         member_count = len(party_members)
@@ -238,22 +268,27 @@ class BattleController:
 
         if (
             not getattr(ui, "party_attack_anim_queue", None)
-            and getattr(ui, "party_attack_anim_active_idx", None) is None
+            and getattr(ui, "party_attack_anim_active", None) is None
         ):
             ui.party_attack_anim_queue = self._collect_attack_anim_queue(
-                party_members, planned_actions
+                party_members, enemies, planned_actions
             )
             ui.party_attack_anim_elapsed_ms = 0
+            ui.enemy_acting_highlight_idx = None
 
-        if not ui.party_attack_anim_queue and ui.party_attack_anim_active_idx is None:
+        if not ui.party_attack_anim_queue and ui.party_attack_anim_active is None:
             return False
 
-        if ui.party_attack_anim_active_idx is None:
-            next_idx = int(ui.party_attack_anim_queue.pop(0))
-            ui.party_attack_anim_active_idx = next_idx
+        if ui.party_attack_anim_active is None:
+            next_side, next_idx = ui.party_attack_anim_queue.pop(0)
+            ui.party_attack_anim_active = (str(next_side), int(next_idx))
             ui.party_attack_anim_elapsed_ms = 0
-            if 0 <= next_idx < len(ui.party_motion_frame_indices):
-                ui.party_motion_frame_indices[next_idx] = 1
+            if next_side == "char":
+                if 0 <= next_idx < len(ui.party_motion_frame_indices):
+                    ui.party_motion_frame_indices[next_idx] = 1
+                ui.enemy_acting_highlight_idx = None
+            else:
+                ui.enemy_acting_highlight_idx = int(next_idx)
             return True
 
         dt_ms = max(0, int(getattr(ui, "dt_ms", 0)))
@@ -263,9 +298,26 @@ class BattleController:
             return True
         ui.party_attack_anim_elapsed_ms = 0
 
-        active_idx = int(ui.party_attack_anim_active_idx)
+        active_side, active_idx_any = ui.party_attack_anim_active
+        active_idx = int(active_idx_any)
+
+        if active_side == "enemy":
+            ui.enemy_acting_highlight_idx = None
+            ui.party_attack_anim_active = None
+            if ui.party_attack_anim_queue:
+                next_side, next_idx = ui.party_attack_anim_queue.pop(0)
+                ui.party_attack_anim_active = (str(next_side), int(next_idx))
+                ui.party_attack_anim_elapsed_ms = 0
+                if next_side == "char":
+                    if 0 <= next_idx < len(ui.party_motion_frame_indices):
+                        ui.party_motion_frame_indices[next_idx] = 1
+                else:
+                    ui.enemy_acting_highlight_idx = int(next_idx)
+                return True
+            return False
+
         if active_idx < 0 or active_idx >= len(ui.party_motion_frame_indices):
-            ui.party_attack_anim_active_idx = None
+            ui.party_attack_anim_active = None
             return bool(ui.party_attack_anim_queue)
 
         frame_idx = int(ui.party_motion_frame_indices[active_idx])
@@ -274,13 +326,17 @@ class BattleController:
             return True
 
         ui.party_motion_frame_indices[active_idx] = 0
-        ui.party_attack_anim_active_idx = None
+        ui.party_attack_anim_active = None
         if ui.party_attack_anim_queue:
-            next_idx = int(ui.party_attack_anim_queue.pop(0))
-            ui.party_attack_anim_active_idx = next_idx
+            next_side, next_idx = ui.party_attack_anim_queue.pop(0)
+            ui.party_attack_anim_active = (str(next_side), int(next_idx))
             ui.party_attack_anim_elapsed_ms = 0
-            if 0 <= next_idx < len(ui.party_motion_frame_indices):
-                ui.party_motion_frame_indices[next_idx] = 1
+            if next_side == "char":
+                if 0 <= next_idx < len(ui.party_motion_frame_indices):
+                    ui.party_motion_frame_indices[next_idx] = 1
+                ui.enemy_acting_highlight_idx = None
+            else:
+                ui.enemy_acting_highlight_idx = int(next_idx)
             return True
         return False
 
