@@ -1,4 +1,4 @@
-# ui_pygame/controller.py
+﻿# ui_pygame/controller.py
 
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ class ResolveResult:
 class BattleController:
     def __init__(self, rng: Optional[Random] = None):
         self.rng = rng or Random()
-        self._bgm_started = False  # ★追加
+        self._bgm_started = False
 
     def update(
         self,
@@ -52,10 +52,10 @@ class BattleController:
         if getattr(ui, "battle_ended", False):
             return
 
-        # ★戦闘BGM（初回だけ）
+        # Battle BGM (At First Time)
         if not self._bgm_started:
             if hasattr(ui, "events") and isinstance(ui.events, list):
-                # ボス戦判定
+                # Judge Boss Battle
                 is_boss = self._is_boss_battle(enemies)
                 bgm_name = battle_ctx.bgm.boss if is_boss else battle_ctx.bgm.normal
                 ui.events.append(
@@ -82,6 +82,9 @@ class BattleController:
                 f"[DBG planned] i={i} kind={a.kind} cmd={a.command} target={a.target_side}:{a.target_index} all={getattr(a,'target_all',False)}"
             )
 
+        if self._update_party_attack_animation(ui, party_members, planned_actions):
+            return
+
         rr = self._resolve_one_round(
             party_members=party_members,
             enemies=enemies,
@@ -95,16 +98,16 @@ class BattleController:
         self._push_logs(ui, rr.logs)
         self._push_events(ui, rr.events)
 
-        # ここはあなたの round_result の構造に合わせて
         end_reason = getattr(rr.side_result, "end_reason", "continue")
         ui.battle_result = self._map_end_reason_to_result(end_reason)
         if ui.battle_result != BattleResult.CONTINUE:
             ui.battle_ended = True
             ui.phase = "end"
             ui.input_mode = "end"
+            self._reset_party_attack_animation(ui, len(party_members))
             self._clear_planned_actions(ui, party_members)
 
-            # ★終了BGM（勝利なら victory、敗北などは停止）
+            # Battle End BGM
             if hasattr(ui, "events") and isinstance(ui.events, list):
                 if ui.battle_result == BattleResult.ENEMY_DEFEATED:
                     ui.events.append(
@@ -127,47 +130,48 @@ class BattleController:
 
             return
 
-        # ===== continue: 次ターン入力開始の初期化 =====
+        # ===== continue =====
 
-        # ターン加算（ui.turn / ui.turn_count どちらでも）
+        # Add Turn (ui.turn / ui.turn_count)
         if hasattr(ui, "turn"):
             ui.turn += 1
         elif hasattr(ui, "turn_count"):
             ui.turn_count += 1
 
-        # 入力フェーズに戻す
+        # Back to Input Phase
         ui.phase = "input"
         ui.input_mode = "member"
+        self._reset_party_attack_animation(ui, len(party_members))
 
-        # ターゲット選択状態を必ずクリア（ctxに既にあるならそれを使う）
+        # Clear the State of Target Selection
         if hasattr(app_ctx, "reset_target_flags"):
             app_ctx.reset_target_flags(ui)
 
-        # planned_actions をクリア
+        # Clear planned_actions
         self._clear_planned_actions(ui, party_members)
         self._auto_fill_jump_actions(ui, party_members, enemies)
         if app_ctx.all_actions_committed(ui):
             ui.phase = "resolve"
             ui.input_mode = "resolve"
             return
-        # 「次に入力すべきキャラ」を再セット（あなたの既存関数を使う）
-        # find_next_unfilled(ui) が app 側の関数なら ctx に渡しておくのが一番楽
+        # ReSet Next Command Input Character
+        # If find_next_unfilled(ui) is app function -> ctx
         if hasattr(app_ctx, "find_next_unfilled_member_index"):
             ui.selected_member_idx = app_ctx.find_next_unfilled_member_index(ui)
         else:
-            # 保険：0に戻す
+            # Return to 0
             ui.selected_member_idx = 0
 
-        # そのキャラのコマンド候補を再計算
+        # Recalc the Candidate Comamnd
         if hasattr(app_ctx, "get_job_commands"):
             ui.command_candidates = app_ctx.get_job_commands(
                 party_members[ui.selected_member_idx]
             )
 
-        # ログ（任意）
+        # Log
         if hasattr(ui, "logs") and isinstance(ui.logs, list):
             t = getattr(ui, "turn", getattr(ui, "turn_count", "?"))
-            ui.logs.append(f"--- Turn {t} 入力開始 ---")
+            ui.logs.append(f"--- Turn {t} Start Input ---")
             self._append_auto_filled_action_logs(ui, party_members)
 
     def _is_boss_battle(self, enemies: List[EnemyRuntime]) -> bool:
@@ -196,14 +200,98 @@ class BattleController:
         )
         return ResolveResult(logs=logs, side_result=side_result, events=events)
 
+    def _reset_party_attack_animation(self, ui, member_count: int) -> None:
+        if member_count < 0:
+            member_count = 0
+        ui.party_motion_frame_indices = [0] * member_count
+        ui.party_attack_anim_queue = []
+        ui.party_attack_anim_active_idx = None
+        ui.party_attack_anim_elapsed_ms = 0
+
+    def _collect_attack_anim_queue(
+        self,
+        party_members: List[PartyMemberRuntime],
+        planned_actions: List[Optional[PlannedAction]],
+    ) -> List[int]:
+        queue: List[int] = []
+        for idx, action in enumerate(planned_actions):
+            if action is None:
+                continue
+            if action.kind != "physical":
+                continue
+            if idx >= len(party_members):
+                continue
+            if is_out_of_battle(party_members[idx].state):
+                continue
+            queue.append(idx)
+        return queue
+
+    def _update_party_attack_animation(
+        self,
+        ui,
+        party_members: List[PartyMemberRuntime],
+        planned_actions: List[Optional[PlannedAction]],
+    ) -> bool:
+        member_count = len(party_members)
+        if len(getattr(ui, "party_motion_frame_indices", [])) != member_count:
+            self._reset_party_attack_animation(ui, member_count)
+
+        if (
+            not getattr(ui, "party_attack_anim_queue", None)
+            and getattr(ui, "party_attack_anim_active_idx", None) is None
+        ):
+            ui.party_attack_anim_queue = self._collect_attack_anim_queue(
+                party_members, planned_actions
+            )
+            ui.party_attack_anim_elapsed_ms = 0
+
+        if not ui.party_attack_anim_queue and ui.party_attack_anim_active_idx is None:
+            return False
+
+        if ui.party_attack_anim_active_idx is None:
+            next_idx = int(ui.party_attack_anim_queue.pop(0))
+            ui.party_attack_anim_active_idx = next_idx
+            ui.party_attack_anim_elapsed_ms = 0
+            if 0 <= next_idx < len(ui.party_motion_frame_indices):
+                ui.party_motion_frame_indices[next_idx] = 1
+            return True
+
+        dt_ms = max(0, int(getattr(ui, "dt_ms", 0)))
+        ui.party_attack_anim_elapsed_ms += dt_ms
+        step_ms = max(1, int(getattr(ui, "party_attack_anim_step_ms", 90)))
+        if ui.party_attack_anim_elapsed_ms < step_ms:
+            return True
+        ui.party_attack_anim_elapsed_ms = 0
+
+        active_idx = int(ui.party_attack_anim_active_idx)
+        if active_idx < 0 or active_idx >= len(ui.party_motion_frame_indices):
+            ui.party_attack_anim_active_idx = None
+            return bool(ui.party_attack_anim_queue)
+
+        frame_idx = int(ui.party_motion_frame_indices[active_idx])
+        if frame_idx <= 1:
+            ui.party_motion_frame_indices[active_idx] = 2
+            return True
+
+        ui.party_motion_frame_indices[active_idx] = 0
+        ui.party_attack_anim_active_idx = None
+        if ui.party_attack_anim_queue:
+            next_idx = int(ui.party_attack_anim_queue.pop(0))
+            ui.party_attack_anim_active_idx = next_idx
+            ui.party_attack_anim_elapsed_ms = 0
+            if 0 <= next_idx < len(ui.party_motion_frame_indices):
+                ui.party_motion_frame_indices[next_idx] = 1
+            return True
+        return False
+
     def _push_logs(self, ui, logs: List[str]) -> None:
         if not logs:
             return
-        # ui.logs を持つならそこへ
+        # ui.logs
         if hasattr(ui, "logs") and isinstance(ui.logs, list):
             ui.logs.extend(logs)
             return
-        # LogWindow を持つならそちらへ（あなたの実装に合わせて）
+        # LogWindow
         if hasattr(ui, "log_window"):
             lw = ui.log_window
             if hasattr(lw, "extend"):
@@ -218,7 +306,7 @@ class BattleController:
     def _push_events(self, ui, events: List[Dict[str, Any]]) -> None:
         if not events:
             return
-        # 例：ui.events にためる / ui.floating_texts を作る…など
+        # example: Stock to ui.events / Make ui.floating_texts
         if hasattr(ui, "events") and isinstance(ui.events, list):
             ui.events.extend(events)
 
@@ -226,7 +314,6 @@ class BattleController:
         self, ui, party_members: List[PartyMemberRuntime]
     ) -> None:
         if hasattr(ui, "planned_actions"):
-            # len を揃えたいなら None 埋めが安全（参照箇所がある場合に備える）
             ui.planned_actions = [None] * len(party_members)
 
     def _resolve_jump_target_index(
@@ -277,7 +364,7 @@ class BattleController:
             if action is None or action.kind != "jump":
                 continue
             member_name = getattr(party_members[i], "name", f"member[{i}]")
-            ui.logs.append(f"{member_name}はジャンプした！次のターンに攻撃する。")
+            ui.logs.append(f"{member_name} prepares to land from Jump this turn.")
 
     def _map_end_reason_to_result(self, end_reason: str) -> BattleResult:
         match end_reason:

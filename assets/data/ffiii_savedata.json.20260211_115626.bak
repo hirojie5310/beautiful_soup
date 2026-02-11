@@ -3,7 +3,7 @@
     {
       "name": "Runeth",
       "level": 38,
-      "exp": 289589,
+      "exp": 292628,
       "job": "Sage",
       "job_level": {
         "level": 99,
@@ -72,12 +72,12 @@
     },
     {
       "name": "Arc",
-      "level": 37,
-      "exp": 272572,
+      "level": 38,
+      "exp": 275611,
       "job": "Geomancer",
       "job_level": {
-        "level": 8,
-        "skill_point": 44
+        "level": 9,
+        "skill_point": 72
       },
       "job_levels": {
         "Dragoon": {
@@ -93,8 +93,8 @@
           "skill_point": 68
         },
         "Geomancer": {
-          "level": 8,
-          "skill_point": 44
+          "level": 9,
+          "skill_point": 72
         }
       },
       "hp": 245,
@@ -143,20 +143,20 @@
     {
       "name": "Refia",
       "level": 39,
-      "exp": 306572,
-      "job": "Ninja",
+      "exp": 313771,
+      "job": "Dragoon",
       "job_level": {
-        "level": 24,
-        "skill_point": 59
+        "level": 99,
+        "skill_point": 82
       },
       "job_levels": {
         "Dragoon": {
-          "level": 97,
-          "skill_point": 54
+          "level": 99,
+          "skill_point": 82
         },
         "Ninja": {
           "level": 24,
-          "skill_point": 59
+          "skill_point": 83
         },
         "Black Belt": {
           "level": 8,
@@ -182,11 +182,11 @@
       "mind": 11,
       "row": "front",
       "equipment": {
-        "main_hand": "Ragnarok",
-        "off_hand": "Genji Shield",
-        "head": "Genji Helm",
-        "body": "Genji Armor",
-        "arms": "Genji Gloves"
+        "main_hand": "Holy Lance",
+        "off_hand": "Crystal Shield",
+        "head": "Ribbon",
+        "body": "Crystal Mail",
+        "arms": "Crystal Gloves"
       },
       "status_effects": {
         "Poison": false,
@@ -209,11 +209,11 @@
     {
       "name": "Ingus",
       "level": 38,
-      "exp": 287772,
+      "exp": 289971,
       "job": "Bard",
       "job_level": {
-        "level": 12,
-        "skill_point": 92
+        "level": 14,
+        "skill_point": 24
       },
       "job_levels": {
         "Dragoon": {
@@ -229,8 +229,8 @@
           "skill_point": 68
         },
         "Bard": {
-          "level": 12,
-          "skill_point": 92
+          "level": 14,
+          "skill_point": 24
         }
       },
       "hp": 245,
@@ -277,7 +277,7 @@
       "portrait_key": "ingus"
     }
   ],
-  "gil": 252903,
+  "gil": 270697,
   "CP": 255,
   "map": {
     "map": "grassland",

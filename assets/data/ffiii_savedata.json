@@ -2,8 +2,8 @@
   "party": [
     {
       "name": "Runeth",
-      "level": 38,
-      "exp": 292554,
+      "level": 39,
+      "exp": 300948,
       "job": "Sage",
       "job_level": {
         "level": 99,
@@ -73,11 +73,11 @@
     {
       "name": "Arc",
       "level": 38,
-      "exp": 275537,
+      "exp": 283931,
       "job": "Geomancer",
       "job_level": {
-        "level": 9,
-        "skill_point": 72
+        "level": 10,
+        "skill_point": 44
       },
       "job_levels": {
         "Dragoon": {
@@ -93,8 +93,8 @@
           "skill_point": 68
         },
         "Geomancer": {
-          "level": 9,
-          "skill_point": 72
+          "level": 10,
+          "skill_point": 44
         }
       },
       "hp": 245,
@@ -143,16 +143,16 @@
     {
       "name": "Refia",
       "level": 39,
-      "exp": 313697,
+      "exp": 322091,
       "job": "Dragoon",
       "job_level": {
         "level": 99,
-        "skill_point": 74
+        "skill_point": 99
       },
       "job_levels": {
         "Dragoon": {
           "level": 99,
-          "skill_point": 74
+          "skill_point": 99
         },
         "Ninja": {
           "level": 24,
@@ -209,11 +209,11 @@
     {
       "name": "Ingus",
       "level": 38,
-      "exp": 289897,
+      "exp": 298291,
       "job": "Bard",
       "job_level": {
-        "level": 14,
-        "skill_point": 12
+        "level": 15,
+        "skill_point": 16
       },
       "job_levels": {
         "Dragoon": {
@@ -229,8 +229,8 @@
           "skill_point": 68
         },
         "Bard": {
-          "level": 14,
-          "skill_point": 12
+          "level": 15,
+          "skill_point": 16
         }
       },
       "hp": 245,
@@ -277,7 +277,7 @@
       "portrait_key": "ingus"
     }
   ],
-  "gil": 270498,
+  "gil": 285937,
   "CP": 255,
   "map": {
     "map": "grassland",
@@ -298,7 +298,8 @@
       "Antidote": 2,
       "Onion Helm": 1,
       "Lilith's Kiss": 1,
-      "Lamia Scale": 1
+      "Lamia Scale": 1,
+      "Hi-Potion": 1
     },
     "Field": {
       "Magic Key": 1,

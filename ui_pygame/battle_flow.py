@@ -1,4 +1,4 @@
-# ui_pygame/battle_flow.py
+﻿# ui_pygame/battle_flow.py
 # battle_flow は BattleContext にだけ依存
 # UI層は BattleAppContext に閉じる
 import pygame
@@ -19,7 +19,10 @@ from ui_pygame.render.floating_texts import (
 from ui_pygame.render.hub import draw_header
 from ui_pygame.render.enemy_panel import draw_enemy_panel
 from ui_pygame.render.party_panel import draw_party_panel
-from ui_pygame.render.sprites import draw_enemy_sprites_formation
+from ui_pygame.render.sprites import (
+    draw_enemy_sprites_formation,
+    draw_party_idle_sprites_column,
+)
 from ui_pygame.render.log_panel import draw_log_panel
 from ui_pygame.render.command_panel import draw_command_panel
 
@@ -32,6 +35,7 @@ def run_one_battle(
     audio,
     state,
     enemy_sprite_cache,
+    party_motion_cache,
     status_icon_cache: StatusIconCache,
     *,
     ctx: BattleContext,
@@ -40,7 +44,7 @@ def run_one_battle(
     return: BattleResult
     """
 
-    # enemies は BattleContext から取得
+    # enemies are from BattleContext
     party_members = ctx.party_members
     enemies = ctx.enemies
 
@@ -52,15 +56,20 @@ def run_one_battle(
     ui.turn = 1
     ui.phase = "input"
     ui.input_mode = "member"
-    ui.logs = ["戦闘開始！"]
+    ui.logs = ["Battle started."]
     ui.scroll = 0
     ui.planned_actions = [None] * len(party_members)
 
-    # ★追加：元の run_battle_app にあった初期化を戻す
+    # Carry spell dictionary from battle context
     ui.spells_by_name = ctx.spells_expanded or {}
     ui.se_enter = ctx.se.enter
     ui.se_confirm = ctx.se.confirm
     ui.se_invalid = ctx.se.invalid
+    ui.party_motion_frame_indices = [0] * len(party_members)
+    ui.party_attack_anim_queue = []
+    ui.party_attack_anim_active_idx = None
+    ui.party_attack_anim_elapsed_ms = 0
+    ui.party_attack_anim_step_ms = int(getattr(cfg, "motion_attack_step_ms", 90))
 
     # ★次に入力すべきメンバー（戦闘可能な先頭）を選ぶ
     def first_alive_member_index() -> int:
@@ -106,7 +115,7 @@ def run_one_battle(
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 return BattleResult.QUIT
 
-            # ★戦闘終了後の入力（例：Enterで敵選択へ戻る）
+            # End phase: confirm with Enter/Space
             if ui.phase == "end" and event.type == pygame.KEYDOWN:
                 if event.key in (pygame.K_RETURN, pygame.K_SPACE):
                     return ui.battle_result
@@ -135,7 +144,7 @@ def run_one_battle(
             ui.events.clear()
 
         # -------- render --------
-        # 0) レイアウト定義（960×540前提だが cfgに追従）
+        # 0) Layout constants
         W, H = cfg.width, cfg.height
 
         TOP_H = 140
@@ -149,9 +158,25 @@ def run_one_battle(
         field_rect = pygame.Rect(0, TOP_H, W, MID_H)
         bottom_rect = pygame.Rect(0, TOP_H + MID_H, W, BOT_H)
 
-        # 上HUD：左=ENEMY / 右=PARTY（FF風：敵左・味方右）
-        enemy_rect = pygame.Rect(M, M, 360, TOP_H - M * 2)  # 360×108
-        party_rect = pygame.Rect(W - M - 560, M, 560, TOP_H - M * 2)  # 560×108
+        # Top HUD: enemy panel (left) and party panel (right)
+        enemy_rect = pygame.Rect(M, M, 360, TOP_H - M * 2)  # 360x108
+        party_rect = pygame.Rect(W - M - 560, M, 560, TOP_H - M * 2)  # 560ﾃ・08
+
+        # Middle field: enemy sprites on left, party motions on right
+        party_motion_w = 110
+        mid_split_gap = 12
+        enemy_field_rect = pygame.Rect(
+            field_rect.left,
+            field_rect.top,
+            max(0, field_rect.width - party_motion_w - mid_split_gap),
+            field_rect.height,
+        )
+        party_motion_rect = pygame.Rect(
+            enemy_field_rect.right + mid_split_gap,
+            field_rect.top,
+            party_motion_w,
+            field_rect.height,
+        )
 
         # 下HUD：LOG（左）＋ COMMAND（右）を横並び
         LOG_H = 170
@@ -164,39 +189,46 @@ def run_one_battle(
         cmd_rect = pygame.Rect(W - M - cmd_w, hud_y, cmd_w, cmd_h)
         log_rect = pygame.Rect(M, hud_y, (W - M * 2) - cmd_w - G, LOG_H)
 
-        # 1) ログスクロールのクランプ（log_panel側が行数計算するので、ここは安全側に）
-        # scroll=0 が最新、増えるほど過去へ
-        # ここでは「最大どこまで遡れるか」だけ制限
+        # Clamp scroll for log window
         approx_visible_lines = max(1, (log_rect.h - 40) // font.get_linesize())
         max_scroll = max(0, len(ui.logs) - approx_visible_lines)
         ui.scroll = max(0, min(ui.scroll, max_scroll))
 
-        # 2) 背景
+        # 2) Back Ground
         screen.fill((10, 10, 20))
 
         # 任意：フィールド領域をうっすら区切る（デバッグにも便利）
-        # pygame.draw.rect(screen, (20, 20, 30), field_rect, 0)
         # pygame.draw.rect(screen, (40, 40, 60), field_rect, 1)
 
-        # 3) ヘッダ（左上）
+        # 3) Draw header
         draw_header(screen, font, ui.turn, ui.phase)
 
-        # 4) フィールド：敵スプライト（左側隊列）
+        # 4) Draw enemy and party sprites
         ui.enemy_sprite_rects = draw_enemy_sprites_formation(
             screen,
             font,
             enemies,
             enemy_sprite_cache,
-            area_rect=field_rect,
+            area_rect=enemy_field_rect,
             side="left",
-            formation="auto",  # 1-3: 1列 / 4-6: 3x2
+            formation="auto",  # 1-3: 1 column/ 4-6: 3x2
             scale=2,
         )
+        draw_party_idle_sprites_column(
+            screen,
+            party_members,
+            party_motion_cache,
+            area_rect=party_motion_rect,
+            frame_w=cfg.motion_frame_w,
+            frame_h=cfg.motion_frame_h,
+            gap=6,
+            frame_indices=ui.party_motion_frame_indices,
+        )
 
-        # 5) フローティングテキスト（スプライトの上に出すならこの位置）
+        # Draw floating texts over enemy sprites
         draw_floating_texts(screen, font, ui)
 
-        # 6) 上HUD：パーティ（右上）
+        # Draw party status panel
         draw_party_panel(
             screen,
             font,
@@ -208,7 +240,7 @@ def run_one_battle(
             status_icon_cache=status_icon_cache,
         )
 
-        # 7) 上HUD：敵パネル（左上）※選択/点滅状態を計算して渡す
+        # 7) Draw enemy panel and targeting highlight
         selected_enemy_index = None
         blink_all = False
         if ui.phase == "input" and ui.input_mode == "target_enemy":
@@ -231,7 +263,7 @@ def run_one_battle(
             blink_all=blink_all,
         )
 
-        # 8) 下HUD：ログ（左下）
+        # 8) Draw log panel
         draw_log_panel(
             screen,
             font,
@@ -246,5 +278,5 @@ def run_one_battle(
 
         pygame.display.flip()
 
-    # ★型チェッカー対策（通常ここには来ない想定）
+    # Safety fallback (normally not reached)
     return BattleResult.CONTINUE

@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # state: UI状態管理
 # BattleUIState / FloatingText / LogWindow などdataclass群
 
@@ -38,14 +38,14 @@ def add_logs(ui: BattleUIState, new_logs: List[str]) -> None:
 
 
 # -------------------------
-# UI状態（★1回だけ定義）
+# UI State (Define only once)
 # -------------------------
 @dataclass
 class BattleUIState:
     turn: int = 1
     phase: str = "input"  # "input" / "resolve" / "end"
 
-    # 入力段階
+    # Input Phase
     # member -> command -> (magic/item) -> target_side -> target_enemy/target_ally -> back to member
     input_mode: str = (
         "member"  # "member" | "command" | "magic" | "item" | "target_side" | "target_enemy" | "target_ally"
@@ -53,69 +53,74 @@ class BattleUIState:
 
     selected_member_idx: int = 0
 
-    # command 選択
+    # command selection
     command_candidates: Sequence[CommandCandidate] = field(default_factory=list)
     selected_command_idx: int = 0
 
-    # magic 選択（party_magic_lists[member_idx] のリストをそのまま表示）
+    # magic selection (show party_magic_lists[member_idx])
     magic_candidates: list[tuple[str, int, int]] = field(default_factory=list)
     selected_magic_idx: int = 0
     selected_spell_name: Optional[str] = None
 
-    # item 選択
+    # item selection
     item_candidates: List[Tuple[str, str, int]] = field(
         default_factory=list
     )  # [(name, itype, qty), ...]
     selected_item_idx: int = 0
     selected_item_name: Optional[str] = None
 
-    # target 選択
+    # target selection
     target_side: TargetSide | None = None
     selected_target_idx: int = 0  # enemy/ally list index
-    selected_target_side_idx: int = 0  # ★ 0=敵, 1=味方, 2=自分
+    selected_target_side_idx: int = 0  # 笘・0=enemy, 1=ally, 2=self
 
-    # ★One/All 用：単体/全体の選択
-    aoe_choice_candidates: List[str] = field(default_factory=lambda: ["単体", "全体"])
+    # One/All
+    aoe_choice_candidates: List[str] = field(default_factory=lambda: ["One", "All"])
     selected_aoe_idx: int = 0
     selected_target_all: bool = False
 
-    # simulate に渡す
+    # -> simulate
     planned_actions: List[Optional[PlannedAction]] = field(default_factory=list)
 
     logs: List[str] = field(default_factory=list)
 
-    # ★追加：battle_sim / controller から渡されるイベント
+    # event from battle_sim / controller
     events: list[UiEvent] = field(default_factory=list)
 
-    # ログスクロール
+    # log scroll
     scroll: int = 0
 
-    # スクロール用の状態
-    menu_scroll: int = 0  # ★ スクロール位置（行単位）
-    menu_visible_rows: int = 8  # ★ 一度に表示する行数
+    # state for scroll
+    menu_scroll: int = 0  # scroll position
+    menu_visible_rows: int = 8  # column number for display
 
     spells_by_name: dict = field(default_factory=dict)  # spell_name -> spell_json
 
-    # フローティングテキスト
+    # floating text
     dt_ms: int = 0
     floating_texts: List[FloatingText] = field(default_factory=list)
     enemy_sprite_rects: List[pygame.Rect] = field(default_factory=list)
-    sprite_cache: dict = field(default_factory=dict)  # 使うなら
+    sprite_cache: dict = field(default_factory=dict)  # sprite cache
+    party_motion_frame_indices: List[int] = field(default_factory=list)
+    party_attack_anim_queue: List[int] = field(default_factory=list)
+    party_attack_anim_active_idx: Optional[int] = None
+    party_attack_anim_elapsed_ms: int = 0
+    party_attack_anim_step_ms: int = 90
 
-    # ログウィンドウ
-    log_scroll: int = 0  # LogWindow用スクロール位置
-    log_max_keep: int = 100  # LogWindow用最大保持行数
+    # log window
+    log_scroll: int = 0  # scroll position for LogWindow
+    log_max_keep: int = 100  # max column number for LogWindow
 
-    # サウンドエフェクト
+    # Sound effects
     se_enter: Optional[pygame.mixer.Sound] = None
     se_confirm: Optional[pygame.mixer.Sound] = None
     se_invalid: Optional[pygame.mixer.Sound] = None
     se_rareitem: Optional[pygame.mixer.Sound] = None
 
-    # BGM 状態
+    # BGM state
     current_bgm: str | None = None  # "battle", "victory", "requiem"
 
-    # ===== 戦闘結果 =====
+    # ===== battle result =====
     battle_result: BattleResult = BattleResult.CONTINUE
     battle_ended: bool = False
 
@@ -124,17 +129,17 @@ class BattleUIState:
 class FloatingText:
     enemy_index: int
     text: str
-    ttl_ms: int = 900  # 表示時間
-    age_ms: int = 0  # 経過
-    y_offset: float = 0.0  # 上に流す
+    ttl_ms: int = 900  # display time
+    age_ms: int = 0  # progress
+    y_offset: float = 0.0  # flow to upper
 
     def update(self, dt_ms: int) -> bool:
         self.age_ms += dt_ms
-        self.y_offset -= 0.03 * dt_ms  # 上に移動（調整OK）
+        self.y_offset -= 0.03 * dt_ms  # move to upper
         return self.age_ms < self.ttl_ms
 
     def alpha(self) -> int:
-        # 終盤でフェードアウト
+        # fade out
         remain = max(0, self.ttl_ms - self.age_ms)
         if remain >= 250:
             return 255
@@ -152,28 +157,28 @@ class LogWindow:
     padding: int = 8
     line_gap: int = 4
 
-    # 画面に残す最大“行数”（wrap後の行数基準）
+    # max column number
     max_lines: int = 200
 
-    # スクロール（0=最下部、正の値で上へ）
+    # scroll
     scroll: int = 0
 
     lines: List[str] = field(default_factory=list)
 
     def add(self, text: str) -> None:
         """
-        text: 1行でも複数行でもOK（\n を含んでよい）
+        text: can contain \n
         """
         for raw_line in text.splitlines():
             wrapped = self._wrap_line(raw_line)
             self.lines.extend(wrapped)
 
-        # ためすぎ防止
+        # block over stock
         if len(self.lines) > self.max_lines:
             over = len(self.lines) - self.max_lines
             self.lines = self.lines[over:]
 
-        # 新しいログが来たら基本は最下部に戻す（好みで無効化可）
+        # if new logs come, back to most below position
         self.scroll = 0
 
     def add_many(self, texts: List[str]) -> None:
@@ -181,13 +186,12 @@ class LogWindow:
             self.add(t)
 
     def handle_event(self, event: pygame.event.Event) -> None:
-        # マウスホイールでスクロール（Windowsでもpygame2ならMOUSEWHEELが普通に来ます）
+        # scroll by mouse wheel
         if event.type == pygame.MOUSEWHEEL:
-            # 上に回すと event.y=1（上へスクロールしたいので scroll を増やす）
-            self.scroll += -event.y * 3  # 3行ずつ
+            self.scroll += -event.y * 3  # 3陦後★縺､
             self.scroll = max(0, self.scroll)
 
-        # キーでもスクロール（任意）
+        # scroll by key
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_PAGEUP:
                 self.scroll += 10
@@ -195,31 +199,31 @@ class LogWindow:
                 self.scroll = max(0, self.scroll - 10)
 
     def draw(self, screen: pygame.Surface) -> None:
-        # 背景と枠
+        # back ground and flame
         pygame.draw.rect(screen, self.bg_color, self.rect)
         pygame.draw.rect(screen, self.border_color, self.rect, width=2)
 
         inner = self.rect.inflate(-self.padding * 2, -self.padding * 2)
 
-        # 表示可能行数を計算
+        # calculate max column
         line_h = self.font.get_height()
         step = line_h + self.line_gap
         visible_lines = max(1, inner.height // step)
 
-        # 表示範囲（最下部基準 + scroll）
+        # display range
         total = len(self.lines)
         end = total - self.scroll
         start = max(0, end - visible_lines)
         view = self.lines[start:end]
 
-        # 描画（下から上に積むとFFっぽい）
+        # draw
         y = inner.bottom - step
         for s in reversed(view):
             surf = self.font.render(s, True, self.text_color)
             screen.blit(surf, (inner.left, y))
             y -= step
 
-        # スクロールが大きすぎたときの安全策
+        # safety guard for scroll
         self.scroll = min(self.scroll, max(0, total - visible_lines))
 
     def _wrap_line(self, line: str) -> List[str]:
@@ -231,7 +235,7 @@ class LogWindow:
         if self.font.size(line)[0] <= max_w:
             return [line]
 
-        # まずはスペース区切りで試す
+        # space divide
         words = line.split(" ")
         if len(words) > 1:
             out, buf = [], ""
@@ -247,7 +251,7 @@ class LogWindow:
                 out.append(buf)
             return out
 
-        # スペースがない（日本語など）→文字単位でwrap
+        # no space
         out, buf = [], ""
         for ch in line:
             trial = buf + ch

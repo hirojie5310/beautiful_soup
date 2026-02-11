@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # render.sprites: UI共通描画関数群
 # draw_enemy_sprites_row / draw_floating_texts など
 
@@ -11,7 +11,7 @@ import pygame
 from typing import Optional, Dict, Literal
 import os
 
-from combat.models import EnemyRuntime
+from combat.models import EnemyRuntime, PartyMemberRuntime
 from utils.text_normalize import normalize_text_basic
 
 
@@ -32,7 +32,51 @@ def load_enemy_sprite_images(folder: str) -> Dict[str, pygame.Surface]:
     return cache
 
 
-# pygameでスプライトシートを切り出す
+def load_party_idle_motion_images(
+    folder: str,
+    *,
+    frame_w: int = 55,
+    frame_h: int = 60,
+) -> Dict[str, list[pygame.Surface]]:
+    """
+    Load motion sheets (*.png) and cache 3 horizontal frames.
+    Expected sheet size is 165x60 (55x60 x 3), but this function crops safely.
+    """
+    cache: Dict[str, list[pygame.Surface]] = {}
+    if not os.path.isdir(folder):
+        return cache
+
+    for fn in os.listdir(folder):
+        if not normalize_text_basic(fn).endswith(".png"):
+            continue
+        key = os.path.splitext(fn)[0]
+        path = os.path.join(folder, fn)
+        sheet = pygame.image.load(path).convert_alpha()
+        if sheet.get_width() <= 0 or sheet.get_height() <= 0:
+            continue
+
+        frames: list[pygame.Surface] = []
+        for frame_idx in range(3):
+            src_x = frame_idx * frame_w
+            if src_x >= sheet.get_width():
+                src_x = 0
+            crop_w = min(frame_w, sheet.get_width() - src_x)
+            crop_h = min(frame_h, sheet.get_height())
+            if crop_w <= 0 or crop_h <= 0:
+                continue
+            frames.append(
+                sheet.subsurface(pygame.Rect(src_x, 0, crop_w, crop_h)).copy()
+            )
+
+        if not frames:
+            continue
+        while len(frames) < 3:
+            frames.append(frames[0].copy())
+        cache[normalize_text_basic(key)] = frames
+    return cache
+
+
+# pygame helper: slice sprite sheet into fixed-size tiles
 def slice_sprite_sheet(
     image_path: str,
     tile_w: int,
@@ -75,11 +119,9 @@ def draw_enemy_sprites_row(
     """
     rects: list[pygame.Rect] = []
 
-    show_list = (
-        enemies  # 死亡も表示したいなら enemies のままでOK（あなたの意図に合わせて）
-    )
+    show_list = enemies
 
-    # 表示用Surfaceと幅を準備（Noneでもplaceholder幅を確保）
+    # Prepare render surfaces and fallback sizes.
     rendered: list[tuple[EnemyRuntime, Optional[pygame.Surface], int, int]] = []
     for e in show_list:
         sid = getattr(e, "sprite_id", None)
@@ -104,24 +146,24 @@ def draw_enemy_sprites_row(
     for e, surf, w, h in rendered:
         alive = getattr(e, "hp", 0) > 0
 
-        # 「敵画像のRect」を作る（これがfloatingの基準）
+        # Sprite rect used for floating-text anchors.
         r = pygame.Rect(x, y, w, h)
 
         if surf is not None:
             screen.blit(surf, r.topleft)
 
-            # 死亡時の暗転（任意）
+            # Dim dead enemies.
             if show_dead_overlay and not alive:
                 overlay = pygame.Surface((w, h), pygame.SRCALPHA)
                 overlay.fill((0, 0, 0, 140))
                 screen.blit(overlay, r.topleft)
 
         else:
-            # spriteが無い場合のダミー枠
+            # dammy frame for the case of no sprite
             pygame.draw.rect(screen, (80, 80, 100), r, border_radius=4)
             pygame.draw.rect(screen, (160, 160, 180), r, 2, border_radius=4)
 
-        # 名前（画像の下）
+        # Name color
         name_col = (240, 240, 240) if alive else (140, 140, 140)
         name_surf = font.render(e.name, True, name_col)
         screen.blit(name_surf, (r.centerx - name_surf.get_width() // 2, r.bottom + 4))
@@ -158,7 +200,7 @@ def draw_enemy_sprites_formation(
     rects: list[pygame.Rect] = []
     show_list = enemies
 
-    # 1) 表示用Surface作成（スケール込み）
+    # 1) Prepare render surfaces and fallback sizes.
     rendered: list[tuple[EnemyRuntime, Optional[pygame.Surface], int, int]] = []
     for e in show_list:
         sid = getattr(e, "sprite_id", None)
@@ -179,7 +221,7 @@ def draw_enemy_sprites_formation(
     if n == 0:
         return rects
 
-    # 2) フォーメーション決定
+    # 2) Decide formation
     if formation == "auto":
         # 最大6なら：1-3は1列、4-6は3x2が扱いやすい
         if n <= 3:
@@ -196,17 +238,17 @@ def draw_enemy_sprites_formation(
     cols = max(1, cols)
     rows = max(1, rows)
 
-    # 3) 各セルの最大サイズ（グリッドの整列のため）
+    # 3) Compute max cell size across sprites.
     cell_w = max(w for _, _, w, _ in rendered)
     cell_h = max(h for _, _, _, h in rendered)
 
-    # 名前表示分だけ縦を少し余裕
+    # Include name text area in each row height.
     cell_h_with_name = cell_h + (font.get_linesize() + name_offset_y)
 
     grid_w = cols * cell_w + (cols - 1) * gap_x
     grid_h = rows * cell_h_with_name + (rows - 1) * gap_y
 
-    # 4) area_rect 内での開始位置（左右寄せ＋縦中央）
+    # 4) Anchor within area_rect.
     if side == "left":
         start_x = area_rect.left + 24
     else:
@@ -214,18 +256,16 @@ def draw_enemy_sprites_formation(
 
     start_y = area_rect.top + max(0, (area_rect.height - grid_h) // 2)
 
-    # 5) 実配置（奥→手前っぽく見せるなら row を上→下で少しずらすのもアリ）
+    # 5) Place sprites on the grid.
     for idx, (e, surf, w, h) in enumerate(rendered):
         col = idx % cols
         row = idx // cols
         if row >= rows:
-            break  # 余った分は描かない（通常6以内なら起きない）
-
-        # セル左上
+            break
+        # Cell origin.
         cx = start_x + col * (cell_w + gap_x)
         cy = start_y + row * (cell_h_with_name + gap_y)
 
-        # セル中央寄せで描く
         x = cx + (cell_w - w) // 2
         y = cy + (cell_h - h) // 2
 
@@ -242,12 +282,74 @@ def draw_enemy_sprites_formation(
             pygame.draw.rect(screen, (80, 80, 100), r, border_radius=4)
             pygame.draw.rect(screen, (160, 160, 180), r, 2, border_radius=4)
 
-        # 名前（画像の下）
+        # Name color
         name_col = (240, 240, 240) if alive else (140, 140, 140)
         name_surf = font.render(e.name, True, name_col)
         name_x = r.centerx - name_surf.get_width() // 2
         name_y = r.bottom + name_offset_y
         screen.blit(name_surf, (name_x, name_y))
+
+        rects.append(r)
+
+    return rects
+
+
+def draw_party_idle_sprites_column(
+    screen: pygame.Surface,
+    party_members: list[PartyMemberRuntime],
+    motion_cache: dict[str, list[pygame.Surface]],
+    *,
+    area_rect: pygame.Rect,
+    frame_w: int = 55,
+    frame_h: int = 60,
+    gap: int = 6,
+    show_dead_overlay: bool = True,
+    frame_indices: list[int] | None = None,
+) -> list[pygame.Rect]:
+    """
+    Draw party idle sprites in a top-to-bottom column inside area_rect.
+    The sprite key prefers PartyMemberRuntime.portrait_key.
+    """
+    rects: list[pygame.Rect] = []
+    if not party_members:
+        return rects
+
+    n = len(party_members)
+    total_h = n * frame_h + max(0, n - 1) * gap
+    start_y = area_rect.top + max(0, (area_rect.height - total_h) // 2)
+    x = area_rect.left + max(0, (area_rect.width - frame_w) // 2)
+
+    for idx, member in enumerate(party_members):
+        key = normalize_text_basic(getattr(member, "portrait_key", "") or "")
+        if not key:
+            key = normalize_text_basic(getattr(member, "name", "") or "")
+        frames = motion_cache.get(key) if key else None
+        frame_idx = 0
+        if frame_indices is not None and 0 <= idx < len(frame_indices):
+            frame_idx = max(0, min(2, int(frame_indices[idx])))
+        surf = None
+        if frames:
+            surf = frames[frame_idx] if frame_idx < len(frames) else frames[0]
+
+        y = start_y + idx * (frame_h + gap)
+        r = pygame.Rect(x, y, frame_w, frame_h)
+        alive = getattr(member, "hp", 0) > 0
+
+        if surf is not None:
+            if surf.get_width() != frame_w or surf.get_height() != frame_h:
+                surf = pygame.transform.scale(surf, (frame_w, frame_h))
+            screen.blit(surf, r.topleft)
+            if show_dead_overlay and not alive:
+                overlay = pygame.Surface((frame_w, frame_h), pygame.SRCALPHA)
+                overlay.fill((0, 0, 0, 140))
+                screen.blit(overlay, r.topleft)
+        else:
+            pygame.draw.rect(screen, (80, 80, 100), r, border_radius=4)
+            pygame.draw.rect(screen, (160, 160, 180), r, 2, border_radius=4)
+            if show_dead_overlay and not alive:
+                overlay = pygame.Surface((frame_w, frame_h), pygame.SRCALPHA)
+                overlay.fill((0, 0, 0, 100))
+                screen.blit(overlay, r.topleft)
 
         rects.append(r)
 

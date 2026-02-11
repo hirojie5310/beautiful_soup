@@ -18,7 +18,10 @@ from ui_pygame.battle_context import BattleContext
 from ui_pygame.audio_manager import AudioManager
 from ui_pygame.assets_py.portrait_cache import PortraitCache
 from ui_pygame.assets_py.status_icon_cashe import StatusIconCache
-from ui_pygame.render.sprites import load_enemy_sprite_images
+from ui_pygame.render.sprites import (
+    load_enemy_sprite_images,
+    load_party_idle_motion_images,
+)
 from ui_pygame.audio.ui_se import build_ui_se
 from ui_pygame.logic import (
     reset_target_flags,
@@ -89,6 +92,11 @@ class GameFlowController:
         self.config = config
 
         self.enemy_sprite_cache = load_enemy_sprite_images(config.enemy_sprite_dir)
+        self.party_motion_cache = load_party_idle_motion_images(
+            config.motion_dir,
+            frame_w=config.motion_frame_w,
+            frame_h=config.motion_frame_h,
+        )
 
         pygame.mixer.init()
         self.audio = AudioManager(base_dir=config.audio_dir)
@@ -166,6 +174,7 @@ class GameFlowController:
             self.audio,
             self.state,
             self.enemy_sprite_cache,
+            self.party_motion_cache,
             status_icon_cache=self.status_icon_cache,
             ctx=ctx,
         )

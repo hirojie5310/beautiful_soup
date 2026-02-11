@@ -1,4 +1,4 @@
-# ui_pygame/app_context.py
+﻿# ui_pygame/app_context.py
 # ============================================================
 # app_context: ui context data classes
 # BattleAppContext: holds context data for the battle UI
@@ -84,6 +84,10 @@ class BattleAppConfig:
     font_name: str = "meiryo"
     font_size: int = 18
     enemy_sprite_dir: str = "assets/images/enemy_sprites"
+    motion_dir: str = "assets/images/motions"
+    motion_frame_w: int = 55
+    motion_frame_h: int = 60
+    motion_attack_step_ms: int = 90
 
     # ★追加
     audio_dir: str = "assets/sounds/"
