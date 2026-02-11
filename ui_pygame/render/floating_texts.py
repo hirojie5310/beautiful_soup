@@ -29,7 +29,7 @@ def _append_floating_text_from_combat_event(
                 FloatingText(
                     target_side=str(side),
                     target_index=idx,
-                    text=" ".join(names),
+                    text=" ".join(name_texts),
                 )
             )
 

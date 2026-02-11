@@ -1,9 +1,7 @@
 from typing import List, Tuple, Any, Sequence, Dict
 from pathlib import Path
-import json
 import shutil
 import pygame
-from datetime import datetime
 
 from assets.data.data_loader import save_savedata
 from combat.progression import apply_item_stock_to_inventory
@@ -114,33 +112,24 @@ def prompt_save_progress_and_write(
         sign = "+" if cp_diff > 0 else ""
         print(f"CP: {before_cp} -> {after_cp} ({sign}{cp_diff})")
 
-    ans = normalize_text_basic(input("\nこの更新をセーブデータに保存しますか？ [y/N]: "))
+    ans = normalize_text_basic(
+        input("\nこの更新をセーブデータに保存しますか？ [y/N]: ")
+    )
     if ans not in ("y", "yes"):
         print("[Save] キャンセルしました。")
         return False
 
     save_savedata_with_backup(save_path, after_save)
     print(f"[Save] 保存しました: {save_path}")
-    print(f"[Save] バックアップ: {save_path}.bak")
     return True
 
 
 def save_savedata_with_backup(path: Path, save: dict) -> None:
     """
     savedata を JSON として保存する。
-    既存ファイルがあれば .bak を作成してから上書きする。
+    互換性のため関数名は維持するが、.bak バックアップは作成しない。
     """
-    path.parent.mkdir(parents=True, exist_ok=True)
-
-    # ① バックアップ作成
-    if path.exists():
-        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup_path = path.with_name(f"{path.name}.{ts}.bak")
-        shutil.copy2(path, backup_path)
-
-    # ② 新しい savedata を書き込み
-    with path.open("w", encoding="utf-8") as f:
-        json.dump(save, f, ensure_ascii=False, indent=2)
+    save_savedata(path, save)
 
 
 def list_savedata_backups(path: Path) -> List[Path]:

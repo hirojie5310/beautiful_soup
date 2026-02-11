@@ -316,6 +316,8 @@ def draw_party_idle_sprites_column(
     frame_w: int = 55,
     frame_h: int = 60,
     gap: int = 6,
+    perspective_shift_px: int = 40,
+    front_row_shift_px: int | None = None,
     show_dead_overlay: bool = True,
     frame_indices: list[int] | None = None,
 ) -> list[pygame.Rect]:
@@ -330,7 +332,14 @@ def draw_party_idle_sprites_column(
     n = len(party_members)
     total_h = n * frame_h + max(0, n - 1) * gap
     start_y = area_rect.top + max(0, (area_rect.height - total_h) // 2)
-    x = area_rect.left + max(0, (area_rect.width - frame_w) // 2)
+    base_x = area_rect.left + max(0, (area_rect.width - frame_w) // 2)
+
+    # Add slight depth: upper members are shifted toward screen center,
+    # while the bottom member stays at the original x position.
+    screen_center_x = screen.get_rect().centerx
+    shift_sign = -1 if area_rect.centerx >= screen_center_x else 1
+    max_shift = max(0, int(perspective_shift_px))
+    front_shift_default = max(0, int(frame_w))
 
     for idx, member in enumerate(party_members):
         key = normalize_text_basic(getattr(member, "portrait_key", "") or "")
@@ -345,6 +354,22 @@ def draw_party_idle_sprites_column(
             surf = frames[frame_idx] if frame_idx < len(frames) else frames[0]
 
         y = start_y + idx * (frame_h + gap)
+        if n <= 1:
+            shift = 0
+        else:
+            depth_ratio = (n - 1 - idx) / (n - 1)  # top=1.0 ... bottom=0.0
+            shift = int(round(max_shift * depth_ratio))
+        x = base_x + shift_sign * shift
+
+        row = str(getattr(getattr(member, "base", None), "row", "") or "").lower()
+        if row == "front":
+            front_shift = front_shift_default
+            if front_row_shift_px is not None:
+                front_shift = max(0, int(front_row_shift_px))
+            x += shift_sign * front_shift
+
+        x = max(area_rect.left, min(area_rect.right - frame_w, x))
+
         r = pygame.Rect(x, y, frame_w, frame_h)
         alive = getattr(member, "hp", 0) > 0
 
