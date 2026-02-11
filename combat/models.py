@@ -59,13 +59,15 @@ class _ActorMetaEvent(TypedDict, total=False):
 
 class DamageEvent(_ActorMetaEvent):
     type: Literal["damage"]
-    enemy_index: int
+    target_side: Literal["enemy", "char"]
+    target_index: int
     value: int
 
 
 class StatusEvent(_ActorMetaEvent):
     type: Literal["status"]
-    enemy_index: int
+    target_side: Literal["enemy", "char"]
+    target_index: int
     names: list[str]
 
 

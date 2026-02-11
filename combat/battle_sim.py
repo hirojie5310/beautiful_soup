@@ -195,7 +195,8 @@ def _append_enemy_diff_events(
             events.append(
                 {
                     "type": "damage",
-                    "enemy_index": i,
+                    "target_side": "enemy",
+                    "target_index": i,
                     "value": delta,
                     "actor_side": actor_side,
                     "actor_index": actor_index,
@@ -207,7 +208,49 @@ def _append_enemy_diff_events(
             events.append(
                 {
                     "type": "status",
-                    "enemy_index": i,
+                    "target_side": "enemy",
+                    "target_index": i,
+                    "names": added,
+                    "actor_side": actor_side,
+                    "actor_index": actor_index,
+                }
+            )
+
+
+def _append_party_diff_events(
+    *,
+    party_members: List[PartyMemberRuntime],
+    old_hp_map: List[int],
+    old_status_map: List[set],
+    events: list[dict],
+    actor_side: str,
+    actor_index: int,
+) -> None:
+    """パーティ全体のHP/状態異常差分から表示イベントを蓄積する。"""
+    for i, member in enumerate(party_members):
+        new_hp = member.state.hp
+        new_statuses = set(getattr(member.state, "statuses", set()))
+
+        delta = old_hp_map[i] - new_hp
+        if delta > 0:
+            events.append(
+                {
+                    "type": "damage",
+                    "target_side": "char",
+                    "target_index": i,
+                    "value": delta,
+                    "actor_side": actor_side,
+                    "actor_index": actor_index,
+                }
+            )
+
+        added = sorted(list(new_statuses - old_status_map[i]), key=lambda x: str(x))
+        if added:
+            events.append(
+                {
+                    "type": "status",
+                    "target_side": "char",
+                    "target_index": i,
                     "names": added,
                     "actor_side": actor_side,
                     "actor_index": actor_index,
@@ -469,6 +512,11 @@ def simulate_one_round_multi_party(
 
             dmg_to_enemy = 0
 
+            old_party_hp_map = [m.state.hp for m in party_members]
+            old_party_status_map = [
+                set(getattr(m.state, "statuses", set())) for m in party_members
+            ]
+
             enemy_result = run_enemy_turn(
                 char_name=pm.name,
                 enemy_name=em.name,
@@ -485,6 +533,15 @@ def simulate_one_round_multi_party(
                 state=state,
                 rng=rng,
                 party_members=party_members,
+            )
+
+            _append_party_diff_events(
+                party_members=party_members,
+                old_hp_map=old_party_hp_map,
+                old_status_map=old_party_status_map,
+                events=events,
+                actor_side=side,
+                actor_index=idx,
             )
 
             if all_enemies_defeated(enemies):

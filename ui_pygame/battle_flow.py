@@ -223,7 +223,7 @@ def run_one_battle(
                 1, int(getattr(ui, "party_attack_anim_elapsed_ms", 0))
             ),
         )
-        draw_party_idle_sprites_column(
+        ui.party_sprite_rects = draw_party_idle_sprites_column(
             screen,
             party_members,
             party_motion_cache,

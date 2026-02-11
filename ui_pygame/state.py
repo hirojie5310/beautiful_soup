@@ -101,6 +101,7 @@ class BattleUIState:
     dt_ms: int = 0
     floating_texts: List[FloatingText] = field(default_factory=list)
     enemy_sprite_rects: List[pygame.Rect] = field(default_factory=list)
+    party_sprite_rects: List[pygame.Rect] = field(default_factory=list)
     sprite_cache: dict = field(default_factory=dict)  # sprite cache
     party_motion_frame_indices: List[int] = field(default_factory=list)
     party_attack_anim_queue: List[tuple[str, int]] = field(default_factory=list)
@@ -134,7 +135,8 @@ class BattleUIState:
 
 @dataclass
 class FloatingText:
-    enemy_index: int
+    target_side: str
+    target_index: int
     text: str
     ttl_ms: int = 900  # display time
     age_ms: int = 0  # progress

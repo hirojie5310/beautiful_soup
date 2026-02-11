@@ -10,40 +10,66 @@ def _append_floating_text_from_combat_event(
     ui: BattleUIState, combat_ev: CombatBattleEvent
 ):
     if combat_ev["type"] == "damage":
-        idx = combat_ev["enemy_index"]
+        idx = combat_ev["target_index"]
+        side = combat_ev.get("target_side", "enemy")
         val = combat_ev["value"]
         if val > 0:
-            ui.floating_texts.append(FloatingText(enemy_index=idx, text=str(val)))
+            ui.floating_texts.append(
+                FloatingText(target_side=str(side), target_index=idx, text=str(val))
+            )
         return
 
     if combat_ev["type"] == "status":
-        idx = combat_ev["enemy_index"]
+        idx = combat_ev["target_index"]
+        side = combat_ev.get("target_side", "enemy")
         names = combat_ev["names"]
         if names:
+            name_texts = [str(getattr(n, "value", n)) for n in names]
             ui.floating_texts.append(
-                FloatingText(enemy_index=idx, text=" ".join(names))
+                FloatingText(
+                    target_side=str(side),
+                    target_index=idx,
+                    text=" ".join(names),
+                )
             )
 
 
 # フローティングテキストの描画
 def draw_floating_texts(screen, font, ui: BattleUIState):
-    if not ui.enemy_sprite_rects:
-        return
-
     # 更新 & 生存
     alive = []
     for ft in ui.floating_texts:
-        if ft.enemy_index < 0 or ft.enemy_index >= len(ui.enemy_sprite_rects):
+        rects = (
+            ui.party_sprite_rects
+            if getattr(ft, "target_side", "enemy") == "char"
+            else ui.enemy_sprite_rects
+        )
+        if not rects:
+            continue
+        if ft.target_index < 0 or ft.target_index >= len(rects):
             continue
         if ft.update(ui.dt_ms):  # ui.dt_ms を毎フレーム入れる運用
             alive.append(ft)
     ui.floating_texts = alive
 
     for ft in ui.floating_texts:
-        r = ui.enemy_sprite_rects[ft.enemy_index]
+        rects = (
+            ui.party_sprite_rects
+            if getattr(ft, "target_side", "enemy") == "char"
+            else ui.enemy_sprite_rects
+        )
+        if not rects or ft.target_index < 0 or ft.target_index >= len(rects):
+            continue
+
+        r = rects[ft.target_index]
         a = ft.alpha()
 
-        surf = font.render(ft.text, True, (255, 255, 255))
+        color = (
+            (255, 190, 190)
+            if getattr(ft, "target_side", "enemy") == "char"
+            else (255, 255, 255)
+        )
+        surf = font.render(ft.text, True, color)
         surf = surf.convert_alpha()
         surf.set_alpha(a)
 
@@ -60,7 +86,7 @@ def apply_battle_events_to_ui(ui: BattleUIState, events: Sequence[UiEvent]):
     def should_hold_for_actor_sync(combat_ev: CombatBattleEvent) -> bool:
         actor_side = combat_ev.get("actor_side")
         actor_index = combat_ev.get("actor_index")
-        if actor_side != "char" or actor_index is None:
+        if actor_index is None:
             return False
 
         # アクター未アクティブ時は「これから表示予定の行動アニメ」がある場合のみ保留する。
@@ -69,7 +95,9 @@ def apply_battle_events_to_ui(ui: BattleUIState, events: Sequence[UiEvent]):
             return bool(getattr(ui, "party_attack_anim_queue", []))
 
         active_side, active_idx = active_actor
-        return not (active_side == "char" and int(active_idx) == int(actor_index))
+        return not (
+            str(active_side) == str(actor_side) and int(active_idx) == int(actor_index)
+        )
 
     for ev in events:
         if isinstance(ev, AudioEvent):
