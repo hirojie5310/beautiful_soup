@@ -15,7 +15,6 @@ from __future__ import annotations
 
 from typing import Dict, Any, Tuple, List, Optional, Callable
 from collections import defaultdict
-import unicodedata
 
 from combat.constants import COMMAND_TO_KIND
 from combat.enums import BattleKind
@@ -34,6 +33,11 @@ from combat.life_check import (
     first_alive_enemy_index,
 )
 from combat.inventory import build_item_list, is_item_visible_in_context
+from utils.text_normalize import (
+    normalize_text_basic,
+    normalize_text_nfkc,
+    normalize_whitespace,
+)
 
 
 # 1) コマンド正規化 ===========================================================================
@@ -46,10 +50,9 @@ def _normalize_command_key(cmd: str) -> str:
     - 連続空白の正規化
     - lower（大小文字ゆれ吸収）
     """
-    s = unicodedata.normalize("NFKC", cmd)
-    s = s.strip().replace("　", " ")
-    s = " ".join(s.split())
-    return s.lower()
+    s = normalize_text_nfkc(cmd)
+    s = s.replace("　", " ")
+    return normalize_whitespace(s)
 
 
 # COMMAND_TO_KIND は「正規化済みキー」で引けるようにする
@@ -93,7 +96,7 @@ def choose_magic(char_state: BattleActorState, magic_list) -> str:
 
 
 def categorize_anywhere_item(effect_text: str) -> str:
-    e = effect_text.lower()
+    e = normalize_text_basic(effect_text)
     if "revive from ko" in e:
         return "Revive"
     if "cure " in e:
@@ -104,7 +107,7 @@ def categorize_anywhere_item(effect_text: str) -> str:
 
 
 def categorize_combat_item(effect_text: str) -> str:
-    e = effect_text.lower()
+    e = normalize_text_basic(effect_text)
     if "deal" in e and "damage" in e:
         return "Damage"
     if "inflict " in e:
@@ -127,7 +130,7 @@ def build_grouped_item_menu(
         spell_info = item_json.get("SpellInfo") or {}
         effect_text = spell_info.get("Effect") or ""
 
-        t = (itype or "").strip().lower()
+        t = normalize_text_basic(itype or "")
         if t == "anywhere":
             cat = categorize_anywhere_item(effect_text)
             anywhere_buckets[cat].append((name, qty))
@@ -176,7 +179,7 @@ def build_grouped_item_menu(
         else:
             elem = str(elem_raw)
 
-        elem_l = elem.strip().lower()
+        elem_l = normalize_text_basic(elem)
         elem_rank = ELEMENT_ORDER.get(elem_l, 99)
 
         power = spell_info.get("BasePower")

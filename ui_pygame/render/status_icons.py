@@ -1,6 +1,7 @@
 # ui_pygame/render/status_icons.py
 
 from combat.constants import STATUS_ICON_KEY_BY_ENUM, STATUS_ENUM_BY_KEY
+from utils.text_normalize import normalize_text_basic
 
 
 def draw_status_icons(screen, actor, icon_cache, x, y, spacing=2):
@@ -30,7 +31,7 @@ def draw_status_immune_icons(
     for st in status_immunities:
         # --- 正規化（ここが超重要） ---
         if isinstance(st, str):
-            key = st.strip().lower()
+            key = normalize_text_basic(st)
             st_enum = STATUS_ENUM_BY_KEY.get(key)
         else:
             st_enum = st

@@ -14,6 +14,7 @@
 import random
 from typing import Optional, Dict, Any
 from copy import deepcopy
+from utils.text_normalize import normalize_text_basic
 
 from combat.models import SpellInfo, EnemyAttackResult
 from combat.constants import MASTER_SPELLS_BY_NAME
@@ -21,7 +22,7 @@ from combat.elements import parse_elements
 
 
 def spell_from_json(spell_json: Dict[str, Any]) -> SpellInfo:
-    raw_type = str(spell_json.get("Type", "")).lower().strip()
+    raw_type = normalize_text_basic(spell_json.get("Type", ""))
 
     # Summon Magic 親の「Power最大の子を選ぶロジック」を削除
     """
@@ -182,12 +183,12 @@ def _find_monster_spell_definition(
     if not spell_name:
         return None
 
-    sname = spell_name.strip().lower()
+    sname = normalize_text_basic(spell_name)
 
     # 1) モンスターの Spells セクションを探す（最優先）
     spells = monster.get("Spells") or monster.get("spells") or []
     for sp in spells:
-        nm = (sp.get("Name") or sp.get("name") or "").strip().lower()
+        nm = normalize_text_basic(sp.get("Name") or sp.get("name") or "")
         if nm == sname:
             return sp
 
@@ -200,7 +201,7 @@ def _find_monster_spell_definition(
             return sp
         # 大文字小文字ゆれにも対応
         for nm, js in MASTER_SPELLS_BY_NAME.items():
-            if nm.lower() == sname:
+            if normalize_text_basic(nm) == sname:
                 return js
 
     return None
@@ -254,7 +255,7 @@ def enrich_monster_spells(
                 new_spells.append(s)
                 continue
 
-            master = spells_by_name.get(nm) or spells_by_name.get(nm.lower())
+            master = spells_by_name.get(nm) or spells_by_name.get(normalize_text_basic(nm))
             if isinstance(master, dict):
                 new_spells.append(_merge_spell_defs(s, master))
             else:
@@ -277,7 +278,7 @@ def enrich_monster_spells(
                 continue
 
             # 「魔法DBに存在する名前なら補完」くらいの緩い判定でOK
-            master = spells_by_name.get(nm) or spells_by_name.get(nm.lower())
+            master = spells_by_name.get(nm) or spells_by_name.get(normalize_text_basic(nm))
             if isinstance(master, dict):
                 new_specials.append(_merge_spell_defs(a, master))
             else:

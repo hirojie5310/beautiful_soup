@@ -42,6 +42,7 @@ from ui_pygame.field_effects import (
 from ui_pygame.render.status_icons import draw_status_icons, draw_status_immune_icons
 
 from system.cp_system import compute_job_change_cp_cost
+from utils.text_normalize import normalize_text_basic
 
 
 # 色
@@ -111,7 +112,7 @@ ITEM_AFFECT_CHECKERS = {
 
 
 def canon(s: str) -> str:
-    return str(s).strip().lower()
+    return normalize_text_basic(s)
 
 
 # 効果がある対象だけ白表示
@@ -1401,8 +1402,8 @@ def allowed_by_job(actor, item_dict: dict) -> bool:
     allow = item_dict.get("EquippedBy") or []
     if not allow:
         return True
-    code = actor_job_code(actor).lower()
-    return code in {str(x).lower() for x in allow}
+    code = canon(actor_job_code(actor))
+    return code in {canon(x) for x in allow}
 
 
 # off_hand で「両手武器」を除外（重要）
@@ -1415,9 +1416,10 @@ def _actor_code_for_equip(actor) -> str:
     if raw in JOB_NAME_TO_CODE:
         return JOB_NAME_TO_CODE[raw]
     # slug が "wa" みたいなケースも吸収したいので、大小無視で合わせる
-    inv = {k.lower(): v for k, v in JOB_NAME_TO_CODE.items()}
-    if raw.lower() in inv:
-        return inv[raw.lower()]
+    inv = {canon(k): v for k, v in JOB_NAME_TO_CODE.items()}
+    raw_key = canon(raw)
+    if raw_key in inv:
+        return inv[raw_key]
     return raw  # すでに "Wa" 等が入っているならそのまま
 
 
@@ -1426,7 +1428,7 @@ def _armor_allows(actor, armor_dict: dict) -> bool:
     if not codes:
         return True
     actor_code = _actor_code_for_equip(actor)
-    return actor_code.lower() in {str(c).lower() for c in codes}
+    return canon(actor_code) in {canon(c) for c in codes}
 
 
 def build_equip_candidates(actor, slot, *, weapons_by_name, armors_by_name):
@@ -2128,14 +2130,14 @@ def open_magic_pygame(
 
     # spells_by_name は "Flare" のように大文字始まりキーなので、
     # 小文字正規化で引ける index を一度作っておく（高速＆安全）
-    spells_key_lut = {str(k).strip().lower(): k for k in spells_by_name.keys()}
+    spells_key_lut = {canon(k): k for k in spells_by_name.keys()}
 
     def blit_line(text, x, y, color=WHITE):
         surf = font.render(text, True, color)
         screen.blit(surf, (x, y))
 
     def _canon_spell_name(name: str) -> str:
-        return str(name).strip().lower()
+        return canon(name)
 
     def _spell_lookup(name: str) -> dict:
         # 1) そのまま
@@ -2168,7 +2170,7 @@ def open_magic_pygame(
           - それ以外（回復/治療系）: 生存（hp>0）だけ
         さらに細かい「状態異常にかかってる人だけ」などは後で追加可能。
         """
-        sn = str(spell_name).strip().lower()
+        sn = canon(spell_name)
 
         is_revive = sn in ("raise", "arise")
         cand = []
@@ -2484,7 +2486,7 @@ def open_magic_pygame(
 
 # 魔法名の正規化
 def is_field_usable(spell: dict) -> bool:
-    name = str(spell.get("name", "")).strip().lower()
+    name = canon(spell.get("name", ""))
     if name in FIELD_MAGIC_WHITELIST:
         return True
     return False
@@ -2496,7 +2498,7 @@ def field_spell_will_affect(spell_name: str, actor) -> bool:
     フィールド魔法を actor に使ったとき、実際に効果があるか？
     （HPやStatusが変化するか）
     """
-    sn = spell_name.strip().lower()
+    sn = canon(spell_name)
 
     state = actor.state  # PartyMemberRuntime 前提
 
@@ -2587,7 +2589,7 @@ def dec_inventory_item(save_dict: dict, item_name: str, item_type: str) -> bool:
 
 # 判定関数
 def needs_target_item(item_name: str) -> bool:
-    return item_name.strip().lower() in FIELD_ITEM_TARGET_REQUIRED
+    return canon(item_name) in FIELD_ITEM_TARGET_REQUIRED
 
 
 # メニュー「アイテム」
@@ -2963,10 +2965,10 @@ def draw_magic_description(
         return
 
     # 小文字正規化で引く（open_magic_pygame と同じ思想）
-    key = str(spell_name).strip().lower()
+    key = canon(spell_name)
     spell = None
     for k, v in spells_by_name.items():
-        if str(k).strip().lower() == key:
+        if canon(k) == key:
             spell = v
             break
 

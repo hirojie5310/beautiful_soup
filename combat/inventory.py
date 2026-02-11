@@ -9,6 +9,7 @@
 # ============================================================
 
 from typing import Dict, Any, Tuple, List
+from utils.text_normalize import normalize_text_basic
 
 
 # ============================================================
@@ -29,7 +30,7 @@ def is_item_usable(item_def: Dict[str, Any], *, in_battle: bool) -> bool:
     if not isinstance(item_type, str):
         return False
 
-    t = item_type.strip().lower()
+    t = normalize_text_basic(item_type)
 
     if in_battle:
         # 戦闘中は Combat / Anywhere のみ
@@ -110,7 +111,7 @@ def is_item_visible_in_context(item_json: Dict[str, Any], in_combat: bool) -> bo
         or item_json.get("Type")
         or ""
     )
-    it = str(raw).strip().lower()
+    it = normalize_text_basic(raw)
 
     if in_combat:
         # 戦闘中は Key / Field は完全非表示

@@ -17,7 +17,7 @@ from ui_pygame.state import BattleUIState
 from ui_pygame.ui_types import InputMode
 from ui_pygame.app_context import BattleAppContext
 
-from .target_select import handle_target_list_keydown
+from .target_select import TargetModeConfig, handle_target_mode_keydown
 
 
 def _alive_ally_indices(party_members: Sequence[Any]) -> list[int]:
@@ -37,18 +37,7 @@ def handle_target_ally_keydown(
     """
     party_members = ctx.party_members
     alive = _alive_ally_indices(party_members)
-    if not alive:
-        ui.logs.append("[入力] 味方がいません")
-        ui.input_mode = "member"
-        return False
-
     member = party_members[ui.selected_member_idx]
-
-    # ★ESC/BSP は target_side を「呼ばずに」戻すだけ
-    if event.key in (pygame.K_ESCAPE, pygame.K_BACKSPACE):
-        ui.input_mode = on_escape_mode
-        ui.selected_target_all = False
-        return False
 
     def make_action(target_ally_index: int) -> PlannedAction:
         if ui.selected_spell_name:
@@ -77,13 +66,18 @@ def handle_target_ally_keydown(
             return f"[確定] {member.name}: Magic {ui.selected_spell_name} → {ally_name}"
         return f"[確定] {member.name}: Item {ui.selected_item_name} → {ally_name}"
 
-    # ★ここが修正点：target_side ではなく「target_list」共通ハンドラを呼ぶ
-    return handle_target_list_keydown(
+    config = TargetModeConfig(
+        target_side="ally",
+        on_escape_mode=on_escape_mode,
+        empty_log="[入力] 味方がいません",
+        clear_target_all_on_escape=True,
+        make_action=make_action,
+        log_on_confirm=log_on_confirm,
+    )
+
+    return handle_target_mode_keydown(
         event=event,
         ui=ui,
         alive_indices=alive,
-        target_side="ally",
-        on_escape_mode=on_escape_mode,
-        make_action=make_action,
-        log_on_confirm=log_on_confirm,
+        config=config,
     )

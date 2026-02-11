@@ -24,6 +24,7 @@ from typing import Any, Dict, List, Optional, Iterable
 from combat.models import PartyMemberRuntime, EnemyRuntime, PlannedAction
 from combat.life_check import any_char_alive, any_enemy_alive, is_out_of_battle
 from combat.state_view import format_state_line
+from utils.text_normalize import normalize_text_basic
 
 from typing import Any, Iterable, Sequence, Mapping
 
@@ -46,9 +47,9 @@ def _fmt_row(row: Any) -> str:
     s = s.upper()
     if s in ("FRONT", "BACK"):
         return s
-    if "front" in s.lower():
+    if "front" in normalize_text_basic(s):
         return "FRONT"
-    if "back" in s.lower():
+    if "back" in normalize_text_basic(s):
         return "BACK"
     return s
 
@@ -378,7 +379,7 @@ def print_enemy_status_compact(enemy) -> None:
             atk_rate = atk.get("Rate", None)
             sp = spells_by_name.get(atk_name, {})
 
-            sp_type = str(sp.get("Type", "-")).lower() if sp else "-"
+            sp_type = normalize_text_basic(sp.get("Type", "-")) if sp else "-"
             sp_pow = sp.get("Power", "-") if sp else "-"
             sp_acc = _fmt_acc_from_spell(sp.get("Accuracy", None)) if sp else "-"
             sp_mul = sp.get("Multiplier", "-") if sp else "-"

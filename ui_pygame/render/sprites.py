@@ -12,6 +12,7 @@ from typing import Optional, Dict, Literal
 import os
 
 from combat.models import EnemyRuntime
+from utils.text_normalize import normalize_text_basic
 
 
 def load_enemy_sprite_images(folder: str) -> Dict[str, pygame.Surface]:
@@ -21,7 +22,7 @@ def load_enemy_sprite_images(folder: str) -> Dict[str, pygame.Surface]:
     """
     cache: Dict[str, pygame.Surface] = {}
     for fn in os.listdir(folder):
-        if not fn.lower().endswith(".png"):
+        if not normalize_text_basic(fn).endswith(".png"):
             continue
         sprite_id = os.path.splitext(fn)[0]
         path = os.path.join(folder, fn)

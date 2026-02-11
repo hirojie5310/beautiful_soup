@@ -12,6 +12,7 @@ from __future__ import annotations
 import pygame
 from typing import List, Tuple
 import re
+from utils.text_normalize import normalize_text_basic
 
 
 def draw_command_panel(
@@ -138,7 +139,7 @@ def draw_command_panel(
             return (150, 255, 200)
 
         # フォールバック：名前推定（任意）
-        n = (spell_name or "").strip().lower()
+        n = normalize_text_basic(spell_name or "")
         if n.startswith(("fire", "fira", "firaga", "flare")):
             return (255, 120, 120)
         if n.startswith(("bliz", "ice")):
@@ -389,7 +390,7 @@ def parse_elements(elem_raw) -> List[str]:
 
     out = []
     for p in parts:
-        p = p.strip().lower()
+        p = normalize_text_basic(p)
         if p:
             out.append(p)
     return out

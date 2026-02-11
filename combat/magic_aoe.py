@@ -26,6 +26,7 @@ from combat.elements import (
 from combat.magic_damage import magic_damage_enemy_to_char
 from combat.life_check import is_out_of_battle
 from combat.logging import log_damage
+from utils.text_normalize import normalize_text_basic
 
 
 # 敵→キャラ「純粋な全体攻撃」（Snowstorm等）用の汎用ヘルパ
@@ -75,7 +76,7 @@ def enemy_cast_aoe_damage_spell_to_party(
         magic_accuracy_percent=acc_percent,
     )
 
-    is_reflectable = str(spell_json.get("Reflectable", "No")).strip().lower() == "yes"
+    is_reflectable = normalize_text_basic(spell_json.get("Reflectable", "No")) == "yes"
 
     # ★ まとめログ用カウンタ
     reflect_count = 0
@@ -223,7 +224,7 @@ def enemy_cast_aoe_status_spell_to_party(
         logs.append(f"{enemy_name}の《{spell_name}》！")
         return
 
-    status_obj = STATUS_NAME_MAP.get(ailment.lower())
+    status_obj = STATUS_NAME_MAP.get(normalize_text_basic(ailment))
     if status_obj is None:
         logs.append(f"{enemy_name}の《{spell_name}》！")
         logs.append(f"（未対応の状態異常: {ailment}）")
@@ -266,7 +267,7 @@ def spell_name(spell: dict) -> str:
 
 
 def spell_target(spell: dict) -> str:
-    return (spell.get("Target") or spell.get("target") or "").strip().lower()
+    return normalize_text_basic(spell.get("Target") or spell.get("target") or "")
 
 
 def is_spell_aoe(spell: dict) -> bool:
@@ -276,7 +277,7 @@ def is_spell_aoe(spell: dict) -> bool:
 
 # AoE関数呼び出し用関数
 def spell_is_aoe(spell_def: dict) -> bool:
-    target = (spell_def.get("Target") or "").strip().lower()
+    target = normalize_text_basic(spell_def.get("Target") or "")
     return target == "all enemies"
 
 

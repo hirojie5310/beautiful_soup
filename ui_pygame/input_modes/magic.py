@@ -5,6 +5,7 @@ import pygame
 
 from ui_pygame.state import BattleUIState
 from ui_pygame.app_context import BattleAppContext
+from utils.text_normalize import normalize_text_basic
 
 
 def _play_se(se) -> None:
@@ -66,24 +67,28 @@ def handle_magic_keydown(
     if spell_lv is None:
         spells = getattr(ui, "spells_by_name", {}) or {}
         sj = spells.get(spell_name) or {}
-        try:
-            iv = int(sj.get("Level"))
-            if 1 <= iv <= 8:
-                spell_lv = iv
-        except Exception:
-            pass
+        lv_raw = sj.get("Level")
+        if lv_raw is not None:
+            try:
+                iv = int(lv_raw)
+                if 1 <= iv <= 8:
+                    spell_lv = iv
+            except Exception:
+                pass
 
     # 3) さらに保険：job raw の Spells から Level
     if spell_lv is None:
         member = ctx.party_members[ui.selected_member_idx]
         for sp in member.job.raw.get("Spells", []):
             if isinstance(sp, dict) and sp.get("Name") == spell_name:
-                try:
-                    iv = int(sp.get("Level"))
-                    if 1 <= iv <= 8:
-                        spell_lv = iv
-                except Exception:
-                    pass
+                lv_raw = sp.get("Level")
+                if lv_raw is not None:
+                    try:
+                        iv = int(lv_raw)
+                        if 1 <= iv <= 8:
+                            spell_lv = iv
+                    except Exception:
+                        pass
                 break
 
     member = ctx.party_members[ui.selected_member_idx]
@@ -95,8 +100,7 @@ def handle_magic_keydown(
         remain = member.state.mp_pool.get(spell_lv, 0)
         if remain <= 0:
             ui.logs.append(f"[入力] {spell_name}: 残回数がありません")
-            if hasattr(ui, "play_error_sound"):
-                ui.play_error_sound()
+            _play_se(getattr(ui, "se_invalid", None))
             return False
 
     # OKならここで Enter SE
@@ -106,7 +110,7 @@ def handle_magic_keydown(
 
     spells: Dict[str, Any] = getattr(ui, "spells_by_name", {}) or {}
     spell_json = spells.get(spell_name) or {}
-    target_raw = str((spell_json.get("Target") or "")).strip().lower()
+    target_raw = normalize_text_basic(spell_json.get("Target") or "")
 
     ui.selected_target_all = False  # デフォルト単体
 

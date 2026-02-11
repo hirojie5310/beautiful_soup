@@ -60,6 +60,7 @@ def run_one_battle(
     ui.spells_by_name = ctx.spells_expanded or {}
     ui.se_enter = ctx.se.enter
     ui.se_confirm = ctx.se.confirm
+    ui.se_invalid = ctx.se.invalid
 
     # ★次に入力すべきメンバー（戦闘可能な先頭）を選ぶ
     def first_alive_member_index() -> int:

@@ -7,6 +7,7 @@ from datetime import datetime
 
 from assets.data.data_loader import save_savedata
 from combat.progression import apply_item_stock_to_inventory
+from utils.text_normalize import normalize_text_basic
 
 
 # (name, job_name, blv, alv, bexp, aexp, bjl, ajl, bsp, asp)
@@ -113,7 +114,7 @@ def prompt_save_progress_and_write(
         sign = "+" if cp_diff > 0 else ""
         print(f"CP: {before_cp} -> {after_cp} ({sign}{cp_diff})")
 
-    ans = input("\nこの更新をセーブデータに保存しますか？ [y/N]: ").strip().lower()
+    ans = normalize_text_basic(input("\nこの更新をセーブデータに保存しますか？ [y/N]: "))
     if ans not in ("y", "yes"):
         print("[Save] キャンセルしました。")
         return False
@@ -159,7 +160,7 @@ def restore_latest_backup(path: Path) -> bool:
         return False
 
     latest = backups[0]
-    ans = input(f"{latest.name} から復元しますか？ [y/N]: ").strip().lower()
+    ans = normalize_text_basic(input(f"{latest.name} から復元しますか？ [y/N]: "))
     if ans not in ("y", "yes"):
         print("[Restore] キャンセルしました。")
         return False

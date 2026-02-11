@@ -21,8 +21,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable
 
-import pygame
-
 from combat.models import EnemyRuntime, PartyMemberRuntime
 from combat.life_check import any_char_alive, any_enemy_alive
 

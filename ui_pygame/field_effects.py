@@ -1,6 +1,7 @@
 # field_effects.py
 # メニューの「まほう」「アイテム」の処理に利用する純粋に“状態を書き換える”層
 from combat.constants import STATUS_ENUM_BY_KEY, Status
+from utils.text_normalize import normalize_text_basic
 
 FIELD_ITEM_TYPES = ("Anywhere", "Field")
 
@@ -83,7 +84,7 @@ def set_hp(actor, new_hp: int) -> bool:
 # clear_status(actor, Status or key)（BattleActorState.statuses から消す）
 def clear_status(actor, key: str, save_dict=None) -> bool:
     changed = False
-    key_l = str(key).strip().lower()
+    key_l = normalize_text_basic(key)
 
     # (A) 戦闘ロジックの本体：BattleActorState.statuses を消す
     st = get_battle_state(actor)

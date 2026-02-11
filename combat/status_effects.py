@@ -26,6 +26,7 @@ from typing import Optional, Dict, Any, List
 from combat.enums import Status
 from combat.models import BattleActorState, FinalCharacterStats, FinalEnemyStats
 from combat.models import EnemyCasterStats
+from utils.text_normalize import normalize_text_basic
 
 
 # <状態異常> =============================================================================
@@ -92,7 +93,7 @@ def apply_partial_petrify_from_status_attack(
 
 # 名前から amount を返す小ヘルパー（部分石化）
 def partial_petrify_amount_from_name(name: str) -> float:
-    n = name.lower()
+    n = normalize_text_basic(name)
     if "1/3" in n:
         return 1.0 / 3.0
     if "1/2" in n:
@@ -225,37 +226,33 @@ def apply_status_spell_to_enemy(
                 spell_json["StatusAilment"] = child_status
 
     # ★ スペル名は最初に拾っておく（Name / name 両対応）
-    spell_name = (
-        (spell_json.get("Name") or spell_json.get("name") or "").strip().lower()
-    )
+    spell_name = normalize_text_basic(spell_json.get("Name") or spell_json.get("name") or "")
 
     # ---- 1) 状態異常リスト抽出（StatusAilment / StatusAilments） ----
     ailments = spell_json.get("StatusAilment") or spell_json.get("StatusAilments") or ""
 
     ailments_list: List[str] = []
     if isinstance(ailments, str) and ailments.strip():
-        ailments_list = [a.strip().lower() for a in ailments.split(",") if a.strip()]
+        ailments_list = [normalize_text_basic(a) for a in ailments.split(",") if a.strip()]
 
     # ★ ここでスペル名を取得（name / Name どちらにも対応）
-    spell_name = (
-        (spell_json.get("Name") or spell_json.get("name") or "").strip().lower()
-    )
+    spell_name = normalize_text_basic(spell_json.get("Name") or spell_json.get("name") or "")
 
     # ---- 1.5) Summon 子スペルの Status を拾う ----
     # expand_summon_magic_as_children 済みだと Type="Summon" の子が spells_by_name に入る。
     # 子は StatusAilment ではなく Status を持つのでここで吸う。
     if not ailments_list:
-        raw_type = str(spell_json.get("Type", "")).lower().strip()
+        raw_type = normalize_text_basic(spell_json.get("Type", ""))
         if raw_type == "summon" or raw_type.startswith("summon"):
             child_status = (spell_json.get("Status") or "").strip()
             if child_status and child_status != "-":
                 ailments_list = [
-                    a.strip().lower() for a in child_status.split(",") if a.strip()
+                    normalize_text_basic(a) for a in child_status.split(",") if a.strip()
                 ]
 
     # ---- 2) それでも無い場合は Effect から抽出（Mini/Toad等含む） ----
     if not ailments_list:
-        effect_text = (spell_json.get("Effect") or "").lower()
+        effect_text = normalize_text_basic(spell_json.get("Effect") or "")
 
         # パターンA: "Inflict xxx"
         if "inflict" in effect_text:
@@ -290,7 +287,7 @@ def apply_status_spell_to_enemy(
     immune_list = (
         enemy_json.get("StatusAilmentVulnerability", {}).get("Immune", []) or []
     )
-    immune_set = set(str(x).strip().lower() for x in immune_list)
+    immune_set = set(normalize_text_basic(x) for x in immune_list)
 
     # ---- 3.5) Toad / Mini 専用処理（即KO系） ----
     for ail in ailments_list:
@@ -402,7 +399,7 @@ def apply_status_spell_to_enemy(
 
     # ---- 6) 付与実行 ----
     for a in ailments_list:
-        key = a.lower()
+        key = normalize_text_basic(a)
 
         if key in immune_set or (
             key.startswith("partial petrification")
@@ -521,11 +518,11 @@ def apply_status_spell_to_char(
     ailments = spell_json.get("StatusAilment") or spell_json.get("StatusAilments") or ""
     ailments_list: list[str] = []
     if isinstance(ailments, str) and ailments.strip():
-        ailments_list = [a.strip().lower() for a in ailments.split(",") if a.strip()]
+        ailments_list = [normalize_text_basic(a) for a in ailments.split(",") if a.strip()]
 
     # 2) まだ取れなかったら Effect から推定（Mini/Toad など）
     if not ailments_list:
-        effect_text = (spell_json.get("Effect") or "").lower()
+        effect_text = normalize_text_basic(spell_json.get("Effect") or "")
         if "miniaturize" in effect_text:
             ailments_list = ["mini"]
         elif "toad" in effect_text and "turn target into a toad" in effect_text:
@@ -533,7 +530,7 @@ def apply_status_spell_to_char(
 
     # 2.x) Effect から抽出（Inflict / Mini / Toad）
     if not ailments_list:
-        effect_text = (spell_json.get("Effect") or "").lower()
+        effect_text = normalize_text_basic(spell_json.get("Effect") or "")
 
         if "inflict" in effect_text:
             after = effect_text.split("inflict", 1)[1].strip()
@@ -547,9 +544,7 @@ def apply_status_spell_to_char(
             ailments_list = ["toad"]
 
     # 3) Erase / Toad / Mini 特別扱い
-    spell_name = (
-        (spell_json.get("Name") or spell_json.get("name") or "").strip().lower()
-    )
+    spell_name = normalize_text_basic(spell_json.get("Name") or spell_json.get("name") or "")
 
     if not ailments_list:
         if spell_name == "erase":
@@ -625,7 +620,7 @@ def apply_status_spell_to_char(
 
     # ---- Toad / Mini：キャラ側は KO ではなく普通に状態異常化させる想定 ----
     for ail in ailments_list:
-        key = ail.lower()
+        key = normalize_text_basic(ail)
         if key in ("toad", "mini"):
             if key in immune_set:
                 logs.append(f"{char_name}には{key.title()}が効かなかった！（無効）")
@@ -648,7 +643,7 @@ def apply_status_spell_to_char(
 
     # 8) 通常の状態異常（Poison / Blind…）も enemy版と同様に処理
     for ail in ailments_list:
-        key = ail.lower()
+        key = normalize_text_basic(ail)
         if key in immune_set:
             logs.append(f"{char_name}には{key}が効かなかった！（無効）")
             continue

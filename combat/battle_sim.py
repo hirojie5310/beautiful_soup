@@ -39,6 +39,176 @@ from combat.magic_damage import healing_spell_kind
 from combat.progression import apply_job_sp_for_command
 
 
+def _resolve_character_targets(
+    *,
+    action: PlannedAction,
+    actor: PartyMemberRuntime,
+    party_members: List[PartyMemberRuntime],
+    enemies: List[EnemyRuntime],
+) -> tuple[Optional[EnemyRuntime], Optional[PartyMemberRuntime], Optional[int]]:
+    """行動対象（敵/味方/自分）を決定する。"""
+    target_enemy: Optional[EnemyRuntime] = None
+    target_char: Optional[PartyMemberRuntime] = None
+    enemy_index: Optional[int] = None
+
+    if action.target_side == "enemy":
+        if (
+            action.target_index is None
+            or action.target_index >= len(enemies)
+            or is_out_of_battle(enemies[action.target_index].state)
+        ):
+            t_idx = first_alive_enemy_index(enemies)
+            if t_idx is None:
+                return None, None, None
+        else:
+            t_idx = action.target_index
+
+        target_enemy = enemies[t_idx]
+        enemy_index = t_idx
+
+    elif action.target_side == "ally":
+        if (
+            action.target_index is None
+            or action.target_index >= len(party_members)
+            or is_out_of_battle(party_members[action.target_index].state)
+        ):
+            t_idx = first_alive_char_index(party_members)
+            if t_idx is None:
+                return None, None, None
+        else:
+            t_idx = action.target_index
+
+        target_char = party_members[t_idx]
+    else:
+        target_char = actor
+
+    if target_enemy is None:
+        t_idx = first_alive_enemy_index(enemies)
+        if t_idx is None:
+            return None, target_char, None
+        target_enemy = enemies[t_idx]
+        enemy_index = t_idx
+
+    return target_enemy, target_char, enemy_index
+
+
+def _build_character_action_inputs(
+    *,
+    action: PlannedAction,
+    spells_by_name: Optional[Dict[str, Dict[str, Any]]],
+    items_by_name: Optional[Dict[str, Dict[str, Any]]],
+    logs: List[str],
+) -> tuple[
+    BattleKind,
+    Optional[str],
+    Any,
+    Optional[Dict[str, Any]],
+    Optional[str],
+    Optional[str],
+    Optional[Dict[str, Any]],
+]:
+    """PlannedAction を run_character_turn 用の引数群へ変換する。"""
+    char_attack_kind: BattleKind = "physical"
+    char_battle_command: Optional[str] = action.command
+    char_spell = None
+    char_spell_json = None
+    char_spell_healing_type = None
+    char_spell_name = None
+    char_item = None
+
+    if action.kind in ("physical", "special", "run", "jump"):
+        if action.kind == "special":
+            char_attack_kind = "special"
+        elif action.kind == "run":
+            char_attack_kind = "run"
+        elif action.kind == "jump":
+            char_attack_kind = "jump"
+        else:
+            char_attack_kind = "physical"
+
+    elif action.kind == "magic":
+        if not spells_by_name or not action.spell_name:
+            logs.append("※ 魔法が選択されなかったため、通常攻撃として扱います。")
+            char_attack_kind = "physical"
+            char_battle_command = "Fight"
+        else:
+            spell_name = action.spell_name
+            spell_json = spells_by_name.get(spell_name)
+            if not spell_json:
+                logs.append(
+                    f"※ 魔法《{spell_name}》のデータが見つからないため、通常攻撃にフォールバックします。"
+                )
+                char_attack_kind = "physical"
+                char_battle_command = "Fight"
+            else:
+                char_attack_kind = "magic"
+                char_spell = spell_from_json(spell_json)
+                char_spell_json = spell_json
+                char_spell_healing_type = healing_spell_kind(spell_json)
+                char_spell_name = spell_name
+
+    elif action.kind == "item":
+        if not items_by_name or not action.item_name:
+            logs.append("※ アイテムが選択されなかったため、通常攻撃として扱います。")
+            char_attack_kind = "physical"
+            char_battle_command = "Fight"
+        else:
+            item_name = action.item_name
+            item_json = items_by_name.get(item_name)
+            if not item_json:
+                logs.append(
+                    f"※ アイテム《{item_name}》のデータが見つからないため、通常攻撃にフォールバックします。"
+                )
+                char_attack_kind = "physical"
+                char_battle_command = "Fight"
+            else:
+                char_attack_kind = "item"
+                char_item = item_json
+
+    return (
+        char_attack_kind,
+        char_battle_command,
+        char_spell,
+        char_spell_json,
+        char_spell_healing_type,
+        char_spell_name,
+        char_item,
+    )
+
+
+def _append_enemy_diff_events(
+    *,
+    enemies: List[EnemyRuntime],
+    old_hp_map: List[int],
+    old_status_map: List[set],
+    events: list[dict],
+) -> None:
+    """敵全体のHP/状態異常差分から表示イベントを蓄積する。"""
+    for i, e in enumerate(enemies):
+        new_hp = e.state.hp
+        new_statuses = set(getattr(e.state, "statuses", set()))
+
+        delta = old_hp_map[i] - new_hp
+        if delta > 0:
+            events.append(
+                {
+                    "type": "damage",
+                    "enemy_index": i,
+                    "value": delta,
+                }
+            )
+
+        added = sorted(list(new_statuses - old_status_map[i]), key=lambda x: str(x))
+        if added:
+            events.append(
+                {
+                    "type": "status",
+                    "enemy_index": i,
+                    "names": added,
+                }
+            )
+
+
 def simulate_one_round_multi_party(
     party_members: List[PartyMemberRuntime],
     enemies: List[EnemyRuntime],
@@ -171,148 +341,35 @@ def simulate_one_round_multi_party(
 
             logs.append(f"▶ {pm.name} の行動（{action.command}）")
 
-            # ----- ターゲット決定 -----
-            target_enemy: Optional[EnemyRuntime] = None
-            target_char: Optional[PartyMemberRuntime] = None
-
-            # ★変更：t_idx を「敵インデックス」として使う（enemy_indexの正体）
-            enemy_index: Optional[int] = None
-
-            if action.target_side == "enemy":
-                # ----------------------------
-                # ★ここから target_all 対応版
-                # ----------------------------
-                target_indices: list[int] = []
-
-                if getattr(action, "target_all", False):
-                    # 全体：生存している敵を全員対象にする
-                    target_indices = [
-                        i
-                        for i, e in enumerate(enemies)
-                        if not is_out_of_battle(e.state)
-                    ]
-                    if not target_indices:
-                        break  # 対象がいない
-                else:
-                    # 単体：従来のフォールバック込み
-                    if (
-                        action.target_index is None
-                        or action.target_index >= len(enemies)
-                        or is_out_of_battle(enemies[action.target_index].state)
-                    ):
-                        t_idx = first_alive_enemy_index(enemies)
-                        if t_idx is None:
-                            break
-                    else:
-                        t_idx = action.target_index
-                    target_indices = [t_idx]
-
-                # 以降の「単体に対して処理する既存コード」を
-                # target_indices で回す
-                for enemy_index in target_indices:
-                    target_enemy = enemies[enemy_index]
-
-                    # ここから下は、元々 target_enemy/enemy_index を使っていた
-                    # 「魔法適用」や「ダメージ/状態異常」や「events生成」を
-                    # そのまま置いてください（= 既存処理をforの中に入れるだけ）
-                    # 例：
-                    #   damage = ...
-                    #   events.append({"type": "damage", "enemy_index": enemy_index, "value": damage})
-                    #   ...
-
-            elif action.target_side == "ally":
-                if (
-                    action.target_index is None
-                    or action.target_index >= len(party_members)
-                    or is_out_of_battle(party_members[action.target_index].state)
-                ):
-                    t_idx = first_alive_char_index(party_members)
-                    if t_idx is None:
-                        break
-                else:
-                    t_idx = action.target_index
-                target_char = party_members[t_idx]
-            else:
-                target_char = pm
-
-            # enemy を必ず渡す（既存仕様のため）
+            # --- 行動対象（敵/味方/自分）を決定 ---
+            target_enemy, _, _ = _resolve_character_targets(
+                action=action,
+                actor=pm,
+                party_members=party_members,
+                enemies=enemies,
+            )
             if target_enemy is None:
-                t_idx = first_alive_enemy_index(enemies)
-                if t_idx is None:
-                    break
-                target_enemy = enemies[t_idx]
-                enemy_index = t_idx  # ★追加：回復でも「参照用」として一応入れる
+                break
             em = target_enemy
 
-            # --- kind ごとの引数決定（あなたのまま） ---
-            char_attack_kind: BattleKind = "physical"
-            char_battle_command: Optional[str] = action.command
+            # --- PlannedAction を run_character_turn 用の引数群へ変換 ---
+            (
+                char_attack_kind,
+                char_battle_command,
+                char_spell,
+                char_spell_json,
+                char_spell_healing_type,
+                char_spell_name,
+                char_item,
+            ) = _build_character_action_inputs(
+                action=action,
+                spells_by_name=spells_by_name,
+                items_by_name=items_by_name,
+                logs=logs,
+            )
             char_weapon_hand: Literal["main", "off"] = "main"
-            char_spell = None
-            char_spell_json = None
-            char_spell_healing_type = None
-            char_spell_name = None
-            char_item = None
 
-            if action.kind in ("physical", "special", "run", "jump"):
-                if action.kind == "special":
-                    char_attack_kind = "special"
-                elif action.kind == "run":
-                    char_attack_kind = "run"
-                elif action.kind == "jump":
-                    char_attack_kind = "jump"  # ★追加
-                else:
-                    char_attack_kind = "physical"
-
-            elif action.kind == "magic":
-                if not spells_by_name or not action.spell_name:
-                    logs.append(
-                        "※ 魔法が選択されなかったため、通常攻撃として扱います。"
-                    )
-                    char_attack_kind = "physical"
-                    char_battle_command = "Fight"
-                else:
-                    spell_name = action.spell_name
-                    spell_json = spells_by_name.get(spell_name)
-                    if not spell_json:
-                        logs.append(
-                            f"※ 魔法《{spell_name}》のデータが見つからないため、通常攻撃にフォールバックします。"
-                        )
-                        char_attack_kind = "physical"
-                        char_battle_command = "Fight"
-                    else:
-                        spell = spell_from_json(spell_json)
-                        healing_type = healing_spell_kind(spell_json)
-
-                        char_attack_kind = "magic"
-                        char_spell = spell
-                        char_spell_json = spell_json
-                        char_spell_healing_type = healing_type
-                        char_spell_name = spell_name
-
-            elif action.kind == "item":
-                if not items_by_name or not action.item_name:
-                    logs.append(
-                        "※ アイテムが選択されなかったため、通常攻撃として扱います。"
-                    )
-                    char_attack_kind = "physical"
-                    char_battle_command = "Fight"
-                else:
-                    item_name = action.item_name
-                    item_json = items_by_name.get(item_name)
-                    if not item_json:
-                        logs.append(
-                            f"※ アイテム《{item_name}》のデータが見つからないため、通常攻撃にフォールバックします。"
-                        )
-                        char_attack_kind = "physical"
-                        char_battle_command = "Fight"
-                    else:
-                        char_attack_kind = "item"
-                        char_item = item_json
-
-            # =========================================
-            # ★変更：HP/状態異常差分を「敵全員」で取る（AoE対応）
-            # =========================================
+            # --- 敵全体のHP/状態異常差分から表示イベントを蓄積 ---
             old_hp_map = [e.state.hp for e in enemies]
             old_status_map = [set(getattr(e.state, "statuses", set())) for e in enemies]
 
@@ -360,31 +417,12 @@ def simulate_one_round_multi_party(
             # =========================================
             # ★変更：差分から dict events を生成して「蓄積」
             # =========================================
-            for i, e in enumerate(enemies):
-                new_hp = e.state.hp
-                new_statuses = set(getattr(e.state, "statuses", set()))
-
-                delta = old_hp_map[i] - new_hp
-                if delta > 0:
-                    events.append(
-                        {
-                            "type": "damage",
-                            "enemy_index": i,
-                            "value": delta,
-                        }
-                    )
-
-                added = sorted(
-                    list(new_statuses - old_status_map[i]), key=lambda x: str(x)
-                )
-                if added:
-                    events.append(
-                        {
-                            "type": "status",
-                            "enemy_index": i,
-                            "names": added,
-                        }
-                    )
+            _append_enemy_diff_events(
+                enemies=enemies,
+                old_hp_map=old_hp_map,
+                old_status_map=old_status_map,
+                events=events,
+            )
 
             # ★ 行動後：戦闘終了チェック
             if all_enemies_defeated(enemies):

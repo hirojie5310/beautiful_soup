@@ -109,6 +109,7 @@ class BattleUIState:
     # サウンドエフェクト
     se_enter: Optional[pygame.mixer.Sound] = None
     se_confirm: Optional[pygame.mixer.Sound] = None
+    se_invalid: Optional[pygame.mixer.Sound] = None
     se_rareitem: Optional[pygame.mixer.Sound] = None
 
     # BGM 状態

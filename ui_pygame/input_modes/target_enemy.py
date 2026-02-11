@@ -18,7 +18,7 @@ from ui_pygame.state import BattleUIState
 from ui_pygame.ui_types import InputMode
 from ui_pygame.app_context import BattleAppContext
 
-from .target_select import handle_target_list_keydown
+from .target_select import TargetModeConfig, handle_target_mode_keydown
 
 
 def _alive_enemy_indices(enemies: Sequence[Any]) -> list[int]:
@@ -41,11 +41,6 @@ def handle_target_enemy_keydown(
 
     enemies = ctx.enemies
     alive = _alive_enemy_indices(enemies)
-    if not alive:
-        ui.logs.append("[入力] 敵がいません")
-        ui.input_mode = "member"
-        return False
-
     member = ctx.party_members[ui.selected_member_idx]
 
     # 直前が magic/item か、physical/special かで戻り先を切替
@@ -53,13 +48,6 @@ def handle_target_enemy_keydown(
     escape_mode: InputMode = (
         on_escape_mode_magic_item if from_magic_or_item else on_escape_mode_phys
     )
-
-    # ★ここが重要：ESC/BSP は target_side を「呼ばずに」モードを戻すだけ
-    if event.key in (pygame.K_ESCAPE, pygame.K_BACKSPACE):
-        ui.input_mode = escape_mode
-        if escape_mode == "command":
-            ui.selected_target_all = False  # 物理/特殊へ戻る時だけAoEを消す
-        return False
 
     def make_action(target_enemy_index: int) -> PlannedAction:
         # 直前が magic
@@ -120,13 +108,18 @@ def handle_target_enemy_keydown(
         cmd = cand.cmd
         return f"[確定] {member.name}: {cmd} → {enemy_name}"
 
-    # ★ここが修正点：target_side ではなく「target_list」共通ハンドラを呼ぶ
-    return handle_target_list_keydown(
+    config = TargetModeConfig(
+        target_side="enemy",
+        on_escape_mode=escape_mode,
+        empty_log="[入力] 敵がいません",
+        clear_target_all_on_escape=(escape_mode == "command"),
+        make_action=make_action,
+        log_on_confirm=log_on_confirm,
+    )
+
+    return handle_target_mode_keydown(
         event=event,
         ui=ui,
         alive_indices=alive,
-        target_side="enemy",
-        on_escape_mode=escape_mode,
-        make_action=make_action,
-        log_on_confirm=log_on_confirm,
+        config=config,
     )

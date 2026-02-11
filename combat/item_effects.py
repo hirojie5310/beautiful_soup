@@ -19,6 +19,7 @@ from combat.models import (
 )
 from combat.elements import parse_elements, apply_element_relation_to_damage
 from combat.status_effects import *
+from utils.text_normalize import normalize_text_basic
 
 
 # ============================================================
@@ -54,7 +55,7 @@ def apply_item_effect_to_actor(
         return
 
     spell_info = item_json.get("SpellInfo") or {}
-    effect_text = (spell_info.get("Effect") or "").lower()
+    effect_text = normalize_text_basic(spell_info.get("Effect") or "")
     value = int(item_json.get("Value", 0) or 0)
 
     # 既に戦闘不能（HP<=0）の場合、HP回復系の扱いをどうするかは好みだが、
@@ -67,8 +68,8 @@ def apply_item_effect_to_actor(
     #    SpellEffect: "Haste"
     #    Multiplier は 3 で固定
     # ------------------------------------------
-    name_lower = (item_json.get("Name") or "").strip().lower()
-    spell_effect = (item_json.get("SpellEffect") or "").strip().lower()
+    name_lower = normalize_text_basic(item_json.get("Name") or "")
+    spell_effect = normalize_text_basic(item_json.get("SpellEffect") or "")
 
     is_haste_item = (
         "enhance accuracy and attack multiplier" in effect_text
@@ -347,7 +348,7 @@ def apply_status_item_to_enemy(
         False : この関数では扱わないアイテムだった（＝他で処理してね）
     """
     spell_info = item_json.get("SpellInfo") or {}
-    effect_text = (spell_info.get("Effect") or "").lower()
+    effect_text = normalize_text_basic(spell_info.get("Effect") or "")
 
     # 今の JSON だと "Inflict Paralysis" などが入っている。
     # 必要に応じて "inflict poison" なども増やせるようにマッピングで書いておく。
@@ -390,7 +391,7 @@ def apply_status_item_to_enemy(
 
     if "inflict partial petrification" in effect_text:
         # どの段階か判定（アイテムJSONのEffectやNameに含まれる前提）
-        src = (effect_text + " " + str(item_json.get("Name", ""))).lower()
+        src = normalize_text_basic(effect_text + " " + str(item_json.get("Name", "")))
         amount = partial_petrify_amount_from_name(src)
 
         # 命中したらゲージ処理へ
@@ -439,8 +440,8 @@ def spell_from_item(item_json: Dict[str, Any]) -> SpellInfo:
     # 2) 無い場合は Effect から推定
     # ----------------------------
     if not elements:
-        effect_text = (spell_info.get("Effect") or "").lower()
-        spell_effect_name = str(item_json.get("SpellEffect") or "").lower()
+        effect_text = normalize_text_basic(spell_info.get("Effect") or "")
+        spell_effect_name = normalize_text_basic(item_json.get("SpellEffect") or "")
         src = effect_text + " " + spell_effect_name
 
         def has(*keys):
@@ -472,7 +473,7 @@ def spell_from_item(item_json: Dict[str, Any]) -> SpellInfo:
     acc_percent = int(round(base_acc * 100))
 
     # Magic type（適当に black/white）
-    effect_text = (spell_info.get("Effect") or "").lower()
+    effect_text = normalize_text_basic(spell_info.get("Effect") or "")
     if "deal" in effect_text and "damage" in effect_text:
         magic_type = "black"
     else:

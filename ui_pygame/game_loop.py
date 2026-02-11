@@ -5,11 +5,12 @@
 # config:アプリ設定（論理名）
 
 # ui_pygame/
-#   ├─ app.py          ← pygame専用の起動ラッパ
-#   ├─ game_loop.py    ← ゲーム進行（主役）
-#   ├─ enemy_flow.py
-#   ├─ battle_flow.py
-#   ├─ victory_flow.py
+#   ├─ app.py           ← pygame専用の起動ラッパ
+#   ├─ game_loop.py     ← ゲーム進行（主役）
+#   ├─ enemy_flow.py    ← エリア/敵選択
+#   ├─ battle_flow.py   ← 戦闘処理（BattleContext依存）UI層は BattleAppContext依存
+#   ├─ victory_flow.py  ← 戦闘勝利処理
+#   ├─ gameover_flow.py ← 戦闘敗退処理
 
 from __future__ import annotations
 

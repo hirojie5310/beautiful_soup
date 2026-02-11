@@ -2,10 +2,12 @@
 # target_select:
 
 # handle_target_list_keydown: target_enemy / target_ally 共通ハンドラ
+# handle_target_mode_keydown: target mode（enemy/ally）設定駆動ハンドラ
 # ============================================================
 
 # ui_pygame/input_modes/target_select.py
 from __future__ import annotations
+from dataclasses import dataclass
 from typing import Optional, Sequence, Callable
 
 import pygame
@@ -14,6 +16,22 @@ from combat.models import PlannedAction, TargetSide
 
 from ui_pygame.state import BattleUIState
 from ui_pygame.ui_types import InputMode
+
+
+DefMakeAction = Callable[[int], PlannedAction]
+DefLogOnConfirm = Callable[[int], str]
+
+
+@dataclass(frozen=True)
+class TargetModeConfig:
+    """target_enemy / target_ally の振る舞い差分設定。"""
+
+    target_side: TargetSide
+    on_escape_mode: InputMode
+    empty_log: str
+    clear_target_all_on_escape: bool
+    make_action: DefMakeAction
+    log_on_confirm: DefLogOnConfirm
 
 
 def _play_se(se: Optional[pygame.mixer.Sound]) -> None:
@@ -34,8 +52,8 @@ def handle_target_list_keydown(
     alive_indices: Sequence[int],
     target_side: TargetSide,  # "enemy" or "ally"
     on_escape_mode: InputMode,  # 戻り先モード
-    make_action: Callable[[int], PlannedAction],  # target_index -> PlannedAction
-    log_on_confirm: Callable[[int], str],  # target_index -> log string
+    make_action: DefMakeAction,  # target_index -> PlannedAction
+    log_on_confirm: DefLogOnConfirm,  # target_index -> log string
 ) -> bool:
     """
     target_enemy / target_ally 共通ハンドラ
@@ -96,3 +114,34 @@ def handle_target_list_keydown(
         return True
 
     return False
+
+
+def handle_target_mode_keydown(
+    *,
+    event: pygame.event.Event,
+    ui: BattleUIState,
+    alive_indices: Sequence[int],
+    config: TargetModeConfig,
+) -> bool:
+    """target mode の共通テンプレートハンドラ。"""
+
+    if not alive_indices:
+        ui.logs.append(config.empty_log)
+        ui.input_mode = "member"
+        return False
+
+    if event.key in (pygame.K_ESCAPE, pygame.K_BACKSPACE):
+        ui.input_mode = config.on_escape_mode
+        if config.clear_target_all_on_escape:
+            ui.selected_target_all = False
+        return False
+
+    return handle_target_list_keydown(
+        event=event,
+        ui=ui,
+        alive_indices=alive_indices,
+        target_side=config.target_side,
+        on_escape_mode=config.on_escape_mode,
+        make_action=config.make_action,
+        log_on_confirm=config.log_on_confirm,
+    )

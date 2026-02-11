@@ -1,11 +1,12 @@
 import pygame
 
 from pathlib import Path
+from utils.text_normalize import normalize_text_basic
 
 
 # グループ名 → 画像ファイル名の変換
 def group_name_to_image_key(name: str) -> str:
-    return name.lower().replace("'", "").replace(" ", "_")
+    return normalize_text_basic(name).replace("'", "").replace(" ", "_")
 
 
 # マッププレビュー画像の読み込み（キャッシュ付き）

@@ -11,6 +11,7 @@ from types import SimpleNamespace
 from typing import Literal, Dict, Any, List, Tuple, cast
 
 from utils.safe_int_float import safe_int
+from utils.text_normalize import normalize_text_basic
 from combat.enums import BattleKind, Status
 from combat.models import (
     Optional,
@@ -492,8 +493,8 @@ def run_character_turn(
                 dmg_to_enemy = 0
                 return dmg_to_enemy, None
 
-            spell_type = (char_spell_json.get("Type") or "").lower()
-            spell_name_lower = (char_spell_name or "").lower()
+            spell_type = normalize_text_basic(char_spell_json.get("Type") or "")
+            spell_name_lower = normalize_text_basic(char_spell_name or "")
             is_summon_heal = (
                 spell_type.startswith("summon") or "healing light" in spell_name_lower
             )
@@ -569,12 +570,12 @@ def run_character_turn(
             )
             if isinstance(ailments, str):
                 ailments_list = [
-                    a.strip().lower() for a in ailments.split(",") if a.strip()
+                    normalize_text_basic(a) for a in ailments.split(",") if a.strip()
                 ]
             else:
                 ailments_list = []
 
-            before = set(s.name.lower() for s in target_state.statuses)
+            before = set(normalize_text_basic(s.name) for s in target_state.statuses)
 
             status_map = {
                 "poison": Status.POISON,
@@ -598,7 +599,7 @@ def run_character_turn(
                     if st in (Status.PARTIAL_PETRIFY, Status.PETRIFY):
                         target_state.partial_petrify_gauge = 0.0
 
-            after = set(s.name.lower() for s in target_state.statuses)
+            after = set(normalize_text_basic(s.name) for s in target_state.statuses)
             cured = sorted(before - after)
 
             spell_label = char_spell_name or "状態回復魔法"
@@ -652,7 +653,7 @@ def run_character_turn(
                 dmg_to_enemy = 0
                 return dmg_to_enemy, None
 
-            effect = (char_spell_json.get("Effect") or "").lower()
+            effect = normalize_text_basic(char_spell_json.get("Effect") or "")
 
             if target_state.has(Status.KO):
                 target_state.statuses.discard(Status.KO)
@@ -840,7 +841,7 @@ def run_character_turn(
                 return dmg_to_enemy, None
 
             if (
-                str(char_spell_json.get("Type", "")).lower() == "summon"
+                normalize_text_basic(char_spell_json.get("Type", "")) == "summon"
                 and raw_name == "Odin: Protective Light"
             ):
                 base_acc = float(char_spell_json.get("Accuracy") or 0.0)
@@ -992,7 +993,7 @@ def run_character_turn(
             # ------------------------
             # ターゲット判定：All / One/All
             # ------------------------
-            target_raw = (char_spell_json.get("Target") or "").strip().lower()
+            target_raw = normalize_text_basic(char_spell_json.get("Target") or "")
             is_all_only = target_raw == "all enemies"
             is_one_or_all = target_raw == "one/all enemies"
 
@@ -1034,7 +1035,7 @@ def run_character_turn(
             # AoEにReflectを入れたい場合は別途拡張（敵ごとに reflect_charges を見る必要がある）
             # ------------------------
             is_reflectable = (
-                str(char_spell_json.get("Reflectable", "No")).strip().lower() == "yes"
+                normalize_text_basic(char_spell_json.get("Reflectable", "No")) == "yes"
             )
             if (
                 (not aoe_selected)
@@ -1099,8 +1100,8 @@ def run_character_turn(
                 return any(name.endswith(ps) for ps in pure_status_spells)
 
             is_drain_spell = False
-            effect_text = (char_spell_json.get("Effect") or "").lower()
-            name_lower = (char_spell_json.get("Name") or "").lower()
+            effect_text = normalize_text_basic(char_spell_json.get("Effect") or "")
+            name_lower = normalize_text_basic(char_spell_json.get("Name") or "")
             if "absorb hp" in effect_text or name_lower == "drain":
                 is_drain_spell = True
 
@@ -1120,7 +1121,7 @@ def run_character_turn(
 
                 # ★ 反射まとめ
                 is_reflectable = (
-                    str(char_spell_json.get("Reflectable", "No")).strip().lower()
+                    normalize_text_basic(char_spell_json.get("Reflectable", "No"))
                     == "yes"
                 )
                 reflect_count = 0
@@ -1364,9 +1365,9 @@ def run_character_turn(
                 target_name = tpm.name
 
         spell_info = char_item.get("SpellInfo") or {}
-        effect_text = (spell_info.get("Effect") or "").lower()
-        item_spell_effect = str(char_item.get("SpellEffect") or "").lower()
-        item_name_lower = (char_item.get("Name") or "").lower()
+        effect_text = normalize_text_basic(spell_info.get("Effect") or "")
+        item_spell_effect = normalize_text_basic(char_item.get("SpellEffect") or "")
+        item_name_lower = normalize_text_basic(char_item.get("Name") or "")
 
         # =========================
         # 攻撃/状態異常アイテム判定
@@ -1697,7 +1698,7 @@ def run_character_turn(
                 surface = (save.get("map") or {}).get("surface")
 
             surface_str = str(surface or "Other").strip()
-            surface_norm = surface_str.lower()
+            surface_norm = normalize_text_basic(surface_str)
 
             surface_to_spell = {
                 "sky": "Cyclone",
@@ -1775,7 +1776,7 @@ def run_character_turn(
 
                 else:
                     effect = spell.get("Effect", "")
-                    target = (spell.get("Target") or "").strip().lower()
+                    target = normalize_text_basic(spell.get("Target") or "")
                     is_aoe = target == "all enemies"
 
                     if "Inflict KO" in effect:
@@ -2517,7 +2518,7 @@ def run_enemy_turn(
         ):
             spell_def = _find_spell_json_for_enemy_attack(enemy_json, enemy_attack)
             spell_name = (spell_def or {}).get("Name") or enemy_attack.attack_name
-            name_lower = spell_name.lower()
+            name_lower = normalize_text_basic(spell_name)
 
             # 0) spell_def が無いと Target も見れないので fallback
             if not spell_def:
@@ -2586,7 +2587,7 @@ def run_enemy_turn(
                                     or 100
                                 )
                             ),
-                            magic_type=str(spell_def.get("Type") or "").lower(),
+                            magic_type=normalize_text_basic(spell_def.get("Type") or ""),
                             elements=parse_elements(spell_def.get("Element")),
                         )
                         enemy_caster = enemy_caster_from_monster(enemy_json)
@@ -3125,7 +3126,7 @@ def enemy_attack_to_char_with_special(
                     reflectable_raw = base_spell.get("Reflectable")
 
             # 3) それでも見つからなければ "No" 扱い
-            is_reflectable = str(reflectable_raw or "No").strip().lower() == "yes"
+            is_reflectable = normalize_text_basic(reflectable_raw or "No") == "yes"
 
             return EnemyAttackResult(
                 damage=max(int(dmg_spec), 0),

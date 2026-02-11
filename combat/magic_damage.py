@@ -38,6 +38,7 @@ from combat.elements import (
 )
 from combat.elements import parse_elements
 from combat.logging import log_damage
+from utils.text_normalize import normalize_text_basic
 
 
 def _is_offensive_white(spell: SpellInfo) -> bool:
@@ -52,7 +53,7 @@ def _is_offensive_white(spell: SpellInfo) -> bool:
     # ① name があるなら名前で判定（将来 name を追加してもOK）
     nm = getattr(spell, "name", None)
     if isinstance(nm, str) and nm:
-        return nm.strip().lower() in OFFENSIVE_WHITE
+        return normalize_text_basic(nm) in OFFENSIVE_WHITE
 
     # ② name が無い場合は属性で判定（★parse_elements で正規化）
     elems = parse_elements(getattr(spell, "elements", None))
@@ -86,8 +87,8 @@ def healing_spell_kind(spell_json: Dict[str, Any]) -> str | None:
       "haste"   : 攻撃力・攻撃回数アップ
     回復/補助系でなければ None
     """
-    effect = (spell_json.get("Effect") or "").strip().lower()
-    name = (spell_json.get("Name") or "").strip().lower()
+    effect = normalize_text_basic(spell_json.get("Effect") or "")
+    name = normalize_text_basic(spell_json.get("Name") or "")
 
     # --- HP回復 ---
     if "restore target's hp" in effect:

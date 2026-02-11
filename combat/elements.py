@@ -18,6 +18,7 @@ from typing import Dict, Any, Iterable
 from combat.constants import _ELEMENT_SYNONYMS
 from combat.enums import ElementRelation
 from combat.models import FinalCharacterStats
+from utils.text_normalize import normalize_text_basic
 
 
 # ============================================================
@@ -34,9 +35,9 @@ def parse_elements(raw_elems) -> list[str]:
         return []
 
     if isinstance(raw_elems, str):
-        elems = [e.strip().lower() for e in raw_elems.split(",") if e.strip()]
+        elems = [normalize_text_basic(e) for e in raw_elems.split(",") if e.strip()]
     elif isinstance(raw_elems, list):
-        elems = [str(e).strip().lower() for e in raw_elems if str(e).strip()]
+        elems = [normalize_text_basic(e) for e in raw_elems if str(e).strip()]
     else:
         elems = []
 

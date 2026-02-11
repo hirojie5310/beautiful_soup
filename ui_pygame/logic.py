@@ -28,6 +28,7 @@ from ui_pygame.field_effects import (
     dec_inventory_item,
     FIELD_ITEM_TYPES,
 )
+from utils.text_normalize import normalize_text_basic
 
 
 SPECIAL_NO_TARGET = {"Cheer", "Scare", "Flee", "Terrain", "Boost"}
@@ -355,7 +356,7 @@ def make_use_field_item_fn(
 ) -> Callable[[int, str, Optional[int], Optional[str]], bool]:
 
     def _canon(s: str) -> str:
-        return str(s).strip().lower()
+        return normalize_text_basic(s)
 
     def _needs_target(item_name: str) -> bool:
         return _canon(item_name) in FIELD_ITEM_TARGET_REQUIRED

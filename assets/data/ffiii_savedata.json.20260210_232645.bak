@@ -3,7 +3,7 @@
     {
       "name": "Runeth",
       "level": 38,
-      "exp": 289570,
+      "exp": 288043,
       "job": "Sage",
       "job_level": {
         "level": 99,
@@ -73,11 +73,11 @@
     {
       "name": "Arc",
       "level": 37,
-      "exp": 272553,
+      "exp": 271026,
       "job": "Geomancer",
       "job_level": {
         "level": 8,
-        "skill_point": 36
+        "skill_point": 4
       },
       "job_levels": {
         "Dragoon": {
@@ -94,7 +94,7 @@
         },
         "Geomancer": {
           "level": 8,
-          "skill_point": 36
+          "skill_point": 4
         }
       },
       "hp": 245,
@@ -143,11 +143,11 @@
     {
       "name": "Refia",
       "level": 39,
-      "exp": 306553,
+      "exp": 305026,
       "job": "Ninja",
       "job_level": {
-        "level": 24,
-        "skill_point": 43
+        "level": 23,
+        "skill_point": 71
       },
       "job_levels": {
         "Dragoon": {
@@ -155,8 +155,8 @@
           "skill_point": 54
         },
         "Ninja": {
-          "level": 24,
-          "skill_point": 43
+          "level": 23,
+          "skill_point": 71
         },
         "Black Belt": {
           "level": 8,
@@ -209,11 +209,11 @@
     {
       "name": "Ingus",
       "level": 38,
-      "exp": 287753,
+      "exp": 286226,
       "job": "Bard",
       "job_level": {
         "level": 12,
-        "skill_point": 80
+        "skill_point": 20
       },
       "job_levels": {
         "Dragoon": {
@@ -230,7 +230,7 @@
         },
         "Bard": {
           "level": 12,
-          "skill_point": 80
+          "skill_point": 20
         }
       },
       "hp": 245,
@@ -277,7 +277,7 @@
       "portrait_key": "ingus"
     }
   ],
-  "gil": 252860,
+  "gil": 246044,
   "CP": 255,
   "map": {
     "map": "grassland",
