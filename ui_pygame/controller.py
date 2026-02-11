@@ -9,6 +9,7 @@ from random import Random
 from combat.runtime_state import RuntimeState
 from combat.battle_sim import simulate_one_round_multi_party  # ←実際の場所に合わせて
 from combat.battle_result import BattleResult
+from combat.life_check import first_alive_enemy_index, is_out_of_battle
 
 # EnemyRuntime / PlannedAction / SideTurnResult の import 先もあなたの構成に合わせて調整してください
 from combat.models import (
@@ -144,7 +145,11 @@ class BattleController:
 
         # planned_actions をクリア
         self._clear_planned_actions(ui, party_members)
-
+        self._auto_fill_jump_actions(ui, party_members, enemies)
+        if app_ctx.all_actions_committed(ui):
+            ui.phase = "resolve"
+            ui.input_mode = "resolve"
+            return
         # 「次に入力すべきキャラ」を再セット（あなたの既存関数を使う）
         # find_next_unfilled(ui) が app 側の関数なら ctx に渡しておくのが一番楽
         if hasattr(app_ctx, "find_next_unfilled_member_index"):
@@ -163,6 +168,7 @@ class BattleController:
         if hasattr(ui, "logs") and isinstance(ui.logs, list):
             t = getattr(ui, "turn", getattr(ui, "turn_count", "?"))
             ui.logs.append(f"--- Turn {t} 入力開始 ---")
+            self._append_auto_filled_action_logs(ui, party_members)
 
     def _is_boss_battle(self, enemies: List[EnemyRuntime]) -> bool:
         return any(getattr(e, "is_boss", False) for e in enemies)
@@ -222,6 +228,56 @@ class BattleController:
         if hasattr(ui, "planned_actions"):
             # len を揃えたいなら None 埋めが安全（参照箇所がある場合に備える）
             ui.planned_actions = [None] * len(party_members)
+
+    def _resolve_jump_target_index(
+        self, member: PartyMemberRuntime, enemies: List[EnemyRuntime]
+    ) -> Optional[int]:
+        t_idx = getattr(member.state, "jump_target_index", None)
+        if (
+            t_idx is not None
+            and 0 <= t_idx < len(enemies)
+            and not is_out_of_battle(enemies[t_idx].state)
+        ):
+            return t_idx
+        return first_alive_enemy_index(enemies)
+
+    def _auto_fill_jump_actions(
+        self,
+        ui,
+        party_members: List[PartyMemberRuntime],
+        enemies: List[EnemyRuntime],
+    ) -> None:
+        if not hasattr(ui, "planned_actions"):
+            return
+
+        for i, member in enumerate(party_members):
+            if is_out_of_battle(member.state):
+                continue
+            if not getattr(member.state, "is_jumping", False):
+                continue
+
+            target_idx = self._resolve_jump_target_index(member, enemies)
+            if target_idx is None:
+                continue
+
+            ui.planned_actions[i] = PlannedAction(
+                kind="jump",
+                command="Jump",
+                target_side="enemy",
+                target_index=target_idx,
+            )
+
+    def _append_auto_filled_action_logs(
+        self, ui, party_members: List[PartyMemberRuntime]
+    ) -> None:
+        if not hasattr(ui, "planned_actions"):
+            return
+
+        for i, action in enumerate(ui.planned_actions):
+            if action is None or action.kind != "jump":
+                continue
+            member_name = getattr(party_members[i], "name", f"member[{i}]")
+            ui.logs.append(f"{member_name}はジャンプした！次のターンに攻撃する。")
 
     def _map_end_reason_to_result(self, end_reason: str) -> BattleResult:
         match end_reason:

@@ -71,9 +71,11 @@ def run_one_battle(
 
     def find_next_unfilled_member_index(ui: BattleUIState) -> int:
         for i, act in enumerate(ui.planned_actions):
+            if ctx.is_out_of_battle(party_members[i].state):
+                continue
             if act is None:
                 return i
-        return 0
+        return first_alive_member_index()
 
     ui.selected_member_idx = first_alive_member_index()
     ui.command_candidates = ctx.get_job_commands(party_members[ui.selected_member_idx])

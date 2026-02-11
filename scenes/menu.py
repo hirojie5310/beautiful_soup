@@ -562,6 +562,11 @@ def open_equip_pygame(
             weapons_by_name=weapons_by_name,
             armors_by_name=armors_by_name,
         )
+        if candidates:
+            cand_idx = max(0, min(cand_idx, len(candidates) - 1))
+        else:
+            cand_idx = 0
+            cand_top = 0
 
         # ---------------- input ----------------
         for ev in pygame.event.get():
@@ -579,29 +584,39 @@ def open_equip_pygame(
                     actor_idx = (actor_idx - 1) % len(party)
                     slot_idx = 0
                     mode = "slot"
+                    cand_idx = 0
+                    cand_top = 0
 
                 elif ev.key == pygame.K_RIGHT:
                     actor_idx = (actor_idx + 1) % len(party)
                     slot_idx = 0
                     mode = "slot"
+                    cand_idx = 0
+                    cand_top = 0
 
                 elif ev.key == pygame.K_UP:
                     if mode == "slot":
                         slot_idx = (slot_idx - 1) % len(slots)
+                        cand_idx = 0
+                        cand_top = 0
                     else:
-                        cand_idx = (cand_idx - 1) % len(candidates)
-                        cand_top = clamp_scroll(
-                            cand_idx, cand_top, max_rows, len(candidates)
-                        )
+                        if candidates:
+                            cand_idx = (cand_idx - 1) % len(candidates)
+                            cand_top = clamp_scroll(
+                                cand_idx, cand_top, max_rows, len(candidates)
+                            )
 
                 elif ev.key == pygame.K_DOWN:
                     if mode == "slot":
                         slot_idx = (slot_idx + 1) % len(slots)
+                        cand_idx = 0
+                        cand_top = 0
                     else:
-                        cand_idx = (cand_idx + 1) % len(candidates)
-                        cand_top = clamp_scroll(
-                            cand_idx, cand_top, max_rows, len(candidates)
-                        )
+                        if candidates:
+                            cand_idx = (cand_idx + 1) % len(candidates)
+                            cand_top = clamp_scroll(
+                                cand_idx, cand_top, max_rows, len(candidates)
+                            )
 
                 elif ev.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_z):
                     if mode == "slot":
@@ -644,6 +659,9 @@ def open_equip_pygame(
 
                     else:
                         # ★ 装備確定（既存処理）
+                        if not candidates:
+                            mode = "slot"
+                            continue
                         kind, name, _ = candidates[cand_idx]
 
                         if actor.equipment is None:
@@ -743,8 +761,11 @@ def open_equip_pygame(
 
         # 差分表示（mode が candidate のときだけ）
         # if mode == "candidate" and slots[slot_idx] != "unequip_all":
-        kind, name, _ = candidates[cand_idx]
-        preview = calc_preview(kind, name)
+        if candidates:
+            kind, name, _ = candidates[cand_idx]
+            preview = calc_preview(kind, name)
+        else:
+            preview = actor.stats
         draw_equip_status_compare(
             screen,
             font,
