@@ -4,7 +4,7 @@ import pygame
 from collections import Counter
 
 from ui_pygame.state import BattleUIState
-from combat.save_prompt import _toast_pygame
+from ui_pygame.save_prompt_adapter import _toast_pygame
 
 
 RARE_ITEMS = {

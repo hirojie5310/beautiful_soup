@@ -3,7 +3,7 @@
     {
       "name": "Runeth",
       "level": 40,
-      "exp": 347154,
+      "exp": 347369,
       "job": "Sage",
       "job_level": {
         "level": 99,
@@ -27,7 +27,7 @@
           "skill_point": 0
         }
       },
-      "hp": 2013,
+      "hp": 2188,
       "max_hp": 260,
       "mp": {
         "L1MP": 45,
@@ -73,11 +73,11 @@
     {
       "name": "Arc",
       "level": 39,
-      "exp": 328537,
+      "exp": 328752,
       "job": "Geomancer",
       "job_level": {
         "level": 13,
-        "skill_point": 68
+        "skill_point": 84
       },
       "job_levels": {
         "Dragoon": {
@@ -94,7 +94,7 @@
         },
         "Geomancer": {
           "level": 13,
-          "skill_point": 68
+          "skill_point": 84
         }
       },
       "hp": 245,
@@ -143,7 +143,7 @@
     {
       "name": "Refia",
       "level": 41,
-      "exp": 373297,
+      "exp": 373512,
       "job": "Dragoon",
       "job_level": {
         "level": 99,
@@ -209,11 +209,11 @@
     {
       "name": "Ingus",
       "level": 40,
-      "exp": 344497,
+      "exp": 344712,
       "job": "Bard",
       "job_level": {
-        "level": 20,
-        "skill_point": 80
+        "level": 21,
+        "skill_point": 4
       },
       "job_levels": {
         "Dragoon": {
@@ -229,8 +229,8 @@
           "skill_point": 68
         },
         "Bard": {
-          "level": 20,
-          "skill_point": 80
+          "level": 21,
+          "skill_point": 4
         }
       },
       "hp": 245,
@@ -277,7 +277,7 @@
       "portrait_key": "ingus"
     }
   ],
-  "gil": 390067,
+  "gil": 390618,
   "CP": 255,
   "map": {
     "map": "grassland",
@@ -295,7 +295,7 @@
       "Potion": 5,
       "Hi Potion": 2,
       "Elixir": 10,
-      "Antidote": 2,
+      "Antidote": 1,
       "Onion Helm": 1,
       "Lilith's Kiss": 1,
       "Lamia Scale": 1,

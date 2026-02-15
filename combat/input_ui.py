@@ -73,26 +73,35 @@ def normalize_battle_command(cmd: str) -> BattleKind:
     return _COMMAND_TO_KIND_NORM.get(key, "special")
 
 
-def choose_magic(char_state: BattleActorState, magic_list) -> str:
+def choose_magic(
+    char_state: BattleActorState,
+    magic_list,
+    *,
+    input_func: Callable[[str], str] = input,
+    output_func: Callable[[str], None] = print,
+    render_magic_menu: Callable[
+        [Any, BattleActorState], None
+    ] = print_magic_menu_by_level,
+) -> str:
     """
     magic_list から番号で魔法を選ばせて「魔法名」を返す。
     表示は Lv別まとめ形式。
     """
     if not magic_list:
-        print("使用可能な魔法が定義されていません。")
+        output_func("使用可能な魔法が定義されていません。")
         return ""
 
-    print("使用する魔法を選んでください。")
-    print_magic_menu_by_level(magic_list, char_state)
+    output_func("使用する魔法を選んでください。")
+    render_magic_menu(magic_list, char_state)
 
     while True:
-        s = input(f"番号を入力してください (1-{len(magic_list)}): ").strip()
+        s = input_func(f"番号を入力してください (1-{len(magic_list)}): ").strip()
         if s.isdigit():
             n = int(s)
             if 1 <= n <= len(magic_list):
                 spell_name, _, _ = magic_list[n - 1]
                 return spell_name
-        print("入力が正しくありません。")
+        output_func("入力が正しくありません。")
 
 
 def categorize_anywhere_item(effect_text: str) -> str:
@@ -230,21 +239,22 @@ def build_grouped_item_menu(
 
 def choose_item(
     items_by_name,
+    item_list: List[Tuple[str, str, int]],
     *,
     input_func: Callable[[str], str] = input,
     output_func: Callable[[str], None] = print,
 ) -> str:
     """
-    ITEM_LIST から番号でアイテムを選ばせて、選ばれた「アイテム名」を返す。
+    item_list から番号でアイテムを選ばせて、選ばれた「アイテム名」を返す。
     Effect分類つき表示版。
     """
-    if not ITEM_LIST:
+    if not item_list:
         output_func("使用可能なアイテムがありません。")
         return ""
 
     output_func("使用するアイテムを選んでください。")
 
-    lines, menu_order = build_grouped_item_menu(ITEM_LIST, items_by_name)
+    lines, menu_order = build_grouped_item_menu(item_list, items_by_name)
     if not menu_order:
         output_func("使用可能なアイテムがありません。")
         return ""
@@ -263,7 +273,7 @@ def choose_item(
 
 # 各メンバーから「行動だけ」入力させる関数
 # ※ここでは 単純化のため に：各キャラの魔法リスト・アイテムリストは
-# 既存の MAGIC_LIST / ITEM_LIST をそのまま使う形にしています。
+# 既存の MAGIC_LIST をそのまま使う形にしています。
 # 実際は build_magic_list や build_item_list をキャラごとに呼ぶとさらに自然です。
 def ask_action_for_member(
     member_index: int,
@@ -273,6 +283,13 @@ def ask_action_for_member(
     items_by_name: Dict[str, Dict[str, Any]],
     party_magic_lists,  # ★ 追加：キャラごとの magic_list の配列
     save: dict,
+    *,
+    input_func: Callable[[str], str] = input,
+    output_func: Callable[[str], None] = print,
+    choose_enemy_target: Callable[
+        ..., Optional[int]
+    ] = choose_target_index_from_enemies,
+    choose_ally_target: Callable[..., Optional[int]] = choose_target_index_from_allies,
 ) -> PlannedAction:
     member = party_members[member_index]
     job_data = member.job
@@ -286,20 +303,22 @@ def ask_action_for_member(
     if not commands:
         commands = ["Fight", "Defend", "Item", "Run"]
 
-    print(f"\n{member.name} の行動を選んでください。")
-    print(format_state_line(member.name, member.state))
+    output_func(f"\n{member.name} の行動を選んでください。")
+    output_func(format_state_line(member.name, member.state))
     for idx, cmd in enumerate(commands, start=1):
-        print(f"  {idx}: {cmd}")
+        output_func(f"  {idx}: {cmd}")
 
     while True:
-        s = input(f"番号を入力してください (1-{len(commands)}): ").strip()
+        s = input_func(f"番号を入力してください (1-{len(commands)}): ").strip()
         if s.isdigit() and 1 <= int(s) <= len(commands):
             selected_command = commands[int(s) - 1]
             break
-        print("入力が正しくありません。")
+        output_func("入力が正しくありません。")
 
     normalized_kind = normalize_battle_command(selected_command)
-    print(f"[Debug:input_ui]《{normalized_kind}》{selected_command} が選択されました。")
+    output_func(
+        f"[Debug:input_ui]《{normalized_kind}》{selected_command} が選択されました。"
+    )
 
     # special: 対象不要
     SPECIAL_NO_TARGET = {"Cheer", "Scare", "Flee", "Terrain", "Boost"}
@@ -322,7 +341,9 @@ def ask_action_for_member(
             )
 
         if selected_command in SPECIAL_ENEMY_TARGET:
-            t_idx = choose_target_index_from_enemies(enemies)
+            t_idx = choose_enemy_target(
+                enemies, input_func=input_func, output_func=output_func
+            )
             return PlannedAction(
                 kind="special",
                 command=selected_command,
@@ -339,7 +360,9 @@ def ask_action_for_member(
         )
 
     if normalized_kind == "jump":
-        t_idx = choose_target_index_from_enemies(enemies)
+        t_idx = choose_enemy_target(
+            enemies, input_func=input_func, output_func=output_func
+        )
         return PlannedAction(
             kind="jump",
             command="Jump",
@@ -351,7 +374,9 @@ def ask_action_for_member(
     # 物理 / special
     # =========================
     if normalized_kind == "physical":
-        t_idx = choose_target_index_from_enemies(enemies)
+        t_idx = choose_enemy_target(
+            enemies, input_func=input_func, output_func=output_func
+        )
         if t_idx is None:
             # ターゲットがいない → 一応 Fight だが実質何もできない
             return PlannedAction(
@@ -392,10 +417,17 @@ def ask_action_for_member(
     # =========================
     if normalized_kind == "magic":
         magic_list = party_magic_lists[member_index]  # ★ このメンバーの魔法メニュー
-        spell_name = choose_magic(member.state, magic_list)
+        spell_name = choose_magic(
+            member.state,
+            magic_list,
+            input_func=input_func,
+            output_func=output_func,
+        )
         if not spell_name:
-            print("魔法が選択されなかったため、物理攻撃として扱います。")
-            t_idx = choose_target_index_from_enemies(enemies)
+            output_func("魔法が選択されなかったため、物理攻撃として扱います。")
+            t_idx = choose_enemy_target(
+                enemies, input_func=input_func, output_func=output_func
+            )
             return PlannedAction(
                 kind="physical",
                 command="Fight",
@@ -403,26 +435,33 @@ def ask_action_for_member(
                 target_index=t_idx,
             )
 
-        print("魔法の対象を選んでください。")
-        print("  1: 敵単体")
-        print("  2: 味方単体")
-        print("  3: 自分")
+        output_func("魔法の対象を選んでください。")
+        output_func("  1: 敵単体")
+        output_func("  2: 味方単体")
+        output_func("  3: 自分")
 
         while True:
-            s = input("番号を入力してください (1-3): ").strip()
+            s = input_func("番号を入力してください (1-3): ").strip()
             if s == "1":
                 t_side = "enemy"
-                t_idx = choose_target_index_from_enemies(enemies)
+                t_idx = choose_enemy_target(
+                    enemies, input_func=input_func, output_func=output_func
+                )
                 break
             elif s == "2":
                 t_side = "ally"
-                t_idx = choose_target_index_from_allies(party_members, member_index)
+                t_idx = choose_ally_target(
+                    party_members,
+                    member_index,
+                    input_func=input_func,
+                    output_func=output_func,
+                )
                 break
             elif s == "3":
                 t_side = "self"
                 t_idx = member_index
                 break
-            print("入力が正しくありません。")
+            output_func("入力が正しくありません。")
 
         return PlannedAction(
             kind="magic",
@@ -436,7 +475,7 @@ def ask_action_for_member(
     # Item
     # =========================
     if normalized_kind == "item":
-        # 戦闘用 ITEM_LIST を生成
+        # 戦闘用 item_list を生成
         item_list = build_item_list(items_by_name, save, in_battle=True)
         item_list = [
             (name, itype, qty)
@@ -444,8 +483,10 @@ def ask_action_for_member(
             if is_item_visible_in_context(items_by_name.get(name, {}), in_combat=True)
         ]
         if not item_list:
-            print("使用可能なアイテムがないため、物理攻撃として扱います。")
-            t_idx = choose_target_index_from_enemies(enemies)
+            output_func("使用可能なアイテムがないため、物理攻撃として扱います。")
+            t_idx = choose_enemy_target(
+                enemies, input_func=input_func, output_func=output_func
+            )
             return PlannedAction(
                 kind="physical",
                 command="Fight",
@@ -453,14 +494,17 @@ def ask_action_for_member(
                 target_index=t_idx,
             )
 
-        # 既存の choose_item() はグローバル ITEM_LIST を見る前提なので更新
-        global ITEM_LIST
-        ITEM_LIST = item_list
-
-        item_name = choose_item(items_by_name)  # ユーザーにアイテムを選んでもらう
+        item_name = choose_item(
+            items_by_name,
+            item_list,
+            input_func=input_func,
+            output_func=output_func,
+        )  # ユーザーにアイテムを選んでもらう
         if not item_name:
-            print("アイテムが選択されなかったため、物理攻撃として扱います。")
-            t_idx = choose_target_index_from_enemies(enemies)
+            output_func("アイテムが選択されなかったため、物理攻撃として扱います。")
+            t_idx = choose_enemy_target(
+                enemies, input_func=input_func, output_func=output_func
+            )
             return PlannedAction(
                 kind="physical",
                 command="Fight",
@@ -468,26 +512,33 @@ def ask_action_for_member(
                 target_index=t_idx,
             )
 
-        print("アイテムの使用対象を選んでください。")
-        print("  1: 敵単体")
-        print("  2: 味方単体")
-        print("  3: 自分")
+        output_func("アイテムの使用対象を選んでください。")
+        output_func("  1: 敵単体")
+        output_func("  2: 味方単体")
+        output_func("  3: 自分")
 
         while True:
-            s = input("番号を入力してください (1-3): ").strip()
+            s = input_func("番号を入力してください (1-3): ").strip()
             if s == "1":
                 t_side = "enemy"
-                t_idx = choose_target_index_from_enemies(enemies)
+                t_idx = choose_enemy_target(
+                    enemies, input_func=input_func, output_func=output_func
+                )
                 break
             elif s == "2":
                 t_side = "ally"
-                t_idx = choose_target_index_from_allies(party_members, member_index)
+                t_idx = choose_ally_target(
+                    party_members,
+                    member_index,
+                    input_func=input_func,
+                    output_func=output_func,
+                )
                 break
             elif s == "3":
                 t_side = "self"
                 t_idx = member_index
                 break
-            print("入力が正しくありません。")
+            output_func("入力が正しくありません。")
 
         return PlannedAction(
             kind="item",
@@ -500,8 +551,8 @@ def ask_action_for_member(
     # =========================
     # フォールバック
     # =========================
-    print(f"《{selected_command}》は未実装のため、物理攻撃として扱います。")
-    t_idx = choose_target_index_from_enemies(enemies)
+    output_func(f"《{selected_command}》は未実装のため、物理攻撃として扱います。")
+    t_idx = choose_enemy_target(enemies, input_func=input_func, output_func=output_func)
     return PlannedAction(
         kind="physical",
         command="Fight",
@@ -519,6 +570,12 @@ def ask_actions_for_party(
     items_by_name: Dict[str, Dict[str, Any]],
     party_magic_lists: List[Any],  # build_magic_list の戻り型に合わせて
     save: dict,
+    input_func: Callable[[str], str] = input,
+    output_func: Callable[[str], None] = print,
+    choose_enemy_target: Callable[
+        ..., Optional[int]
+    ] = choose_target_index_from_enemies,
+    choose_ally_target: Callable[..., Optional[int]] = choose_target_index_from_allies,
 ) -> List[Optional[PlannedAction]]:
     """
     パーティ全員分の行動入力を行い、planned_actions を返す。
@@ -559,6 +616,10 @@ def ask_actions_for_party(
             items_by_name=items_by_name,
             party_magic_lists=party_magic_lists,
             save=save,
+            input_func=input_func,
+            output_func=output_func,
+            choose_enemy_target=choose_enemy_target,
+            choose_ally_target=choose_ally_target,
         )
 
     return planned_actions

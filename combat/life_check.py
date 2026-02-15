@@ -17,7 +17,7 @@
 # ============================================================
 
 import random
-from typing import Optional, List
+from typing import Optional, List, Callable
 
 from combat.enums import Status
 from combat.models import BattleActorState, PartyMemberRuntime, EnemyRuntime
@@ -59,52 +59,58 @@ def first_alive_char_index(party_members: List[PartyMemberRuntime]) -> Optional[
 # ターゲット選択ヘルパー
 def choose_target_index_from_enemies(
     enemies: List[EnemyRuntime],
+    *,
+    input_func: Callable[[str], str] = input,
+    output_func: Callable[[str], None] = print,
 ) -> Optional[int]:
     alive_indices = [
         i for i, em in enumerate(enemies) if not is_out_of_battle(em.state)
     ]
     if not alive_indices:
-        print("ターゲットにできる敵がいません。")
+        output_func("ターゲットにできる敵がいません。")
         return None
 
-    print("攻撃対象の敵を選んでください。")
+    output_func("攻撃対象の敵を選んでください。")
     for i in alive_indices:
         em = enemies[i]
-        print(f"  {i+1}: {format_state_line(em.name, em.state)}")
+        output_func(f"  {i+1}: {format_state_line(em.name, em.state)}")
 
     while True:
-        s = input(f"番号を入力してください (1-{len(enemies)}): ").strip()
+        s = input_func(f"番号を入力してください (1-{len(enemies)}): ").strip()
         if s.isdigit():
             n = int(s) - 1
             if n in alive_indices:
                 return n
-        print("入力が正しくありません。")
+        output_func("入力が正しくありません。")
 
 
 def choose_target_index_from_allies(
     party_members: List[PartyMemberRuntime],
     self_index: int,
+    *,
+    input_func: Callable[[str], str] = input,
+    output_func: Callable[[str], None] = print,
 ) -> Optional[int]:
     alive_indices = [
         i for i, pm in enumerate(party_members) if not is_out_of_battle(pm.state)
     ]
     if not alive_indices:
-        print("ターゲットにできる味方がいません。")
+        output_func("ターゲットにできる味方がいません。")
         return None
 
-    print("対象の味方を選んでください。")
+    output_func("対象の味方を選んでください。")
     for i in alive_indices:
         pm = party_members[i]
         mark = "(自分)" if i == self_index else ""
-        print(f"  {i+1}: {format_state_line(pm.name, pm.state)} {mark}")
+        output_func(f"  {i+1}: {format_state_line(pm.name, pm.state)} {mark}")
 
     while True:
-        s = input(f"番号を入力してください (1-{len(party_members)}): ").strip()
+        s = input_func(f"番号を入力してください (1-{len(party_members)}): ").strip()
         if s.isdigit():
             n = int(s) - 1
             if n in alive_indices:
                 return n
-        print("入力が正しくありません。")
+        output_func("入力が正しくありません。")
 
 
 # ランダムターゲット用ヘルパー

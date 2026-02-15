@@ -58,10 +58,8 @@ from combat.enemy_selection import (
     build_groups,
 )
 from combat.progression import apply_victory_rewards
-from combat.save_prompt import (
-    save_savedata_with_backup,
-    prompt_save_progress_and_write_pygame,
-)
+from combat.save_prompt import save_savedata_with_backup
+from ui_pygame.save_prompt_adapter import prompt_save_progress_and_write_pygame
 from combat.runtime_state import init_runtime_state
 from combat.magic_menu import expand_spells_for_summons, build_party_magic_lists
 

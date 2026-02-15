@@ -2,9 +2,8 @@
 # runtime_state: 実行時状態
 
 # RuntimeState	JSONデータ格納用Dictクラス
-# STATE	JSONデータを保持するためのグローバル（宣言）
-# init_runtime_state	アプリ起動時に1回だけ呼ぶ想定の初期化（import runtime_state した瞬間に JSON を読み始める）
-# get_state	STATE（JSONデータ）参照用（グローバル・サービスロケータ）
+# init_runtime_state	アプリ起動時に1回だけ呼ぶ想定の初期化
+# get_state	明示的に渡された RuntimeState を検証して返す
 # ============================================================
 
 from __future__ import annotations
@@ -34,9 +33,6 @@ class RuntimeState:
     save: Dict[str, Any]
 
 
-STATE: Optional[RuntimeState] = None
-
-
 def init_runtime_state(
     base_dir: Path = Path("."),
     *,
@@ -53,8 +49,7 @@ def init_runtime_state(
     jobs_by_name = load_jobs(base_dir / "assets/data/ffiii_jobs_compact.json")
     save = load_savedata(base_dir / "assets/data/ffiii_savedata.json")
 
-    global STATE
-    STATE = RuntimeState(
+    return RuntimeState(
         monsters=monsters,
         weapons=weapons,
         armors=armors,
@@ -63,10 +58,12 @@ def init_runtime_state(
         jobs_by_name=jobs_by_name,
         save=save,
     )
-    return STATE
 
 
-def get_state() -> RuntimeState:
-    if STATE is None:
-        raise RuntimeError("runtime_state.init_runtime_state() を先に呼んでください")
-    return STATE
+def get_state(state: Optional[RuntimeState]) -> RuntimeState:
+    """グローバル参照を使わず、呼び出し側が保持する RuntimeState を受け取る。"""
+    if state is None:
+        raise RuntimeError(
+            "RuntimeState が未設定です。init_runtime_state() の戻り値を渡してください"
+        )
+    return state
