@@ -6,7 +6,7 @@ from __future__ import annotations
 # stdlib
 import copy
 from pathlib import Path
-from typing import Callable, Sequence, cast
+from typing import Callable
 
 # third-party
 import pygame
@@ -26,7 +26,6 @@ from ui_pygame.render.sprites import (
 from ui_pygame.audio.ui_se import build_ui_se
 from ui_pygame.logic import (
     reset_target_flags,
-    build_magic_candidates_for_member as build_magic_candidates_for_member_idx,
     build_item_candidates_for_battle as build_item_candidates_for_battle_fn,
     make_planned_action,
     get_job_commands,
@@ -37,6 +36,10 @@ from ui_pygame.enemy_flow import choose_location_floor_pygame
 from ui_pygame.victory_flow import show_victory_result_pygame
 from ui_pygame.gameover_flow import show_gameover_screen
 from ui_pygame.game_flow_mapping import BATTLE_RESULT_TO_PHASE
+from ui_pygame.game_flow_service import (
+    prepare_battle_resources,
+    select_enemy_names_from_groups,
+)
 
 # domain / combat
 from combat.models import (
@@ -45,23 +48,14 @@ from combat.models import (
     EquipmentSet,
     EnemyRuntime,
 )
-from combat.char_build import (
-    build_party_members_from_save,
-    compute_character_final_stats,
-)
-from combat.enemy_build import build_enemies
+from combat.char_build import compute_character_final_stats
 from combat.life_check import is_out_of_battle
 from combat.input_ui import normalize_battle_command
-from combat.enemy_selection import (
-    build_location_index,
-    pick_enemy_names,
-    build_groups,
-)
 from combat.progression import apply_victory_rewards
 from combat.save_prompt import save_savedata_with_backup
 from ui_pygame.save_prompt_adapter import prompt_save_progress_and_write_pygame
 from combat.runtime_state import init_runtime_state
-from combat.magic_menu import expand_spells_for_summons, build_party_magic_lists
+from combat.magic_menu import expand_spells_for_summons
 
 from system.exp_system import LevelTable
 from system.cp_system import load_job_attribution
@@ -208,35 +202,15 @@ class GameFlowController:
         list[PartyMemberRuntime],
         Callable[[int], list[tuple[str, int, int]]],
     ]:
-        party_members = build_party_members_from_save(
-            save=self.state.save,
-            weapons=self.state.weapons,
-            armors=self.state.armors,
-            jobs_by_name=self.state.jobs_by_name,
+        return prepare_battle_resources(
+            state=self.state,
             level_table=self.level_table,
-        )
-        party_magic_lists = cast(
-            Sequence[Sequence[tuple[str, int, int]]],
-            build_party_magic_lists(self.state),
-        )
-
-        build_magic_fn = lambda member_idx: build_magic_candidates_for_member_idx(
-            party_magic_lists, member_idx
-        )
-
-        if enemy_names is None:
-            enemy_names = self._select_enemy_names(
+            enemy_names=enemy_names,
+            select_enemy_names=lambda party_members, build_magic_fn: self._select_enemy_names(
                 party_members=party_members,
                 build_magic_fn=build_magic_fn,
-            )
-
-        enemies = build_enemies(
-            enemy_defs_by_name=self.state.monsters,
-            spells_by_name=self.state.spells,
-            enemy_names=enemy_names,
+            ),
         )
-
-        return enemies, party_members, build_magic_fn
 
     # 戦闘コンテキスト構築（BattleSEの導入を含む）
     def build_battle_context(
@@ -320,18 +294,6 @@ class GameFlowController:
         party_members,
         build_magic_fn: Callable[[int], list[tuple[str, int, int]]],
     ) -> list[str]:
-        flat_locations = build_location_index(self.state.monsters)
-        all_locations = {loc.location for loc in flat_locations}
-        for gname, entry in self.explicit_groups.items():
-            for m in entry["locations"]:
-                if m not in all_locations:
-                    print(f"[WARN] Unknown location in group '{gname}': {m}")
-
-        groups = build_groups(
-            flat_locations,
-            explicit_groups=self.explicit_groups,
-        )
-
         def recalc_stats_fn(
             actor: PartyMemberRuntime, weapons: dict, armors: dict
         ) -> FinalCharacterStats:
@@ -344,8 +306,13 @@ class GameFlowController:
                 job_name=actor.job.name,
             )
 
-        while True:
-            group = choose_location_group_pygame(
+        return select_enemy_names_from_groups(
+            monsters=self.state.monsters,
+            explicit_groups=self.explicit_groups,
+            warn_unknown_location=lambda group_name, location_name: print(
+                f"[WARN] Unknown location in group '{group_name}': {location_name}"
+            ),
+            choose_group=lambda groups: choose_location_group_pygame(
                 self.screen,
                 self.font,
                 groups,
@@ -364,19 +331,14 @@ class GameFlowController:
                 spells_by_name=self.state.spells,
                 items_by_name=self.state.items_by_name,
                 ui_se=self.ui_se,
-            )
-
-            selected = choose_location_floor_pygame(
+            ),
+            choose_floor=lambda floors: choose_location_floor_pygame(
                 self.screen,
                 self.font,
-                group.children,
+                floors,
                 ui_se=self.ui_se,
-            )
-
-            if selected is not None:
-                break
-
-        return pick_enemy_names(selected, self.state.monsters, k_min=2, k_max=6)
+            ),
+        )
 
     # ゲームオーバー処理
     def _run_gameover(self) -> None:
