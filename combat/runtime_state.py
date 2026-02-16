@@ -20,6 +20,7 @@ from assets.data.data_loader import (
     load_jobs,
     load_savedata,
 )
+from combat.errors import StateNotInitializedError
 
 
 @dataclass
@@ -63,7 +64,7 @@ def init_runtime_state(
 def get_state(state: Optional[RuntimeState]) -> RuntimeState:
     """グローバル参照を使わず、呼び出し側が保持する RuntimeState を受け取る。"""
     if state is None:
-        raise RuntimeError(
+        raise StateNotInitializedError(
             "RuntimeState が未設定です。init_runtime_state() の戻り値を渡してください"
         )
     return state

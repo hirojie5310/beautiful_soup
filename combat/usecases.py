@@ -16,6 +16,7 @@ from combat.dto import (
     to_domain_planned_action,
 )
 from combat.enemy_build import build_enemies
+from combat.errors import InvalidLifecycleError
 from combat.magic_menu import (
     build_party_magic_info,
     build_party_magic_lists,
@@ -124,9 +125,10 @@ def execute_round_dto(
     """DTOベースの1ラウンド実行ユースケース（Flask向けの入出力境界）。"""
 
     if request.lifecycle_state != "ready_for_actions":
-        raise ValueError(
+        raise InvalidLifecycleError(
             "execute_round_dto accepts lifecycle_state='ready_for_actions' only. "
-            f"actual={request.lifecycle_state!r}"
+            f"actual={request.lifecycle_state!r}",
+            details={"lifecycle_state": request.lifecycle_state},
         )
 
     planned_actions = [

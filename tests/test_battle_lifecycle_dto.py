@@ -7,6 +7,7 @@ from combat.dto import (
     derive_round_lifecycle,
     to_json_ready_dict,
 )
+from combat.errors import InvalidLifecycleError
 
 
 def test_derive_round_lifecycle_continue_to_next_round() -> None:
@@ -37,10 +38,10 @@ def test_derive_round_lifecycle_rejects_invalid_start_state() -> None:
             current_state="ready_for_next_round",
             end_reason="continue",
         )
-    except ValueError as exc:
+    except InvalidLifecycleError as exc:
         assert "ready_for_actions" in str(exc)
     else:
-        raise AssertionError("ValueError expected")
+        raise AssertionError("InvalidLifecycleError expected")
 
 
 def test_execute_round_input_default_lifecycle_state() -> None:

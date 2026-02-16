@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Any, Optional, cast
 
 from combat.enums import BattleKind
+from combat.errors import InputValidationError, InvalidLifecycleError
 from combat.models import BattleEvent, PlannedAction, TargetSide
 
 
@@ -68,7 +69,10 @@ def validate_lifecycle_transition(
 ) -> None:
     allowed = ALLOWED_LIFECYCLE_TRANSITIONS.get(before, set())
     if after not in allowed:
-        raise ValueError(f"Invalid lifecycle transition: {before!r} -> {after!r}.")
+        raise InvalidLifecycleError(
+            f"Invalid lifecycle transition: {before!r} -> {after!r}.",
+            details={"before": before, "after": after},
+        )
 
 
 def derive_round_lifecycle(
@@ -77,9 +81,10 @@ def derive_round_lifecycle(
     end_reason: str,
 ) -> BattleLifecycleDTO:
     if current_state != LIFECYCLE_READY:
-        raise ValueError(
+        raise InvalidLifecycleError(
             "execute_round_dto must start from 'ready_for_actions'. "
-            f"actual={current_state!r}"
+            f"actual={current_state!r}",
+            details={"current_state": current_state},
         )
 
     before = LIFECYCLE_RESOLVING
@@ -149,7 +154,7 @@ ALLOWED_BATTLE_KINDS: set[str] = {
 }
 
 
-class DTOValidationError(ValueError):
+class DTOValidationError(InputValidationError):
     """Adapter payload validation error for DTO boundary."""
 
 
