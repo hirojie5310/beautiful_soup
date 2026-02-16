@@ -77,8 +77,8 @@ def choose_magic(
     char_state: BattleActorState,
     magic_list,
     *,
-    input_func: Callable[[str], str] = input,
-    output_func: Callable[[str], None] = print,
+    input_func: Callable[[str], str],
+    output_func: Callable[[str], None],
     render_magic_menu: Callable[
         [Any, BattleActorState], None
     ] = print_magic_menu_by_level,
@@ -241,8 +241,8 @@ def choose_item(
     items_by_name,
     item_list: List[Tuple[str, str, int]],
     *,
-    input_func: Callable[[str], str] = input,
-    output_func: Callable[[str], None] = print,
+    input_func: Callable[[str], str],
+    output_func: Callable[[str], None],
 ) -> str:
     """
     item_list から番号でアイテムを選ばせて、選ばれた「アイテム名」を返す。
@@ -284,8 +284,8 @@ def ask_action_for_member(
     party_magic_lists,  # ★ 追加：キャラごとの magic_list の配列
     save: dict,
     *,
-    input_func: Callable[[str], str] = input,
-    output_func: Callable[[str], None] = print,
+    input_func: Callable[[str], str],
+    output_func: Callable[[str], None],
     choose_enemy_target: Callable[
         ..., Optional[int]
     ] = choose_target_index_from_enemies,
@@ -570,8 +570,8 @@ def ask_actions_for_party(
     items_by_name: Dict[str, Dict[str, Any]],
     party_magic_lists: List[Any],  # build_magic_list の戻り型に合わせて
     save: dict,
-    input_func: Callable[[str], str] = input,
-    output_func: Callable[[str], None] = print,
+    input_func: Callable[[str], str],
+    output_func: Callable[[str], None],
     choose_enemy_target: Callable[
         ..., Optional[int]
     ] = choose_target_index_from_enemies,

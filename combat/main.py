@@ -13,55 +13,31 @@ if __package__ is None or __package__ == "":
     if str(project_root) not in sys.path:
         sys.path.insert(0, str(project_root))
 
-from combat.runtime_state import *
-from combat.magic_menu import *
-from combat.char_build import *
-from combat.debug_utils import *
-from combat.enemy_build import *
-from combat.input_ui import *
-from combat.battle_sim import *
+from combat.debug_utils import (
+    check_battle_end_before_round,
+    print_end_reason,
+    print_enemies_status_compact,
+    print_inventory,
+    print_logs,
+    print_party_debug_summary,
+    print_planned_actions,
+    print_round_header_and_state,
+)
+from combat.input_ui import ask_actions_for_party
+from combat.runtime_state import init_runtime_state
+from combat.usecases import build_battle_session, execute_round
 
 
 def main():
-    # =========================
-    # JSON 読み込み
-    # =========================
-    state = init_runtime_state()  # runtime_state
-
-    # キャラごとのそのジョブで使える魔法一覧（リスト）
-    party_magic_info = build_party_magic_info(state)  # magic_menu
-    party_magic_lists = build_party_magic_lists(state)  # magic_menu
-    # 召喚魔法の子Spellsを展開した辞書
-    spells_expanded = expand_spells_for_summons(state.spells)  # magic_menu
-
-    # ==================================================
-    # １．セーブデータ → キャラ最終ステ（パーティ全員）
-    # ==================================================
-    level_table = LevelTable(
-        "assets/data/level_exp.csv"
-    )  # パスは実プロジェクトに合わせて
-    party_members = build_party_members_from_save(
-        save=state.save,
-        weapons=state.weapons,
-        armors=state.armors,
-        jobs_by_name=state.jobs_by_name,
-        level_table=level_table,
-    )  # char_build
-
-    print_party_debug_summary(party_members, party_magic_lists)
-    print_inventory(state.save, show_zero=True)  # debug_utils
-
-    # ==================================================
-    # ２．敵も複数対応の形に
-    # ==================================================
-    enemy_names = ["Flyer", "Unei'S Clone"]
-    enemies = build_enemies(
-        enemy_defs_by_name=state.monsters,
-        spells_by_name=state.spells,
-        enemy_names=enemy_names,
+    state = init_runtime_state()
+    session = build_battle_session(
+        state=state,
+        enemy_names=["Flyer", "Unei'S Clone"],
     )
 
-    print_enemies_status_compact(enemies)  # debug_utils
+    print_party_debug_summary(session.party_members, session.party_magic_lists)
+    print_inventory(session.state.save, show_zero=True)
+    print_enemies_status_compact(session.enemies)
 
     # ==================================================
     # ３．戦闘ターン
@@ -71,7 +47,10 @@ def main():
 
     # simulate_one_round_multi_party を1ターンずつ呼び出す場合
     for turn in range(1, max_turns + 1):
-        print_round_header_and_state(turn, party_members, enemies)  # debug_utils
+        party_members = session.party_members
+        enemies = session.enemies
+
+        print_round_header_and_state(turn, party_members, enemies)
 
         # ラウンド前の終了判定
         pre_end = check_battle_end_before_round(party_members, enemies)  # debug_utils
@@ -80,35 +59,32 @@ def main():
             break
 
         # ① 行動入力
-        planned_actions = ask_actions_for_party(  # input_ui
+        planned_actions = ask_actions_for_party(
             party_members=party_members,
             enemies=enemies,
-            spells_by_name=spells_expanded,
-            items_by_name=state.items_by_name,
-            party_magic_lists=party_magic_lists,
-            save=state.save,
+            spells_by_name=session.spells_expanded,
+            items_by_name=session.state.items_by_name,
+            party_magic_lists=session.party_magic_lists,
+            save=session.state.save,
+            input_func=input,
+            output_func=print,
         )
 
         # デバッグ表示（必要な時だけ呼ぶ運用でもOK）
         print_planned_actions(party_members, planned_actions)  # debug_utils
 
         # ② イニシアティブ計算＆行動解決
-        logs, round_result, _event = simulate_one_round_multi_party(  # battle_sim
-            party_members,
-            enemies,
-            planned_actions,
+        result = execute_round(
+            session=session,
+            planned_actions=planned_actions,
             rng=rng,
-            save=state.save,
-            spells_by_name=spells_expanded,
-            items_by_name=state.items_by_name,
-            state=state,
         )
 
-        print_logs(logs)  # debug_utils
+        print_logs(result.logs)
 
         # ラウンド後の終了判定
-        if round_result.end_reason != "continue":
-            print_end_reason(round_result.end_reason)  # debug_utils
+        if result.round_result.end_reason != "continue":
+            print_end_reason(result.round_result.end_reason)
             break
 
 

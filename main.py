@@ -1,25 +1,33 @@
 from __future__ import annotations
 
-import random
 import copy
+import random
 from pathlib import Path
 
-from combat.runtime_state import *
-from combat.magic_menu import *
-from combat.char_build import *
-from combat.debug_utils import *
-from combat.enemy_build import *
-from combat.input_ui import *
-from combat.battle_sim import *
+from combat.char_build import build_party_members_from_save
+from combat.debug_utils import (
+    check_battle_end_before_round,
+    print_end_reason,
+    print_enemies_status_compact,
+    print_inventory,
+    print_logs,
+    print_party_debug_summary,
+    print_planned_actions,
+    print_round_header_and_state,
+)
 from combat.enemy_selection import (
     LocationMonsters,
     build_location_index,
-    pick_enemy_names,
-    danger_label,
     calc_party_avg_level,
+    danger_label,
+    pick_enemy_names,
 )
+from combat.input_ui import ask_actions_for_party
 from combat.progression import apply_victory_rewards
+from combat.runtime_state import init_runtime_state
 from combat.save_prompt import prompt_save_progress_and_write, restore_backup_by_choice
+from combat.usecases import build_battle_session, execute_round
+from system.exp_system import LevelTable
 
 
 def choose_location_console(
@@ -48,138 +56,89 @@ def choose_location_console(
 
 
 def main():
-    # =========================
-    # JSON 読み込み
-    # =========================
-    state = init_runtime_state()  # runtime_state
-
-    # ★戦闘前のsaveを保持（差分確認用）
+    state = init_runtime_state()
     save_before = copy.deepcopy(state.save)
 
-    # キャラごとのそのジョブで使える魔法一覧（リスト）
-    party_magic_info = build_party_magic_info(state)  # magic_menu
-    party_magic_lists = build_party_magic_lists(state)  # magic_menu
-    # 召喚魔法の子Spellsを展開した辞書
-    spells_expanded = expand_spells_for_summons(state.spells)  # magic_menu
-
-    # ==================================================
-    # １．セーブデータ → キャラ最終ステ（パーティ全員）
-    # ==================================================
-    level_table = LevelTable(
-        "assets/data/level_exp.csv"
-    )  # パスは実プロジェクトに合わせて
-    party_members = build_party_members_from_save(
+    # 場所選択のため、先にパーティ平均レベルを算出
+    pre_level_table = LevelTable("assets/data/level_exp.csv")
+    pre_party_members = build_party_members_from_save(
         save=state.save,
         weapons=state.weapons,
         armors=state.armors,
         jobs_by_name=state.jobs_by_name,
-        level_table=level_table,
-    )  # char_build
+        level_table=pre_level_table,
+    )
 
-    print("weapons type:", type(state.weapons), "len:", len(state.weapons))
-    if isinstance(state.weapons, dict):
-        k = next(iter(state.weapons.keys()))
-        print(
-            "weapons sample key:",
-            repr(k),
-            "value keys:",
-            list(state.weapons[k].keys())[:10],
-        )
-    else:
-        print("weapons[0] keys:", list(state.weapons[0].keys())[:10])
-
-    print_party_debug_summary(party_members, party_magic_lists)
-    print_inventory(state.save, show_zero=True)  # debug_utils
-
-    # ==================================================
-    # ２．敵も複数対応の形に
-    # ==================================================
-    # enemy_names = ["Flyer", "Unei'S Clone"]
-    party_avg_lv = calc_party_avg_level(party_members)
+    party_avg_lv = calc_party_avg_level(pre_party_members)
     locations = build_location_index(state.monsters)
     selected = choose_location_console(locations, party_avg_lv=party_avg_lv)
     enemy_names = pick_enemy_names(selected, state.monsters, k_min=2, k_max=6)
-    enemies = build_enemies(
-        enemy_defs_by_name=state.monsters,
-        spells_by_name=state.spells,
+
+    # UI非依存ユースケース境界を通して戦闘セッションを構築
+    session = build_battle_session(
+        state=state,
         enemy_names=enemy_names,
     )
 
-    print_enemies_status_compact(enemies)  # debug_utils
+    print_party_debug_summary(session.party_members, session.party_magic_lists)
+    print_inventory(session.state.save, show_zero=True)
+    print_enemies_status_compact(session.enemies)
 
-    # ==================================================
-    # ３．戦闘ターン
-    # ==================================================
     rng = random.Random()
     max_turns = 50
     end_reason = None
 
-    # simulate_one_round_multi_party を1ターンずつ呼び出す場合
     for turn in range(1, max_turns + 1):
-        print_round_header_and_state(turn, party_members, enemies)  # debug_utils
+        party_members = session.party_members
+        enemies = session.enemies
 
-        # ラウンド前の終了判定
-        pre_end = check_battle_end_before_round(party_members, enemies)  # debug_utils
+        print_round_header_and_state(turn, party_members, enemies)
+
+        pre_end = check_battle_end_before_round(party_members, enemies)
         if pre_end is not None:
             end_reason = pre_end
-            print_end_reason(pre_end)  # debug_utils
+            print_end_reason(pre_end)
             break
 
-        # ① 行動入力
-        planned_actions = ask_actions_for_party(  # input_ui
+        planned_actions = ask_actions_for_party(
             party_members=party_members,
             enemies=enemies,
-            spells_by_name=spells_expanded,
-            items_by_name=state.items_by_name,
-            party_magic_lists=party_magic_lists,
-            save=state.save,
+            spells_by_name=session.spells_expanded,
+            items_by_name=session.state.items_by_name,
+            party_magic_lists=session.party_magic_lists,
+            save=session.state.save,
+            input_func=input,
+            output_func=print,
         )
 
-        # デバッグ表示（必要な時だけ呼ぶ運用でもOK）
-        print_planned_actions(party_members, planned_actions)  # debug_utils
+        print_planned_actions(party_members, planned_actions)
 
-        # ② イニシアティブ計算＆行動解決
-        logs, round_result, _event = simulate_one_round_multi_party(  # battle_sim
-            party_members,
-            enemies,
-            planned_actions,
+        result = execute_round(
+            session=session,
+            planned_actions=planned_actions,
             rng=rng,
-            save=state.save,
-            spells_by_name=spells_expanded,
-            items_by_name=state.items_by_name,
-            state=state,
         )
+        print_logs(result.logs)
 
-        print_logs(logs)  # debug_utils
-
-        # ラウンド後の終了判定
-        if round_result.end_reason != "continue":
-            end_reason = round_result.end_reason
-            print_end_reason(round_result.end_reason)  # debug_utils
+        if result.round_result.end_reason != "continue":
+            end_reason = result.round_result.end_reason
+            print_end_reason(result.round_result.end_reason)
             break
 
-    # --- 戦闘終了後の報酬適用（ここで一回だけ） ---
     if end_reason == "enemy_defeated":
-        # 勝利処理
-        victory = apply_victory_rewards(
-            party_members=party_members,
-            enemies=enemies,
-            state=state,
-            level_table=level_table,
+        apply_victory_rewards(
+            party_members=session.party_members,
+            enemies=session.enemies,
+            state=session.state,
+            level_table=session.level_table,
         )
 
-        # ★保存確認 → OKなら書き出し
         save_path = Path("assets/data/ffiii_savedata.json")
         prompt_save_progress_and_write(
             before_save=save_before,
-            after_save=state.save,
+            after_save=session.state.save,
             save_path=Path(save_path),
         )
-
-        # 最新から即復元
-        # restore_latest_backup(save_path)
-
-        # 選択式復元
         restore_backup_by_choice(save_path)
 
 
