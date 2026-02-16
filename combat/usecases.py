@@ -12,6 +12,7 @@ from combat.char_build import build_party_members_from_save
 from combat.dto import (
     ExecuteRoundInputDTO,
     ExecuteRoundOutputDTO,
+    derive_round_lifecycle,
     to_domain_planned_action,
 )
 from combat.enemy_build import build_enemies
@@ -122,6 +123,12 @@ def execute_round_dto(
 ) -> ExecuteRoundOutputDTO:
     """DTOベースの1ラウンド実行ユースケース（Flask向けの入出力境界）。"""
 
+    if request.lifecycle_state != "ready_for_actions":
+        raise ValueError(
+            "execute_round_dto accepts lifecycle_state='ready_for_actions' only. "
+            f"actual={request.lifecycle_state!r}"
+        )
+
     planned_actions = [
         to_domain_planned_action(a) if a is not None else None
         for a in request.planned_actions
@@ -138,4 +145,8 @@ def execute_round_dto(
         escaped=result.round_result.escaped,
         enemy_was_physically_hit=result.round_result.enemy_was_physically_hit,
         events=result.event,
+        lifecycle=derive_round_lifecycle(
+            current_state=request.lifecycle_state,
+            end_reason=result.round_result.end_reason,
+        ),
     )
