@@ -12,16 +12,25 @@ from flask import Flask, jsonify, render_template, request
 
 from adapters.flask_error_handlers import register_flask_error_handlers
 from assets.data.data_loader import load_explicit_groups
-from combat.dto import ExecuteRoundInputDTO, parse_execute_round_input_dict, to_json_ready_dict
+from combat.dto import (
+    ExecuteRoundInputDTO,
+    parse_execute_round_input_dict,
+    to_json_ready_dict,
+)
 from combat.enemy_selection import build_groups, build_location_index, pick_enemy_names
 from combat.errors import InputValidationError
+from combat.input_ui import normalize_battle_command
 from combat.runtime_state import init_runtime_state
 from combat.usecases import BattleSession, build_battle_session, execute_round_dto
 
 
-def _build_default_session(*, enemy_names: Sequence[str] | None = None) -> BattleSession:
+def _build_default_session(
+    *, enemy_names: Sequence[str] | None = None
+) -> BattleSession:
     state = init_runtime_state()
-    selected_enemy_names = list(enemy_names) if enemy_names else sorted(state.monsters.keys())[:3]
+    selected_enemy_names = (
+        list(enemy_names) if enemy_names else sorted(state.monsters.keys())[:3]
+    )
     return build_battle_session(state=state, enemy_names=selected_enemy_names)
 
 
@@ -37,7 +46,9 @@ def _normalize_planned_actions_length(
     if actual_count == expected_count:
         return request_dto
 
-    padded = list(request_dto.planned_actions) + [None] * (expected_count - actual_count)
+    padded = list(request_dto.planned_actions) + [None] * (
+        expected_count - actual_count
+    )
     return ExecuteRoundInputDTO(
         planned_actions=padded,
         lifecycle_state=request_dto.lifecycle_state,
@@ -94,6 +105,26 @@ def _build_session_status_snapshot(session: BattleSession) -> dict[str, Any]:
     }
 
 
+def _build_special_command_candidates(session: BattleSession) -> list[str]:
+    candidates: list[str] = []
+    for member in session.party_members:
+        job_raw = getattr(getattr(member, "job", None), "raw", {})
+        if not isinstance(job_raw, dict):
+            continue
+        for i in range(1, 11):
+            command_row = job_raw.get(f"BattleCommand{i}")
+            if not isinstance(command_row, dict):
+                continue
+            command = command_row.get("Command")
+            if not isinstance(command, str) or not command:
+                continue
+            if normalize_battle_command(command) != "special":
+                continue
+            if command not in candidates:
+                candidates.append(command)
+    return candidates
+
+
 def create_app(
     *,
     session: BattleSession | None = None,
@@ -117,7 +148,9 @@ def create_app(
         state = init_runtime_state()
         explicit_groups = load_explicit_groups("assets/data/explicit_groups.json")
         location_entries = build_location_index(state.monsters)
-        location_groups = build_groups(location_entries, explicit_groups=explicit_groups)
+        location_groups = build_groups(
+            location_entries, explicit_groups=explicit_groups
+        )
 
         groups_payload: list[dict[str, Any]] = []
         location_to_entry: dict[str, Any] = {}
@@ -126,15 +159,25 @@ def create_app(
             for child in group.children:
                 locations.append(child.location)
                 location_to_entry[child.location] = child
-            groups_payload.append({"group_name": group.group_name, "locations": locations})
+            groups_payload.append(
+                {"group_name": group.group_name, "locations": locations}
+            )
 
         initial_group = groups_payload[0]["group_name"] if groups_payload else ""
-        initial_location = groups_payload[0]["locations"][0] if groups_payload and groups_payload[0]["locations"] else ""
+        initial_location = (
+            groups_payload[0]["locations"][0]
+            if groups_payload and groups_payload[0]["locations"]
+            else ""
+        )
         initial_entry = location_to_entry.get(initial_location)
         selected_enemy_names = (
-            pick_enemy_names(initial_entry, state.monsters, k_min=2, k_max=6) if initial_entry else sorted(state.monsters.keys())[:3]
+            pick_enemy_names(initial_entry, state.monsters, k_min=2, k_max=6)
+            if initial_entry
+            else sorted(state.monsters.keys())[:3]
         )
-        battle_session = build_battle_session(state=state, enemy_names=selected_enemy_names)
+        battle_session = build_battle_session(
+            state=state, enemy_names=selected_enemy_names
+        )
 
         selection_context = {
             "groups": groups_payload,
@@ -152,20 +195,32 @@ def create_app(
     def index():
         nonlocal battle_session
         if selection_context.get("enabled"):
-            selected_group = request.args.get("location_group", selection_context["selected_group"])
-            selected_location = request.args.get("location", selection_context["selected_location"])
+            selected_group = request.args.get(
+                "location_group", selection_context["selected_group"]
+            )
+            selected_location = request.args.get(
+                "location", selection_context["selected_location"]
+            )
 
             groups = selection_context["groups"]
             valid_group_names = {g["group_name"] for g in groups}
             if selected_group not in valid_group_names and groups:
                 selected_group = groups[0]["group_name"]
 
-            group_row = next((g for g in groups if g["group_name"] == selected_group), None)
+            group_row = next(
+                (g for g in groups if g["group_name"] == selected_group), None
+            )
             valid_locations = set(group_row["locations"]) if group_row else set()
-            if selected_location not in valid_locations and group_row and group_row["locations"]:
+            if (
+                selected_location not in valid_locations
+                and group_row
+                and group_row["locations"]
+            ):
                 selected_location = group_row["locations"][0]
 
-            location_entry = selection_context["location_to_entry"].get(selected_location)
+            location_entry = selection_context["location_to_entry"].get(
+                selected_location
+            )
             if location_entry is not None:
                 enemy_names_for_location = pick_enemy_names(
                     location_entry,
@@ -195,6 +250,11 @@ def create_app(
             selected_location_group=selection_context["selected_group"],
             selected_location=selection_context["selected_location"],
             selected_enemy_names=selection_context.get("selected_enemy_names", []),
+            magic_command_candidates=sorted(battle_session.state.spells.keys()),
+            item_command_candidates=sorted(battle_session.state.items_by_name.keys()),
+            special_command_candidates=_build_special_command_candidates(
+                battle_session
+            ),
         )
 
     @app.post("/battle/round")
@@ -217,9 +277,15 @@ def create_app(
             rng=round_rng,
         )
         response_payload = to_json_ready_dict(output_dto)
-        response_payload["session_status"] = _build_session_status_snapshot(battle_session)
-        response_payload["selected_location_group"] = selection_context.get("selected_group", "")
-        response_payload["selected_location"] = selection_context.get("selected_location", "")
+        response_payload["session_status"] = _build_session_status_snapshot(
+            battle_session
+        )
+        response_payload["selected_location_group"] = selection_context.get(
+            "selected_group", ""
+        )
+        response_payload["selected_location"] = selection_context.get(
+            "selected_location", ""
+        )
         return jsonify(response_payload), 200
 
     return app

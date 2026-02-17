@@ -105,6 +105,11 @@
     </div>
 
     <script id="initialSessionStatusJson" type="application/json">{{ initial_session_status|tojson }}</script>
+    <script id="commandCandidatesJson" type="application/json">{{ {
+      "magic": magic_command_candidates,
+      "item": item_command_candidates,
+      "special": special_command_candidates
+    }|tojson }}</script>
 
     <script>
       const requestBody = document.getElementById("requestBody");
@@ -119,12 +124,21 @@
       const partyStatusBody = document.getElementById("partyStatusBody");
       const enemyStatusBody = document.getElementById("enemyStatusBody");
       const initialSessionStatusNode = document.getElementById("initialSessionStatusJson");
+      const commandCandidatesNode = document.getElementById("commandCandidatesJson");
       let initialSessionStatus = { party: [], enemies: [] };
+      let commandCandidates = { magic: [], item: [], special: [] };
       if (initialSessionStatusNode) {
         try {
           initialSessionStatus = JSON.parse(initialSessionStatusNode.textContent || "{}");
         } catch (error) {
           responseView.textContent = `initial session JSON parse error: ${error}`;
+        }
+      }
+      if (commandCandidatesNode) {
+        try {
+          commandCandidates = JSON.parse(commandCandidatesNode.textContent || "{}");
+        } catch (error) {
+          responseView.textContent = `command candidates JSON parse error: ${error}`;
         }
       }
 
@@ -150,6 +164,75 @@
         renderStatusRows(enemyStatusBody, enemies);
       }
 
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+
+      function buildCommandSelectOptions(names) {
+        const list = Array.isArray(names) ? names : [];
+        if (!list.length) {
+          return '<option value="">(候補なし)</option>';
+        }
+        return list
+          .map((name) => {
+            const escaped = escapeHtml(name);
+            return `<option value="${escaped}">${escaped}</option>`;
+          })
+          .join("");
+      }
+
+      function updateCommandInputByKind(row) {
+        const kind = row.querySelector('[data-field="kind"]').value;
+        const commandInput = row.querySelector('[data-field="command"]');
+        const commandSelect = row.querySelector('[data-field="command_select"]');
+        const spellNameInput = row.querySelector('[data-field="spell_name"]');
+        const itemNameInput = row.querySelector('[data-field="item_name"]');
+
+        spellNameInput.value = "";
+        itemNameInput.value = "";
+        commandSelect.style.display = "none";
+        commandInput.style.display = "";
+
+        if (kind === "magic") {
+          commandInput.value = "Magic";
+          commandInput.style.display = "none";
+          commandSelect.style.display = "";
+          commandSelect.innerHTML = buildCommandSelectOptions(commandCandidates.magic);
+          spellNameInput.value = commandSelect.value || "";
+          return;
+        }
+
+        if (kind === "item") {
+          commandInput.value = "Item";
+          commandInput.style.display = "none";
+          commandSelect.style.display = "";
+          commandSelect.innerHTML = buildCommandSelectOptions(commandCandidates.item);
+          itemNameInput.value = commandSelect.value || "";
+          return;
+        }
+
+        if (kind === "special") {
+          commandInput.style.display = "none";
+          commandSelect.style.display = "";
+          commandSelect.innerHTML = buildCommandSelectOptions(commandCandidates.special);
+          commandInput.value = commandSelect.value || "";
+          return;
+        }
+
+        const defaults = {
+          physical: "Fight",
+          defend: "Defend",
+          jump: "Jump",
+          run: "Run",
+        };
+        commandInput.value = defaults[kind] || commandInput.value || "Fight";
+      }
+
       function buildActionRows() {
         actionRows.innerHTML = "";
         for (let i = 0; i < partyCount; i += 1) {
@@ -167,6 +250,9 @@
               <option value="special">special</option>
             </select>
             <input type="text" data-field="command" value="Fight" placeholder="command (例: Fight)" />
+            <select data-field="command_select" style="display:none"></select>
+            <input type="hidden" data-field="spell_name" value="" />
+            <input type="hidden" data-field="item_name" value="" />
             <select data-field="target_side">
               <option value="enemy" selected>enemy</option>
               <option value="ally">ally</option>
@@ -174,6 +260,21 @@
             </select>
             <input type="number" data-field="target_index" min="0" value="0" />
           `;
+          const kindSelect = row.querySelector('[data-field="kind"]');
+          const commandSelect = row.querySelector('[data-field="command_select"]');
+          kindSelect.addEventListener("change", () => updateCommandInputByKind(row));
+          commandSelect.addEventListener("change", () => {
+            const kind = kindSelect.value;
+            const selected = commandSelect.value;
+            if (kind === "magic") {
+              row.querySelector('[data-field="spell_name"]').value = selected;
+            } else if (kind === "item") {
+              row.querySelector('[data-field="item_name"]').value = selected;
+            } else if (kind === "special") {
+              row.querySelector('[data-field="command"]').value = selected;
+            }
+          });
+          updateCommandInputByKind(row);
           actionRows.appendChild(row);
         }
       }
@@ -182,6 +283,8 @@
         return Array.from(actionRows.querySelectorAll(".action-grid")).map((row) => {
           const kind = row.querySelector('[data-field="kind"]').value;
           const command = row.querySelector('[data-field="command"]').value.trim();
+          const spellName = row.querySelector('[data-field="spell_name"]').value.trim();
+          const itemName = row.querySelector('[data-field="item_name"]').value.trim();
           const targetSide = row.querySelector('[data-field="target_side"]').value;
           const targetIndexRaw = row.querySelector('[data-field="target_index"]').value;
           const action = {
@@ -192,6 +295,12 @@
           };
           if (command) {
             action.command = command;
+          }
+          if (spellName) {
+            action.spell_name = spellName;
+          }
+          if (itemName) {
+            action.item_name = itemName;
           }
           return action;
         });
@@ -223,6 +332,7 @@
           row.querySelector('[data-field="command"]').value = "Fight";
           row.querySelector('[data-field="target_side"]').value = "enemy";
           row.querySelector('[data-field="target_index"]').value = "0";
+          updateCommandInputByKind(row);
         });
         mergeActionsIntoRequest(readActionsFromBuilder());
       });
