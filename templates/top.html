@@ -106,7 +106,7 @@
 
     <script id="initialSessionStatusJson" type="application/json">{{ initial_session_status|tojson }}</script>
     <script id="commandCandidatesJson" type="application/json">{{ {
-      "magic": magic_command_candidates,
+      "magic_by_member": magic_command_candidates_by_member,
       "item": item_command_candidates,
       "special": special_command_candidates
     }|tojson }}</script>
@@ -126,7 +126,7 @@
       const initialSessionStatusNode = document.getElementById("initialSessionStatusJson");
       const commandCandidatesNode = document.getElementById("commandCandidatesJson");
       let initialSessionStatus = { party: [], enemies: [] };
-      let commandCandidates = { magic: [], item: [], special: [] };
+      let commandCandidates = { magic_by_member: [], item: [], special: [] };
       if (initialSessionStatusNode) {
         try {
           initialSessionStatus = JSON.parse(initialSessionStatusNode.textContent || "{}");
@@ -202,7 +202,9 @@
           commandInput.value = "Magic";
           commandInput.style.display = "none";
           commandSelect.style.display = "";
-          commandSelect.innerHTML = buildCommandSelectOptions(commandCandidates.magic);
+          const memberIndex = Number(row.dataset.memberIndex || "0");
+          const magicOptions = commandCandidates.magic_by_member[memberIndex] || [];
+          commandSelect.innerHTML = buildCommandSelectOptions(magicOptions);
           spellNameInput.value = commandSelect.value || "";
           return;
         }
@@ -238,6 +240,7 @@
         for (let i = 0; i < partyCount; i += 1) {
           const row = document.createElement("div");
           row.className = "action-grid";
+          row.dataset.memberIndex = String(i);
           row.innerHTML = `
             <label>メンバー${i + 1}</label>
             <select data-field="kind">

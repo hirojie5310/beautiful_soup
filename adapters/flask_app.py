@@ -105,6 +105,22 @@ def _build_session_status_snapshot(session: BattleSession) -> dict[str, Any]:
     }
 
 
+def _build_magic_command_candidates_by_member(
+    session: BattleSession,
+) -> list[list[str]]:
+    candidates: list[list[str]] = []
+    for row in session.party_magic_lists:
+        names: list[str] = []
+        for cand in row or []:
+            if not isinstance(cand, (list, tuple)) or not cand:
+                continue
+            name = cand[0]
+            if isinstance(name, str) and name:
+                names.append(name)
+        candidates.append(names)
+    return candidates
+
+
 def _build_special_command_candidates(session: BattleSession) -> list[str]:
     candidates: list[str] = []
     for member in session.party_members:
@@ -250,7 +266,9 @@ def create_app(
             selected_location_group=selection_context["selected_group"],
             selected_location=selection_context["selected_location"],
             selected_enemy_names=selection_context.get("selected_enemy_names", []),
-            magic_command_candidates=sorted(battle_session.state.spells.keys()),
+            magic_command_candidates_by_member=_build_magic_command_candidates_by_member(
+                battle_session
+            ),
             item_command_candidates=sorted(battle_session.state.items_by_name.keys()),
             special_command_candidates=_build_special_command_candidates(
                 battle_session
