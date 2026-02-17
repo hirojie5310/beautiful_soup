@@ -7,7 +7,7 @@ from typing import Optional, List, Dict, Any, cast
 from random import Random
 
 from combat.runtime_state import RuntimeState
-from combat.battle_sim import simulate_one_round_multi_party  # ←実際の場所に合わせて
+from combat.usecases import BattleSession, execute_round
 from combat.battle_result import BattleResult
 from combat.initiative import calc_initiative
 from combat.life_check import first_alive_enemy_index, is_out_of_battle
@@ -220,17 +220,26 @@ class BattleController:
         spells_by_name: Optional[Dict[str, Dict[str, Any]]],
         items_by_name: Optional[Dict[str, Dict[str, Any]]],
     ) -> ResolveResult:
-        logs, side_result, events = simulate_one_round_multi_party(
+        del save, items_by_name
+        session = BattleSession(
+            state=state,
+            level_table=None,
             party_members=party_members,
             enemies=enemies,
-            planned_actions=planned_actions,
-            state=state,
-            rng=self.rng,
-            save=save,
-            spells_by_name=spells_by_name,
-            items_by_name=items_by_name,
+            party_magic_info=None,
+            party_magic_lists=None,
+            spells_expanded=spells_by_name or state.spells,
         )
-        return ResolveResult(logs=logs, side_result=side_result, events=events)
+        result = execute_round(
+            session=session,
+            planned_actions=planned_actions,
+            rng=self.rng,
+        )
+        return ResolveResult(
+            logs=result.logs,
+            side_result=result.round_result,
+            events=result.event,
+        )
 
     def _reset_party_attack_animation(self, ui, member_count: int) -> None:
         if member_count < 0:

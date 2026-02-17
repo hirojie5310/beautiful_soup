@@ -37,11 +37,24 @@ def register_flask_error_handlers(app: Any) -> None:
     """
 
     from flask import jsonify
+    from werkzeug.exceptions import HTTPException
 
     @app.errorhandler(DomainError)
     def handle_domain_error(error: DomainError):
         payload, status = map_domain_error_to_http(error)
         return jsonify(payload), status
+
+    @app.errorhandler(HTTPException)
+    def handle_http_exception(error: HTTPException):
+        # Preserve Flask/Werkzeug HTTP semantics (404/405/etc.)
+        payload = {
+            "error": {
+                "code": "http_error",
+                "message": error.description,
+                "details": {"name": error.name},
+            }
+        }
+        return jsonify(payload), error.code
 
     @app.errorhandler(Exception)
     def handle_unexpected_error(error: Exception):

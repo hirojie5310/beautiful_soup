@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Battle Round Runner</title>
+    <style>
+      body { font-family: sans-serif; margin: 24px; line-height: 1.4; }
+      h1 { margin-bottom: 8px; }
+      .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-top: 12px; }
+      textarea { width: 100%; min-height: 160px; font-family: ui-monospace, monospace; }
+      button { padding: 8px 14px; margin-right: 8px; }
+      pre { background: #111; color: #f4f4f4; padding: 12px; border-radius: 6px; overflow-x: auto; }
+      .note { color: #666; font-size: 0.9rem; }
+    </style>
+  </head>
+  <body>
+    <h1>Battle API Playground</h1>
+    <p>ブラウザ上で <code>POST /battle/round</code> を実行して結果を確認できます。</p>
+
+    <div class="card">
+      <h2>Request JSON</h2>
+      <p class="note">planned_actions は空配列でも送信可能です（サーバー側で人数に合わせて補完されます）。</p>
+      <textarea id="requestBody">{
+  "planned_actions": [],
+  "lifecycle_state": "{{ default_lifecycle }}"
+}</textarea>
+      <div style="margin-top: 10px;">
+        <button id="sendBtn">POST /battle/round</button>
+        <button id="resetBtn" type="button">サンプルに戻す</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Response</h2>
+      <pre id="responseView">まだ実行していません。</pre>
+    </div>
+
+    <div class="card">
+      <h2>Session info</h2>
+      <p>想定パーティ人数: <strong id="partyCount">{{ expected_action_count }}</strong></p>
+    </div>
+
+    <script>
+      const requestBody = document.getElementById("requestBody");
+      const sendBtn = document.getElementById("sendBtn");
+      const resetBtn = document.getElementById("resetBtn");
+      const responseView = document.getElementById("responseView");
+
+      const sampleBody = `{
+  "planned_actions": [],
+  "lifecycle_state": "{{ default_lifecycle }}"
+}`;
+
+      resetBtn.addEventListener("click", () => {
+        requestBody.value = sampleBody;
+      });
+
+      sendBtn.addEventListener("click", async () => {
+        let body;
+        try {
+          body = JSON.parse(requestBody.value);
+        } catch (error) {
+          responseView.textContent = `JSON parse error: ${error}`;
+          return;
+        }
+
+        responseView.textContent = "sending...";
+
+        try {
+          const resp = await fetch("/battle/round", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+
+          const payload = await resp.json();
+          responseView.textContent = JSON.stringify(
+            { status: resp.status, body: payload },
+            null,
+            2,
+          );
+        } catch (error) {
+          responseView.textContent = `request failed: ${error}`;
+        }
+      });
+    </script>
+  </body>
+</html>
