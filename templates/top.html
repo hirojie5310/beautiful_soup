@@ -10,13 +10,81 @@
       .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-top: 12px; }
       textarea { width: 100%; min-height: 160px; font-family: ui-monospace, monospace; }
       button { padding: 8px 14px; margin-right: 8px; }
+      input[type="text"], input[type="number"], select { padding: 6px; }
+      .action-grid { display: grid; grid-template-columns: 92px 110px 1fr 130px 120px; gap: 8px; align-items: center; }
+      .action-grid + .action-grid { margin-top: 8px; }
+      .action-grid label { font-size: 0.9rem; color: #555; }
       pre { background: #111; color: #f4f4f4; padding: 12px; border-radius: 6px; overflow-x: auto; }
       .note { color: #666; font-size: 0.9rem; }
+      .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { border-bottom: 1px solid #eee; padding: 6px 4px; text-align: left; }
+      th { font-size: 0.9rem; color: #444; }
     </style>
   </head>
   <body>
     <h1>Battle API Playground</h1>
     <p>ブラウザ上で <code>POST /battle/round</code> を実行して結果を確認できます。</p>
+
+    <div class="card">
+      <h2>Battle setup</h2>
+      <form method="get" action="/">
+        <label for="locationGroupSelect">LocationGroup</label>
+        <select id="locationGroupSelect" name="location_group">
+          {% for group in location_groups %}
+          <option value="{{ group.group_name }}" {% if group.group_name == selected_location_group %}selected{% endif %}>{{ group.group_name }}</option>
+          {% endfor %}
+        </select>
+
+        <label for="locationSelect" style="margin-left: 8px;">location</label>
+        <select id="locationSelect" name="location">
+          {% for group in location_groups %}
+            {% for loc in group.locations %}
+              {% if group.group_name == selected_location_group %}
+              <option value="{{ loc }}" {% if loc == selected_location %}selected{% endif %}>{{ loc }}</option>
+              {% endif %}
+            {% endfor %}
+          {% endfor %}
+        </select>
+        <button type="submit">敵編成を更新</button>
+      </form>
+      <p class="note">選択した location から敵編成を再生成して戦闘セッションを作り直します。</p>
+    </div>
+
+    <div class="card">
+      <h2>Session info</h2>
+      <p>想定パーティ人数: <strong id="partyCount">{{ expected_action_count }}</strong></p>
+      <p>敵の数: <strong id="enemyCount">0</strong></p>
+      <p>選択中 LocationGroup: <strong>{{ selected_location_group }}</strong></p>
+      <p>選択中 location: <strong>{{ selected_location }}</strong></p>
+      <p>出現敵: <strong>{{ selected_enemy_names|join(", ") }}</strong></p>
+      <div class="status-grid">
+        <div>
+          <h3>味方HP</h3>
+          <table>
+            <thead><tr><th>名前</th><th>HP</th></tr></thead>
+            <tbody id="partyStatusBody"></tbody>
+          </table>
+        </div>
+        <div>
+          <h3>敵HP</h3>
+          <table>
+            <thead><tr><th>名前</th><th>HP</th></tr></thead>
+            <tbody id="enemyStatusBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Action Builder</h2>
+      <p class="note">各メンバーの行動を入力して「JSONへ反映」を押すと、<code>planned_actions</code> に反映されます。</p>
+      <div id="actionRows"></div>
+      <div style="margin-top: 10px;">
+        <button id="applyActionsBtn" type="button">JSONへ反映</button>
+        <button id="setAllAttackBtn" type="button">全員を通常攻撃にする</button>
+      </div>
+    </div>
 
     <div class="card">
       <h2>Request JSON</h2>
@@ -36,21 +104,128 @@
       <pre id="responseView">まだ実行していません。</pre>
     </div>
 
-    <div class="card">
-      <h2>Session info</h2>
-      <p>想定パーティ人数: <strong id="partyCount">{{ expected_action_count }}</strong></p>
-    </div>
+    <script id="initialSessionStatusJson" type="application/json">{{ initial_session_status|tojson }}</script>
 
     <script>
       const requestBody = document.getElementById("requestBody");
       const sendBtn = document.getElementById("sendBtn");
       const resetBtn = document.getElementById("resetBtn");
       const responseView = document.getElementById("responseView");
+      const actionRows = document.getElementById("actionRows");
+      const applyActionsBtn = document.getElementById("applyActionsBtn");
+      const setAllAttackBtn = document.getElementById("setAllAttackBtn");
+      const partyCount = Number(document.getElementById("partyCount").textContent || "0");
+      const enemyCount = document.getElementById("enemyCount");
+      const partyStatusBody = document.getElementById("partyStatusBody");
+      const enemyStatusBody = document.getElementById("enemyStatusBody");
+      const initialSessionStatusNode = document.getElementById("initialSessionStatusJson");
+      let initialSessionStatus = { party: [], enemies: [] };
+      if (initialSessionStatusNode) {
+        try {
+          initialSessionStatus = JSON.parse(initialSessionStatusNode.textContent || "{}");
+        } catch (error) {
+          responseView.textContent = `initial session JSON parse error: ${error}`;
+        }
+      }
 
       const sampleBody = `{
   "planned_actions": [],
   "lifecycle_state": "{{ default_lifecycle }}"
 }`;
+
+      function renderStatusRows(tbody, rows) {
+        tbody.innerHTML = "";
+        rows.forEach((row) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${row.name}</td><td>${row.hp} / ${row.max_hp}</td>`;
+          tbody.appendChild(tr);
+        });
+      }
+
+      function renderSessionStatus(status) {
+        const party = Array.isArray(status?.party) ? status.party : [];
+        const enemies = Array.isArray(status?.enemies) ? status.enemies : [];
+        enemyCount.textContent = String(enemies.length);
+        renderStatusRows(partyStatusBody, party);
+        renderStatusRows(enemyStatusBody, enemies);
+      }
+
+      function buildActionRows() {
+        actionRows.innerHTML = "";
+        for (let i = 0; i < partyCount; i += 1) {
+          const row = document.createElement("div");
+          row.className = "action-grid";
+          row.innerHTML = `
+            <label>メンバー${i + 1}</label>
+            <select data-field="kind">
+              <option value="physical" selected>physical</option>
+              <option value="magic">magic</option>
+              <option value="item">item</option>
+              <option value="defend">defend</option>
+              <option value="jump">jump</option>
+              <option value="run">run</option>
+              <option value="special">special</option>
+            </select>
+            <input type="text" data-field="command" value="Fight" placeholder="command (例: Fight)" />
+            <select data-field="target_side">
+              <option value="enemy" selected>enemy</option>
+              <option value="ally">ally</option>
+              <option value="self">self</option>
+            </select>
+            <input type="number" data-field="target_index" min="0" value="0" />
+          `;
+          actionRows.appendChild(row);
+        }
+      }
+
+      function readActionsFromBuilder() {
+        return Array.from(actionRows.querySelectorAll(".action-grid")).map((row) => {
+          const kind = row.querySelector('[data-field="kind"]').value;
+          const command = row.querySelector('[data-field="command"]').value.trim();
+          const targetSide = row.querySelector('[data-field="target_side"]').value;
+          const targetIndexRaw = row.querySelector('[data-field="target_index"]').value;
+          const action = {
+            kind,
+            target_side: targetSide,
+            target_index: targetIndexRaw === "" ? null : Number(targetIndexRaw),
+            target_all: false,
+          };
+          if (command) {
+            action.command = command;
+          }
+          return action;
+        });
+      }
+
+      function mergeActionsIntoRequest(actions) {
+        let body;
+        try {
+          body = JSON.parse(requestBody.value);
+        } catch (error) {
+          responseView.textContent = `JSON parse error: ${error}`;
+          return;
+        }
+
+        body.planned_actions = actions;
+        requestBody.value = JSON.stringify(body, null, 2);
+      }
+
+      buildActionRows();
+      renderSessionStatus(initialSessionStatus);
+
+      applyActionsBtn.addEventListener("click", () => {
+        mergeActionsIntoRequest(readActionsFromBuilder());
+      });
+
+      setAllAttackBtn.addEventListener("click", () => {
+        actionRows.querySelectorAll(".action-grid").forEach((row) => {
+          row.querySelector('[data-field="kind"]').value = "physical";
+          row.querySelector('[data-field="command"]').value = "Fight";
+          row.querySelector('[data-field="target_side"]').value = "enemy";
+          row.querySelector('[data-field="target_index"]').value = "0";
+        });
+        mergeActionsIntoRequest(readActionsFromBuilder());
+      });
 
       resetBtn.addEventListener("click", () => {
         requestBody.value = sampleBody;
@@ -75,6 +250,9 @@
           });
 
           const payload = await resp.json();
+          if (payload && payload.session_status) {
+            renderSessionStatus(payload.session_status);
+          }
           responseView.textContent = JSON.stringify(
             { status: resp.status, body: payload },
             null,

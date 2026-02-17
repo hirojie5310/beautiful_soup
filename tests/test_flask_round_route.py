@@ -19,6 +19,7 @@ class _DummyMember:
 @dataclass
 class _DummySession:
     party_members: list[_DummyMember]
+    enemies: list[_DummyMember]
 
 
 def _build_app(monkeypatch, *, expected_actions: int = 4):
@@ -26,7 +27,8 @@ def _build_app(monkeypatch, *, expected_actions: int = 4):
 
     app = flask_app.create_app(
         session=_DummySession(
-            party_members=[_DummyMember(state=object()) for _ in range(expected_actions)]
+            party_members=[_DummyMember(state=object()) for _ in range(expected_actions)],
+            enemies=[_DummyMember(state=object()) for _ in range(3)],
         ),
     )
 
@@ -76,6 +78,13 @@ def test_root_page_renders_html(monkeypatch):
     body = resp.get_data(as_text=True)
     assert "Battle API Playground" in body
     assert "POST /battle/round" in body
+    assert "Action Builder" in body
+    assert "JSONへ反映" in body
+    assert "敵の数" in body
+    assert "味方HP" in body
+    assert "敵HP" in body
+    assert "Battle setup" in body
+    assert "LocationGroup" in body
 
 def test_post_round_accepts_shorter_planned_actions_with_padding(monkeypatch):
     app = _build_app(monkeypatch, expected_actions=4)
@@ -87,6 +96,10 @@ def test_post_round_accepts_shorter_planned_actions_with_padding(monkeypatch):
     )
 
     assert resp.status_code == 200
+    payload = resp.get_json()
+    assert "session_status" in payload
+    assert payload["session_status"]["party"]
+    assert payload["session_status"]["enemies"]
 
 
 def test_post_round_rejects_too_many_planned_actions(monkeypatch):
