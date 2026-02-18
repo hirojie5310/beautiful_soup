@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import cast
 
 import pytest
 
@@ -9,6 +10,7 @@ pytest.importorskip("flask")
 
 from combat.dto import BattleLifecycleDTO, ExecuteRoundOutputDTO, LIFECYCLE_READY
 from combat.errors import DomainError, InputValidationError, InvalidLifecycleError
+from combat.usecases import BattleSession
 
 
 @dataclass
@@ -26,9 +28,14 @@ def _build_app(monkeypatch, *, expected_actions: int = 4):
     import adapters.flask_app as flask_app
 
     app = flask_app.create_app(
-        session=_DummySession(
-            party_members=[_DummyMember(state=object()) for _ in range(expected_actions)],
-            enemies=[_DummyMember(state=object()) for _ in range(3)],
+        session=cast(
+            BattleSession,
+            _DummySession(
+                party_members=[
+                    _DummyMember(state=object()) for _ in range(expected_actions)
+                ],
+                enemies=[_DummyMember(state=object()) for _ in range(3)],
+            ),
         ),
     )
 
@@ -66,7 +73,6 @@ def _build_app(monkeypatch, *, expected_actions: int = 4):
     return app
 
 
-
 def test_root_page_renders_html(monkeypatch):
     app = _build_app(monkeypatch)
     client = app.test_client()
@@ -85,6 +91,22 @@ def test_root_page_renders_html(monkeypatch):
     assert "敵HP" in body
     assert "Battle setup" in body
     assert "LocationGroup" in body
+    assert "Field Menu ページを開く" in body
+    assert "menuUseItemBtn" not in body
+
+
+def test_menu_page_renders_html(monkeypatch):
+    app = _build_app(monkeypatch)
+    client = app.test_client()
+
+    resp = client.get("/menu")
+
+    assert resp.status_code == 200
+    assert "text/html" in resp.content_type
+    body = resp.get_data(as_text=True)
+    assert "Field Menu (Flask)" in body
+    assert "menuUseItemBtn" in body
+
 
 def test_post_round_accepts_shorter_planned_actions_with_padding(monkeypatch):
     app = _build_app(monkeypatch, expected_actions=4)

@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Field Menu (Flask)</title>
+    <style>
+      body { font-family: sans-serif; margin: 24px; line-height: 1.4; }
+      .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-top: 12px; }
+      .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { border-bottom: 1px solid #eee; padding: 6px 4px; text-align: left; }
+      th { font-size: 0.9rem; color: #444; }
+      input[type="text"], input[type="number"], select { padding: 6px; }
+      button { padding: 8px 14px; margin-right: 8px; }
+      pre { background: #111; color: #f4f4f4; padding: 12px; border-radius: 6px; overflow-x: auto; }
+      .note { color: #666; font-size: 0.9rem; }
+    </style>
+  </head>
+  <body>
+    <h1>Field Menu (Flask)</h1>
+    <p class="note">アイテム・魔法の使用、装備/ジョブ変更、並び替え、セーブを実行できます。</p>
+    <a href="/"><button type="button">Battle API Playgroundへ戻る</button></a>
+
+    <div class="card">
+      <div class="status-grid">
+        <div>
+          <h3>パーティ情報</h3>
+          <table>
+            <thead><tr><th>#</th><th>名前</th><th>Job</th><th>HP</th><th>Row</th></tr></thead>
+            <tbody id="menuPartyBody"></tbody>
+          </table>
+        </div>
+        <div>
+          <h3>インベントリ</h3>
+          <table>
+            <thead><tr><th>Type</th><th>名前</th><th>数</th></tr></thead>
+            <tbody id="menuInventoryBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style="margin-top:10px;display:grid;gap:8px;">
+        <div>
+          <strong>アイテム使用</strong>
+          <input id="menuItemUser" type="number" min="0" value="0" style="width:70px" />
+          <input id="menuItemName" type="text" placeholder="Potion" />
+          <input id="menuItemTarget" type="number" min="0" value="0" style="width:70px" />
+          <input id="menuItemType" type="text" placeholder="Anywhere/Field(任意)" />
+          <button id="menuUseItemBtn" type="button">実行</button>
+        </div>
+        <div>
+          <strong>魔法使用</strong>
+          <input id="menuMagicCaster" type="number" min="0" value="0" style="width:70px" />
+          <input id="menuSpellName" type="text" placeholder="Cure" />
+          <input id="menuMagicTarget" type="number" min="0" value="0" style="width:70px" />
+          <button id="menuCastMagicBtn" type="button">実行</button>
+        </div>
+        <div>
+          <strong>装備変更</strong>
+          <input id="menuEquipMember" type="number" min="0" value="0" style="width:70px" />
+          <select id="menuEquipSlot">
+            <option value="main_hand">main_hand</option>
+            <option value="off_hand">off_hand</option>
+            <option value="head">head</option>
+            <option value="body">body</option>
+            <option value="arms">arms</option>
+          </select>
+          <input id="menuEquipName" type="text" placeholder="装備名（空で外す）" />
+          <button id="menuChangeEquipBtn" type="button">実行</button>
+        </div>
+        <div>
+          <strong>ジョブ変更</strong>
+          <input id="menuJobMember" type="number" min="0" value="0" style="width:70px" />
+          <input id="menuJobName" type="text" placeholder="Job名" />
+          <button id="menuChangeJobBtn" type="button">実行</button>
+        </div>
+        <div>
+          <strong>並び替え</strong>
+          <input id="menuReorder" type="text" placeholder="例: 1,0,2,3" />
+          <button id="menuReorderBtn" type="button">実行</button>
+          <button id="menuSaveBtn" type="button">セーブ</button>
+          <button id="menuRefreshBtn" type="button">再読込</button>
+        </div>
+      </div>
+      <pre id="menuResponseView">menu state ready.</pre>
+    </div>
+
+    <script id="initialMenuStateJson" type="application/json">{{ initial_menu_state|tojson }}</script>
+    <script>
+      const menuPartyBody = document.getElementById("menuPartyBody");
+      const menuInventoryBody = document.getElementById("menuInventoryBody");
+      const menuResponseView = document.getElementById("menuResponseView");
+      const initialMenuStateNode = document.getElementById("initialMenuStateJson");
+      let menuState = { party: [], inventory: [], jobs: [] };
+
+      if (initialMenuStateNode) {
+        try {
+          menuState = JSON.parse(initialMenuStateNode.textContent || "{}");
+        } catch (error) {
+          menuResponseView.textContent = `initial menu JSON parse error: ${error}`;
+        }
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+
+      function renderMenuState(state) {
+        const party = Array.isArray(state?.party) ? state.party : [];
+        const inventory = Array.isArray(state?.inventory) ? state.inventory : [];
+        menuPartyBody.innerHTML = "";
+        menuInventoryBody.innerHTML = "";
+        party.forEach((row) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${row.index}</td><td>${escapeHtml(row.name)}</td><td>${escapeHtml(row.job)}</td><td>${row.hp}/${row.max_hp}</td><td>${escapeHtml(row.row)}</td>`;
+          menuPartyBody.appendChild(tr);
+        });
+        inventory.forEach((row) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${escapeHtml(row.item_type)}</td><td>${escapeHtml(row.name)}</td><td>${row.count}</td>`;
+          menuInventoryBody.appendChild(tr);
+        });
+      }
+
+      async function postMenu(path, payload) {
+        const resp = await fetch(path, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const body = await resp.json();
+        if (body && body.menu_state) {
+          menuState = body.menu_state;
+          renderMenuState(menuState);
+        }
+        menuResponseView.textContent = JSON.stringify({ status: resp.status, body }, null, 2);
+      }
+
+      document.getElementById("menuUseItemBtn").addEventListener("click", async () => {
+        await postMenu("/menu/use-item", {
+          user_index: Number(document.getElementById("menuItemUser").value || "0"),
+          item_name: document.getElementById("menuItemName").value,
+          target_index: Number(document.getElementById("menuItemTarget").value || "0"),
+          item_type: document.getElementById("menuItemType").value || null,
+        });
+      });
+      document.getElementById("menuCastMagicBtn").addEventListener("click", async () => {
+        await postMenu("/menu/cast-magic", {
+          caster_index: Number(document.getElementById("menuMagicCaster").value || "0"),
+          spell_name: document.getElementById("menuSpellName").value,
+          target_index: Number(document.getElementById("menuMagicTarget").value || "0"),
+        });
+      });
+      document.getElementById("menuChangeEquipBtn").addEventListener("click", async () => {
+        await postMenu("/menu/change-equipment", {
+          member_index: Number(document.getElementById("menuEquipMember").value || "0"),
+          slot: document.getElementById("menuEquipSlot").value,
+          item_name: document.getElementById("menuEquipName").value || null,
+        });
+      });
+      document.getElementById("menuChangeJobBtn").addEventListener("click", async () => {
+        await postMenu("/menu/change-job", {
+          member_index: Number(document.getElementById("menuJobMember").value || "0"),
+          job_name: document.getElementById("menuJobName").value,
+        });
+      });
+      document.getElementById("menuReorderBtn").addEventListener("click", async () => {
+        const raw = document.getElementById("menuReorder").value.trim();
+        const order = raw.split(",").map((v) => Number(v.trim())).filter((v) => Number.isInteger(v));
+        await postMenu("/menu/reorder", { order });
+      });
+      document.getElementById("menuSaveBtn").addEventListener("click", async () => {
+        await postMenu("/menu/save", {});
+      });
+      document.getElementById("menuRefreshBtn").addEventListener("click", async () => {
+        const resp = await fetch("/menu/state");
+        const body = await resp.json();
+        menuState = body;
+        renderMenuState(menuState);
+        menuResponseView.textContent = JSON.stringify({ status: resp.status, body }, null, 2);
+      });
+
+      renderMenuState(menuState);
+    </script>
+  </body>
+</html>
