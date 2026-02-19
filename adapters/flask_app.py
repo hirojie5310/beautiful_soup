@@ -8,7 +8,7 @@ from pathlib import Path
 from random import Random
 from typing import Any, Sequence
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, send_from_directory
 
 from adapters.flask_error_handlers import register_flask_error_handlers
 from assets.data.data_loader import load_explicit_groups
@@ -100,6 +100,7 @@ def _build_enemy_status_snapshot(session: BattleSession) -> list[dict[str, Any]]
             {
                 "index": idx,
                 "name": str(getattr(enemy, "name", f"Enemy {idx + 1}")),
+                "sprite_id": getattr(enemy, "sprite_id", None),
                 "hp": hp,
                 "max_hp": max_hp,
             }
@@ -403,6 +404,14 @@ def create_app(
             "selected_location", ""
         )
         return jsonify(response_payload), 200
+
+    @app.get("/assets/enemy-sprites/<path:filename>")
+    def get_enemy_sprite(filename: str):
+        safe_name = Path(filename).name
+        if not safe_name.lower().endswith(".png"):
+            return jsonify({"error": "png only"}), 400
+        sprite_dir = Path(__file__).resolve().parents[1] / "assets/images/enemy_sprites"
+        return send_from_directory(str(sprite_dir), safe_name)
 
     @app.get("/menu")
     def menu_page():

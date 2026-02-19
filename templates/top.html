@@ -5,110 +5,318 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Battle Round Runner</title>
     <style>
-      body { font-family: sans-serif; margin: 24px; line-height: 1.4; }
-      h1 { margin-bottom: 8px; }
-      .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-top: 12px; }
-      textarea { width: 100%; min-height: 160px; font-family: ui-monospace, monospace; }
-      button { padding: 8px 14px; margin-right: 8px; }
-      input[type="text"], input[type="number"], select { padding: 6px; }
-      .action-grid { display: grid; grid-template-columns: 92px 110px 1fr 130px 120px; gap: 8px; align-items: center; }
+      :root {
+        --bg: #02051c;
+        --panel: rgba(15, 20, 54, 0.96);
+        --panel-alt: rgba(33, 16, 16, 0.96);
+        --border: #b8bfd9;
+        --text: #f1f4ff;
+        --muted: #8f98c7;
+        --accent: #f3e98f;
+        --danger: #ff6f7f;
+        --ok: #55d27b;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "BIZ UDPGothic", "Yu Gothic UI", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(1000px 600px at 20% 20%, #101b52 0%, transparent 45%),
+          radial-gradient(900px 500px at 80% 80%, #230f52 0%, transparent 40%),
+          var(--bg);
+      }
+
+      .battle-layout {
+        width: min(1280px, 96vw);
+        margin: 20px auto;
+      }
+
+      .frame {
+        border: 3px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08) inset;
+      }
+
+      .screen-title {
+        margin: 0 0 8px;
+        font-size: 2rem;
+      }
+
+      .phase-note {
+        color: var(--muted);
+        margin: 0 0 14px;
+      }
+
+      .phase-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+
+      .phase {
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.04);
+        font-size: 0.92rem;
+      }
+
+      .phase strong { color: var(--accent); }
+
+      .top-panels {
+        display: grid;
+        grid-template-columns: 1.2fr 1.8fr;
+        gap: 12px;
+      }
+
+      .panel-title {
+        margin: 0 0 10px;
+        color: var(--accent);
+        font-size: 1.25rem;
+      }
+
+      .enemy-summary {
+        background: var(--panel-alt);
+        padding: 14px;
+      }
+
+      .enemy-summary ol {
+        margin: 0;
+        padding-left: 22px;
+        line-height: 1.55;
+      }
+
+      .party-table table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .party-table td {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.13);
+        padding: 6px 4px;
+      }
+
+      .main-grid {
+        margin-top: 12px;
+        display: grid;
+        grid-template-columns: 1.8fr 1.2fr;
+        gap: 12px;
+        align-items: start;
+      }
+
+      .enemy-sprite-board {
+        padding: 16px;
+        min-height: 360px;
+      }
+
+      .sprite-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 12px;
+      }
+
+      .sprite-card {
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.3);
+        padding: 8px;
+      }
+
+      .sprite-card img {
+        width: 100%;
+        height: 110px;
+        object-fit: contain;
+        image-rendering: pixelated;
+        background: #000;
+      }
+
+      .sprite-card .name {
+        margin-top: 6px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .enemy-hp-bar {
+        margin-top: 6px;
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.2);
+        overflow: hidden;
+      }
+
+      .enemy-hp-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #65e183, #37b35f);
+      }
+
+      .log-panel {
+        margin-top: 12px;
+        padding: 14px;
+      }
+
+      pre {
+        margin: 0;
+        white-space: pre-wrap;
+        line-height: 1.5;
+      }
+
+      .command-frame {
+        padding: 16px;
+      }
+
+      .command-row,
+      .action-grid {
+        display: grid;
+        grid-template-columns: 90px 118px 1fr 130px 110px;
+        gap: 8px;
+        align-items: center;
+      }
+
       .action-grid + .action-grid { margin-top: 8px; }
-      .action-grid label { font-size: 0.9rem; color: #555; }
-      pre { background: #111; color: #f4f4f4; padding: 12px; border-radius: 6px; overflow-x: auto; }
-      .note { color: #666; font-size: 0.9rem; }
-      .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
-      table { width: 100%; border-collapse: collapse; }
-      th, td { border-bottom: 1px solid #eee; padding: 6px 4px; text-align: left; }
-      th { font-size: 0.9rem; color: #444; }
+      select, input, button, textarea {
+        font-family: inherit;
+        font-size: 0.95rem;
+      }
+
+      select, input, textarea {
+        width: 100%;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: rgba(0, 0, 0, 0.25);
+        color: var(--text);
+        padding: 6px;
+      }
+
+      button {
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: #1b2c91;
+        color: var(--text);
+        padding: 7px 10px;
+        cursor: pointer;
+      }
+
+      .btn-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .dev-tools {
+        margin-top: 12px;
+        padding: 12px;
+      }
+
+      .dev-tools summary {
+        cursor: pointer;
+        color: var(--muted);
+      }
+
+      .muted { color: var(--muted); }
+      .hp-good { color: var(--ok); }
+      .hp-bad { color: var(--danger); }
+
+      @media (max-width: 980px) {
+        .top-panels, .main-grid {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
   </head>
   <body>
-    <h1>Battle API Playground</h1>
-    <p>ブラウザ上で <code>POST /battle/round</code> を実行して結果を確認できます。</p>
+    <main class="battle-layout">
+      <h1 class="screen-title">Battle UI Migration Playground</h1>
+      <p class="phase-note">既存APIは維持したまま、Pygame風の「敵スプライト＋コマンド枠」へ段階移行するための試作レイアウトです。</p>
 
-    <div class="card">
-      <h2>Battle setup</h2>
-      <form method="get" action="/">
-        <label for="locationGroupSelect">LocationGroup</label>
-        <select id="locationGroupSelect" name="location_group">
-          {% for group in location_groups %}
-          <option value="{{ group.group_name }}" {% if group.group_name == selected_location_group %}selected{% endif %}>{{ group.group_name }}</option>
-          {% endfor %}
-        </select>
+      <section class="phase-list">
+        <div class="phase"><strong>Phase 1:</strong> レイアウトと色調をゲーム風へ変更</div>
+        <div class="phase"><strong>Phase 2:</strong> 敵スプライト/HPバーを状態連動で描画</div>
+        <div class="phase"><strong>Phase 3:</strong> キーボード操作・カーソルUIを追加</div>
+        <div class="phase"><strong>Phase 4:</strong> 画像アセット差し替え・演出追加</div>
+      </section>
 
-        <label for="locationSelect" style="margin-left: 8px;">location</label>
-        <select id="locationSelect" name="location">
-          {% for group in location_groups %}
-            {% for loc in group.locations %}
-              {% if group.group_name == selected_location_group %}
-              <option value="{{ loc }}" {% if loc == selected_location %}selected{% endif %}>{{ loc }}</option>
-              {% endif %}
-            {% endfor %}
-          {% endfor %}
-        </select>
-        <button type="submit">敵編成を更新</button>
-      </form>
-      <p class="note">選択した location から敵編成を再生成して戦闘セッションを作り直します。</p>
-    </div>
+      <section class="top-panels">
+        <div class="frame enemy-summary">
+          <h2 class="panel-title">ENEMIES</h2>
+          <p class="muted">LocationGroup: <strong>{{ selected_location_group }}</strong> / location: <strong>{{ selected_location }}</strong></p>
+          <ol id="enemySummaryList"></ol>
+          <p>敵数: <strong id="enemyCount">0</strong></p>
+        </div>
 
-    <div class="card">
-      <h2>Session info</h2>
-      <p>想定パーティ人数: <strong id="partyCount">{{ expected_action_count }}</strong></p>
-      <p>敵の数: <strong id="enemyCount">0</strong></p>
-      <p>選択中 LocationGroup: <strong>{{ selected_location_group }}</strong></p>
-      <p>選択中 location: <strong>{{ selected_location }}</strong></p>
-      <p>出現敵: <strong>{{ selected_enemy_names|join(", ") }}</strong></p>
-      <div class="status-grid">
-        <div>
-          <h3>味方HP</h3>
+        <div class="frame party-table" style="padding: 14px;">
+          <h2 class="panel-title">PARTY STATUS</h2>
           <table>
-            <thead><tr><th>名前</th><th>HP</th></tr></thead>
             <tbody id="partyStatusBody"></tbody>
           </table>
         </div>
+      </section>
+
+      <section class="main-grid">
         <div>
-          <h3>敵HP</h3>
-          <table>
-            <thead><tr><th>名前</th><th>HP</th></tr></thead>
-            <tbody id="enemyStatusBody"></tbody>
-          </table>
+          <div class="frame enemy-sprite-board">
+            <h2 class="panel-title">Enemy Sprites</h2>
+            <div id="enemySpriteGrid" class="sprite-grid"></div>
+          </div>
+
+          <div class="frame log-panel">
+            <h2 class="panel-title">LOG / RESPONSE</h2>
+            <pre id="responseView">まだ実行していません。</pre>
+          </div>
         </div>
-      </div>
-    </div>
 
-    <div class="card">
-      <h2>Action Builder</h2>
-      <p class="note">各メンバーの行動を入力して「JSONへ反映」を押すと、<code>planned_actions</code> に反映されます。</p>
-      <div id="actionRows"></div>
-      <div style="margin-top: 10px;">
-        <button id="applyActionsBtn" type="button">JSONへ反映</button>
-        <button id="setAllAttackBtn" type="button">全員を通常攻撃にする</button>
-      </div>
-    </div>
+        <aside class="frame command-frame">
+          <h2 class="panel-title">COMMAND FRAME</h2>
+          <p class="muted">想定パーティ人数: <strong id="partyCount">{{ expected_action_count }}</strong></p>
+          <div id="actionRows"></div>
+          <div class="btn-row">
+            <button id="applyActionsBtn" type="button">JSONへ反映</button>
+            <button id="setAllAttackBtn" type="button">全員を通常攻撃</button>
+          </div>
 
-    <div class="card">
-      <h2>Field Menu (Flask)</h2>
-      <p class="note">Field Menu は別ページに分離しました。敵選択後の状態のまま利用できます。</p>
-      <a href="/menu"><button type="button">Field Menu ページを開く</button></a>
-    </div>
-
-    <div class="card">
-      <h2>Request JSON</h2>
-      <p class="note">planned_actions は空配列でも送信可能です（サーバー側で人数に合わせて補完されます）。</p>
-      <textarea id="requestBody">{
+          <h3 style="margin:14px 0 8px;">Request JSON</h3>
+          <textarea id="requestBody" rows="8">{
   "planned_actions": [],
   "lifecycle_state": "{{ default_lifecycle }}"
 }</textarea>
-      <div style="margin-top: 10px;">
-        <button id="sendBtn">POST /battle/round</button>
-        <button id="resetBtn" type="button">サンプルに戻す</button>
-      </div>
-    </div>
+          <div class="btn-row">
+            <button id="sendBtn" type="button">POST /battle/round</button>
+            <button id="resetBtn" type="button">サンプルに戻す</button>
+            <a href="/menu"><button type="button">Field Menu</button></a>
+          </div>
+        </aside>
+      </section>
 
-    <div class="card">
-      <h2>Response</h2>
-      <pre id="responseView">まだ実行していません。</pre>
-    </div>
+      <details class="frame dev-tools">
+        <summary>開発用コントロール（場所選択）</summary>
+        <form method="get" action="/" style="margin-top: 10px; display:flex; gap:8px; flex-wrap: wrap; align-items: center;">
+          <label for="locationGroupSelect">LocationGroup</label>
+          <select id="locationGroupSelect" name="location_group" style="width:auto; min-width: 220px;">
+            {% for group in location_groups %}
+            <option value="{{ group.group_name }}" {% if group.group_name == selected_location_group %}selected{% endif %}>{{ group.group_name }}</option>
+            {% endfor %}
+          </select>
+
+          <label for="locationSelect">location</label>
+          <select id="locationSelect" name="location" style="width:auto; min-width: 220px;">
+            {% for group in location_groups %}
+              {% for loc in group.locations %}
+                {% if group.group_name == selected_location_group %}
+                <option value="{{ loc }}" {% if loc == selected_location %}selected{% endif %}>{{ loc }}</option>
+                {% endif %}
+              {% endfor %}
+            {% endfor %}
+          </select>
+          <button type="submit">敵編成を更新</button>
+        </form>
+      </details>
+    </main>
 
     <script id="initialSessionStatusJson" type="application/json">{{ initial_session_status|tojson }}</script>
     <script id="commandCandidatesJson" type="application/json">{{ {
@@ -128,11 +336,13 @@
       const partyCount = Number(document.getElementById("partyCount").textContent || "0");
       const enemyCount = document.getElementById("enemyCount");
       const partyStatusBody = document.getElementById("partyStatusBody");
-      const enemyStatusBody = document.getElementById("enemyStatusBody");
+      const enemySummaryList = document.getElementById("enemySummaryList");
+      const enemySpriteGrid = document.getElementById("enemySpriteGrid");
       const initialSessionStatusNode = document.getElementById("initialSessionStatusJson");
       const commandCandidatesNode = document.getElementById("commandCandidatesJson");
       let initialSessionStatus = { party: [], enemies: [] };
       let commandCandidates = { magic_by_member: [], item: [], special: [] };
+
       if (initialSessionStatusNode) {
         try {
           initialSessionStatus = JSON.parse(initialSessionStatusNode.textContent || "{}");
@@ -153,23 +363,6 @@
   "lifecycle_state": "{{ default_lifecycle }}"
 }`;
 
-      function renderStatusRows(tbody, rows) {
-        tbody.innerHTML = "";
-        rows.forEach((row) => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `<td>${row.name}</td><td>${row.hp} / ${row.max_hp}</td>`;
-          tbody.appendChild(tr);
-        });
-      }
-
-      function renderSessionStatus(status) {
-        const party = Array.isArray(status?.party) ? status.party : [];
-        const enemies = Array.isArray(status?.enemies) ? status.enemies : [];
-        enemyCount.textContent = String(enemies.length);
-        renderStatusRows(partyStatusBody, party);
-        renderStatusRows(enemyStatusBody, enemies);
-      }
-
       function escapeHtml(value) {
         return String(value)
           .replaceAll("&", "&amp;")
@@ -177,6 +370,77 @@
           .replaceAll(">", "&gt;")
           .replaceAll('"', "&quot;")
           .replaceAll("'", "&#39;");
+      }
+
+      function hpClass(row) {
+        const hp = Number(row?.hp ?? 0);
+        const maxHp = Math.max(1, Number(row?.max_hp ?? 1));
+        return hp / maxHp <= 0.25 ? "hp-bad" : "hp-good";
+      }
+
+      function renderStatusRows(rows) {
+        partyStatusBody.innerHTML = "";
+        rows.forEach((row) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${escapeHtml(row.name)}</td><td class="${hpClass(row)}">HP ${row.hp}/${row.max_hp}</td>`;
+          partyStatusBody.appendChild(tr);
+        });
+      }
+
+      function fallbackSpriteDataUri(name) {
+        const label = encodeURIComponent(name.slice(0, 6));
+        const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 90'>
+          <rect width='120' height='90' fill='#0d0d0f'/><rect x='7' y='7' width='106' height='76' fill='#32153f'/>
+          <text x='60' y='50' fill='#d6d7ff' font-size='11' text-anchor='middle'>${label}</text></svg>`;
+        return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+      }
+
+      function buildEnemySpriteUrl(spriteId, enemyName) {
+        if (!spriteId) {
+          return fallbackSpriteDataUri(enemyName);
+        }
+        return `/assets/enemy-sprites/${encodeURIComponent(String(spriteId))}.png`;
+      }
+
+      function renderEnemySprites(enemies) {
+        enemySummaryList.innerHTML = "";
+        enemySpriteGrid.innerHTML = "";
+        enemies.forEach((enemy, index) => {
+          const li = document.createElement("li");
+          li.innerHTML = `${index + 1}. ${escapeHtml(enemy.name)} <span class="${hpClass(enemy)}">HP ${enemy.hp}/${enemy.max_hp}</span>`;
+          enemySummaryList.appendChild(li);
+
+          const hp = Number(enemy?.hp ?? 0);
+          const maxHp = Math.max(1, Number(enemy?.max_hp ?? 1));
+          const hpRate = Math.max(0, Math.min(100, Math.round((hp / maxHp) * 100)));
+          const imgSrc = buildEnemySpriteUrl(enemy?.sprite_id, enemy?.name || "Enemy");
+
+          const card = document.createElement("article");
+          card.className = "sprite-card";
+          card.innerHTML = `
+            <img alt="${escapeHtml(enemy.name)} sprite" src="${imgSrc}" />
+            <div class="name">${escapeHtml(enemy.name)}</div>
+            <div class="enemy-hp-bar"><div class="enemy-hp-fill" style="width:${hpRate}%"></div></div>
+            <div class="${hpClass(enemy)}">${enemy.hp}/${enemy.max_hp}</div>
+          `;
+
+          const imgNode = card.querySelector("img");
+          if (imgNode) {
+            imgNode.addEventListener("error", () => {
+              imgNode.src = fallbackSpriteDataUri(enemy?.name || "Enemy");
+            }, { once: true });
+          }
+
+          enemySpriteGrid.appendChild(card);
+        });
+      }
+
+      function renderSessionStatus(status) {
+        const party = Array.isArray(status?.party) ? status.party : [];
+        const enemies = Array.isArray(status?.enemies) ? status.enemies : [];
+        enemyCount.textContent = String(enemies.length);
+        renderStatusRows(party);
+        renderEnemySprites(enemies);
       }
 
       function buildCommandSelectOptions(names) {
@@ -248,7 +512,7 @@
           row.className = "action-grid";
           row.dataset.memberIndex = String(i);
           row.innerHTML = `
-            <label>メンバー${i + 1}</label>
+            <label>Member ${i + 1}</label>
             <select data-field="kind">
               <option value="physical" selected>physical</option>
               <option value="magic">magic</option>
