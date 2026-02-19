@@ -125,6 +125,13 @@
         border-radius: 10px;
         background: rgba(0, 0, 0, 0.3);
         padding: 8px;
+        transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+      }
+
+      .sprite-card.is-targeted {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(243, 233, 143, 0.35);
+        transform: translateY(-1px);
       }
 
       .sprite-card img {
@@ -179,6 +186,46 @@
       }
 
       .action-grid + .action-grid { margin-top: 8px; }
+      .action-grid {
+        position: relative;
+      }
+
+      .action-grid.is-focused {
+        outline: 2px solid rgba(243, 233, 143, 0.75);
+        outline-offset: 4px;
+        border-radius: 6px;
+      }
+
+      .cursor-marker {
+        color: transparent;
+        font-size: 0.95rem;
+        margin-right: 4px;
+      }
+
+      .action-grid.is-focused .cursor-marker {
+        color: var(--accent);
+      }
+
+      .keyboard-hint {
+        margin: 6px 0 10px;
+        padding: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.04);
+        font-size: 0.88rem;
+        line-height: 1.45;
+      }
+
+      .kbd {
+        display: inline-block;
+        min-width: 24px;
+        padding: 1px 6px;
+        margin: 0 2px;
+        border-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        background: rgba(0, 0, 0, 0.28);
+        text-align: center;
+      }
       select, input, button, textarea {
         font-family: inherit;
         font-size: 0.95rem;
@@ -274,6 +321,11 @@
         <aside class="frame command-frame">
           <h2 class="panel-title">COMMAND FRAME</h2>
           <p class="muted">想定パーティ人数: <strong id="partyCount">{{ expected_action_count }}</strong></p>
+          <div class="keyboard-hint">
+            Cursor: <span class="kbd">↑</span><span class="kbd">↓</span> メンバー選択 /
+            <span class="kbd">←</span><span class="kbd">→</span> 敵ターゲット変更 /
+            <span class="kbd">Enter</span> JSONへ反映
+          </div>
           <div id="actionRows"></div>
           <div class="btn-row">
             <button id="applyActionsBtn" type="button">JSONへ反映</button>
@@ -342,6 +394,8 @@
       const commandCandidatesNode = document.getElementById("commandCandidatesJson");
       let initialSessionStatus = { party: [], enemies: [] };
       let commandCandidates = { magic_by_member: [], item: [], special: [] };
+      let cursorMemberIndex = 0;
+      let enemyTargetCursorIndex = 0;
 
       if (initialSessionStatusNode) {
         try {
@@ -417,6 +471,7 @@
 
           const card = document.createElement("article");
           card.className = "sprite-card";
+          card.dataset.enemyIndex = String(index);
           card.innerHTML = `
             <img alt="${escapeHtml(enemy.name)} sprite" src="${imgSrc}" />
             <div class="name">${escapeHtml(enemy.name)}</div>
@@ -431,8 +486,15 @@
             }, { once: true });
           }
 
+          card.addEventListener("click", () => {
+            setEnemyTargetCursor(index);
+            syncTargetInputByCursor();
+          });
+
           enemySpriteGrid.appendChild(card);
         });
+
+        syncEnemyCursorUi();
       }
 
       function renderSessionStatus(status) {
@@ -512,7 +574,7 @@
           row.className = "action-grid";
           row.dataset.memberIndex = String(i);
           row.innerHTML = `
-            <label>Member ${i + 1}</label>
+            <label><span class="cursor-marker">▶</span>Member ${i + 1}</label>
             <select data-field="kind">
               <option value="physical" selected>physical</option>
               <option value="magic">magic</option>
@@ -535,7 +597,21 @@
           `;
           const kindSelect = row.querySelector('[data-field="kind"]');
           const commandSelect = row.querySelector('[data-field="command_select"]');
+          const targetIndexInput = row.querySelector('[data-field="target_index"]');
+          const targetSideSelect = row.querySelector('[data-field="target_side"]');
           kindSelect.addEventListener("change", () => updateCommandInputByKind(row));
+          targetSideSelect.addEventListener("change", () => syncTargetInputByCursor());
+          targetIndexInput.addEventListener("change", () => {
+            const nextIndex = Number(targetIndexInput.value || "0");
+            setEnemyTargetCursor(nextIndex);
+            syncEnemyCursorUi();
+          });
+          row.addEventListener("focusin", () => {
+            setCursorMemberIndex(i);
+          });
+          row.addEventListener("click", () => {
+            setCursorMemberIndex(i);
+          });
           commandSelect.addEventListener("change", () => {
             const kind = kindSelect.value;
             const selected = commandSelect.value;
@@ -550,6 +626,97 @@
           updateCommandInputByKind(row);
           actionRows.appendChild(row);
         }
+
+        setCursorMemberIndex(0);
+        syncTargetInputByCursor();
+      }
+
+      function getActionRowNodes() {
+        return Array.from(actionRows.querySelectorAll(".action-grid"));
+      }
+
+      function setCursorMemberIndex(index) {
+        const rows = getActionRowNodes();
+        if (!rows.length) {
+          cursorMemberIndex = 0;
+          return;
+        }
+        const bounded = Math.max(0, Math.min(rows.length - 1, index));
+        cursorMemberIndex = bounded;
+        rows.forEach((row, rowIndex) => {
+          row.classList.toggle("is-focused", rowIndex === cursorMemberIndex);
+        });
+        syncTargetInputByCursor();
+      }
+
+      function setEnemyTargetCursor(index) {
+        const enemyCards = Array.from(enemySpriteGrid.querySelectorAll(".sprite-card"));
+        if (!enemyCards.length) {
+          enemyTargetCursorIndex = 0;
+          return;
+        }
+        enemyTargetCursorIndex = Math.max(0, Math.min(enemyCards.length - 1, index));
+        syncEnemyCursorUi();
+      }
+
+      function syncEnemyCursorUi() {
+        const enemyCards = Array.from(enemySpriteGrid.querySelectorAll(".sprite-card"));
+        enemyCards.forEach((card, index) => {
+          card.classList.toggle("is-targeted", index === enemyTargetCursorIndex);
+        });
+      }
+
+      function syncTargetInputByCursor() {
+        const rows = getActionRowNodes();
+        const activeRow = rows[cursorMemberIndex];
+        if (!activeRow) {
+          return;
+        }
+        const targetSideSelect = activeRow.querySelector('[data-field="target_side"]');
+        const targetIndexInput = activeRow.querySelector('[data-field="target_index"]');
+        if (!targetSideSelect || !targetIndexInput || targetSideSelect.value !== "enemy") {
+          return;
+        }
+        targetIndexInput.value = String(enemyTargetCursorIndex);
+      }
+
+      function bindKeyboardControl() {
+        document.addEventListener("keydown", (event) => {
+          if (event.altKey || event.ctrlKey || event.metaKey) {
+            return;
+          }
+          const activeTag = document.activeElement?.tagName;
+          if (activeTag === "INPUT" || activeTag === "TEXTAREA" || activeTag === "SELECT") {
+            return;
+          }
+
+          if (event.key === "ArrowUp") {
+            event.preventDefault();
+            setCursorMemberIndex(cursorMemberIndex - 1);
+            return;
+          }
+          if (event.key === "ArrowDown") {
+            event.preventDefault();
+            setCursorMemberIndex(cursorMemberIndex + 1);
+            return;
+          }
+          if (event.key === "ArrowLeft") {
+            event.preventDefault();
+            setEnemyTargetCursor(enemyTargetCursorIndex - 1);
+            syncTargetInputByCursor();
+            return;
+          }
+          if (event.key === "ArrowRight") {
+            event.preventDefault();
+            setEnemyTargetCursor(enemyTargetCursorIndex + 1);
+            syncTargetInputByCursor();
+            return;
+          }
+          if (event.key === "Enter") {
+            event.preventDefault();
+            mergeActionsIntoRequest(readActionsFromBuilder());
+          }
+        });
       }
 
       function readActionsFromBuilder() {
@@ -594,6 +761,7 @@
 
       buildActionRows();
       renderSessionStatus(initialSessionStatus);
+      bindKeyboardControl();
 
       applyActionsBtn.addEventListener("click", () => {
         mergeActionsIntoRequest(readActionsFromBuilder());
