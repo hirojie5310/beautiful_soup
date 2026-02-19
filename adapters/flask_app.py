@@ -31,6 +31,34 @@ from combat.models import EquipmentSet
 from assets.data.data_loader import save_savedata
 from ui_pygame.field_effects import sync_equipment_to_save
 from adapters.flask_menu_actions import make_cast_field_magic_fn, make_use_field_item_fn
+from utils.text_normalize import normalize_text_basic
+
+
+def group_name_to_image_key(name: str) -> str:
+    return normalize_text_basic(name).replace("'", "").replace(" ", "_")
+
+
+def _resolve_location_group_bg_filename(maps_dir: Path, group_name: str) -> str | None:
+    key = group_name_to_image_key(group_name)
+    exts = (".png", ".jpg", ".jpeg", ".PNG", ".JPG")
+
+    for ext in exts:
+        target = maps_dir / f"{key}{ext}"
+        if target.exists() and target.is_file():
+            return target.name
+
+    # Linux では大文字小文字が区別されるため、Windows/Pygame 互換で
+    # 拡張子とファイル名の大文字小文字差異を吸収して探索する。
+    allowed_exts = {ext.lower() for ext in exts}
+    for file in maps_dir.iterdir():
+        if not file.is_file():
+            continue
+        if file.suffix.lower() not in allowed_exts:
+            continue
+        if normalize_text_basic(file.stem) == key:
+            return file.name
+
+    return None
 
 
 def _build_default_session(
@@ -412,6 +440,16 @@ def create_app(
             return jsonify({"error": "png only"}), 400
         sprite_dir = Path(__file__).resolve().parents[1] / "assets/images/enemy_sprites"
         return send_from_directory(str(sprite_dir), safe_name)
+
+    @app.get("/assets/ui/location-group-bg/<path:group_name>")
+    def get_location_group_bg(group_name: str):
+        safe_name = Path(group_name).name
+        maps_dir = Path(__file__).resolve().parents[1] / "assets/images/maps"
+        filename = _resolve_location_group_bg_filename(maps_dir, safe_name)
+        if filename is not None:
+            return send_from_directory(str(maps_dir), filename)
+
+        return "", 404
 
     @app.get("/menu")
     def menu_page():

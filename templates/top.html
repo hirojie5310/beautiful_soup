@@ -110,8 +110,16 @@
       }
 
       .enemy-sprite-board {
+        position: relative;
         padding: 16px;
         min-height: 360px;
+        overflow: hidden;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.3));
+        background-color: rgba(7, 9, 28, 0.92);
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
       }
 
       .sprite-grid {
@@ -121,17 +129,44 @@
       }
 
       .sprite-card {
+        position: relative;
         border: 2px solid rgba(255, 255, 255, 0.2);
         border-radius: 10px;
-        background: rgba(0, 0, 0, 0.3);
+        background: linear-gradient(180deg, rgba(0, 0, 0, 0.24), rgba(0, 0, 0, 0.56));
         padding: 8px;
         transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+        animation: sprite-idle-float 2.6s ease-in-out infinite;
+        animation-delay: calc(var(--enemy-idx, 0) * 0.08s);
       }
 
       .sprite-card.is-targeted {
         border-color: var(--accent);
         box-shadow: 0 0 0 2px rgba(243, 233, 143, 0.35);
         transform: translateY(-1px);
+      }
+
+      .sprite-card.is-hit {
+        animation: sprite-hit 320ms ease;
+      }
+
+      .sprite-card.is-defeated {
+        filter: grayscale(0.9);
+        opacity: 0.72;
+      }
+
+      .sprite-card::after {
+        content: "";
+        position: absolute;
+        inset: 5px;
+        border: 2px dashed rgba(243, 233, 143, 0.85);
+        border-radius: 8px;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .sprite-card.is-targeted::after {
+        opacity: 1;
+        animation: reticle-pulse 680ms ease-in-out infinite;
       }
 
       .sprite-card img {
@@ -160,6 +195,44 @@
       .enemy-hp-fill {
         height: 100%;
         background: linear-gradient(90deg, #65e183, #37b35f);
+        transition: width 300ms ease;
+      }
+
+      .battle-vfx-layer {
+        pointer-events: none;
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      .battle-vfx-layer .spark {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.95), rgba(255, 171, 71, 0.15));
+        animation: spark-burst 500ms ease-out forwards;
+      }
+
+      @keyframes sprite-idle-float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-4px); }
+      }
+
+      @keyframes reticle-pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.03); opacity: 0.4; }
+      }
+
+      @keyframes sprite-hit {
+        0% { filter: brightness(1); }
+        25% { filter: brightness(1.8) saturate(1.3); }
+        100% { filter: brightness(1); }
+      }
+
+      @keyframes spark-burst {
+        0% { transform: translate(0, 0) scale(0.6); opacity: 1; }
+        100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
       }
 
       .log-panel {
@@ -307,9 +380,10 @@
 
       <section class="main-grid">
         <div>
-          <div class="frame enemy-sprite-board">
+          <div id="enemySpriteBoard" class="frame enemy-sprite-board">
             <h2 class="panel-title">Enemy Sprites</h2>
             <div id="enemySpriteGrid" class="sprite-grid"></div>
+            <div id="battleVfxLayer" class="battle-vfx-layer" aria-hidden="true"></div>
           </div>
 
           <div class="frame log-panel">
@@ -334,9 +408,9 @@
 
           <h3 style="margin:14px 0 8px;">Request JSON</h3>
           <textarea id="requestBody" rows="8">{
-  "planned_actions": [],
-  "lifecycle_state": "{{ default_lifecycle }}"
-}</textarea>
+            "planned_actions": [],
+            "lifecycle_state": "{{ default_lifecycle }}"
+          }</textarea>
           <div class="btn-row">
             <button id="sendBtn" type="button">POST /battle/round</button>
             <button id="resetBtn" type="button">サンプルに戻す</button>
@@ -376,6 +450,7 @@
       "item": item_command_candidates,
       "special": special_command_candidates
     }|tojson }}</script>
+    <script id="selectedLocationGroupJson" type="application/json">{{ selected_location_group|tojson }}</script>
 
     <script>
       const requestBody = document.getElementById("requestBody");
@@ -390,12 +465,17 @@
       const partyStatusBody = document.getElementById("partyStatusBody");
       const enemySummaryList = document.getElementById("enemySummaryList");
       const enemySpriteGrid = document.getElementById("enemySpriteGrid");
+      const enemySpriteBoard = document.getElementById("enemySpriteBoard");
       const initialSessionStatusNode = document.getElementById("initialSessionStatusJson");
       const commandCandidatesNode = document.getElementById("commandCandidatesJson");
+      const selectedLocationGroupNode = document.getElementById("selectedLocationGroupJson");
+      const battleVfxLayer = document.getElementById("battleVfxLayer");
       let initialSessionStatus = { party: [], enemies: [] };
       let commandCandidates = { magic_by_member: [], item: [], special: [] };
+      let selectedLocationGroup = "";
       let cursorMemberIndex = 0;
       let enemyTargetCursorIndex = 0;
+      let previousEnemyState = [];
 
       if (initialSessionStatusNode) {
         try {
@@ -409,6 +489,13 @@
           commandCandidates = JSON.parse(commandCandidatesNode.textContent || "{}");
         } catch (error) {
           responseView.textContent = `command candidates JSON parse error: ${error}`;
+        }
+      }
+      if (selectedLocationGroupNode) {
+        try {
+          selectedLocationGroup = JSON.parse(selectedLocationGroupNode.textContent || '""');
+        } catch (error) {
+          responseView.textContent = `selected location group JSON parse error: ${error}`;
         }
       }
 
@@ -456,6 +543,46 @@
         return `/assets/enemy-sprites/${encodeURIComponent(String(spriteId))}.png`;
       }
 
+      function applyLocationGroupBackground(locationGroup) {
+        if (!enemySpriteBoard) {
+          return;
+        }
+        if (!locationGroup) {
+          enemySpriteBoard.style.backgroundImage = "";
+          return;
+        }
+        const url = `/assets/ui/location-group-bg/${encodeURIComponent(String(locationGroup))}`;
+        const probe = new Image();
+        probe.onload = () => {
+          enemySpriteBoard.style.backgroundImage =
+            `linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.3)), url('${url}')`;
+        };
+        probe.onerror = () => {
+          enemySpriteBoard.style.backgroundImage = "";
+        };
+        probe.src = url;
+      }
+
+      function spawnHitSpark(card) {
+        if (!battleVfxLayer || !card) {
+          return;
+        }
+        const boardRect = battleVfxLayer.getBoundingClientRect();
+        const cardRect = card.getBoundingClientRect();
+        const centerX = cardRect.left - boardRect.left + cardRect.width / 2;
+        const centerY = cardRect.top - boardRect.top + cardRect.height / 2;
+        for (let i = 0; i < 7; i += 1) {
+          const spark = document.createElement("span");
+          spark.className = "spark";
+          spark.style.left = `${centerX}px`;
+          spark.style.top = `${centerY}px`;
+          spark.style.setProperty("--dx", `${Math.round((Math.random() * 70) - 35)}px`);
+          spark.style.setProperty("--dy", `${Math.round((Math.random() * 70) - 35)}px`);
+          battleVfxLayer.appendChild(spark);
+          spark.addEventListener("animationend", () => spark.remove(), { once: true });
+        }
+      }
+
       function renderEnemySprites(enemies) {
         enemySummaryList.innerHTML = "";
         enemySpriteGrid.innerHTML = "";
@@ -472,12 +599,26 @@
           const card = document.createElement("article");
           card.className = "sprite-card";
           card.dataset.enemyIndex = String(index);
+          card.style.setProperty("--enemy-idx", String(index));
           card.innerHTML = `
             <img alt="${escapeHtml(enemy.name)} sprite" src="${imgSrc}" />
             <div class="name">${escapeHtml(enemy.name)}</div>
             <div class="enemy-hp-bar"><div class="enemy-hp-fill" style="width:${hpRate}%"></div></div>
             <div class="${hpClass(enemy)}">${enemy.hp}/${enemy.max_hp}</div>
           `;
+
+          const before = previousEnemyState[index];
+          const beforeHp = Number(before?.hp ?? hp);
+          if (hp <= 0) {
+            card.classList.add("is-defeated");
+          }
+          if (hp < beforeHp) {
+            card.classList.add("is-hit");
+            card.addEventListener("animationend", () => {
+              card.classList.remove("is-hit");
+            }, { once: true });
+            spawnHitSpark(card);
+          }
 
           const imgNode = card.querySelector("img");
           if (imgNode) {
@@ -495,6 +636,7 @@
         });
 
         syncEnemyCursorUi();
+        previousEnemyState = enemies.map((enemy) => ({ hp: Number(enemy?.hp ?? 0) }));
       }
 
       function renderSessionStatus(status) {
@@ -761,6 +903,7 @@
 
       buildActionRows();
       renderSessionStatus(initialSessionStatus);
+      applyLocationGroupBackground(selectedLocationGroup);
       bindKeyboardControl();
 
       applyActionsBtn.addEventListener("click", () => {
