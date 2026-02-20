@@ -156,10 +156,12 @@ def _build_party_menu_snapshot(session: BattleSession) -> list[dict[str, Any]]:
             {
                 "index": idx,
                 "name": str(getattr(member, "name", f"Ally {idx + 1}")),
+                "level": _safe_int(getattr(member, "level", 0), 0),
                 "job": str(getattr(getattr(member, "job", None), "name", "Unknown")),
                 "hp": hp,
                 "max_hp": max_hp,
                 "row": str(getattr(stats, "row", "front")),
+                "portrait_key": getattr(member, "portrait_key", None),
                 "equipment": {
                     "main_hand": getattr(eq, "main_hand", None),
                     "off_hand": getattr(eq, "off_hand", None),
@@ -191,12 +193,16 @@ def _build_inventory_snapshot(session: BattleSession) -> list[dict[str, Any]]:
 
 def _build_menu_state_payload(session: BattleSession) -> dict[str, Any]:
     state = getattr(session, "state", None)
+    save = getattr(state, "save", {}) if state is not None else {}
     jobs = getattr(state, "jobs_by_name", {})
     job_names = sorted(jobs.keys()) if isinstance(jobs, dict) else []
+    gil = _safe_int(save.get("gil", 0), 0) if isinstance(save, dict) else 0
+    cp = _safe_int(save.get("CP", 0), 0) if isinstance(save, dict) else 0
     return {
         "party": _build_party_menu_snapshot(session),
         "inventory": _build_inventory_snapshot(session),
         "jobs": job_names,
+        "resources": {"gil": gil, "cp": cp, "cp_max": 255},
     }
 
 
@@ -440,6 +446,27 @@ def create_app(
             return jsonify({"error": "png only"}), 400
         sprite_dir = Path(__file__).resolve().parents[1] / "assets/images/enemy_sprites"
         return send_from_directory(str(sprite_dir), safe_name)
+
+    @app.get("/assets/portraits/<string:portrait_key>")
+    def get_portrait_image(portrait_key: str):
+        safe_key = Path(portrait_key).name
+        if not safe_key:
+            return jsonify({"error": "portrait_key is required"}), 400
+
+        base_dir = Path(__file__).resolve().parents[1] / "assets/images"
+        candidates = [
+            base_dir / "faces" / f"{safe_key}.jpg",
+            base_dir / "faces" / f"{safe_key}.jpeg",
+            base_dir / "faces" / f"{safe_key}.png",
+            base_dir / f"{safe_key}.jpg",
+            base_dir / f"{safe_key}.jpeg",
+            base_dir / f"{safe_key}.png",
+        ]
+        for candidate in candidates:
+            if candidate.exists() and candidate.is_file():
+                return send_from_directory(str(candidate.parent), candidate.name)
+
+        return jsonify({"error": "portrait not found"}), 404
 
     @app.get("/assets/ui/location-group-bg/<path:group_name>")
     def get_location_group_bg(group_name: str):
