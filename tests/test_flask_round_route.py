@@ -19,9 +19,15 @@ class _DummyMember:
 
 
 @dataclass
+class _DummyState:
+    items_by_name: dict[str, object]
+
+
+@dataclass
 class _DummySession:
     party_members: list[_DummyMember]
     enemies: list[_DummyMember]
+    state: _DummyState
 
 
 def _build_app(monkeypatch, *, expected_actions: int = 4):
@@ -35,6 +41,7 @@ def _build_app(monkeypatch, *, expected_actions: int = 4):
                     _DummyMember(state=object()) for _ in range(expected_actions)
                 ],
                 enemies=[_DummyMember(state=object()) for _ in range(3)],
+                state=_DummyState(items_by_name={}),
             ),
         ),
     )
@@ -82,16 +89,11 @@ def test_root_page_renders_html(monkeypatch):
     assert resp.status_code == 200
     assert "text/html" in resp.content_type
     body = resp.get_data(as_text=True)
-    assert "Battle API Playground" in body
+    assert "Battle Round Runner" in body
     assert "POST /battle/round" in body
-    assert "Action Builder" in body
     assert "JSONへ反映" in body
-    assert "敵の数" in body
-    assert "味方HP" in body
-    assert "敵HP" in body
-    assert "Battle setup" in body
     assert "LocationGroup" in body
-    assert "Field Menu ページを開く" in body
+    assert "Field Menu" in body
     assert "menuUseItemBtn" not in body
 
 
@@ -106,6 +108,9 @@ def test_menu_page_renders_html(monkeypatch):
     body = resp.get_data(as_text=True)
     assert "Field Menu (Flask)" in body
     assert "menuUseItemBtn" in body
+    assert "menuJobMember" in body
+    assert "menuJobName" in body
+    assert "menuStatusDetail" in body
 
 
 def test_post_round_accepts_shorter_planned_actions_with_padding(monkeypatch):

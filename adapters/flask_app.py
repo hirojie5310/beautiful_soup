@@ -28,10 +28,12 @@ from combat.char_build import (
 )
 from combat.usecases import BattleSession, build_battle_session, execute_round_dto
 from combat.models import EquipmentSet
+from combat.constants import STATUS_ICON_KEY_BY_ENUM
 from assets.data.data_loader import save_savedata
 from ui_pygame.field_effects import sync_equipment_to_save
 from adapters.flask_menu_actions import make_cast_field_magic_fn, make_use_field_item_fn
 from utils.text_normalize import normalize_text_basic
+from system.cp_system import compute_job_change_cp_cost, load_job_attribution
 
 
 def group_name_to_image_key(name: str) -> str:
@@ -143,6 +145,118 @@ def _build_session_status_snapshot(session: BattleSession) -> dict[str, Any]:
     }
 
 
+def _build_member_status_snapshot(
+    session: BattleSession, member: Any
+) -> dict[str, Any]:
+    state = getattr(member, "state", None)
+    stats = getattr(member, "stats", None)
+    base = getattr(member, "base", None)
+
+    hp = _safe_int(getattr(member, "hp", getattr(state, "hp", 0)), 0)
+    max_hp = _safe_int(getattr(member, "max_hp", getattr(state, "max_hp", hp)), hp)
+
+    mp_pool = getattr(member, "mp_pool", None)
+    if not isinstance(mp_pool, dict):
+        mp_pool = getattr(state, "mp_pool", {})
+    if not isinstance(mp_pool, dict):
+        mp_pool = {}
+    mp_text = "/".join(f"{_safe_int(mp_pool.get(i, 0), 0):2d}" for i in range(1, 9))
+
+    eq = getattr(member, "equipment", None) or EquipmentSet()
+
+    def _is_weapon(name: str | None) -> bool:
+        weapons = getattr(getattr(session, "state", None), "weapons", {})
+        return isinstance(name, str) and isinstance(weapons, dict) and name in weapons
+
+    powers: list[int] = []
+    accs: list[int] = []
+    if _is_weapon(getattr(eq, "main_hand", None)):
+        powers.append(
+            _safe_int(getattr(stats, "main_power", getattr(stats, "attack", 0)), 0)
+        )
+        accs.append(
+            _safe_int(getattr(stats, "main_accuracy", getattr(stats, "hit_rate", 0)), 0)
+        )
+    if _is_weapon(getattr(eq, "off_hand", None)):
+        powers.append(
+            _safe_int(getattr(stats, "off_power", getattr(stats, "attack", 0)), 0)
+        )
+        accs.append(
+            _safe_int(getattr(stats, "off_accuracy", getattr(stats, "hit_rate", 0)), 0)
+        )
+    if not powers:
+        powers = [
+            _safe_int(getattr(stats, "main_power", getattr(stats, "attack", 0)), 0)
+        ]
+        accs = [
+            _safe_int(getattr(stats, "main_accuracy", getattr(stats, "hit_rate", 0)), 0)
+        ]
+
+    atk_value = int(round(sum(powers) / len(powers)))
+    acc_value = int(round(sum(accs) / len(accs)))
+
+    atk_times = 0
+    if _is_weapon(getattr(eq, "main_hand", None)):
+        atk_times += _safe_int(getattr(stats, "main_atk_multiplier", 0), 0)
+    if _is_weapon(getattr(eq, "off_hand", None)):
+        atk_times += _safe_int(getattr(stats, "off_atk_multiplier", 0), 0)
+    if atk_times == 0:
+        atk_times = _safe_int(getattr(stats, "main_atk_multiplier", 0), 0)
+
+    def_times = _safe_int(getattr(stats, "defense_multiplier", 0), 0)
+    statuses = getattr(state, "statuses", set())
+    status_icons: list[str] = []
+    status_labels: list[str] = []
+    if isinstance(statuses, (set, list, tuple)):
+        for st in statuses:
+            label = str(st)
+            icon_key = STATUS_ICON_KEY_BY_ENUM.get(st)
+            if icon_key:
+                status_icons.append(str(icon_key))
+            status_labels.append(label)
+
+    exp_to_next = 0
+    level_table = getattr(session, "level_table", None)
+    if level_table is not None and base is not None:
+        try:
+            ls = level_table.status_from_level_and_exp(
+                _safe_int(getattr(base, "level", getattr(member, "level", 1)), 1),
+                _safe_int(getattr(base, "total_exp", 0), 0),
+            )
+            exp_to_next = _safe_int(getattr(ls, "exp_to_next", 0), 0)
+        except Exception:
+            exp_to_next = 0
+
+    row_raw = str(getattr(base, "row", getattr(stats, "row", "front"))).lower()
+    row_label = "FRONT" if row_raw == "front" else "BACK"
+
+    return {
+        "level": _safe_int(getattr(base, "level", getattr(member, "level", 0)), 0),
+        "job_level": _safe_int(getattr(base, "job_level", 0), 0),
+        "exp": _safe_int(getattr(base, "total_exp", 0), 0),
+        "exp_to_next": exp_to_next,
+        "hp": hp,
+        "max_hp": max_hp,
+        "mp_text": mp_text,
+        "strength": _safe_int(getattr(stats, "strength", 0), 0),
+        "atk_value": atk_value,
+        "atk_times": atk_times,
+        "agility": _safe_int(getattr(stats, "agility", 0), 0),
+        "acc_value": acc_value,
+        "evasion_percent": _safe_int(getattr(stats, "evasion_percent", 0), 0),
+        "vitality": _safe_int(getattr(stats, "vitality", 0), 0),
+        "defense": _safe_int(getattr(stats, "defense", 0), 0),
+        "def_times": def_times,
+        "intelligence": _safe_int(getattr(stats, "intelligence", 0), 0),
+        "mind": _safe_int(getattr(stats, "mind", 0), 0),
+        "magic_defense": _safe_int(getattr(stats, "magic_defense", 0), 0),
+        "magic_resistance": _safe_int(getattr(stats, "magic_resistance", 0), 0),
+        "row_label": row_label,
+        "status_line": ",".join(status_labels) if status_labels else "-",
+        "status_icons": sorted(set(status_icons)),
+    }
+
+
 def _build_party_menu_snapshot(session: BattleSession) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for idx, member in enumerate(session.party_members):
@@ -169,6 +283,7 @@ def _build_party_menu_snapshot(session: BattleSession) -> list[dict[str, Any]]:
                     "body": getattr(eq, "body", None),
                     "arms": getattr(eq, "arms", None),
                 },
+                "status": _build_member_status_snapshot(session, member),
             }
         )
     return rows
@@ -191,7 +306,79 @@ def _build_inventory_snapshot(session: BattleSession) -> list[dict[str, Any]]:
     return rows
 
 
-def _build_menu_state_payload(session: BattleSession) -> dict[str, Any]:
+def _get_saved_job_level_for_member(
+    state: Any, member_index: int, job_name: str
+) -> int:
+    save = getattr(state, "save", {})
+    if not isinstance(save, dict):
+        return 1
+    party = save.get("party")
+    if not isinstance(party, list) or member_index < 0 or member_index >= len(party):
+        return 1
+    entry = party[member_index]
+    if not isinstance(entry, dict):
+        return 1
+    job_levels = entry.get("job_levels")
+    if not isinstance(job_levels, dict):
+        return 1
+    row = job_levels.get(job_name)
+    if not isinstance(row, dict):
+        return 1
+    try:
+        return max(1, int(row.get("level", 1)))
+    except (TypeError, ValueError):
+        return 1
+
+
+def _build_job_candidates_by_member(
+    session: BattleSession,
+    job_attr: dict[str, dict[str, int]] | None = None,
+) -> list[list[dict[str, Any]]]:
+    state = getattr(session, "state", None)
+    members = getattr(session, "party_members", [])
+    jobs_by_name = getattr(state, "jobs_by_name", {}) if state is not None else {}
+
+    if not isinstance(jobs_by_name, dict):
+        return [[] for _ in members]
+
+    job_names = sorted(
+        name for name in jobs_by_name.keys() if isinstance(name, str) and name
+    )
+    rows: list[list[dict[str, Any]]] = []
+    for member_index, member in enumerate(members):
+        from_job = getattr(getattr(member, "job", None), "name", "")
+        by_member: list[dict[str, Any]] = []
+        for job_name in job_names:
+            to_level = _get_saved_job_level_for_member(state, member_index, job_name)
+            cp_cost = 0
+            if (
+                isinstance(job_attr, dict)
+                and from_job in job_attr
+                and job_name in job_attr
+            ):
+                cp_cost = compute_job_change_cp_cost(
+                    from_job=from_job,
+                    to_job=job_name,
+                    to_job_level=to_level,
+                    job_attr=job_attr,
+                )
+            by_member.append(
+                {
+                    "job_name": job_name,
+                    "required_cp": int(cp_cost),
+                    "saved_job_level": int(to_level),
+                    "is_current": bool(job_name == from_job),
+                }
+            )
+        rows.append(by_member)
+    return rows
+
+
+def _build_menu_state_payload(
+    session: BattleSession,
+    *,
+    job_attr: dict[str, dict[str, int]] | None = None,
+) -> dict[str, Any]:
     state = getattr(session, "state", None)
     save = getattr(state, "save", {}) if state is not None else {}
     jobs = getattr(state, "jobs_by_name", {})
@@ -201,7 +388,11 @@ def _build_menu_state_payload(session: BattleSession) -> dict[str, Any]:
     return {
         "party": _build_party_menu_snapshot(session),
         "inventory": _build_inventory_snapshot(session),
+        "magic_candidates_by_member": _build_magic_command_candidates_by_member(
+            session
+        ),
         "jobs": job_names,
+        "job_candidates_by_member": _build_job_candidates_by_member(session, job_attr),
         "resources": {"gil": gil, "cp": cp, "cp_max": 255},
     }
 
@@ -242,7 +433,8 @@ def _build_magic_command_candidates_by_member(
     session: BattleSession,
 ) -> list[list[str]]:
     candidates: list[list[str]] = []
-    for row in session.party_magic_lists:
+    party_magic_lists = getattr(session, "party_magic_lists", [])
+    for row in party_magic_lists:
         names: list[str] = []
         for cand in row or []:
             if not isinstance(cand, (list, tuple)) or not cand:
@@ -339,6 +531,11 @@ def create_app(
         }
 
     round_rng = rng or Random()
+    job_attr: dict[str, dict[str, int]] | None = None
+    try:
+        job_attr = load_job_attribution("assets/data/job_attribution.csv")
+    except OSError:
+        job_attr = None
 
     @app.get("/")
     def index():
@@ -482,12 +679,25 @@ def create_app(
     def menu_page():
         return render_template(
             "menu.html",
-            initial_menu_state=_build_menu_state_payload(battle_session),
+            initial_menu_state=_build_menu_state_payload(
+                battle_session, job_attr=job_attr
+            ),
         )
+
+    @app.get("/assets/status-icons/<path:filename>")
+    def get_status_icon(filename: str):
+        safe_name = Path(filename).name
+        if not safe_name.lower().endswith(".png"):
+            return jsonify({"error": "png only"}), 400
+        icon_dir = Path(__file__).resolve().parents[1] / "assets/images/status_icons"
+        return send_from_directory(str(icon_dir), safe_name)
 
     @app.get("/menu/state")
     def get_menu_state():
-        return jsonify(_build_menu_state_payload(battle_session)), 200
+        return (
+            jsonify(_build_menu_state_payload(battle_session, job_attr=job_attr)),
+            200,
+        )
 
     @app.post("/menu/use-item")
     def post_menu_use_item():
@@ -513,7 +723,12 @@ def create_app(
         ok = use_item(user_index, item_name, target_index, item_type)
         return (
             jsonify(
-                {"ok": ok, "menu_state": _build_menu_state_payload(battle_session)}
+                {
+                    "ok": ok,
+                    "menu_state": _build_menu_state_payload(
+                        battle_session, job_attr=job_attr
+                    ),
+                }
             ),
             200,
         )
@@ -542,7 +757,12 @@ def create_app(
         ok = cast_magic(caster_index, spell_name, target_index)
         return (
             jsonify(
-                {"ok": ok, "menu_state": _build_menu_state_payload(battle_session)}
+                {
+                    "ok": ok,
+                    "menu_state": _build_menu_state_payload(
+                        battle_session, job_attr=job_attr
+                    ),
+                }
             ),
             200,
         )
@@ -579,7 +799,12 @@ def create_app(
         sync_equipment_to_save(member, battle_session.state.save)
         return (
             jsonify(
-                {"ok": True, "menu_state": _build_menu_state_payload(battle_session)}
+                {
+                    "ok": True,
+                    "menu_state": _build_menu_state_payload(
+                        battle_session, job_attr=job_attr
+                    ),
+                }
             ),
             200,
         )
@@ -597,12 +822,55 @@ def create_app(
         if job_name not in battle_session.state.jobs_by_name:
             raise InputValidationError("job_name is invalid")
 
-        party_entry = battle_session.state.save["party"][member_index]
+        member = battle_session.party_members[member_index]
+        from_job = str(getattr(getattr(member, "job", None), "name", ""))
+        to_job_level = _get_saved_job_level_for_member(
+            battle_session.state,
+            member_index,
+            job_name,
+        )
+        required_cp = 0
+        if isinstance(job_attr, dict) and from_job in job_attr and job_name in job_attr:
+            required_cp = compute_job_change_cp_cost(
+                from_job=from_job,
+                to_job=job_name,
+                to_job_level=to_job_level,
+                job_attr=job_attr,
+            )
+
+        save = battle_session.state.save
+        current_cp = _safe_int(save.get("CP", 0), 0)
+        if current_cp < required_cp:
+            return (
+                jsonify(
+                    {
+                        "ok": False,
+                        "reason": "not_enough_cp",
+                        "required_cp": int(required_cp),
+                        "current_cp": int(current_cp),
+                        "menu_state": _build_menu_state_payload(
+                            battle_session,
+                            job_attr=job_attr,
+                        ),
+                    }
+                ),
+                200,
+            )
+
+        save["CP"] = max(0, current_cp - required_cp)
+        party_entry = save["party"][member_index]
         party_entry["job"] = job_name
         _refresh_session_party(battle_session)
         return (
             jsonify(
-                {"ok": True, "menu_state": _build_menu_state_payload(battle_session)}
+                {
+                    "ok": True,
+                    "required_cp": int(required_cp),
+                    "menu_state": _build_menu_state_payload(
+                        battle_session,
+                        job_attr=job_attr,
+                    ),
+                }
             ),
             200,
         )
@@ -631,7 +899,12 @@ def create_app(
         ]
         return (
             jsonify(
-                {"ok": True, "menu_state": _build_menu_state_payload(battle_session)}
+                {
+                    "ok": True,
+                    "menu_state": _build_menu_state_payload(
+                        battle_session, job_attr=job_attr
+                    ),
+                }
             ),
             200,
         )

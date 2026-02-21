@@ -91,6 +91,10 @@
       .member-row-selected {
         text-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
       }
+      .member-row-status-selected {
+        outline: 2px solid rgba(244, 222, 112, 0.8);
+        border-radius: 8px;
+      }
       .menu-panel {
         padding: 20px 24px;
       }
@@ -200,6 +204,20 @@
         width: auto;
         padding: 8px 14px;
       }
+      .status-icons {
+        display: inline-flex;
+        gap: 4px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .status-icon {
+        width: 22px;
+        height: 22px;
+        image-rendering: pixelated;
+      }
+      .status-empty {
+        color: var(--muted);
+      }
     </style>
   </head>
   <body>
@@ -212,9 +230,9 @@
 
       <div class="main">
         <section class="window inventory-panel">
-          <h2 class="section-title">INVENTORY</h2>
+          <h2 class="section-title" id="stockTitle">INVENTORY</h2>
           <table>
-            <thead><tr><th>Type</th><th>Name</th><th>Count</th></tr></thead>
+            <thead><tr><th id="stockCol1">Type</th><th id="stockCol2">Name</th><th id="stockCol3">Count</th></tr></thead>
             <tbody id="menuInventoryBody"></tbody>
           </table>
         </section>
@@ -233,8 +251,8 @@
           </div>
 
           <div id="pane-magic" class="action-pane hidden">
-            <div class="field"><label>使用者 index</label><input id="menuMagicCaster" type="number" min="0" value="0" /></div>
-            <div class="field"><label>魔法名</label><input id="menuSpellName" type="text" placeholder="Cure" /></div>
+            <div class="field"><label>使用者</label><select id="menuMagicCaster"></select></div>
+            <div class="field"><label>まほう</label><select id="menuSpellSelect"></select></div>
             <div class="field"><label>対象 index</label><input id="menuMagicTarget" type="number" min="0" value="0" /></div>
             <button id="menuCastMagicBtn" type="button">実行</button>
           </div>
@@ -246,9 +264,13 @@
             <button id="menuChangeEquipBtn" type="button">実行</button>
           </div>
 
+          <div id="pane-status" class="action-pane hidden">
+            <div id="menuStatusDetail">ステータス対象をパーティ欄から選択してください。</div>
+          </div>
+
           <div id="pane-job" class="action-pane hidden">
-            <div class="field"><label>メンバー index</label><input id="menuJobMember" type="number" min="0" value="0" /></div>
-            <div class="field"><label>ジョブ名</label><input id="menuJobName" type="text" /></div>
+            <div class="field"><label>転職するキャラクター</label><select id="menuJobMember"></select></div>
+            <div class="field"><label>ジョブ</label><select id="menuJobName"></select></div>
             <button id="menuChangeJobBtn" type="button">実行</button>
           </div>
 
@@ -278,6 +300,7 @@
         アイテム: "pane-item",
         まほう: "pane-magic",
         そうび: "pane-equip",
+        ステータス: "pane-status",
         ならびかえ: "pane-row",
         ジョブ: "pane-job",
         セーブ: "pane-save",
@@ -293,11 +316,21 @@
       const metaGil = document.getElementById("metaGil");
       const initialMenuStateNode = document.getElementById("initialMenuStateJson");
       const menuItemSelect = document.getElementById("menuItemSelect");
-      let menuState = { party: [], inventory: [], jobs: [] };
+      const stockTitle = document.getElementById("stockTitle");
+      const stockCol1 = document.getElementById("stockCol1");
+      const stockCol2 = document.getElementById("stockCol2");
+      const stockCol3 = document.getElementById("stockCol3");
+      const menuMagicCaster = document.getElementById("menuMagicCaster");
+      const menuSpellSelect = document.getElementById("menuSpellSelect");
+      const menuJobMember = document.getElementById("menuJobMember");
+      const menuJobName = document.getElementById("menuJobName");
+      const menuStatusDetail = document.getElementById("menuStatusDetail");
+      let menuState = { party: [], inventory: [], magic_candidates_by_member: [], job_candidates_by_member: [], jobs: [] };
 
       let mode = "menu";
       let idx = 0;
       let memberIdx = 0;
+      let statusMemberIdx = 0;
 
       if (initialMenuStateNode) {
         try {
@@ -323,6 +356,13 @@
         return `/assets/portraits/${encodeURIComponent(String(portraitKey))}`;
       }
 
+      function resolveStatusIconUrl(iconKey) {
+        if (!iconKey) {
+          return "";
+        }
+        return `/assets/status-icons/${encodeURIComponent(String(iconKey))}.png`;
+      }
+
       function refreshMeta() {
         const cp = menuState?.resources?.cp;
         const cpMax = menuState?.resources?.cp_max;
@@ -336,10 +376,11 @@
         const rows = party
           .map((m, i) => {
             const selected = mode === "row" && i === memberIdx;
+            const statusSelected = menuItems[idx] === "ステータス" && i === statusMemberIdx;
             const rowClass = String(m.row || "front") === "back" ? "row-back" : "row-front";
             const portraitUrl = resolvePortraitUrl(m.portrait_key);
             return `
-              <div class="member-row ${mode === "row" ? "member-row-mode" : ""} ${selected ? "member-row-selected" : ""}">
+              <div class="member-row ${mode === "row" ? "member-row-mode" : ""} ${selected ? "member-row-selected" : ""} ${statusSelected ? "member-row-status-selected" : ""}" data-member-index="${i}">
                 <div class="member-portrait-wrap ${rowClass}">
                   ${portraitUrl ? `<img class="member-portrait" src="${portraitUrl}" alt="${escapeHtml(m.name)} portrait" loading="lazy" />` : ""}
                 </div>
@@ -363,9 +404,119 @@
           .join("");
       }
 
+      function getMagicCandidatesForCaster(casterIndex) {
+        const byMember = Array.isArray(menuState?.magic_candidates_by_member) ? menuState.magic_candidates_by_member : [];
+        const candidates = byMember[casterIndex];
+        if (!Array.isArray(candidates)) {
+          return [];
+        }
+        return candidates.filter((name) => typeof name === "string" && name);
+      }
+
+
+      function getJobCandidatesForMember(memberIndex) {
+        const byMember = Array.isArray(menuState?.job_candidates_by_member) ? menuState.job_candidates_by_member : [];
+        const candidates = byMember[memberIndex];
+        if (!Array.isArray(candidates)) {
+          return [];
+        }
+        return candidates.filter((row) => row && typeof row.job_name === "string" && row.job_name);
+      }
+
       function renderInventory() {
-        const inventory = Array.isArray(menuState?.inventory) ? menuState.inventory : [];
+        const current = menuItems[idx];
         menuInventoryBody.innerHTML = "";
+
+        if (current === "ステータス") {
+          stockTitle.textContent = "STATUS";
+          stockCol1.textContent = "Param";
+          stockCol2.textContent = "Value";
+          stockCol3.textContent = "";
+          const party = Array.isArray(menuState?.party) ? menuState.party : [];
+          const member = party[statusMemberIdx] || {};
+          const st = member.status || {};
+          const rows = [
+            ["LEVEL", Number(st.level || member.level || 0)],
+            ["HP", `${Number(st.hp || member.hp || 0)}/${Number(st.max_hp || member.max_hp || 0)}`],
+            ["MP", st.mp_text || "0/0/0/0/0/0/0/0"],
+            ["Job Level", Number(st.job_level || 0)],
+            ["EXP", Number(st.exp || 0)],
+            ["EXP to Next Level", Number(st.exp_to_next || 0)],
+            ["STR/ATK/TIMES", `${Number(st.strength || 0)}/${Number(st.atk_value || 0)}/${Number(st.atk_times || 0)}`],
+            ["AGI/HIT/EVA", `${Number(st.agility || 0)}/${Number(st.acc_value || 0)}/${Number(st.evasion_percent || 0)}`],
+            ["VIT/DEF/TIMES", `${Number(st.vitality || 0)}/${Number(st.defense || 0)}/${Number(st.def_times || 0)}`],
+            ["INT", Number(st.intelligence || 0)],
+            ["MND/MDEF/MEVA", `${Number(st.mind || 0)}/${Number(st.magic_defense || 0)}/${Number(st.magic_resistance || 0)}`],
+            ["ROW", st.row_label || "FRONT"],
+            ["Status", "__STATUS_ICONS__"],
+          ];
+          rows.forEach(([k, v]) => {
+            const tr = document.createElement("tr");
+            if (v === "__STATUS_ICONS__") {
+              const iconKeys = Array.isArray(st.status_icons) ? st.status_icons.filter((x) => typeof x === "string" && x) : [];
+              const iconsHtml = iconKeys.length
+                ? `<span class="status-icons">${iconKeys
+                    .map((key) => `<img class="status-icon" src="${resolveStatusIconUrl(key)}" alt="${escapeHtml(key)}" title="${escapeHtml(key)}" loading="lazy" />`)
+                    .join("")}</span>`
+                : `<span class="status-empty">-</span>`;
+              tr.innerHTML = `<td>${escapeHtml(k)}</td><td>${iconsHtml}</td><td></td>`;
+            } else {
+              tr.innerHTML = `<td>${escapeHtml(k)}</td><td>${escapeHtml(v)}</td><td></td>`;
+            }
+            menuInventoryBody.appendChild(tr);
+          });
+          return;
+        }
+
+        if (current === "ジョブ") {
+          stockTitle.textContent = "JOB";
+          stockCol1.textContent = "Job";
+          stockCol2.textContent = "Need CP";
+          stockCol3.textContent = "Lv";
+          const memberIndex = Number(menuJobMember.value || "0");
+          const candidates = getJobCandidatesForMember(memberIndex);
+          candidates.forEach((row) => {
+            const tr = document.createElement("tr");
+            const currentMark = row.is_current ? " ★" : "";
+            tr.innerHTML = `<td>${escapeHtml(row.job_name)}${currentMark}</td><td>${Number(row.required_cp || 0)}</td><td>${Number(row.saved_job_level || 1)}</td>`;
+            menuInventoryBody.appendChild(tr);
+          });
+          if (!candidates.length) {
+            const tr = document.createElement("tr");
+            tr.innerHTML = "<td colspan=\"3\">(転職可能ジョブなし)</td>";
+            menuInventoryBody.appendChild(tr);
+          }
+          return;
+        }
+
+        if (current === "まほう") {
+          stockTitle.textContent = "MAGIC";
+          stockCol1.textContent = "Caster";
+          stockCol2.textContent = "Spell";
+          stockCol3.textContent = "";
+          const party = Array.isArray(menuState?.party) ? menuState.party : [];
+          party.forEach((member, memberIndex) => {
+            const spells = getMagicCandidatesForCaster(memberIndex);
+            if (!spells.length) {
+              const tr = document.createElement("tr");
+              tr.innerHTML = `<td>${escapeHtml(member.name || `Member ${memberIndex}`)}</td><td>(使用可能な魔法なし)</td><td></td>`;
+              menuInventoryBody.appendChild(tr);
+              return;
+            }
+            spells.forEach((spellName, spellIndex) => {
+              const tr = document.createElement("tr");
+              tr.innerHTML = `<td>${spellIndex === 0 ? escapeHtml(member.name || `Member ${memberIndex}`) : ""}</td><td>${escapeHtml(spellName)}</td><td></td>`;
+              menuInventoryBody.appendChild(tr);
+            });
+          });
+          return;
+        }
+
+        stockTitle.textContent = "INVENTORY";
+        stockCol1.textContent = "Type";
+        stockCol2.textContent = "Name";
+        stockCol3.textContent = "Count";
+        const inventory = Array.isArray(menuState?.inventory) ? menuState.inventory : [];
         inventory.forEach((row) => {
           const tr = document.createElement("tr");
           tr.innerHTML = `<td>${escapeHtml(row.item_type)}</td><td>${escapeHtml(row.name)}</td><td>${row.count}</td>`;
@@ -401,6 +552,129 @@
         document.getElementById("menuItemType").value = selectedOption?.dataset?.itemType || "";
       }
 
+      function renderMagicCasterSelect() {
+        const party = Array.isArray(menuState?.party) ? menuState.party : [];
+        const prevCaster = Number(menuMagicCaster.value || "0");
+        menuMagicCaster.innerHTML = "";
+        party.forEach((member, i) => {
+          const opt = document.createElement("option");
+          opt.value = String(i);
+          opt.textContent = `${i}: ${member.name || `Member ${i}`}`;
+          if ((Number.isInteger(prevCaster) && prevCaster === i) || (!menuMagicCaster.options.length && i === 0)) {
+            opt.selected = true;
+          }
+          menuMagicCaster.appendChild(opt);
+        });
+        if (!party.length) {
+          const opt = document.createElement("option");
+          opt.value = "0";
+          opt.textContent = "(使用者なし)";
+          menuMagicCaster.appendChild(opt);
+        }
+        renderMagicSpellSelect();
+      }
+
+      function renderMagicSpellSelect() {
+        const casterIndex = Number(menuMagicCaster.value || "0");
+        const spells = getMagicCandidatesForCaster(casterIndex);
+        const prevSpell = menuSpellSelect.value;
+        menuSpellSelect.innerHTML = "";
+        if (!spells.length) {
+          const opt = document.createElement("option");
+          opt.value = "";
+          opt.textContent = "(使用可能な魔法なし)";
+          menuSpellSelect.appendChild(opt);
+          return;
+        }
+        spells.forEach((spellName, i) => {
+          const opt = document.createElement("option");
+          opt.value = spellName;
+          opt.textContent = spellName;
+          if ((prevSpell && prevSpell === spellName) || (!prevSpell && i === 0)) {
+            opt.selected = true;
+          }
+          menuSpellSelect.appendChild(opt);
+        });
+      }
+
+
+      function renderJobMemberSelect() {
+        const party = Array.isArray(menuState?.party) ? menuState.party : [];
+        const prevMember = Number(menuJobMember.value || "0");
+        menuJobMember.innerHTML = "";
+        party.forEach((member, i) => {
+          const opt = document.createElement("option");
+          opt.value = String(i);
+          opt.textContent = `${i}: ${member.name || `Member ${i}`}`;
+          if ((Number.isInteger(prevMember) && prevMember === i) || (!menuJobMember.options.length && i === 0)) {
+            opt.selected = true;
+          }
+          menuJobMember.appendChild(opt);
+        });
+        if (!party.length) {
+          const opt = document.createElement("option");
+          opt.value = "0";
+          opt.textContent = "(メンバーなし)";
+          menuJobMember.appendChild(opt);
+        }
+        renderJobNameSelect();
+      }
+
+      function renderJobNameSelect() {
+        const memberIndex = Number(menuJobMember.value || "0");
+        const candidates = getJobCandidatesForMember(memberIndex);
+        const prevJob = menuJobName.value;
+        menuJobName.innerHTML = "";
+        if (!candidates.length) {
+          const opt = document.createElement("option");
+          opt.value = "";
+          opt.textContent = "(ジョブ候補なし)";
+          menuJobName.appendChild(opt);
+          return;
+        }
+        candidates.forEach((row, i) => {
+          const opt = document.createElement("option");
+          opt.value = row.job_name;
+          opt.dataset.requiredCp = String(Number(row.required_cp || 0));
+          opt.textContent = `${row.job_name} (CP ${Number(row.required_cp || 0)})`;
+          if ((prevJob && prevJob === row.job_name) || (!prevJob && i === 0)) {
+            opt.selected = true;
+          }
+          menuJobName.appendChild(opt);
+        });
+      }
+
+      function renderStatusDetail() {
+        const party = Array.isArray(menuState?.party) ? menuState.party : [];
+        if (!party.length) {
+          statusMemberIdx = 0;
+          menuStatusDetail.textContent = "パーティメンバーがいません。";
+          return;
+        }
+        if (statusMemberIdx < 0 || statusMemberIdx >= party.length) {
+          statusMemberIdx = 0;
+        }
+        const member = party[statusMemberIdx] || {};
+        const st = member.status || {};
+        const statusIconKeys = Array.isArray(st.status_icons) ? st.status_icons.filter((x) => typeof x === "string" && x) : [];
+        const statusIconHtml = statusIconKeys.length
+          ? statusIconKeys
+              .map((key) => `<img class="status-icon" src="${resolveStatusIconUrl(key)}" alt="${escapeHtml(key)}" title="${escapeHtml(key)}" loading="lazy" />`)
+              .join("")
+          : '<span class="status-empty">-</span>';
+        menuStatusDetail.innerHTML = `
+          <div>対象: ${escapeHtml(member.name || `Member ${statusMemberIdx}`)} / ${escapeHtml(member.job || "Unknown")}</div>
+          <div>LEVEL ${Number(st.level || member.level || 0)} / HP ${Number(st.hp || member.hp || 0)}/${Number(st.max_hp || member.max_hp || 0)} / MP ${escapeHtml(st.mp_text || "0/0/0/0/0/0/0/0")}</div>
+          <div>Job Level ${Number(st.job_level || 0)} / EXP ${Number(st.exp || 0)} / EXP to Next ${Number(st.exp_to_next || 0)}</div>
+          <div>STR/ATK/TIMES ${Number(st.strength || 0)}/${Number(st.atk_value || 0)}/${Number(st.atk_times || 0)}</div>
+          <div>AGI/HIT/EVA ${Number(st.agility || 0)}/${Number(st.acc_value || 0)}/${Number(st.evasion_percent || 0)}</div>
+          <div>VIT/DEF/TIMES ${Number(st.vitality || 0)}/${Number(st.defense || 0)}/${Number(st.def_times || 0)}</div>
+          <div>INT ${Number(st.intelligence || 0)} / MND/MDEF/MEVA ${Number(st.mind || 0)}/${Number(st.magic_defense || 0)}/${Number(st.magic_resistance || 0)}</div>
+          <div>ROW ${escapeHtml(st.row_label || "FRONT")}</div>
+          <div>Status <span class="status-icons">${statusIconHtml}</span></div>
+        `;
+      }
+
       function renderActionPane() {
         const current = menuItems[idx];
         actionTitle.textContent = current;
@@ -408,9 +682,6 @@
         const paneId = actionMap[current];
         if (paneId) {
           document.getElementById(paneId).classList.remove("hidden");
-        }
-        if (current === "ステータス") {
-          menuResponseView.textContent = "ステータス表示は現在パーティ欄で確認できます。";
         }
         if (mode === "row") {
           menuHelp.textContent = "↑ ↓: Member Select　Enter: Swap(先頭と入替)　Esc: Back";
@@ -422,8 +693,11 @@
       function render() {
         renderParty();
         renderMenu();
-        renderInventory();
         renderItemSelect();
+        renderMagicCasterSelect();
+        renderJobMemberSelect();
+        renderStatusDetail();
+        renderInventory();
         renderActionPane();
         refreshMeta();
       }
@@ -459,9 +733,14 @@
             item_type: document.getElementById("menuItemType").value || null,
           });
         } else if (current === "まほう") {
+          const spellName = menuSpellSelect.value;
+          if (!spellName) {
+            menuResponseView.textContent = "使用可能な魔法がありません。";
+            return;
+          }
           await postMenu("/menu/cast-magic", {
-            caster_index: Number(document.getElementById("menuMagicCaster").value || "0"),
-            spell_name: document.getElementById("menuSpellName").value,
+            caster_index: Number(menuMagicCaster.value || "0"),
+            spell_name: spellName,
             target_index: Number(document.getElementById("menuMagicTarget").value || "0"),
           });
         } else if (current === "そうび") {
@@ -471,9 +750,14 @@
             item_name: document.getElementById("menuEquipName").value || null,
           });
         } else if (current === "ジョブ") {
+          const selectedJob = menuJobName.value;
+          if (!selectedJob) {
+            menuResponseView.textContent = "転職可能なジョブがありません。";
+            return;
+          }
           await postMenu("/menu/change-job", {
-            member_index: Number(document.getElementById("menuJobMember").value || "0"),
-            job_name: document.getElementById("menuJobName").value,
+            member_index: Number(menuJobMember.value || "0"),
+            job_name: selectedJob,
           });
         } else if (current === "ならびかえ") {
           mode = "row";
@@ -489,8 +773,17 @@
           event.preventDefault();
         }
         if (mode === "menu") {
-          if (event.key === "ArrowUp") idx = (idx - 1 + menuItems.length) % menuItems.length;
-          if (event.key === "ArrowDown") idx = (idx + 1) % menuItems.length;
+          const current = menuItems[idx];
+          if (current === "ステータス") {
+            const partyLen = Array.isArray(menuState?.party) ? menuState.party.length : 0;
+            if (partyLen > 0) {
+              if (event.key === "ArrowUp") statusMemberIdx = (statusMemberIdx - 1 + partyLen) % partyLen;
+              if (event.key === "ArrowDown") statusMemberIdx = (statusMemberIdx + 1) % partyLen;
+            }
+          } else {
+            if (event.key === "ArrowUp") idx = (idx - 1 + menuItems.length) % menuItems.length;
+            if (event.key === "ArrowDown") idx = (idx + 1) % menuItems.length;
+          }
           if (event.key === "Enter") await executeCurrentMenu();
           if (event.key === "Escape") window.location.href = "/";
         } else if (mode === "row") {
@@ -529,6 +822,29 @@
       menuItemSelect.addEventListener("change", () => {
         const selectedOption = menuItemSelect.selectedOptions[0];
         document.getElementById("menuItemType").value = selectedOption?.dataset?.itemType || "";
+      });
+      menuMagicCaster.addEventListener("change", renderMagicSpellSelect);
+      menuJobMember.addEventListener("change", () => {
+        renderJobNameSelect();
+        renderInventory();
+      });
+      menuJobName.addEventListener("change", renderInventory);
+      partyPanel.addEventListener("click", (event) => {
+        const row = event.target.closest("[data-member-index]");
+        if (!row) return;
+        const memberIndex = Number(row.getAttribute("data-member-index") || "0");
+        if (!Number.isInteger(memberIndex)) return;
+        statusMemberIdx = memberIndex;
+        const current = menuItems[idx];
+        if (current === "まほう") {
+          menuMagicCaster.value = String(memberIndex);
+          renderMagicSpellSelect();
+        }
+        if (current === "ジョブ") {
+          menuJobMember.value = String(memberIndex);
+          renderJobNameSelect();
+        }
+        render();
       });
 
       refreshState().catch(() => render());
