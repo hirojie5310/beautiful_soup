@@ -103,6 +103,7 @@
         font-size: 46px;
         line-height: 1.55;
         color: var(--muted);
+        cursor: pointer;
       }
       .menu-item.active {
         color: var(--text);
@@ -136,6 +137,12 @@
       }
       th {
         color: var(--warn);
+      }
+      tr.selectable-row {
+        cursor: pointer;
+      }
+      tr.selected-row {
+        background: rgba(80, 224, 147, 0.2);
       }
       .bottom {
         margin-top: 24px;
@@ -331,6 +338,47 @@
       let idx = 0;
       let memberIdx = 0;
       let statusMemberIdx = 0;
+      let statusFocus = "menu";
+
+      const partySelectableMenus = new Set(["アイテム", "まほう", "ジョブ", "ステータス"]);
+
+      function isPartySelectionMenu(menuName) {
+        return partySelectableMenus.has(menuName);
+      }
+
+      function getCurrentPartySelectionIndex() {
+        const current = menuItems[idx];
+        if (current === "アイテム") {
+          return Number(document.getElementById("menuItemUser").value || "0");
+        }
+        if (current === "まほう") {
+          return Number(menuMagicCaster.value || "0");
+        }
+        if (current === "ジョブ") {
+          return Number(menuJobMember.value || "0");
+        }
+        return statusMemberIdx;
+      }
+
+      function setCurrentPartySelectionIndex(memberIndex) {
+        const current = menuItems[idx];
+        if (current === "アイテム") {
+          document.getElementById("menuItemUser").value = String(memberIndex);
+          return;
+        }
+        if (current === "まほう") {
+          menuMagicCaster.value = String(memberIndex);
+          renderMagicSpellSelect();
+          return;
+        }
+        if (current === "ジョブ") {
+          menuJobMember.value = String(memberIndex);
+          renderJobNameSelect();
+          renderInventory();
+          return;
+        }
+        statusMemberIdx = memberIndex;
+      }
 
       if (initialMenuStateNode) {
         try {
@@ -373,14 +421,16 @@
 
       function renderParty() {
         const party = Array.isArray(menuState?.party) ? menuState.party : [];
+        const current = menuItems[idx];
+        const selectedPartyIndex = getCurrentPartySelectionIndex();
         const rows = party
           .map((m, i) => {
             const selected = mode === "row" && i === memberIdx;
-            const statusSelected = menuItems[idx] === "ステータス" && i === statusMemberIdx;
+            const partySelected = mode === "menu" && isPartySelectionMenu(current) && i === selectedPartyIndex;
             const rowClass = String(m.row || "front") === "back" ? "row-back" : "row-front";
             const portraitUrl = resolvePortraitUrl(m.portrait_key);
             return `
-              <div class="member-row ${mode === "row" ? "member-row-mode" : ""} ${selected ? "member-row-selected" : ""} ${statusSelected ? "member-row-status-selected" : ""}" data-member-index="${i}">
+              <div class="member-row ${mode === "row" ? "member-row-mode" : ""} ${selected ? "member-row-selected" : ""} ${partySelected ? "member-row-status-selected" : ""}" data-member-index="${i}">
                 <div class="member-portrait-wrap ${rowClass}">
                   ${portraitUrl ? `<img class="member-portrait" src="${portraitUrl}" alt="${escapeHtml(m.name)} portrait" loading="lazy" />` : ""}
                 </div>
@@ -400,7 +450,7 @@
 
       function renderMenu() {
         menuPanel.innerHTML = menuItems
-          .map((name, i) => `<span class="menu-item ${mode === "menu" && i === idx ? "active" : ""}">${mode === "menu" && i === idx ? "▶" : ""} ${name}</span>`)
+          .map((name, i) => `<span class="menu-item ${mode === "menu" && i === idx ? "active" : ""}" data-menu-index="${i}">${mode === "menu" && i === idx ? "▶" : ""} ${name}</span>`)
           .join("");
       }
 
@@ -421,6 +471,41 @@
           return [];
         }
         return candidates.filter((row) => row && typeof row.job_name === "string" && row.job_name);
+      }
+
+      function selectListChoiceByDelta(delta) {
+        const current = menuItems[idx];
+        if (current === "アイテム") {
+          const options = Array.from(menuItemSelect.options).filter((opt) => opt.value);
+          if (!options.length) return;
+          const currentIndex = options.findIndex((opt) => opt.value === menuItemSelect.value);
+          const base = currentIndex >= 0 ? currentIndex : 0;
+          const next = (base + delta + options.length) % options.length;
+          menuItemSelect.value = options[next].value;
+          const selectedOption = menuItemSelect.selectedOptions[0];
+          document.getElementById("menuItemType").value = selectedOption?.dataset?.itemType || "";
+          renderInventory();
+          return;
+        }
+        if (current === "まほう") {
+          const options = Array.from(menuSpellSelect.options).filter((opt) => opt.value);
+          if (!options.length) return;
+          const currentIndex = options.findIndex((opt) => opt.value === menuSpellSelect.value);
+          const base = currentIndex >= 0 ? currentIndex : 0;
+          const next = (base + delta + options.length) % options.length;
+          menuSpellSelect.value = options[next].value;
+          renderInventory();
+          return;
+        }
+        if (current === "ジョブ") {
+          const options = Array.from(menuJobName.options).filter((opt) => opt.value);
+          if (!options.length) return;
+          const currentIndex = options.findIndex((opt) => opt.value === menuJobName.value);
+          const base = currentIndex >= 0 ? currentIndex : 0;
+          const next = (base + delta + options.length) % options.length;
+          menuJobName.value = options[next].value;
+          renderInventory();
+        }
       }
 
       function renderInventory() {
@@ -475,9 +560,16 @@
           stockCol3.textContent = "Lv";
           const memberIndex = Number(menuJobMember.value || "0");
           const candidates = getJobCandidatesForMember(memberIndex);
+          const selectedJobName = menuJobName.value;
           candidates.forEach((row) => {
             const tr = document.createElement("tr");
             const currentMark = row.is_current ? " ★" : "";
+            if (row.job_name === selectedJobName) {
+              tr.classList.add("selected-row");
+            }
+            tr.classList.add("selectable-row");
+            tr.dataset.choiceType = "job";
+            tr.dataset.jobName = row.job_name;
             tr.innerHTML = `<td>${escapeHtml(row.job_name)}${currentMark}</td><td>${Number(row.required_cp || 0)}</td><td>${Number(row.saved_job_level || 1)}</td>`;
             menuInventoryBody.appendChild(tr);
           });
@@ -495,6 +587,8 @@
           stockCol2.textContent = "Spell";
           stockCol3.textContent = "";
           const party = Array.isArray(menuState?.party) ? menuState.party : [];
+          const selectedCasterIndex = Number(menuMagicCaster.value || "0");
+          const selectedSpellName = menuSpellSelect.value;
           party.forEach((member, memberIndex) => {
             const spells = getMagicCandidatesForCaster(memberIndex);
             if (!spells.length) {
@@ -505,6 +599,13 @@
             }
             spells.forEach((spellName, spellIndex) => {
               const tr = document.createElement("tr");
+              if (memberIndex === selectedCasterIndex && spellName === selectedSpellName) {
+                tr.classList.add("selected-row");
+              }
+              tr.classList.add("selectable-row");
+              tr.dataset.choiceType = "magic";
+              tr.dataset.casterIndex = String(memberIndex);
+              tr.dataset.spellName = spellName;
               tr.innerHTML = `<td>${spellIndex === 0 ? escapeHtml(member.name || `Member ${memberIndex}`) : ""}</td><td>${escapeHtml(spellName)}</td><td></td>`;
               menuInventoryBody.appendChild(tr);
             });
@@ -516,9 +617,19 @@
         stockCol1.textContent = "Type";
         stockCol2.textContent = "Name";
         stockCol3.textContent = "Count";
+        const selectedItemName = menuItemSelect.value;
         const inventory = Array.isArray(menuState?.inventory) ? menuState.inventory : [];
         inventory.forEach((row) => {
           const tr = document.createElement("tr");
+          const selectable = row && (row.item_type === "Anywhere" || row.item_type === "Field");
+          if (row.name === selectedItemName) {
+            tr.classList.add("selected-row");
+          }
+          if (selectable) {
+            tr.classList.add("selectable-row");
+            tr.dataset.choiceType = "item";
+            tr.dataset.itemName = row.name;
+          }
           tr.innerHTML = `<td>${escapeHtml(row.item_type)}</td><td>${escapeHtml(row.name)}</td><td>${row.count}</td>`;
           menuInventoryBody.appendChild(tr);
         });
@@ -685,6 +796,10 @@
         }
         if (mode === "row") {
           menuHelp.textContent = "↑ ↓: Member Select　Enter: Swap(先頭と入替)　Esc: Back";
+        } else if (["アイテム", "まほう", "ジョブ"].includes(current) && statusFocus === "party") {
+          menuHelp.textContent = "↑ ↓: Member Select　← →: List Select　Backspace: Menu Select　Esc: Back";
+        } else if (isPartySelectionMenu(current) && statusFocus === "party") {
+          menuHelp.textContent = "↑ ↓: Member Select　Backspace: Menu Select　Esc: Back";
         } else {
           menuHelp.textContent = "↑ ↓: Select　Enter: OK　Esc: Back";
         }
@@ -769,22 +884,47 @@
       }
 
       document.addEventListener("keydown", async (event) => {
-        if (["ArrowUp", "ArrowDown", "Enter", "Escape"].includes(event.key)) {
+        if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Enter", "Escape", "Backspace"].includes(event.key)) {
           event.preventDefault();
         }
         if (mode === "menu") {
           const current = menuItems[idx];
-          if (current === "ステータス") {
+          if (isPartySelectionMenu(current)) {
             const partyLen = Array.isArray(menuState?.party) ? menuState.party.length : 0;
-            if (partyLen > 0) {
-              if (event.key === "ArrowUp") statusMemberIdx = (statusMemberIdx - 1 + partyLen) % partyLen;
-              if (event.key === "ArrowDown") statusMemberIdx = (statusMemberIdx + 1) % partyLen;
+            if (event.key === "Backspace") {
+              statusFocus = "menu";
+            }
+            if (statusFocus === "party") {
+              if (partyLen > 0) {
+                let nextMemberIndex = getCurrentPartySelectionIndex();
+                if (event.key === "ArrowUp") nextMemberIndex = (nextMemberIndex - 1 + partyLen) % partyLen;
+                if (event.key === "ArrowDown") nextMemberIndex = (nextMemberIndex + 1) % partyLen;
+                if (["ArrowUp", "ArrowDown"].includes(event.key)) {
+                  setCurrentPartySelectionIndex(nextMemberIndex);
+                }
+              }
+              if (["アイテム", "まほう", "ジョブ"].includes(current) && event.key === "ArrowLeft") {
+                selectListChoiceByDelta(-1);
+              }
+              if (["アイテム", "まほう", "ジョブ"].includes(current) && event.key === "ArrowRight") {
+                selectListChoiceByDelta(1);
+              }
+              if (event.key === "Enter") {
+                await executeCurrentMenu();
+              }
+            } else {
+              if (event.key === "ArrowUp") idx = (idx - 1 + menuItems.length) % menuItems.length;
+              if (event.key === "ArrowDown") idx = (idx + 1) % menuItems.length;
+              if (event.key === "Enter") {
+                statusFocus = "party";
+              }
             }
           } else {
+            statusFocus = "menu";
             if (event.key === "ArrowUp") idx = (idx - 1 + menuItems.length) % menuItems.length;
             if (event.key === "ArrowDown") idx = (idx + 1) % menuItems.length;
+            if (event.key === "Enter") await executeCurrentMenu();
           }
-          if (event.key === "Enter") await executeCurrentMenu();
           if (event.key === "Escape") window.location.href = "/";
         } else if (mode === "row") {
           const partyLen = Array.isArray(menuState?.party) ? menuState.party.length : 0;
@@ -822,27 +962,67 @@
       menuItemSelect.addEventListener("change", () => {
         const selectedOption = menuItemSelect.selectedOptions[0];
         document.getElementById("menuItemType").value = selectedOption?.dataset?.itemType || "";
+        renderInventory();
       });
-      menuMagicCaster.addEventListener("change", renderMagicSpellSelect);
+      menuMagicCaster.addEventListener("change", () => {
+        renderMagicSpellSelect();
+        renderInventory();
+      });
       menuJobMember.addEventListener("change", () => {
         renderJobNameSelect();
         renderInventory();
       });
+      menuSpellSelect.addEventListener("change", renderInventory);
       menuJobName.addEventListener("change", renderInventory);
+      menuInventoryBody.addEventListener("click", (event) => {
+        const row = event.target.closest("tr[data-choice-type]");
+        if (!row) return;
+        const choiceType = row.dataset.choiceType;
+        if (choiceType === "item") {
+          const itemName = row.dataset.itemName || "";
+          if (itemName) {
+            menuItemSelect.value = itemName;
+            const selectedOption = menuItemSelect.selectedOptions[0];
+            document.getElementById("menuItemType").value = selectedOption?.dataset?.itemType || "";
+          }
+        }
+        if (choiceType === "magic") {
+          const casterIndex = Number(row.dataset.casterIndex || "0");
+          const spellName = row.dataset.spellName || "";
+          menuMagicCaster.value = String(casterIndex);
+          renderMagicSpellSelect();
+          if (spellName) {
+            menuSpellSelect.value = spellName;
+          }
+        }
+        if (choiceType === "job") {
+          const jobName = row.dataset.jobName || "";
+          if (jobName) {
+            menuJobName.value = jobName;
+          }
+        }
+        renderInventory();
+      });
+
+      menuPanel.addEventListener("click", (event) => {
+        const item = event.target.closest("[data-menu-index]");
+        if (!item) return;
+        const nextIdx = Number(item.getAttribute("data-menu-index") || "0");
+        if (!Number.isInteger(nextIdx) || nextIdx < 0 || nextIdx >= menuItems.length) return;
+        idx = nextIdx;
+        statusFocus = "menu";
+        render();
+      });
+
       partyPanel.addEventListener("click", (event) => {
         const row = event.target.closest("[data-member-index]");
         if (!row) return;
         const memberIndex = Number(row.getAttribute("data-member-index") || "0");
         if (!Number.isInteger(memberIndex)) return;
-        statusMemberIdx = memberIndex;
         const current = menuItems[idx];
-        if (current === "まほう") {
-          menuMagicCaster.value = String(memberIndex);
-          renderMagicSpellSelect();
-        }
-        if (current === "ジョブ") {
-          menuJobMember.value = String(memberIndex);
-          renderJobNameSelect();
+        if (isPartySelectionMenu(current)) {
+          setCurrentPartySelectionIndex(memberIndex);
+          statusFocus = "party";
         }
         render();
       });
