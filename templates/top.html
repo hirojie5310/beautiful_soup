@@ -6,417 +6,203 @@
     <title>Battle Round Runner</title>
     <style>
       :root {
-        --bg: #02051c;
-        --panel: rgba(15, 20, 54, 0.96);
-        --panel-alt: rgba(33, 16, 16, 0.96);
-        --border: #b8bfd9;
-        --text: #f1f4ff;
-        --muted: #8f98c7;
-        --accent: #f3e98f;
-        --danger: #ff6f7f;
-        --ok: #55d27b;
+        --bg: #04081d;
+        --panel: rgba(15, 23, 66, 0.94);
+        --border: rgba(233, 240, 255, 0.7);
+        --text: #f4f7ff;
+        --muted: #b2bcdf;
+        --accent: #ffe37f;
       }
-
       * { box-sizing: border-box; }
       body {
         margin: 0;
-        min-height: 100vh;
-        font-family: "BIZ UDPGothic", "Yu Gothic UI", sans-serif;
         color: var(--text);
-        background:
-          radial-gradient(1000px 600px at 20% 20%, #101b52 0%, transparent 45%),
-          radial-gradient(900px 500px at 80% 80%, #230f52 0%, transparent 40%),
-          var(--bg);
+        font-family: "BIZ UDPGothic", "Yu Gothic UI", sans-serif;
+        background: radial-gradient(circle at 20% 0%, #1a2b84 0%, transparent 45%), var(--bg);
       }
-
       .battle-layout {
-        width: min(1280px, 96vw);
-        margin: 20px auto;
+        width: min(760px, 100vw);
+        min-height: 100vh;
+        margin: 0 auto;
+        padding: 8px;
+        display: grid;
+        gap: 8px;
+        grid-template-rows: auto auto 1fr;
       }
-
       .frame {
-        border: 3px solid var(--border);
-        border-radius: 14px;
+        border: 2px solid var(--border);
+        border-radius: 10px;
         background: var(--panel);
-        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08) inset;
       }
-
-      .screen-title {
-        margin: 0 0 8px;
-        font-size: 2rem;
-      }
-
-      .phase-note {
-        color: var(--muted);
-        margin: 0 0 14px;
-      }
-
-      .phase-list {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 10px;
-        margin-bottom: 14px;
-      }
-
-      .phase {
-        padding: 10px 12px;
-        border-radius: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        background: rgba(255, 255, 255, 0.04);
-        font-size: 0.92rem;
-      }
-
-      .phase strong { color: var(--accent); }
-
-      .top-panels {
-        display: grid;
-        grid-template-columns: 1.2fr 1.8fr;
-        gap: 12px;
-      }
-
       .panel-title {
-        margin: 0 0 10px;
-        color: var(--accent);
-        font-size: 1.25rem;
-      }
-
-      .enemy-summary {
-        background: var(--panel-alt);
-        padding: 14px;
-      }
-
-      .enemy-summary ol {
         margin: 0;
-        padding-left: 22px;
-        line-height: 1.55;
+        font-size: 0.95rem;
+        color: var(--accent);
       }
 
-      .party-table table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-
-      .party-table td {
-        border-bottom: 1px solid rgba(255, 255, 255, 0.13);
-        padding: 6px 4px;
-      }
-
-      .main-grid {
-        margin-top: 12px;
+      .top-section { padding: 8px; }
+      .party-grid {
         display: grid;
-        grid-template-columns: 1.8fr 1.2fr;
-        gap: 12px;
-        align-items: start;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px;
       }
+      .party-card {
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        border-radius: 8px;
+        padding: 6px 4px;
+        text-align: center;
+        background: rgba(0, 0, 0, 0.2);
+      }
+      .party-card.active {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(255, 227, 127, 0.4) inset;
+      }
+      .portrait {
+        width: 100%;
+        aspect-ratio: 3 / 4;
+        object-fit: cover;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 6px;
+        image-rendering: pixelated;
+        background: #090909;
+      }
+      .party-name { font-weight: bold; font-size: 0.86rem; margin-top: 4px; }
+      .stat { font-size: 0.8rem; }
 
-      .enemy-sprite-board {
+      .mid-section {
         position: relative;
-        padding: 16px;
-        min-height: 360px;
-        overflow: hidden;
+        padding: 8px;
+        min-height: 170px;
         background:
-          linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.3));
-        background-color: rgba(7, 9, 28, 0.92);
+          linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.25)),
+          rgba(7, 12, 37, 0.88);
         background-position: center;
         background-repeat: no-repeat;
         background-size: cover;
       }
-
       .sprite-grid {
+        margin-top: 6px;
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 12px;
+        grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+        gap: 6px;
       }
-
       .sprite-card {
-        position: relative;
-        border: 2px solid rgba(255, 255, 255, 0.2);
-        border-radius: 10px;
-        background: linear-gradient(180deg, rgba(0, 0, 0, 0.24), rgba(0, 0, 0, 0.56));
-        padding: 8px;
-        transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
-        animation: sprite-idle-float 2.6s ease-in-out infinite;
-        animation-delay: calc(var(--enemy-idx, 0) * 0.08s);
-      }
-
-      .sprite-card.is-targeted {
-        border-color: var(--accent);
-        box-shadow: 0 0 0 2px rgba(243, 233, 143, 0.35);
-        transform: translateY(-1px);
-      }
-
-      .sprite-card.is-hit {
-        animation: sprite-hit 320ms ease;
-      }
-
-      .sprite-card.is-defeated {
-        filter: grayscale(0.9);
-        opacity: 0.72;
-      }
-
-      .sprite-card::after {
-        content: "";
-        position: absolute;
-        inset: 5px;
-        border: 2px dashed rgba(243, 233, 143, 0.85);
+        border: 2px solid rgba(255, 255, 255, 0.25);
         border-radius: 8px;
-        opacity: 0;
-        pointer-events: none;
+        padding: 5px;
+        text-align: left;
+        background: rgba(0, 0, 0, 0.38);
+        cursor: pointer;
       }
-
-      .sprite-card.is-targeted::after {
-        opacity: 1;
-        animation: reticle-pulse 680ms ease-in-out infinite;
-      }
-
+      .sprite-card.targeted { border-color: var(--accent); }
       .sprite-card img {
         width: 100%;
-        height: 110px;
+        height: 64px;
         object-fit: contain;
         image-rendering: pixelated;
-        background: #000;
+        background: rgba(0, 0, 0, 0.3);
       }
-
-      .sprite-card .name {
-        margin-top: 6px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-
+      .sprite-name { font-size: 0.72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       .enemy-hp-bar {
-        margin-top: 6px;
+        margin-top: 4px;
         height: 8px;
         border-radius: 999px;
         background: rgba(255, 255, 255, 0.2);
         overflow: hidden;
       }
-
       .enemy-hp-fill {
         height: 100%;
-        background: linear-gradient(90deg, #65e183, #37b35f);
-        transition: width 300ms ease;
+        background: linear-gradient(90deg, #66e286, #37b35f);
+      }
+      .enemy-hp-text {
+        font-size: 0.74rem;
+        color: #d9ffe8;
       }
 
-      .battle-vfx-layer {
-        pointer-events: none;
-        position: absolute;
-        inset: 0;
-        overflow: hidden;
-      }
-
-      .battle-vfx-layer .spark {
-        position: absolute;
-        width: 10px;
-        height: 10px;
-        border-radius: 999px;
-        background: radial-gradient(circle, rgba(255, 255, 255, 0.95), rgba(255, 171, 71, 0.15));
-        animation: spark-burst 500ms ease-out forwards;
-      }
-
-      @keyframes sprite-idle-float {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-4px); }
-      }
-
-      @keyframes reticle-pulse {
-        0%, 100% { transform: scale(1); opacity: 1; }
-        50% { transform: scale(1.03); opacity: 0.4; }
-      }
-
-      @keyframes sprite-hit {
-        0% { filter: brightness(1); }
-        25% { filter: brightness(1.8) saturate(1.3); }
-        100% { filter: brightness(1); }
-      }
-
-      @keyframes spark-burst {
-        0% { transform: translate(0, 0) scale(0.6); opacity: 1; }
-        100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
-      }
-
-      .log-panel {
-        margin-top: 12px;
-        padding: 14px;
-      }
-
-      pre {
-        margin: 0;
-        white-space: pre-wrap;
-        line-height: 1.5;
-      }
-
-      .command-frame {
-        padding: 16px;
-      }
-
-      .command-row,
-      .action-grid {
+      .bottom-section {
+        padding: 8px;
         display: grid;
-        grid-template-columns: 90px 118px 1fr 130px 110px;
+        grid-template-rows: auto 1fr;
         gap: 8px;
-        align-items: center;
       }
-
-      .action-grid + .action-grid { margin-top: 8px; }
-      .action-grid {
-        position: relative;
+      .status-line { font-size: 0.86rem; color: var(--muted); }
+      .menu-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
       }
-
-      .action-grid.is-focused {
-        outline: 2px solid rgba(243, 233, 143, 0.75);
-        outline-offset: 4px;
-        border-radius: 6px;
+      .btn {
+        border: 1px solid rgba(244, 247, 255, 0.75);
+        border-radius: 8px;
+        background: linear-gradient(180deg, #4459bf, #20317e);
+        color: var(--text);
+        font-size: 0.92rem;
+        padding: 9px 8px;
+        cursor: pointer;
       }
-
-      .cursor-marker {
-        color: transparent;
-        font-size: 0.95rem;
-        margin-right: 4px;
+      .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+      .btn.secondary { background: linear-gradient(180deg, #50535e, #2c2f39); }
+      .candidate-panel {
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 8px;
+        padding: 8px;
+        max-height: 210px;
+        overflow: auto;
+        display: none;
       }
-
-      .action-grid.is-focused .cursor-marker {
+      .candidate-panel.open { display: block; }
+      .log-panel {
+        display: none;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 8px;
+        max-height: 240px;
+        overflow: auto;
+        padding: 8px;
+        white-space: pre-wrap;
+        line-height: 1.4;
+        background: rgba(0, 0, 0, 0.35);
+      }
+      .log-panel.open { display: block; }
+      .next-turn-note {
+        display: none;
+        margin-top: 6px;
+        font-size: 0.84rem;
         color: var(--accent);
       }
-
-      .keyboard-hint {
-        margin: 6px 0 10px;
-        padding: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        border-radius: 8px;
-        background: rgba(255, 255, 255, 0.04);
-        font-size: 0.88rem;
-        line-height: 1.45;
-      }
-
-      .kbd {
-        display: inline-block;
-        min-width: 24px;
-        padding: 1px 6px;
-        margin: 0 2px;
-        border-radius: 4px;
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        background: rgba(0, 0, 0, 0.28);
-        text-align: center;
-      }
-      select, input, button, textarea {
-        font-family: inherit;
-        font-size: 0.95rem;
-      }
-
-      select, input, textarea {
-        width: 100%;
-        border-radius: 6px;
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        background: rgba(0, 0, 0, 0.25);
-        color: var(--text);
-        padding: 6px;
-      }
-
-      button {
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        background: #1b2c91;
-        color: var(--text);
-        padding: 7px 10px;
-        cursor: pointer;
-      }
-
-      .btn-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 10px;
-      }
-
-      .dev-tools {
-        margin-top: 12px;
-        padding: 12px;
-      }
-
-      .dev-tools summary {
-        cursor: pointer;
-        color: var(--muted);
-      }
-
-      .muted { color: var(--muted); }
-      .hp-good { color: var(--ok); }
-      .hp-bad { color: var(--danger); }
-
-      @media (max-width: 980px) {
-        .top-panels, .main-grid {
-          grid-template-columns: 1fr;
-        }
-      }
+      .next-turn-note.open { display: block; }
+      .hidden { display: none; }
+      .dev-tools { padding: 8px; }
+      .dev-tools summary { cursor: pointer; color: var(--muted); }
     </style>
   </head>
   <body>
     <main class="battle-layout">
-      <h1 class="screen-title">Battle UI Migration Playground</h1>
-      <p class="phase-note">既存APIは維持したまま、Pygame風の「敵スプライト＋コマンド枠」へ段階移行するための試作レイアウトです。</p>
-
-      <section class="phase-list">
-        <div class="phase"><strong>Phase 1:</strong> レイアウトと色調をゲーム風へ変更</div>
-        <div class="phase"><strong>Phase 2:</strong> 敵スプライト/HPバーを状態連動で描画</div>
-        <div class="phase"><strong>Phase 3:</strong> キーボード操作・カーソルUIを追加</div>
-        <div class="phase"><strong>Phase 4:</strong> 画像アセット差し替え・演出追加</div>
+      <section class="frame top-section">
+        <h2 class="panel-title">上部: PARTY</h2>
+        <div id="partyGrid" class="party-grid"></div>
       </section>
 
-      <section class="top-panels">
-        <div class="frame enemy-summary">
-          <h2 class="panel-title">ENEMIES</h2>
-          <p class="muted">LocationGroup: <strong>{{ selected_location_group }}</strong> / location: <strong>{{ selected_location }}</strong></p>
-          <ol id="enemySummaryList"></ol>
-          <p>敵数: <strong id="enemyCount">0</strong></p>
-        </div>
-
-        <div class="frame party-table" style="padding: 14px;">
-          <h2 class="panel-title">PARTY STATUS</h2>
-          <table>
-            <tbody id="partyStatusBody"></tbody>
-          </table>
-        </div>
+      <section id="enemySpriteBoard" class="frame mid-section">
+        <h2 class="panel-title">中部: Enemy Sprites（攻撃対象をタップ）</h2>
+        <div id="enemySpriteGrid" class="sprite-grid"></div>
       </section>
 
-      <section class="main-grid">
+      <section class="frame bottom-section">
         <div>
-          <div id="enemySpriteBoard" class="frame enemy-sprite-board">
-            <h2 class="panel-title">Enemy Sprites</h2>
-            <div id="enemySpriteGrid" class="sprite-grid"></div>
-            <div id="battleVfxLayer" class="battle-vfx-layer" aria-hidden="true"></div>
-          </div>
-
-          <div class="frame log-panel">
-            <h2 class="panel-title">LOG / RESPONSE</h2>
-            <pre id="responseView">まだ実行していません。</pre>
-          </div>
+          <h2 class="panel-title">下部: COMMAND</h2>
+          <div id="statusLine" class="status-line"></div>
         </div>
 
-        <aside class="frame command-frame">
-          <h2 class="panel-title">COMMAND FRAME</h2>
-          <p class="muted">想定パーティ人数: <strong id="partyCount">{{ expected_action_count }}</strong></p>
-          <div class="keyboard-hint">
-            Cursor: <span class="kbd">↑</span><span class="kbd">↓</span> メンバー選択 /
-            <span class="kbd">←</span><span class="kbd">→</span> 敵ターゲット変更 /
-            <span class="kbd">Enter</span> JSONへ反映
+        <div id="commandPanel">
+          <div id="baseCommands" class="menu-grid"></div>
+          <div id="candidatePanel" class="candidate-panel"></div>
+          <div id="logPanel" class="log-panel"></div>
+          <div id="nextTurnNote" class="next-turn-note">Enter または画面タップで次のターンへ進みます。</div>
+          <div class="menu-grid" style="margin-top:6px;">
+            <button id="backBtn" class="btn secondary" type="button">もどる</button>
+            <a href="/menu"><button class="btn secondary" type="button">Field Menu</button></a>
           </div>
-          <div id="actionRows"></div>
-          <div class="btn-row">
-            <button id="applyActionsBtn" type="button">JSONへ反映</button>
-            <button id="setAllAttackBtn" type="button">全員を通常攻撃</button>
-          </div>
-
-          <h3 style="margin:14px 0 8px;">Request JSON</h3>
-          <textarea id="requestBody" rows="8">{
-            "planned_actions": [],
-            "lifecycle_state": "{{ default_lifecycle }}"
-          }</textarea>
-          <div class="btn-row">
-            <button id="sendBtn" type="button">POST /battle/round</button>
-            <button id="resetBtn" type="button">サンプルに戻す</button>
-            <a href="/menu"><button type="button">Field Menu</button></a>
-          </div>
-        </aside>
+        </div>
       </section>
 
       <details class="frame dev-tools">
@@ -453,56 +239,30 @@
     <script id="selectedLocationGroupJson" type="application/json">{{ selected_location_group|tojson }}</script>
 
     <script>
-      const requestBody = document.getElementById("requestBody");
-      const sendBtn = document.getElementById("sendBtn");
-      const resetBtn = document.getElementById("resetBtn");
-      const responseView = document.getElementById("responseView");
-      const actionRows = document.getElementById("actionRows");
-      const applyActionsBtn = document.getElementById("applyActionsBtn");
-      const setAllAttackBtn = document.getElementById("setAllAttackBtn");
-      const partyCount = Number(document.getElementById("partyCount").textContent || "0");
-      const enemyCount = document.getElementById("enemyCount");
-      const partyStatusBody = document.getElementById("partyStatusBody");
-      const enemySummaryList = document.getElementById("enemySummaryList");
-      const enemySpriteGrid = document.getElementById("enemySpriteGrid");
+      const partyGrid = document.getElementById("partyGrid");
       const enemySpriteBoard = document.getElementById("enemySpriteBoard");
-      const initialSessionStatusNode = document.getElementById("initialSessionStatusJson");
-      const commandCandidatesNode = document.getElementById("commandCandidatesJson");
-      const selectedLocationGroupNode = document.getElementById("selectedLocationGroupJson");
-      const battleVfxLayer = document.getElementById("battleVfxLayer");
+      const enemySpriteGrid = document.getElementById("enemySpriteGrid");
+      const statusLine = document.getElementById("statusLine");
+      const baseCommands = document.getElementById("baseCommands");
+      const candidatePanel = document.getElementById("candidatePanel");
+      const logPanel = document.getElementById("logPanel");
+      const nextTurnNote = document.getElementById("nextTurnNote");
+      const backBtn = document.getElementById("backBtn");
+
       let initialSessionStatus = { party: [], enemies: [] };
       let commandCandidates = { magic_by_member: [], item: [], special: [] };
+      let pendingActions = [];
+      let currentMemberIndex = 0;
+      let selectedEnemyIndex = 0;
+      let inCandidateMode = false;
+      let awaitingNextTurn = false;
       let selectedLocationGroup = "";
-      let cursorMemberIndex = 0;
-      let enemyTargetCursorIndex = 0;
-      let previousEnemyState = [];
 
-      if (initialSessionStatusNode) {
-        try {
-          initialSessionStatus = JSON.parse(initialSessionStatusNode.textContent || "{}");
-        } catch (error) {
-          responseView.textContent = `initial session JSON parse error: ${error}`;
-        }
-      }
-      if (commandCandidatesNode) {
-        try {
-          commandCandidates = JSON.parse(commandCandidatesNode.textContent || "{}");
-        } catch (error) {
-          responseView.textContent = `command candidates JSON parse error: ${error}`;
-        }
-      }
-      if (selectedLocationGroupNode) {
-        try {
-          selectedLocationGroup = JSON.parse(selectedLocationGroupNode.textContent || '""');
-        } catch (error) {
-          responseView.textContent = `selected location group JSON parse error: ${error}`;
-        }
-      }
+      try { initialSessionStatus = JSON.parse(document.getElementById("initialSessionStatusJson").textContent || "{}"); } catch (_e) {}
+      try { commandCandidates = JSON.parse(document.getElementById("commandCandidatesJson").textContent || "{}"); } catch (_e) {}
+      try { selectedLocationGroup = JSON.parse(document.getElementById("selectedLocationGroupJson").textContent || '""'); } catch (_e) {}
 
-      const sampleBody = `{
-  "planned_actions": [],
-  "lifecycle_state": "{{ default_lifecycle }}"
-}`;
+      const defaultLifecycle = "{{ default_lifecycle }}";
 
       function escapeHtml(value) {
         return String(value)
@@ -513,40 +273,64 @@
           .replaceAll("'", "&#39;");
       }
 
-      function hpClass(row) {
-        const hp = Number(row?.hp ?? 0);
-        const maxHp = Math.max(1, Number(row?.max_hp ?? 1));
-        return hp / maxHp <= 0.25 ? "hp-bad" : "hp-good";
-      }
-
-      function renderStatusRows(rows) {
-        partyStatusBody.innerHTML = "";
-        rows.forEach((row) => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `<td>${escapeHtml(row.name)}</td><td class="${hpClass(row)}">HP ${row.hp}/${row.max_hp}</td>`;
-          partyStatusBody.appendChild(tr);
-        });
-      }
-
       function fallbackSpriteDataUri(name) {
         const label = encodeURIComponent(name.slice(0, 6));
-        const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 90'>
-          <rect width='120' height='90' fill='#0d0d0f'/><rect x='7' y='7' width='106' height='76' fill='#32153f'/>
-          <text x='60' y='50' fill='#d6d7ff' font-size='11' text-anchor='middle'>${label}</text></svg>`;
+        const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 90'><rect width='120' height='90' fill='#111'/><text x='60' y='50' fill='#ddd' font-size='12' text-anchor='middle'>${label}</text></svg>`;
         return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
       }
 
       function buildEnemySpriteUrl(spriteId, enemyName) {
-        if (!spriteId) {
-          return fallbackSpriteDataUri(enemyName);
-        }
+        if (!spriteId) return fallbackSpriteDataUri(enemyName || "Enemy");
         return `/assets/enemy-sprites/${encodeURIComponent(String(spriteId))}.png`;
       }
 
+      function buildPortraitUrl(portraitKey, memberName) {
+        if (!portraitKey) return fallbackSpriteDataUri(memberName || "Member");
+        return `/assets/portraits/${encodeURIComponent(String(portraitKey))}`;
+      }
+
+      function renderParty() {
+        const party = Array.isArray(initialSessionStatus.party) ? initialSessionStatus.party : [];
+        partyGrid.innerHTML = "";
+        party.forEach((member, index) => {
+          const card = document.createElement("article");
+          card.className = `party-card ${index === currentMemberIndex ? "active" : ""}`;
+          card.innerHTML = `
+            <img class="portrait" alt="${escapeHtml(member.name)}" src="${buildPortraitUrl(member?.portrait_key, member?.name)}" />
+            <div class="party-name">${escapeHtml(member.name || `Member ${index + 1}`)}</div>
+            <div class="stat">HP ${member.hp ?? 0}/${member.max_hp ?? 0}</div>
+            <div class="stat">LV ${member.level ?? "-"}</div>
+          `;
+          partyGrid.appendChild(card);
+        });
+      }
+
+      function renderEnemies() {
+        const enemies = Array.isArray(initialSessionStatus.enemies) ? initialSessionStatus.enemies : [];
+        enemySpriteGrid.innerHTML = "";
+        enemies.forEach((enemy, index) => {
+          const card = document.createElement("article");
+          card.className = `sprite-card ${index === selectedEnemyIndex ? "targeted" : ""}`;
+          const hp = Number(enemy?.hp ?? 0);
+          const maxHp = Math.max(1, Number(enemy?.max_hp ?? 1));
+          const hpRate = Math.max(0, Math.min(100, Math.round((hp / maxHp) * 100)));
+          card.innerHTML = `
+            <img alt="${escapeHtml(enemy.name || "Enemy")}" src="${buildEnemySpriteUrl(enemy?.sprite_id, enemy?.name)}" />
+            <div class="sprite-name">${escapeHtml(enemy.name || `Enemy ${index + 1}`)}</div>
+            <div class="enemy-hp-bar"><div class="enemy-hp-fill" style="width:${hpRate}%"></div></div>
+            <div class="enemy-hp-text">${hp}/${maxHp}</div>
+          `;
+          card.addEventListener("click", () => {
+            if (awaitingNextTurn) return;
+            selectedEnemyIndex = index;
+            renderEnemies();
+          });
+          enemySpriteGrid.appendChild(card);
+        });
+      }
+
       function applyLocationGroupBackground(locationGroup) {
-        if (!enemySpriteBoard) {
-          return;
-        }
+        if (!enemySpriteBoard) return;
         if (!locationGroup) {
           enemySpriteBoard.style.backgroundImage = "";
           return;
@@ -555,7 +339,7 @@
         const probe = new Image();
         probe.onload = () => {
           enemySpriteBoard.style.backgroundImage =
-            `linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.3)), url('${url}')`;
+            `linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.25)), url('${url}')`;
         };
         probe.onerror = () => {
           enemySpriteBoard.style.backgroundImage = "";
@@ -563,399 +347,170 @@
         probe.src = url;
       }
 
-      function spawnHitSpark(card) {
-        if (!battleVfxLayer || !card) {
-          return;
-        }
-        const boardRect = battleVfxLayer.getBoundingClientRect();
-        const cardRect = card.getBoundingClientRect();
-        const centerX = cardRect.left - boardRect.left + cardRect.width / 2;
-        const centerY = cardRect.top - boardRect.top + cardRect.height / 2;
-        for (let i = 0; i < 7; i += 1) {
-          const spark = document.createElement("span");
-          spark.className = "spark";
-          spark.style.left = `${centerX}px`;
-          spark.style.top = `${centerY}px`;
-          spark.style.setProperty("--dx", `${Math.round((Math.random() * 70) - 35)}px`);
-          spark.style.setProperty("--dy", `${Math.round((Math.random() * 70) - 35)}px`);
-          battleVfxLayer.appendChild(spark);
-          spark.addEventListener("animationend", () => spark.remove(), { once: true });
-        }
-      }
-
-      function renderEnemySprites(enemies) {
-        enemySummaryList.innerHTML = "";
-        enemySpriteGrid.innerHTML = "";
-        enemies.forEach((enemy, index) => {
-          const li = document.createElement("li");
-          li.innerHTML = `${index + 1}. ${escapeHtml(enemy.name)} <span class="${hpClass(enemy)}">HP ${enemy.hp}/${enemy.max_hp}</span>`;
-          enemySummaryList.appendChild(li);
-
-          const hp = Number(enemy?.hp ?? 0);
-          const maxHp = Math.max(1, Number(enemy?.max_hp ?? 1));
-          const hpRate = Math.max(0, Math.min(100, Math.round((hp / maxHp) * 100)));
-          const imgSrc = buildEnemySpriteUrl(enemy?.sprite_id, enemy?.name || "Enemy");
-
-          const card = document.createElement("article");
-          card.className = "sprite-card";
-          card.dataset.enemyIndex = String(index);
-          card.style.setProperty("--enemy-idx", String(index));
-          card.innerHTML = `
-            <img alt="${escapeHtml(enemy.name)} sprite" src="${imgSrc}" />
-            <div class="name">${escapeHtml(enemy.name)}</div>
-            <div class="enemy-hp-bar"><div class="enemy-hp-fill" style="width:${hpRate}%"></div></div>
-            <div class="${hpClass(enemy)}">${enemy.hp}/${enemy.max_hp}</div>
-          `;
-
-          const before = previousEnemyState[index];
-          const beforeHp = Number(before?.hp ?? hp);
-          if (hp <= 0) {
-            card.classList.add("is-defeated");
-          }
-          if (hp < beforeHp) {
-            card.classList.add("is-hit");
-            card.addEventListener("animationend", () => {
-              card.classList.remove("is-hit");
-            }, { once: true });
-            spawnHitSpark(card);
-          }
-
-          const imgNode = card.querySelector("img");
-          if (imgNode) {
-            imgNode.addEventListener("error", () => {
-              imgNode.src = fallbackSpriteDataUri(enemy?.name || "Enemy");
-            }, { once: true });
-          }
-
-          card.addEventListener("click", () => {
-            setEnemyTargetCursor(index);
-            syncTargetInputByCursor();
-          });
-
-          enemySpriteGrid.appendChild(card);
-        });
-
-        syncEnemyCursorUi();
-        previousEnemyState = enemies.map((enemy) => ({ hp: Number(enemy?.hp ?? 0) }));
-      }
-
-      function renderSessionStatus(status) {
-        const party = Array.isArray(status?.party) ? status.party : [];
-        const enemies = Array.isArray(status?.enemies) ? status.enemies : [];
-        enemyCount.textContent = String(enemies.length);
-        renderStatusRows(party);
-        renderEnemySprites(enemies);
-      }
-
-      function buildCommandSelectOptions(names) {
-        const list = Array.isArray(names) ? names : [];
-        if (!list.length) {
-          return '<option value="">(候補なし)</option>';
-        }
-        return list
-          .map((name) => {
-            const escaped = escapeHtml(name);
-            return `<option value="${escaped}">${escaped}</option>`;
-          })
-          .join("");
-      }
-
-      function updateCommandInputByKind(row) {
-        const kind = row.querySelector('[data-field="kind"]').value;
-        const commandInput = row.querySelector('[data-field="command"]');
-        const commandSelect = row.querySelector('[data-field="command_select"]');
-        const spellNameInput = row.querySelector('[data-field="spell_name"]');
-        const itemNameInput = row.querySelector('[data-field="item_name"]');
-
-        spellNameInput.value = "";
-        itemNameInput.value = "";
-        commandSelect.style.display = "none";
-        commandInput.style.display = "";
-
-        if (kind === "magic") {
-          commandInput.value = "Magic";
-          commandInput.style.display = "none";
-          commandSelect.style.display = "";
-          const memberIndex = Number(row.dataset.memberIndex || "0");
-          const magicOptions = commandCandidates.magic_by_member[memberIndex] || [];
-          commandSelect.innerHTML = buildCommandSelectOptions(magicOptions);
-          spellNameInput.value = commandSelect.value || "";
-          return;
-        }
-
-        if (kind === "item") {
-          commandInput.value = "Item";
-          commandInput.style.display = "none";
-          commandSelect.style.display = "";
-          commandSelect.innerHTML = buildCommandSelectOptions(commandCandidates.item);
-          itemNameInput.value = commandSelect.value || "";
-          return;
-        }
-
-        if (kind === "special") {
-          commandInput.style.display = "none";
-          commandSelect.style.display = "";
-          commandSelect.innerHTML = buildCommandSelectOptions(commandCandidates.special);
-          commandInput.value = commandSelect.value || "";
-          return;
-        }
-
-        const defaults = {
-          physical: "Fight",
-          defend: "Defend",
-          jump: "Jump",
-          run: "Run",
+      function buildAction(kind, command, extra = {}) {
+        const action = {
+          kind,
+          command,
+          target_side: "enemy",
+          target_index: selectedEnemyIndex,
+          target_all: false,
+          ...extra,
         };
-        commandInput.value = defaults[kind] || commandInput.value || "Fight";
+        return action;
       }
 
-      function buildActionRows() {
-        actionRows.innerHTML = "";
-        for (let i = 0; i < partyCount; i += 1) {
-          const row = document.createElement("div");
-          row.className = "action-grid";
-          row.dataset.memberIndex = String(i);
-          row.innerHTML = `
-            <label><span class="cursor-marker">▶</span>Member ${i + 1}</label>
-            <select data-field="kind">
-              <option value="physical" selected>physical</option>
-              <option value="magic">magic</option>
-              <option value="item">item</option>
-              <option value="defend">defend</option>
-              <option value="jump">jump</option>
-              <option value="run">run</option>
-              <option value="special">special</option>
-            </select>
-            <input type="text" data-field="command" value="Fight" placeholder="command (例: Fight)" />
-            <select data-field="command_select" style="display:none"></select>
-            <input type="hidden" data-field="spell_name" value="" />
-            <input type="hidden" data-field="item_name" value="" />
-            <select data-field="target_side">
-              <option value="enemy" selected>enemy</option>
-              <option value="ally">ally</option>
-              <option value="self">self</option>
-            </select>
-            <input type="number" data-field="target_index" min="0" value="0" />
-          `;
-          const kindSelect = row.querySelector('[data-field="kind"]');
-          const commandSelect = row.querySelector('[data-field="command_select"]');
-          const targetIndexInput = row.querySelector('[data-field="target_index"]');
-          const targetSideSelect = row.querySelector('[data-field="target_side"]');
-          kindSelect.addEventListener("change", () => updateCommandInputByKind(row));
-          targetSideSelect.addEventListener("change", () => syncTargetInputByCursor());
-          targetIndexInput.addEventListener("change", () => {
-            const nextIndex = Number(targetIndexInput.value || "0");
-            setEnemyTargetCursor(nextIndex);
-            syncEnemyCursorUi();
-          });
-          row.addEventListener("focusin", () => {
-            setCursorMemberIndex(i);
-          });
-          row.addEventListener("click", () => {
-            setCursorMemberIndex(i);
-          });
-          commandSelect.addEventListener("change", () => {
-            const kind = kindSelect.value;
-            const selected = commandSelect.value;
-            if (kind === "magic") {
-              row.querySelector('[data-field="spell_name"]').value = selected;
-            } else if (kind === "item") {
-              row.querySelector('[data-field="item_name"]').value = selected;
-            } else if (kind === "special") {
-              row.querySelector('[data-field="command"]').value = selected;
+      function closeCandidateMode() {
+        inCandidateMode = false;
+        candidatePanel.classList.remove("open");
+        candidatePanel.innerHTML = "";
+        baseCommands.classList.remove("hidden");
+      }
+
+      function openCandidateMode(type) {
+        inCandidateMode = true;
+        baseCommands.classList.add("hidden");
+        candidatePanel.classList.add("open");
+        const options = type === "magic"
+          ? (commandCandidates.magic_by_member?.[currentMemberIndex] || [])
+          : (commandCandidates.item || []);
+
+        const rows = options.length ? options : ["(候補なし)"];
+        candidatePanel.innerHTML = rows.map((name, index) => {
+          const disabled = name === "(候補なし)" ? "disabled" : "";
+          return `<button type="button" class="btn" data-candidate-index="${index}" ${disabled}>${escapeHtml(name)}</button>`;
+        }).join("<div style='height:6px;'></div>");
+
+        candidatePanel.querySelectorAll("button").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const pick = btn.textContent;
+            if (!pick || pick === "(候補なし)") return;
+            if (type === "magic") {
+              selectAction(buildAction("magic", "Magic", { spell_name: pick }));
+            } else {
+              selectAction(buildAction("item", "Item", { item_name: pick }));
             }
+            closeCandidateMode();
           });
-          updateCommandInputByKind(row);
-          actionRows.appendChild(row);
-        }
-
-        setCursorMemberIndex(0);
-        syncTargetInputByCursor();
-      }
-
-      function getActionRowNodes() {
-        return Array.from(actionRows.querySelectorAll(".action-grid"));
-      }
-
-      function setCursorMemberIndex(index) {
-        const rows = getActionRowNodes();
-        if (!rows.length) {
-          cursorMemberIndex = 0;
-          return;
-        }
-        const bounded = Math.max(0, Math.min(rows.length - 1, index));
-        cursorMemberIndex = bounded;
-        rows.forEach((row, rowIndex) => {
-          row.classList.toggle("is-focused", rowIndex === cursorMemberIndex);
-        });
-        syncTargetInputByCursor();
-      }
-
-      function setEnemyTargetCursor(index) {
-        const enemyCards = Array.from(enemySpriteGrid.querySelectorAll(".sprite-card"));
-        if (!enemyCards.length) {
-          enemyTargetCursorIndex = 0;
-          return;
-        }
-        enemyTargetCursorIndex = Math.max(0, Math.min(enemyCards.length - 1, index));
-        syncEnemyCursorUi();
-      }
-
-      function syncEnemyCursorUi() {
-        const enemyCards = Array.from(enemySpriteGrid.querySelectorAll(".sprite-card"));
-        enemyCards.forEach((card, index) => {
-          card.classList.toggle("is-targeted", index === enemyTargetCursorIndex);
         });
       }
 
-      function syncTargetInputByCursor() {
-        const rows = getActionRowNodes();
-        const activeRow = rows[cursorMemberIndex];
-        if (!activeRow) {
+      function selectAction(action) {
+        pendingActions[currentMemberIndex] = action;
+        currentMemberIndex += 1;
+        if (currentMemberIndex >= (initialSessionStatus.party?.length || 0)) {
+          sendPlannedActions();
           return;
         }
-        const targetSideSelect = activeRow.querySelector('[data-field="target_side"]');
-        const targetIndexInput = activeRow.querySelector('[data-field="target_index"]');
-        if (!targetSideSelect || !targetIndexInput || targetSideSelect.value !== "enemy") {
-          return;
-        }
-        targetIndexInput.value = String(enemyTargetCursorIndex);
+        renderParty();
+        renderStatusLine();
       }
 
-      function bindKeyboardControl() {
-        document.addEventListener("keydown", (event) => {
-          if (event.altKey || event.ctrlKey || event.metaKey) {
-            return;
-          }
-          const activeTag = document.activeElement?.tagName;
-          if (activeTag === "INPUT" || activeTag === "TEXTAREA" || activeTag === "SELECT") {
-            return;
-          }
+      function renderBaseCommands() {
+        baseCommands.innerHTML = "";
+        const commands = [
+          { label: "たたかう", onClick: () => selectAction(buildAction("physical", "Fight")) },
+          { label: "ぼうぎょ", onClick: () => selectAction(buildAction("defend", "Defend")) },
+          { label: "まほう", onClick: () => openCandidateMode("magic") },
+          { label: "アイテム", onClick: () => openCandidateMode("item") },
+          { label: "にげる", onClick: () => selectAction(buildAction("run", "Run")) },
+        ];
 
-          if (event.key === "ArrowUp") {
-            event.preventDefault();
-            setCursorMemberIndex(cursorMemberIndex - 1);
-            return;
-          }
-          if (event.key === "ArrowDown") {
-            event.preventDefault();
-            setCursorMemberIndex(cursorMemberIndex + 1);
-            return;
-          }
-          if (event.key === "ArrowLeft") {
-            event.preventDefault();
-            setEnemyTargetCursor(enemyTargetCursorIndex - 1);
-            syncTargetInputByCursor();
-            return;
-          }
-          if (event.key === "ArrowRight") {
-            event.preventDefault();
-            setEnemyTargetCursor(enemyTargetCursorIndex + 1);
-            syncTargetInputByCursor();
-            return;
-          }
-          if (event.key === "Enter") {
-            event.preventDefault();
-            mergeActionsIntoRequest(readActionsFromBuilder());
-          }
+        commands.forEach((item) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "btn";
+          button.textContent = item.label;
+          button.addEventListener("click", () => {
+            if (awaitingNextTurn) return;
+            item.onClick();
+          });
+          baseCommands.appendChild(button);
         });
       }
 
-      function readActionsFromBuilder() {
-        return Array.from(actionRows.querySelectorAll(".action-grid")).map((row) => {
-          const kind = row.querySelector('[data-field="kind"]').value;
-          const command = row.querySelector('[data-field="command"]').value.trim();
-          const spellName = row.querySelector('[data-field="spell_name"]').value.trim();
-          const itemName = row.querySelector('[data-field="item_name"]').value.trim();
-          const targetSide = row.querySelector('[data-field="target_side"]').value;
-          const targetIndexRaw = row.querySelector('[data-field="target_index"]').value;
-          const action = {
-            kind,
-            target_side: targetSide,
-            target_index: targetIndexRaw === "" ? null : Number(targetIndexRaw),
-            target_all: false,
-          };
-          if (command) {
-            action.command = command;
-          }
-          if (spellName) {
-            action.spell_name = spellName;
-          }
-          if (itemName) {
-            action.item_name = itemName;
-          }
-          return action;
-        });
+      function renderStatusLine() {
+        if (awaitingNextTurn) {
+          statusLine.textContent = "行動結果を表示中";
+          return;
+        }
+        const member = initialSessionStatus.party?.[currentMemberIndex];
+        if (!member) return;
+        statusLine.textContent = `${member.name} のコマンドを選択してください（対象: ${selectedEnemyIndex + 1}）`;
       }
 
-      function mergeActionsIntoRequest(actions) {
-        let body;
+      function startResultMode(logsText) {
+        awaitingNextTurn = true;
+        baseCommands.classList.add("hidden");
+        candidatePanel.classList.remove("open");
+        logPanel.classList.add("open");
+        nextTurnNote.classList.add("open");
+        logPanel.textContent = logsText || "ログがありません。";
+        renderStatusLine();
+      }
+
+      async function sendPlannedActions() {
+        const body = { planned_actions: pendingActions, lifecycle_state: defaultLifecycle };
+        renderStatusLine();
         try {
-          body = JSON.parse(requestBody.value);
-        } catch (error) {
-          responseView.textContent = `JSON parse error: ${error}`;
-          return;
-        }
-
-        body.planned_actions = actions;
-        requestBody.value = JSON.stringify(body, null, 2);
-      }
-
-      buildActionRows();
-      renderSessionStatus(initialSessionStatus);
-      applyLocationGroupBackground(selectedLocationGroup);
-      bindKeyboardControl();
-
-      applyActionsBtn.addEventListener("click", () => {
-        mergeActionsIntoRequest(readActionsFromBuilder());
-      });
-
-      setAllAttackBtn.addEventListener("click", () => {
-        actionRows.querySelectorAll(".action-grid").forEach((row) => {
-          row.querySelector('[data-field="kind"]').value = "physical";
-          row.querySelector('[data-field="command"]').value = "Fight";
-          row.querySelector('[data-field="target_side"]').value = "enemy";
-          row.querySelector('[data-field="target_index"]').value = "0";
-          updateCommandInputByKind(row);
-        });
-        mergeActionsIntoRequest(readActionsFromBuilder());
-      });
-
-      resetBtn.addEventListener("click", () => {
-        requestBody.value = sampleBody;
-      });
-
-      sendBtn.addEventListener("click", async () => {
-        let body;
-        try {
-          body = JSON.parse(requestBody.value);
-        } catch (error) {
-          responseView.textContent = `JSON parse error: ${error}`;
-          return;
-        }
-
-        responseView.textContent = "sending...";
-
-        try {
-          const resp = await fetch("/battle/round", {
+          const response = await fetch("/battle/round", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(body),
           });
-
-          const payload = await resp.json();
-          if (payload && payload.session_status) {
-            renderSessionStatus(payload.session_status);
+          const payload = await response.json();
+          if (payload?.session_status) {
+            initialSessionStatus = payload.session_status;
           }
-          responseView.textContent = JSON.stringify(
-            { status: resp.status, body: payload },
-            null,
-            2,
-          );
+          const logs = Array.isArray(payload?.logs) ? payload.logs.join("\n") : JSON.stringify(payload, null, 2);
+          startResultMode(logs);
+          renderParty();
+          renderEnemies();
         } catch (error) {
-          responseView.textContent = `request failed: ${error}`;
+          startResultMode(`request failed: ${error}`);
+        }
+      }
+
+      function startNextTurn() {
+        awaitingNextTurn = false;
+        pendingActions = [];
+        currentMemberIndex = 0;
+        selectedEnemyIndex = 0;
+        closeCandidateMode();
+        logPanel.classList.remove("open");
+        nextTurnNote.classList.remove("open");
+        renderParty();
+        renderEnemies();
+        renderStatusLine();
+      }
+
+      backBtn.addEventListener("click", () => {
+        if (awaitingNextTurn) return;
+        if (inCandidateMode) {
+          closeCandidateMode();
+          return;
+        }
+        if (currentMemberIndex <= 0) return;
+        currentMemberIndex -= 1;
+        pendingActions[currentMemberIndex] = undefined;
+        renderParty();
+        renderStatusLine();
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && awaitingNextTurn) {
+          event.preventDefault();
+          startNextTurn();
         }
       });
+      document.addEventListener("click", () => {
+        if (awaitingNextTurn) startNextTurn();
+      });
+
+      renderParty();
+      renderEnemies();
+      applyLocationGroupBackground(selectedLocationGroup);
+      renderBaseCommands();
+      renderStatusLine();
     </script>
   </body>
 </html>

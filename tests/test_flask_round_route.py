@@ -90,8 +90,8 @@ def test_root_page_renders_html(monkeypatch):
     assert "text/html" in resp.content_type
     body = resp.get_data(as_text=True)
     assert "Battle Round Runner" in body
-    assert "POST /battle/round" in body
-    assert "JSONへ反映" in body
+    assert "中部: Enemy Sprites" in body
+    assert "下部: COMMAND" in body
     assert "LocationGroup" in body
     assert "Field Menu" in body
     assert "menuUseItemBtn" not in body
