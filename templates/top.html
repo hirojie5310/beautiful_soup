@@ -87,14 +87,37 @@
         gap: 6px;
       }
       .sprite-card {
+        position: relative;
         border: 2px solid rgba(255, 255, 255, 0.25);
         border-radius: 8px;
         padding: 5px;
         text-align: left;
         background: rgba(0, 0, 0, 0.38);
         cursor: pointer;
+        transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+        animation: sprite-idle-float 2.6s ease-in-out infinite;
+        animation-delay: calc(var(--enemy-idx, 0) * 0.08s);
       }
-      .sprite-card.targeted { border-color: var(--accent); }
+      .sprite-card.targeted {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(255, 227, 127, 0.38);
+      }
+      .sprite-card.is-hit {
+        animation: sprite-hit 320ms ease;
+      }
+      .sprite-card::after {
+        content: "";
+        position: absolute;
+        inset: 4px;
+        border: 2px dashed rgba(255, 227, 127, 0.85);
+        border-radius: 8px;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .sprite-card.targeted::after {
+        opacity: 1;
+        animation: reticle-pulse 680ms ease-in-out infinite;
+      }
       .sprite-card img {
         width: 100%;
         height: 64px;
@@ -117,6 +140,38 @@
       .enemy-hp-text {
         font-size: 0.74rem;
         color: #d9ffe8;
+      }
+
+      .battle-vfx-layer {
+        pointer-events: none;
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      .battle-vfx-layer .spark {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.95), rgba(255, 171, 71, 0.15));
+        animation: spark-burst 500ms ease-out forwards;
+      }
+      @keyframes sprite-idle-float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-4px); }
+      }
+      @keyframes reticle-pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.03); opacity: 0.4; }
+      }
+      @keyframes sprite-hit {
+        0% { filter: brightness(1); }
+        25% { filter: brightness(1.8) saturate(1.3); }
+        100% { filter: brightness(1); }
+      }
+      @keyframes spark-burst {
+        0% { transform: translate(0, 0) scale(0.6); opacity: 1; }
+        100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
       }
 
       .bottom-section {
@@ -185,6 +240,7 @@
       <section id="enemySpriteBoard" class="frame mid-section">
         <h2 class="panel-title">中部: Enemy Sprites（攻撃対象をタップ）</h2>
         <div id="enemySpriteGrid" class="sprite-grid"></div>
+        <div id="battleVfxLayer" class="battle-vfx-layer" aria-hidden="true"></div>
       </section>
 
       <section class="frame bottom-section">
@@ -242,6 +298,7 @@
       const partyGrid = document.getElementById("partyGrid");
       const enemySpriteBoard = document.getElementById("enemySpriteBoard");
       const enemySpriteGrid = document.getElementById("enemySpriteGrid");
+      const battleVfxLayer = document.getElementById("battleVfxLayer");
       const statusLine = document.getElementById("statusLine");
       const baseCommands = document.getElementById("baseCommands");
       const candidatePanel = document.getElementById("candidatePanel");
@@ -257,6 +314,7 @@
       let inCandidateMode = false;
       let awaitingNextTurn = false;
       let selectedLocationGroup = "";
+      let previousEnemyState = [];
 
       try { initialSessionStatus = JSON.parse(document.getElementById("initialSessionStatusJson").textContent || "{}"); } catch (_e) {}
       try { commandCandidates = JSON.parse(document.getElementById("commandCandidatesJson").textContent || "{}"); } catch (_e) {}
@@ -305,12 +363,31 @@
         });
       }
 
+      function spawnHitSpark(card) {
+        if (!battleVfxLayer || !card) return;
+        const boardRect = battleVfxLayer.getBoundingClientRect();
+        const cardRect = card.getBoundingClientRect();
+        const centerX = cardRect.left - boardRect.left + cardRect.width / 2;
+        const centerY = cardRect.top - boardRect.top + cardRect.height / 2;
+        for (let i = 0; i < 7; i += 1) {
+          const spark = document.createElement("span");
+          spark.className = "spark";
+          spark.style.left = `${centerX}px`;
+          spark.style.top = `${centerY}px`;
+          spark.style.setProperty("--dx", `${Math.round((Math.random() * 70) - 35)}px`);
+          spark.style.setProperty("--dy", `${Math.round((Math.random() * 70) - 35)}px`);
+          battleVfxLayer.appendChild(spark);
+          spark.addEventListener("animationend", () => spark.remove(), { once: true });
+        }
+      }
+
       function renderEnemies() {
         const enemies = Array.isArray(initialSessionStatus.enemies) ? initialSessionStatus.enemies : [];
         enemySpriteGrid.innerHTML = "";
         enemies.forEach((enemy, index) => {
           const card = document.createElement("article");
           card.className = `sprite-card ${index === selectedEnemyIndex ? "targeted" : ""}`;
+          card.style.setProperty("--enemy-idx", String(index));
           const hp = Number(enemy?.hp ?? 0);
           const maxHp = Math.max(1, Number(enemy?.max_hp ?? 1));
           const hpRate = Math.max(0, Math.min(100, Math.round((hp / maxHp) * 100)));
@@ -320,6 +397,16 @@
             <div class="enemy-hp-bar"><div class="enemy-hp-fill" style="width:${hpRate}%"></div></div>
             <div class="enemy-hp-text">${hp}/${maxHp}</div>
           `;
+          const before = previousEnemyState[index];
+          const beforeHp = Number(before?.hp ?? hp);
+          if (hp < beforeHp) {
+            card.classList.add("is-hit");
+            card.addEventListener("animationend", () => {
+              card.classList.remove("is-hit");
+            }, { once: true });
+            spawnHitSpark(card);
+          }
+
           card.addEventListener("click", () => {
             if (awaitingNextTurn) return;
             selectedEnemyIndex = index;
@@ -327,6 +414,7 @@
           });
           enemySpriteGrid.appendChild(card);
         });
+        previousEnemyState = enemies.map((enemy) => ({ hp: Number(enemy?.hp ?? 0) }));
       }
 
       function applyLocationGroupBackground(locationGroup) {
