@@ -274,7 +274,7 @@
 
       <section class="frame bottom-section">
         <div>
-          <h2 class="panel-title">下部: COMMAND</h2>
+          <h2 id="bottomSectionTitle" class="panel-title">下部: COMMAND</h2>
           <div id="statusLine" class="status-line"></div>
         </div>
 
@@ -335,6 +335,7 @@
       const logPanel = document.getElementById("logPanel");
       const nextTurnNote = document.getElementById("nextTurnNote");
       const backBtn = document.getElementById("backBtn");
+      const bottomSectionTitle = document.getElementById("bottomSectionTitle");
 
       let initialSessionStatus = { party: [], enemies: [] };
       let commandCandidates = { battle_by_member: [], magic_by_member: [], item: [], special: [] };
@@ -343,6 +344,8 @@
       let selectedEnemyIndex = 0;
       let inCandidateMode = false;
       let awaitingNextTurn = false;
+      let battleFinished = false;
+      let battleEndReason = "";
       let selectedLocationGroup = "";
       let previousEnemyState = [];
 
@@ -599,6 +602,12 @@
       }
 
       function renderStatusLine() {
+        if (battleFinished) {
+          statusLine.textContent = battleEndReason === "enemy_defeated"
+            ? "戦闘終了: Victory"
+            : "戦闘終了: Game Over";
+          return;
+        }
         if (awaitingNextTurn) {
           statusLine.textContent = "行動結果を表示中";
           return;
@@ -608,13 +617,28 @@
         statusLine.textContent = `${member.name} のコマンドを選択してください（対象: ${selectedEnemyIndex + 1}）`;
       }
 
-      function startResultMode(logsText) {
+      function renderBottomSectionTitle() {
+        if (!bottomSectionTitle) return;
+        bottomSectionTitle.textContent = battleFinished
+          ? "下部: BATTLE RESULT LOG"
+          : "下部: COMMAND";
+      }
+
+      function startResultMode(logsText, options = {}) {
+        const isFinal = Boolean(options?.battleFinished);
+        battleFinished = isFinal;
+        battleEndReason = String(options?.endReason || "");
         awaitingNextTurn = true;
         baseCommands.classList.add("hidden");
         candidatePanel.classList.remove("open");
         logPanel.classList.add("open");
-        nextTurnNote.classList.add("open");
+        if (isFinal) {
+          nextTurnNote.classList.remove("open");
+        } else {
+          nextTurnNote.classList.add("open");
+        }
         logPanel.textContent = logsText || "ログがありません。";
+        renderBottomSectionTitle();
         renderStatusLine();
       }
 
@@ -632,7 +656,10 @@
             initialSessionStatus = payload.session_status;
           }
           const logs = Array.isArray(payload?.logs) ? payload.logs.join("\n") : JSON.stringify(payload, null, 2);
-          startResultMode(logs);
+          startResultMode(logs, {
+            battleFinished: Boolean(payload?.lifecycle?.battle_finished),
+            endReason: payload?.end_reason,
+          });
           renderParty();
           renderEnemies();
         } catch (error) {
@@ -641,6 +668,7 @@
       }
 
       function startNextTurn() {
+        if (battleFinished) return;
         awaitingNextTurn = false;
         pendingActions = [];
         currentMemberIndex = 0;
@@ -655,6 +683,7 @@
       }
 
       backBtn.addEventListener("click", () => {
+        if (battleFinished) return;
         if (awaitingNextTurn) return;
         if (inCandidateMode) {
           closeCandidateMode();
@@ -681,6 +710,7 @@
       renderParty();
       renderEnemies();
       applyLocationGroupBackground(selectedLocationGroup);
+      renderBottomSectionTitle();
       renderBaseCommands();
       renderStatusLine();
     </script>

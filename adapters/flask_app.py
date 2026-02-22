@@ -19,6 +19,7 @@ from combat.dto import (
 )
 from combat.enemy_selection import build_groups, build_location_index, pick_enemy_names
 from combat.errors import InputValidationError
+from combat.progression import apply_victory_rewards
 from combat.input_ui import normalize_battle_command
 from combat.magic_menu import build_party_magic_info, build_party_magic_lists
 from combat.runtime_state import init_runtime_state
@@ -490,6 +491,71 @@ def _build_battle_commands_by_member(
     return candidates
 
 
+def _build_member_progress_snapshot(member: Any) -> dict[str, Any]:
+    base = getattr(member, "base", None)
+    return {
+        "name": str(getattr(member, "name", "")),
+        "level": _safe_int(getattr(base, "level", 0), 0),
+        "exp": _safe_int(getattr(base, "total_exp", 0), 0),
+        "job_level": _safe_int(getattr(base, "job_level", 0), 0),
+        "job_skill_point": _safe_int(getattr(base, "job_skill_point", 0), 0),
+    }
+
+
+def _build_party_progress_snapshot(session: BattleSession) -> dict[str, dict[str, Any]]:
+    rows: dict[str, dict[str, Any]] = {}
+    for member in session.party_members:
+        snap = _build_member_progress_snapshot(member)
+        rows[snap["name"]] = snap
+    return rows
+
+
+def _format_victory_progress_logs(
+    *,
+    before_progress: dict[str, dict[str, Any]],
+    after_progress: dict[str, dict[str, Any]],
+    rewards: dict[str, Any],
+) -> list[str]:
+    lines: list[str] = ["=== Battle Rewards ==="]
+    lines.append(f"EXP +{_safe_int(rewards.get('gained_exp', 0), 0)}")
+    lines.append(f"Gil +{_safe_int(rewards.get('gained_gil', 0), 0)}")
+    lines.append(f"CP +{_safe_int(rewards.get('gained_cp', 0), 0)}")
+
+    for name, after in after_progress.items():
+        before = before_progress.get(name, {})
+
+        level_before = _safe_int(before.get("level", after.get("level", 0)), 0)
+        level_after = _safe_int(after.get("level", level_before), level_before)
+        exp_before = _safe_int(before.get("exp", after.get("exp", 0)), 0)
+        exp_after = _safe_int(after.get("exp", exp_before), exp_before)
+        if level_after != level_before:
+            lines.append(f"{name}: Level {level_before} -> {level_after}")
+        if exp_after != exp_before:
+            lines.append(f"{name}: EXP {exp_before} -> {exp_after}")
+
+        job_before = _safe_int(before.get("job_level", after.get("job_level", 0)), 0)
+        job_after = _safe_int(after.get("job_level", job_before), job_before)
+        sp_before = _safe_int(
+            before.get("job_skill_point", after.get("job_skill_point", 0)),
+            0,
+        )
+        sp_after = _safe_int(after.get("job_skill_point", sp_before), sp_before)
+        sp_delta = sp_after - sp_before
+
+        if job_after != job_before:
+            lines.append(
+                f"{name}: Job Lv {job_before} -> {job_after} (SP {sp_before} -> {sp_after}, +{sp_delta})"
+            )
+        elif sp_delta > 0:
+            lines.append(f"{name}: Skill Point +{sp_delta} ({sp_before} -> {sp_after})")
+
+    dropped = rewards.get("dropped_item", [])
+    if isinstance(dropped, list) and dropped:
+        lines.append("Drop: " + ", ".join(str(x) for x in dropped))
+
+    return lines
+
+
 def _build_special_command_candidates(session: BattleSession) -> list[str]:
     candidates: list[str] = []
     for member in session.party_members:
@@ -581,9 +647,11 @@ def create_app(
     except OSError:
         job_attr = None
 
+    battle_start_progress = _build_party_progress_snapshot(battle_session)
+
     @app.get("/")
     def index():
-        nonlocal battle_session
+        nonlocal battle_session, battle_start_progress
         if selection_context.get("enabled"):
             selected_group = request.args.get(
                 "location_group", selection_context["selected_group"]
@@ -626,6 +694,9 @@ def create_app(
                         state=selection_context["state"],
                         enemy_names=enemy_names_for_location,
                     )
+                    battle_start_progress = _build_party_progress_snapshot(
+                        battle_session
+                    )
                     selection_context["selected_enemy_names"] = enemy_names_for_location
 
             selection_context["selected_group"] = selected_group
@@ -652,6 +723,7 @@ def create_app(
 
     @app.post("/battle/round")
     def post_battle_round():
+        nonlocal battle_start_progress
         payload = request.get_json(silent=True)
         if not isinstance(payload, dict):
             raise InputValidationError(
@@ -670,6 +742,25 @@ def create_app(
             rng=round_rng,
         )
         response_payload = to_json_ready_dict(output_dto)
+
+        if output_dto.end_reason == "enemy_defeated" and hasattr(
+            battle_session, "level_table"
+        ):
+            rewards = apply_victory_rewards(
+                party_members=battle_session.party_members,
+                enemies=battle_session.enemies,
+                state=battle_session.state,
+                level_table=battle_session.level_table,
+            )
+            after_progress = _build_party_progress_snapshot(battle_session)
+            response_payload["logs"] = list(
+                response_payload.get("logs", [])
+            ) + _format_victory_progress_logs(
+                before_progress=battle_start_progress,
+                after_progress=after_progress,
+                rewards=rewards,
+            )
+            response_payload["victory_rewards"] = rewards
         response_payload["session_status"] = _build_session_status_snapshot(
             battle_session
         )
@@ -679,6 +770,8 @@ def create_app(
         response_payload["selected_location"] = selection_context.get(
             "selected_location", ""
         )
+        if output_dto.lifecycle.battle_finished:
+            battle_start_progress = _build_party_progress_snapshot(battle_session)
         return jsonify(response_payload), 200
 
     @app.get("/assets/enemy-sprites/<path:filename>")

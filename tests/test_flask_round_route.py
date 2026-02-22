@@ -28,6 +28,7 @@ class _DummySession:
     party_members: list[_DummyMember]
     enemies: list[_DummyMember]
     state: _DummyState
+    level_table: object | None = None
 
 
 def _build_app(monkeypatch, *, expected_actions: int = 4):
@@ -42,6 +43,7 @@ def _build_app(monkeypatch, *, expected_actions: int = 4):
                 ],
                 enemies=[_DummyMember(state=object()) for _ in range(3)],
                 state=_DummyState(items_by_name={}),
+                level_table=object(),
             ),
         ),
     )
@@ -207,3 +209,59 @@ def test_unexpected_error_maps_to_500_masked(monkeypatch):
     assert resp.status_code == 500
     payload = resp.get_json()
     assert payload["error"]["code"] == "internal_domain_error"
+
+
+def test_post_round_appends_victory_reward_logs(monkeypatch):
+    import adapters.flask_app as flask_app
+
+    app = flask_app.create_app(
+        session=cast(
+            BattleSession,
+            _DummySession(
+                party_members=[_DummyMember(state=object()) for _ in range(2)],
+                enemies=[_DummyMember(state=object())],
+                state=_DummyState(items_by_name={}),
+                level_table=object(),
+            ),
+        ),
+    )
+
+    def _fake_execute_round_dto(*, session, request, rng):
+        return ExecuteRoundOutputDTO(
+            logs=["Enemy was defeated."],
+            end_reason="enemy_defeated",
+            escaped=False,
+            enemy_was_physically_hit=True,
+            events=[],
+            lifecycle=BattleLifecycleDTO(
+                before="resolving_round",
+                after="battle_finished",
+                battle_finished=True,
+            ),
+        )
+
+    monkeypatch.setattr(flask_app, "execute_round_dto", _fake_execute_round_dto)
+    monkeypatch.setattr(
+        flask_app,
+        "apply_victory_rewards",
+        lambda **_kwargs: {
+            "gained_exp": 120,
+            "gained_gil": 80,
+            "gained_cp": 3,
+            "dropped_item": [],
+            "levelups": [],
+        },
+    )
+
+    client = app.test_client()
+    resp = client.post(
+        "/battle/round",
+        json={"planned_actions": [None, None], "lifecycle_state": "ready_for_actions"},
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["lifecycle"]["battle_finished"] is True
+    assert any("=== Battle Rewards ===" in row for row in payload["logs"])
+    assert any("EXP +120" in row for row in payload["logs"])
+    assert payload["victory_rewards"]["gained_gil"] == 80
