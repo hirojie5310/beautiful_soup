@@ -165,9 +165,9 @@ def run_character_turn(
     - 逃走成功 / ジャンプ上昇 / Terrain 即死などで「このターンで即座にターンを終える」場合：
         (dmg_to_enemy, OneTurnResult(...)) を返し、呼び出し側はそれをそのまま return する
     """
-    logs.append(
-        f"[DBG] kind={char_attack_kind}, cmd={char_battle_command}, is_jumping={getattr(char_state,'is_jumping',False)}"
-    )
+    # logs.append(
+    # f"[DBG] kind={char_attack_kind}, cmd={char_battle_command}, is_jumping={getattr(char_state,'is_jumping',False)}"
+    # )
 
     if rng is None:
         rng = Random()
@@ -1779,68 +1779,58 @@ def run_character_turn(
                     target = normalize_text_basic(spell.get("Target") or "")
                     is_aoe = target == "all enemies"
 
-                    if "Inflict KO" in effect:
-                        if enemy_json.get("PlotBattles"):
-                            logs.append(f"{spell_name}はボスには効かなかった！")
-                            dmg_to_enemy = 0
-                        else:
-                            old_enemy_hp = enemy_state.hp
-                            enemy_state.hp = 0
-                            enemy_state.statuses.add(Status.KO)
+                    targets: list[tuple[str, BattleActorState, Dict[str, Any]]] = []
+                    if is_aoe and isinstance(enemies, list) and enemies:
+                        for er in enemies:
+                            er_state = getattr(er, "state", None)
+                            if not isinstance(er_state, BattleActorState):
+                                continue
+                            if er_state.hp <= 0:
+                                continue
+                            er_name = str(getattr(er, "name", "Enemy"))
+                            er_json = getattr(er, "json", {})
+                            if not isinstance(er_json, dict):
+                                er_json = {}
+                            targets.append((er_name, er_state, er_json))
 
+                    if not targets:
+                        targets.append((enemy_name, enemy_state, enemy_json))
+
+                    total_damage = 0
+                    for tgt_name, tgt_state, tgt_json in targets:
+                        if "Inflict KO" in effect:
+                            if tgt_json.get("PlotBattles"):
+                                logs.append(f"{spell_name}はボスには効かなかった！")
+                                continue
+
+                            old_enemy_hp = tgt_state.hp
+                            tgt_state.hp = 0
+                            tgt_state.statuses.add(Status.KO)
                             logs.append(
-                                f"{enemy_name}は{spell_name}に飲み込まれた！即死！"
+                                f"{tgt_name}は{spell_name}に飲み込まれた！即死！"
                             )
+                            total_damage += old_enemy_hp
+                            continue
 
-                            dmg_to_enemy = old_enemy_hp
-
-                        result = OneTurnResult(
-                            char_state=char_state,
-                            enemy_state=enemy_state,
-                            logs=logs,
-                            enemy_attack_result=None,
-                            end_reason=(
-                                "enemy_defeated" if enemy_state.hp <= 0 else "continue"
-                            ),
-                        )
-                        return dmg_to_enemy, result
-
-                    if is_aoe:
-                        old_enemy_hp = enemy_state.hp
-                        enemy_state.hp = max(enemy_state.hp - final_damage, 0)
+                        old_enemy_hp = tgt_state.hp
+                        tgt_state.hp = max(tgt_state.hp - final_damage, 0)
 
                         log_damage(
                             logs,
                             "",
-                            enemy_name,
+                            tgt_name,
                             final_damage,
                             old_enemy_hp,
-                            enemy_state.hp,
+                            tgt_state.hp,
                             "attacker",
                             "arrow",
                             None,
                             "",
                             True,
                         )
-                        dmg_to_enemy = final_damage
-                    else:
-                        old_enemy_hp = enemy_state.hp
-                        enemy_state.hp = max(enemy_state.hp - final_damage, 0)
+                        total_damage += max(0, old_enemy_hp - tgt_state.hp)
 
-                        log_damage(
-                            logs,
-                            "",
-                            enemy_name,
-                            final_damage,
-                            old_enemy_hp,
-                            enemy_state.hp,
-                            "attacker",
-                            "arrow",
-                            None,
-                            "",
-                            True,
-                        )
-                        dmg_to_enemy = final_damage
+                    dmg_to_enemy = total_damage
 
         # Black Belt: Boost
         if char_battle_command == "Boost":
@@ -2587,7 +2577,9 @@ def run_enemy_turn(
                                     or 100
                                 )
                             ),
-                            magic_type=normalize_text_basic(spell_def.get("Type") or ""),
+                            magic_type=normalize_text_basic(
+                                spell_def.get("Type") or ""
+                            ),
                             elements=parse_elements(spell_def.get("Element")),
                         )
                         enemy_caster = enemy_caster_from_monster(enemy_json)

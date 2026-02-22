@@ -339,7 +339,7 @@ def make_cast_field_magic_fn(
             maxmp = int(max_mp_pool.get(lv, remain))
             toast(f"{spell_name} OK (MP{lv} {remain}/{maxmp})")
 
-        print("[DBG] cast_field_magic called", caster_idx, spell_name, target_idx)
+        # print("[DBG] cast_field_magic called", caster_idx, spell_name, target_idx)
 
         return True
 

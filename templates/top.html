@@ -83,6 +83,20 @@
         font-size: 0.74rem;
         color: #d9ffe8;
       }
+      .status-icons {
+        margin-top: 4px;
+        display: inline-flex;
+        gap: 4px;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: center;
+        min-height: 18px;
+      }
+      .status-icon {
+        width: 18px;
+        height: 18px;
+        image-rendering: pixelated;
+      }
 
       .mid-section {
         position: relative;
@@ -363,6 +377,11 @@
         return `/assets/portraits/${encodeURIComponent(String(portraitKey))}`;
       }
 
+      function resolveStatusIconUrl(iconKey) {
+        if (!iconKey) return "";
+        return `/assets/status-icons/${encodeURIComponent(String(iconKey))}.png`;
+      }
+
       function renderParty() {
         const party = Array.isArray(initialSessionStatus.party) ? initialSessionStatus.party : [];
         partyGrid.innerHTML = "";
@@ -372,11 +391,18 @@
           const hp = Number(member?.hp ?? 0);
           const maxHp = Math.max(1, Number(member?.max_hp ?? 1));
           const hpRate = Math.max(0, Math.min(100, Math.round((hp / maxHp) * 100)));
+          const statusIconKeys = Array.isArray(member?.status_icons)
+            ? member.status_icons.filter((x) => typeof x === "string" && x)
+            : [];
+          const statusIconHtml = statusIconKeys
+            .map((key) => `<img class="status-icon" src="${resolveStatusIconUrl(key)}" alt="${escapeHtml(key)}" title="${escapeHtml(key)}" loading="lazy" />`)
+            .join("");
           card.innerHTML = `
             <img class="portrait" alt="${escapeHtml(member.name)}" src="${buildPortraitUrl(member?.portrait_key, member?.name)}" />
             <div class="party-name">${escapeHtml(member.name || `Member ${index + 1}`)}</div>
             <div class="party-hp-bar"><div class="party-hp-fill" style="width:${hpRate}%"></div></div>
             <div class="party-hp-text">HP ${hp}/${maxHp} &nbsp; LV ${member.level ?? "-"}</div>
+            <div class="status-icons">${statusIconHtml}</div>
           `;
           partyGrid.appendChild(card);
         });

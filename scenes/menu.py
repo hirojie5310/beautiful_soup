@@ -2350,13 +2350,13 @@ def open_magic_pygame(
                     else:
                         # 対象なしで実行
                         # cast_field_magic_fn があるなら呼ぶ / 無いならDBGだけ
-                        print(
-                            f"[DBG] CAST field magic: caster={actor.name} spell={name} target=None"
-                        )
+                        # print(
+                        # f"[DBG] CAST field magic: caster={actor.name} spell={name} target=None"
+                        # )
                         if cast_field_magic_fn:
                             cast_field_magic_fn(member_idx, name, None)
-                        else:
-                            print("[DBG] cast_field_magic_fn is None")
+                        # else:
+                        # print("[DBG] cast_field_magic_fn is None")
                         mode = "spell"
                         continue
 
