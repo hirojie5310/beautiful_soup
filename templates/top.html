@@ -67,7 +67,22 @@
         background: #090909;
       }
       .party-name { font-weight: bold; font-size: 0.86rem; margin-top: 4px; }
-      .stat { font-size: 0.8rem; }
+      .party-hp-bar {
+        margin-top: 4px;
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.2);
+        overflow: hidden;
+      }
+      .party-hp-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #66e286, #37b35f);
+      }
+      .party-hp-text {
+        margin-top: 2px;
+        font-size: 0.74rem;
+        color: #d9ffe8;
+      }
 
       .mid-section {
         position: relative;
@@ -288,6 +303,7 @@
 
     <script id="initialSessionStatusJson" type="application/json">{{ initial_session_status|tojson }}</script>
     <script id="commandCandidatesJson" type="application/json">{{ {
+      "battle_by_member": battle_commands_by_member,
       "magic_by_member": magic_command_candidates_by_member,
       "item": item_command_candidates,
       "special": special_command_candidates
@@ -307,7 +323,7 @@
       const backBtn = document.getElementById("backBtn");
 
       let initialSessionStatus = { party: [], enemies: [] };
-      let commandCandidates = { magic_by_member: [], item: [], special: [] };
+      let commandCandidates = { battle_by_member: [], magic_by_member: [], item: [], special: [] };
       let pendingActions = [];
       let currentMemberIndex = 0;
       let selectedEnemyIndex = 0;
@@ -353,11 +369,14 @@
         party.forEach((member, index) => {
           const card = document.createElement("article");
           card.className = `party-card ${index === currentMemberIndex ? "active" : ""}`;
+          const hp = Number(member?.hp ?? 0);
+          const maxHp = Math.max(1, Number(member?.max_hp ?? 1));
+          const hpRate = Math.max(0, Math.min(100, Math.round((hp / maxHp) * 100)));
           card.innerHTML = `
             <img class="portrait" alt="${escapeHtml(member.name)}" src="${buildPortraitUrl(member?.portrait_key, member?.name)}" />
             <div class="party-name">${escapeHtml(member.name || `Member ${index + 1}`)}</div>
-            <div class="stat">HP ${member.hp ?? 0}/${member.max_hp ?? 0}</div>
-            <div class="stat">LV ${member.level ?? "-"}</div>
+            <div class="party-hp-bar"><div class="party-hp-fill" style="width:${hpRate}%"></div></div>
+            <div class="party-hp-text">HP ${hp}/${maxHp} &nbsp; LV ${member.level ?? "-"}</div>
           `;
           partyGrid.appendChild(card);
         });
@@ -435,6 +454,17 @@
         probe.src = url;
       }
 
+      const SPECIAL_NO_TARGET = new Set(["Cheer", "Scare", "Flee", "Terrain", "Boost"]);
+
+      function commandLabel(command, kind) {
+        if (kind === "physical") return "たたかう";
+        if (kind === "defend") return "ぼうぎょ";
+        if (kind === "magic") return "まほう";
+        if (kind === "item") return "アイテム";
+        if (kind === "run") return "にげる";
+        return command || "special";
+      }
+
       function buildAction(kind, command, extra = {}) {
         const action = {
           kind,
@@ -445,6 +475,17 @@
           ...extra,
         };
         return action;
+      }
+
+      function buildSelfAction(kind, command, extra = {}) {
+        return {
+          kind,
+          command,
+          target_side: "self",
+          target_index: currentMemberIndex,
+          target_all: false,
+          ...extra,
+        };
       }
 
       function closeCandidateMode() {
@@ -490,27 +531,42 @@
           return;
         }
         renderParty();
+        renderBaseCommands();
         renderStatusLine();
       }
 
       function renderBaseCommands() {
         baseCommands.innerHTML = "";
-        const commands = [
-          { label: "たたかう", onClick: () => selectAction(buildAction("physical", "Fight")) },
-          { label: "ぼうぎょ", onClick: () => selectAction(buildAction("defend", "Defend")) },
-          { label: "まほう", onClick: () => openCandidateMode("magic") },
-          { label: "アイテム", onClick: () => openCandidateMode("item") },
-          { label: "にげる", onClick: () => selectAction(buildAction("run", "Run")) },
+        const memberCommands = commandCandidates.battle_by_member?.[currentMemberIndex] || [];
+        const commands = memberCommands.length ? memberCommands : [
+          { command: "Fight", kind: "physical" },
+          { command: "Defend", kind: "defend" },
+          { command: "Item", kind: "item" },
+          { command: "Run", kind: "run" },
         ];
 
-        commands.forEach((item) => {
+        commands.forEach((entry) => {
+          const command = String(entry?.command || "");
+          const kind = String(entry?.kind || "physical");
           const button = document.createElement("button");
           button.type = "button";
           button.className = "btn";
-          button.textContent = item.label;
+          button.textContent = commandLabel(command, kind);
           button.addEventListener("click", () => {
             if (awaitingNextTurn) return;
-            item.onClick();
+            if (kind === "magic") {
+              openCandidateMode("magic");
+              return;
+            }
+            if (kind === "item") {
+              openCandidateMode("item");
+              return;
+            }
+            if (kind === "defend" || kind === "run" || (kind === "special" && SPECIAL_NO_TARGET.has(command))) {
+              selectAction(buildSelfAction(kind, command));
+              return;
+            }
+            selectAction(buildAction(kind, command));
           });
           baseCommands.appendChild(button);
         });
@@ -568,6 +624,7 @@
         nextTurnNote.classList.remove("open");
         renderParty();
         renderEnemies();
+        renderBaseCommands();
         renderStatusLine();
       }
 
@@ -581,6 +638,7 @@
         currentMemberIndex -= 1;
         pendingActions[currentMemberIndex] = undefined;
         renderParty();
+        renderBaseCommands();
         renderStatusLine();
       });
 

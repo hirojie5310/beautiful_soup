@@ -114,6 +114,8 @@ def _build_party_status_snapshot(session: BattleSession) -> list[dict[str, Any]]
                 "name": str(getattr(member, "name", f"Ally {idx + 1}")),
                 "hp": hp,
                 "max_hp": max_hp,
+                "level": _safe_int(getattr(member, "level", 0), 0),
+                "portrait_key": getattr(member, "portrait_key", None),
             }
         )
     return snapshots
@@ -446,6 +448,39 @@ def _build_magic_command_candidates_by_member(
     return candidates
 
 
+def _build_battle_commands_by_member(
+    session: BattleSession,
+) -> list[list[dict[str, str]]]:
+    candidates: list[list[dict[str, str]]] = []
+    for member in session.party_members:
+        member_candidates: list[dict[str, str]] = []
+        job_raw = getattr(getattr(member, "job", None), "raw", {})
+        if isinstance(job_raw, dict):
+            for i in range(1, 5):
+                command_row = job_raw.get(f"BattleCommand{i}")
+                if not isinstance(command_row, dict):
+                    continue
+                command = command_row.get("Command")
+                if not isinstance(command, str) or not command.strip():
+                    continue
+                command_name = command.strip()
+                member_candidates.append(
+                    {
+                        "command": command_name,
+                        "kind": normalize_battle_command(command_name),
+                    }
+                )
+
+        if not member_candidates:
+            fallback = ["Fight", "Defend", "Item", "Run"]
+            member_candidates = [
+                {"command": cmd, "kind": normalize_battle_command(cmd)}
+                for cmd in fallback
+            ]
+        candidates.append(member_candidates)
+    return candidates
+
+
 def _build_special_command_candidates(session: BattleSession) -> list[str]:
     candidates: list[str] = []
     for member in session.party_members:
@@ -596,6 +631,7 @@ def create_app(
             selected_location_group=selection_context["selected_group"],
             selected_location=selection_context["selected_location"],
             selected_enemy_names=selection_context.get("selected_enemy_names", []),
+            battle_commands_by_member=_build_battle_commands_by_member(battle_session),
             magic_command_candidates_by_member=_build_magic_command_candidates_by_member(
                 battle_session
             ),
