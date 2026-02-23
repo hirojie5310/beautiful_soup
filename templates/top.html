@@ -322,6 +322,7 @@
       "item": item_command_candidates,
       "special": special_command_candidates
     }|tojson }}</script>
+    <script id="magicSpellMetaJson" type="application/json">{{ magic_spell_meta_by_name|tojson }}</script>
     <script id="selectedLocationGroupJson" type="application/json">{{ selected_location_group|tojson }}</script>
 
     <script>
@@ -339,6 +340,7 @@
 
       let initialSessionStatus = { party: [], enemies: [] };
       let commandCandidates = { battle_by_member: [], magic_by_member: [], item: [], special: [] };
+      let magicSpellMetaByName = {};
       let pendingActions = [];
       let currentMemberIndex = 0;
       let selectedEnemyIndex = 0;
@@ -351,6 +353,7 @@
 
       try { initialSessionStatus = JSON.parse(document.getElementById("initialSessionStatusJson").textContent || "{}"); } catch (_e) {}
       try { commandCandidates = JSON.parse(document.getElementById("commandCandidatesJson").textContent || "{}"); } catch (_e) {}
+      try { magicSpellMetaByName = JSON.parse(document.getElementById("magicSpellMetaJson").textContent || "{}"); } catch (_e) {}
       try { selectedLocationGroup = JSON.parse(document.getElementById("selectedLocationGroupJson").textContent || '""'); } catch (_e) {}
 
       const defaultLifecycle = "{{ default_lifecycle }}";
@@ -517,6 +520,36 @@
         };
       }
 
+      function buildMagicActionForSpell(spellName) {
+        const meta = magicSpellMetaByName?.[spellName] || {};
+        const canSelectAll = Boolean(meta?.can_select_all);
+        const healingType = String(meta?.healing_type || "");
+        const isHealingMagic = ["hp", "status", "revive", "protect", "haste"].includes(healingType);
+
+        let useAll = false;
+        if (canSelectAll) {
+          const choiceLabel = isHealingMagic
+            ? "この魔法を味方全体に使いますか？\nOK: 全体 / Cancel: 単体"
+            : "この魔法を敵全体に使いますか？\nOK: 全体 / Cancel: 単体";
+          useAll = window.confirm(choiceLabel);
+        }
+
+        if (isHealingMagic) {
+          return buildSelfAction("magic", "Magic", {
+            spell_name: spellName,
+            target_side: "ally",
+            target_index: currentMemberIndex,
+            target_all: canSelectAll ? useAll : false,
+          });
+        }
+
+        return buildAction("magic", "Magic", {
+          spell_name: spellName,
+          target_side: "enemy",
+          target_all: canSelectAll ? useAll : false,
+        });
+      }
+
       function closeCandidateMode() {
         inCandidateMode = false;
         candidatePanel.classList.remove("open");
@@ -543,7 +576,7 @@
             const pick = btn.textContent;
             if (!pick || pick === "(候補なし)") return;
             if (type === "magic") {
-              selectAction(buildAction("magic", "Magic", { spell_name: pick }));
+              selectAction(buildMagicActionForSpell(pick));
             } else {
               selectAction(buildAction("item", "Item", { item_name: pick }));
             }
@@ -552,9 +585,39 @@
         });
       }
 
+      function pickJumpTargetIndex(member) {
+        const enemies = Array.isArray(initialSessionStatus.enemies) ? initialSessionStatus.enemies : [];
+        const rawTarget = Number(member?.jump_target_index);
+        if (Number.isInteger(rawTarget) && rawTarget >= 0 && rawTarget < enemies.length) {
+          const hp = Number(enemies[rawTarget]?.hp ?? 0);
+          if (hp > 0) return rawTarget;
+        }
+        for (let i = 0; i < enemies.length; i += 1) {
+          if (Number(enemies[i]?.hp ?? 0) > 0) return i;
+        }
+        return 0;
+      }
+
+      function autoFillJumpActionsFromCurrentMember() {
+        const party = Array.isArray(initialSessionStatus.party) ? initialSessionStatus.party : [];
+        while (currentMemberIndex < party.length) {
+          const member = party[currentMemberIndex] || {};
+          if (!member?.is_jumping) break;
+          pendingActions[currentMemberIndex] = {
+            kind: "jump",
+            command: "Jump",
+            target_side: "enemy",
+            target_index: pickJumpTargetIndex(member),
+            target_all: false,
+          };
+          currentMemberIndex += 1;
+        }
+      }
+
       function selectAction(action) {
         pendingActions[currentMemberIndex] = action;
         currentMemberIndex += 1;
+        autoFillJumpActionsFromCurrentMember();
         if (currentMemberIndex >= (initialSessionStatus.party?.length || 0)) {
           sendPlannedActions();
           return;
@@ -676,6 +739,11 @@
         closeCandidateMode();
         logPanel.classList.remove("open");
         nextTurnNote.classList.remove("open");
+        autoFillJumpActionsFromCurrentMember();
+        if (currentMemberIndex >= (initialSessionStatus.party?.length || 0)) {
+          sendPlannedActions();
+          return;
+        }
         renderParty();
         renderEnemies();
         renderBaseCommands();
@@ -707,12 +775,17 @@
         if (awaitingNextTurn) startNextTurn();
       });
 
-      renderParty();
-      renderEnemies();
-      applyLocationGroupBackground(selectedLocationGroup);
-      renderBottomSectionTitle();
-      renderBaseCommands();
-      renderStatusLine();
+      autoFillJumpActionsFromCurrentMember();
+      if (currentMemberIndex >= (initialSessionStatus.party?.length || 0)) {
+        sendPlannedActions();
+      } else {
+        renderParty();
+        renderEnemies();
+        applyLocationGroupBackground(selectedLocationGroup);
+        renderBottomSectionTitle();
+        renderBaseCommands();
+        renderStatusLine();
+      }
     </script>
   </body>
 </html>

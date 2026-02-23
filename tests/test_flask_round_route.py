@@ -97,6 +97,9 @@ def test_root_page_renders_html(monkeypatch):
     assert "LocationGroup" in body
     assert "Field Menu" in body
     assert "menuUseItemBtn" not in body
+    assert '"is_jumping": false' in body
+    assert '"jump_target_index": null' in body
+    assert "magicSpellMetaJson" in body
 
 
 def test_menu_page_renders_html(monkeypatch):

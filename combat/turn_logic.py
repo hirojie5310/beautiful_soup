@@ -506,9 +506,14 @@ def run_character_turn(
                 use_expectation=False,
                 blind=char_is_blind,
             )
-            old_hp = target_state.hp
-            target_state.hp = min(target_state.hp + heal, target_stats.max_hp)
-            actual = target_state.hp - old_hp
+
+            target_raw = normalize_text_basic(char_spell_json.get("Target") or "")
+            can_select_aoe = target_raw in {
+                "one/all enemies",
+                "one/all allies",
+                "one/all",
+            }
+            aoe_heal_selected = bool(aoe_selected_override) and can_select_aoe
 
             spell_label = char_spell_name or (
                 "召喚魔法" if is_summon_heal else "回復魔法"
@@ -517,6 +522,38 @@ def run_character_turn(
             remain = char_state.mp_pool[lvl]
             maxmp = char_state.max_mp_pool.get(lvl, remain)
             suffix = f"（MP{lvl} {remain}/{maxmp}）"
+
+            if aoe_heal_selected and party_members is not None:
+                alive_targets = [
+                    pm for pm in party_members if getattr(pm.state, "hp", 0) > 0
+                ]
+                split = max(1, len(alive_targets))
+                per_target_heal = int(max(0, heal) / split)
+                total_actual = 0
+                details: list[str] = []
+                for pm in alive_targets:
+                    old_hp = pm.state.hp
+                    pm.state.hp = min(pm.state.hp + per_target_heal, pm.stats.max_hp)
+                    actual = pm.state.hp - old_hp
+                    total_actual += actual
+                    details.append(f"{pm.name}:{actual}")
+
+                if total_actual > 0:
+                    logs.append(
+                        f"{char_name}は味方全体に《{spell_label}》を唱えた！ "
+                        f"合計HPが{total_actual}回復（{', '.join(details)}）。 {suffix}"
+                    )
+                else:
+                    logs.append(
+                        f"{char_name}は味方全体に《{spell_label}》を唱えた！ "
+                        f"しかしHPはこれ以上回復しない。 {suffix}"
+                    )
+                dmg_to_enemy = 0
+                return dmg_to_enemy, None
+
+            old_hp = target_state.hp
+            target_state.hp = min(target_state.hp + heal, target_stats.max_hp)
+            actual = target_state.hp - old_hp
 
             if actual > 0:
                 if is_summon_heal:

@@ -22,6 +22,7 @@ from combat.errors import InputValidationError
 from combat.progression import apply_victory_rewards
 from combat.input_ui import normalize_battle_command
 from combat.magic_menu import build_party_magic_info, build_party_magic_lists
+from combat.magic_damage import healing_spell_kind
 from combat.runtime_state import init_runtime_state
 from combat.char_build import (
     build_party_members_from_save,
@@ -126,6 +127,8 @@ def _build_party_status_snapshot(session: BattleSession) -> list[dict[str, Any]]
                 "level": _safe_int(getattr(member, "level", 0), 0),
                 "portrait_key": getattr(member, "portrait_key", None),
                 "status_icons": sorted(set(status_icons)),
+                "is_jumping": bool(getattr(state, "is_jumping", False)),
+                "jump_target_index": getattr(state, "jump_target_index", None),
             }
         )
     return snapshots
@@ -458,6 +461,24 @@ def _build_magic_command_candidates_by_member(
     return candidates
 
 
+def _build_magic_spell_meta(session: BattleSession) -> dict[str, dict[str, Any]]:
+    rows: dict[str, dict[str, Any]] = {}
+    for name, raw in getattr(session, "spells_expanded", {}).items():
+        if not isinstance(name, str) or not name:
+            continue
+        if not isinstance(raw, dict):
+            continue
+        target_norm = normalize_text_basic(raw.get("Target") or "")
+        can_select_all = target_norm in {"one/all enemies", "one/all allies", "one/all"}
+        rows[name] = {
+            "target": str(raw.get("Target") or ""),
+            "target_norm": target_norm,
+            "can_select_all": can_select_all,
+            "healing_type": str(healing_spell_kind(raw) or ""),
+        }
+    return rows
+
+
 def _build_battle_commands_by_member(
     session: BattleSession,
 ) -> list[list[dict[str, str]]]:
@@ -715,6 +736,7 @@ def create_app(
             magic_command_candidates_by_member=_build_magic_command_candidates_by_member(
                 battle_session
             ),
+            magic_spell_meta_by_name=_build_magic_spell_meta(battle_session),
             item_command_candidates=sorted(battle_session.state.items_by_name.keys()),
             special_command_candidates=_build_special_command_candidates(
                 battle_session
