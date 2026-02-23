@@ -520,25 +520,73 @@
         };
       }
 
+      function chooseSingleAllyTargetIndex() {
+        const party = Array.isArray(initialSessionStatus.party) ? initialSessionStatus.party : [];
+        const candidates = party
+          .map((member, index) => ({ member, index }))
+          .filter(({ member }) => !isMemberOutOfBattle(member));
+        if (!candidates.length) return currentMemberIndex;
+
+        const current = candidates.find((row) => row.index === currentMemberIndex);
+        const defaultTarget = current ? current.index : candidates[0].index;
+        const optionsText = candidates
+          .map(({ member, index }, rowIndex) => `${rowIndex + 1}: ${member?.name || `Member ${index + 1}`}`)
+          .join("\n");
+        const input = window.prompt(`対象の味方を選択してください（番号）\n${optionsText}`, "1");
+        if (input === null) return null;
+
+        const picked = Number.parseInt(String(input), 10);
+        if (!Number.isInteger(picked) || picked < 1 || picked > candidates.length) {
+          window.alert("対象番号が不正です。現在のキャラを対象にします。");
+          return defaultTarget;
+        }
+        return candidates[picked - 1].index;
+      }
+
+      function chooseMagicTargetSide() {
+        const sideRaw = window.prompt(
+          "この魔法の対象を選んでください。\n1: 味方\n2: 敵",
+          "1",
+        );
+        if (sideRaw === null) return null;
+        if (String(sideRaw).trim() === "2") return "enemy";
+        return "ally";
+      }
+
       function buildMagicActionForSpell(spellName) {
         const meta = magicSpellMetaByName?.[spellName] || {};
         const canSelectAll = Boolean(meta?.can_select_all);
         const healingType = String(meta?.healing_type || "");
-        const isHealingMagic = ["hp", "status", "revive", "protect", "haste"].includes(healingType);
+        const isNonAttackMagic = ["hp", "status", "revive", "protect", "haste"].includes(healingType);
+
+        if (!isNonAttackMagic) {
+          let useAll = false;
+          if (canSelectAll) {
+            useAll = window.confirm("この魔法を敵全体に使いますか？\nOK: 全体 / Cancel: 単体");
+          }
+          return buildAction("magic", "Magic", {
+            spell_name: spellName,
+            target_side: "enemy",
+            target_all: canSelectAll ? useAll : false,
+          });
+        }
+
+        const targetSide = chooseMagicTargetSide();
+        if (targetSide === null) return null;
 
         let useAll = false;
         if (canSelectAll) {
-          const choiceLabel = isHealingMagic
-            ? "この魔法を味方全体に使いますか？\nOK: 全体 / Cancel: 単体"
-            : "この魔法を敵全体に使いますか？\nOK: 全体 / Cancel: 単体";
-          useAll = window.confirm(choiceLabel);
+          const allLabel = targetSide === "ally" ? "味方" : "敵";
+          useAll = window.confirm(`この魔法を${allLabel}全体に使いますか？\nOK: 全体 / Cancel: 単体`);
         }
 
-        if (isHealingMagic) {
+        if (targetSide === "ally") {
+          const allyTargetIndex = useAll ? currentMemberIndex : chooseSingleAllyTargetIndex();
+          if (allyTargetIndex === null) return null;
           return buildSelfAction("magic", "Magic", {
             spell_name: spellName,
             target_side: "ally",
-            target_index: currentMemberIndex,
+            target_index: allyTargetIndex,
             target_all: canSelectAll ? useAll : false,
           });
         }
@@ -576,7 +624,9 @@
             const pick = btn.textContent;
             if (!pick || pick === "(候補なし)") return;
             if (type === "magic") {
-              selectAction(buildMagicActionForSpell(pick));
+              const magicAction = buildMagicActionForSpell(pick);
+              if (!magicAction) return;
+              selectAction(magicAction);
             } else {
               selectAction(buildAction("item", "Item", { item_name: pick }));
             }
@@ -598,10 +648,22 @@
         return 0;
       }
 
-      function autoFillJumpActionsFromCurrentMember() {
+      function isMemberOutOfBattle(member) {
+        const hp = Number(member?.hp ?? 0);
+        if (hp <= 0) return true;
+        const icons = Array.isArray(member?.status_icons) ? member.status_icons : [];
+        return icons.includes("ko") || icons.includes("petrification");
+      }
+
+      function autoSkipInputUnavailableMembersFromCurrentMember() {
         const party = Array.isArray(initialSessionStatus.party) ? initialSessionStatus.party : [];
         while (currentMemberIndex < party.length) {
           const member = party[currentMemberIndex] || {};
+          if (isMemberOutOfBattle(member)) {
+            pendingActions[currentMemberIndex] = null;
+            currentMemberIndex += 1;
+            continue;
+          }
           if (!member?.is_jumping) break;
           pendingActions[currentMemberIndex] = {
             kind: "jump",
@@ -612,6 +674,10 @@
           };
           currentMemberIndex += 1;
         }
+      }
+
+      function autoFillJumpActionsFromCurrentMember() {
+        autoSkipInputUnavailableMembersFromCurrentMember();
       }
 
       function selectAction(action) {
@@ -758,8 +824,14 @@
           return;
         }
         if (currentMemberIndex <= 0) return;
-        currentMemberIndex -= 1;
-        pendingActions[currentMemberIndex] = undefined;
+        do {
+          currentMemberIndex -= 1;
+          pendingActions[currentMemberIndex] = undefined;
+        } while (
+          currentMemberIndex > 0
+          && (pendingActions[currentMemberIndex] === null
+            || isMemberOutOfBattle(initialSessionStatus.party?.[currentMemberIndex]))
+        );
         renderParty();
         renderBaseCommands();
         renderStatusLine();
