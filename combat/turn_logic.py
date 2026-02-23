@@ -499,14 +499,6 @@ def run_character_turn(
                 spell_type.startswith("summon") or "healing light" in spell_name_lower
             )
 
-            heal = magic_heal_amount_to_char(
-                caster=char_stats,
-                spell=char_spell,
-                rng=rng,
-                use_expectation=False,
-                blind=char_is_blind,
-            )
-
             target_raw = normalize_text_basic(char_spell_json.get("Target") or "")
             can_select_aoe = target_raw in {
                 "one/all enemies",
@@ -514,6 +506,22 @@ def run_character_turn(
                 "one/all",
             }
             aoe_heal_selected = bool(aoe_selected_override) and can_select_aoe
+            target_count = 1
+            if aoe_heal_selected and party_members is not None:
+                target_count = max(
+                    1,
+                    len([pm for pm in party_members if getattr(pm.state, "hp", 0) > 0]),
+                )
+
+            heal = magic_heal_amount_to_char(
+                caster=char_stats,
+                spell=char_spell,
+                rng=rng,
+                use_expectation=False,
+                blind=char_is_blind,
+                target_count=target_count,
+                spell_name=(char_spell_name or ""),
+            )
 
             spell_label = char_spell_name or (
                 "召喚魔法" if is_summon_heal else "回復魔法"
@@ -527,8 +535,7 @@ def run_character_turn(
                 alive_targets = [
                     pm for pm in party_members if getattr(pm.state, "hp", 0) > 0
                 ]
-                split = max(1, len(alive_targets))
-                per_target_heal = int(max(0, heal) / split)
+                per_target_heal = int(max(0, heal) / target_count)
                 total_actual = 0
                 details: list[str] = []
                 for pm in alive_targets:

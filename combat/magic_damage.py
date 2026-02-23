@@ -124,11 +124,17 @@ def magic_heal_amount_to_char(
     rng: Optional[random.Random] = None,
     use_expectation: bool = False,
     blind: bool = False,
+    target_count: int = 1,
+    spell_name: str = "",
 ) -> int:
     """
     回復白魔法の回復量を計算する簡易関数。
     攻撃魔法の式を流用し、相手側の魔防/抵抗は無視。
     """
+    # Curaja(Cure4) は単体対象時に全回復（実装上は 9999 固定値）
+    if normalize_text_basic(spell_name) == "curaja" and target_count <= 1:
+        return 9999
+
     magic_power = _calc_magic_power(caster, spell)
     magic_mult = _calc_magic_multiplier(caster, spell)
     magic_acc = _calc_magic_accuracy(caster, spell, blind=blind)
@@ -183,6 +189,7 @@ def _calc_magic_multiplier(caster: FinalCharacterStats, spell: SpellInfo) -> int
 
     if spell.magic_type == "white":
         stat = caster.mind  # ガイドの Spirit 相当
+        # このプロジェクトでは Skill 相当を job_level として扱う
         return max(1 + stat // 16 + L // 16 + J // 32, 0)
 
     if spell.magic_type == "summon":

@@ -138,6 +138,7 @@ def ff3_confused_self_dummy_char(enemy: FinalEnemyStats) -> FinalCharacterStats:
     return FinalCharacterStats(
         level=enemy.level,
         job_level=enemy.job_level,
+        job_skill_point=0,
         max_hp=enemy.hp,
         strength=0,
         agility=enemy.agility,
@@ -226,17 +227,23 @@ def apply_status_spell_to_enemy(
                 spell_json["StatusAilment"] = child_status
 
     # ★ スペル名は最初に拾っておく（Name / name 両対応）
-    spell_name = normalize_text_basic(spell_json.get("Name") or spell_json.get("name") or "")
+    spell_name = normalize_text_basic(
+        spell_json.get("Name") or spell_json.get("name") or ""
+    )
 
     # ---- 1) 状態異常リスト抽出（StatusAilment / StatusAilments） ----
     ailments = spell_json.get("StatusAilment") or spell_json.get("StatusAilments") or ""
 
     ailments_list: List[str] = []
     if isinstance(ailments, str) and ailments.strip():
-        ailments_list = [normalize_text_basic(a) for a in ailments.split(",") if a.strip()]
+        ailments_list = [
+            normalize_text_basic(a) for a in ailments.split(",") if a.strip()
+        ]
 
     # ★ ここでスペル名を取得（name / Name どちらにも対応）
-    spell_name = normalize_text_basic(spell_json.get("Name") or spell_json.get("name") or "")
+    spell_name = normalize_text_basic(
+        spell_json.get("Name") or spell_json.get("name") or ""
+    )
 
     # ---- 1.5) Summon 子スペルの Status を拾う ----
     # expand_summon_magic_as_children 済みだと Type="Summon" の子が spells_by_name に入る。
@@ -247,7 +254,9 @@ def apply_status_spell_to_enemy(
             child_status = (spell_json.get("Status") or "").strip()
             if child_status and child_status != "-":
                 ailments_list = [
-                    normalize_text_basic(a) for a in child_status.split(",") if a.strip()
+                    normalize_text_basic(a)
+                    for a in child_status.split(",")
+                    if a.strip()
                 ]
 
     # ---- 2) それでも無い場合は Effect から抽出（Mini/Toad等含む） ----
@@ -518,7 +527,9 @@ def apply_status_spell_to_char(
     ailments = spell_json.get("StatusAilment") or spell_json.get("StatusAilments") or ""
     ailments_list: list[str] = []
     if isinstance(ailments, str) and ailments.strip():
-        ailments_list = [normalize_text_basic(a) for a in ailments.split(",") if a.strip()]
+        ailments_list = [
+            normalize_text_basic(a) for a in ailments.split(",") if a.strip()
+        ]
 
     # 2) まだ取れなかったら Effect から推定（Mini/Toad など）
     if not ailments_list:
@@ -544,7 +555,9 @@ def apply_status_spell_to_char(
             ailments_list = ["toad"]
 
     # 3) Erase / Toad / Mini 特別扱い
-    spell_name = normalize_text_basic(spell_json.get("Name") or spell_json.get("name") or "")
+    spell_name = normalize_text_basic(
+        spell_json.get("Name") or spell_json.get("name") or ""
+    )
 
     if not ailments_list:
         if spell_name == "erase":

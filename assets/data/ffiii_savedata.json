@@ -54,7 +54,7 @@
       },
       "status_effects": {
         "Poison": true,
-        "Blind": true,
+        "Blind": false,
         "Mini": false,
         "Silence": false,
         "Toad": false,
@@ -114,7 +114,7 @@
       "vitality": 18,
       "intelligence": 10,
       "mind": 11,
-      "row": "front",
+      "row": "back",
       "equipment": {
         "main_hand": "Rune Bell",
         "off_hand": "Rune Bell",

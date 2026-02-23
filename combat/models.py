@@ -186,6 +186,7 @@ class FinalCharacterStats:
 
     level: int
     job_level: int
+    job_skill_point: int
     max_hp: int
     strength: int
     agility: int

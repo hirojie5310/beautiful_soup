@@ -594,6 +594,7 @@ def compute_character_final_stats(
     final = FinalCharacterStats(
         level=base.level,
         job_level=base.job_level,
+        job_skill_point=base.job_skill_point,
         max_hp=base.max_hp,
         strength=base.strength,
         agility=base.agility,
