@@ -272,7 +272,12 @@
           return;
         }
         if (current === "セーブ") {
-          await saveGame();
+          const confirmed = window.confirm("セーブしますか？");
+          if (confirmed) {
+            await saveGame();
+          } else {
+            menuMessage.textContent = "セーブをキャンセルしました。";
+          }
         }
       }
 
@@ -306,11 +311,12 @@
         render();
       });
 
-      partyPanel.addEventListener("click", (event) => {
+      partyPanel.addEventListener("click", async (event) => {
         if (mode !== "row") return;
         const row = event.target.closest("[data-member-index]");
         if (!row) return;
         rowMemberIdx = Number(row.getAttribute("data-member-index") || "0");
+        await toggleRow(rowMemberIdx);
         render();
       });
 
