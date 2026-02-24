@@ -844,6 +844,26 @@ def create_app(
             ),
         )
 
+    @app.get("/menu/item")
+    def menu_item_page():
+        return render_template("menu_item.html")
+
+    @app.get("/menu/magic")
+    def menu_magic_page():
+        return render_template("menu_magic.html")
+
+    @app.get("/menu/equip")
+    def menu_equip_page():
+        return render_template("menu_equip.html")
+
+    @app.get("/menu/status")
+    def menu_status_page():
+        return render_template("menu_status.html")
+
+    @app.get("/menu/job")
+    def menu_job_page():
+        return render_template("menu_job.html")
+
     @app.get("/assets/status-icons/<path:filename>")
     def get_status_icon(filename: str):
         safe_name = Path(filename).name
@@ -1069,12 +1089,48 @@ def create_app(
             200,
         )
 
+    @app.post("/menu/toggle-row")
+    def post_menu_toggle_row():
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict):
+            raise InputValidationError("request body must be JSON object")
+
+        member_index = _require_int(payload, "member_index")
+        if member_index < 0 or member_index >= len(battle_session.party_members):
+            raise InputValidationError("member_index out of range")
+
+        member = battle_session.party_members[member_index]
+        current_row = str(getattr(member.base, "row", "front")).lower()
+        next_row = "back" if current_row == "front" else "front"
+        member.base.row = next_row
+        if member.stats is not None:
+            member.stats.row = next_row
+        save_party = battle_session.state.save.get("party", [])
+        if member_index < len(save_party) and isinstance(
+            save_party[member_index], dict
+        ):
+            save_party[member_index]["row"] = next_row
+
+        return (
+            jsonify(
+                {
+                    "ok": True,
+                    "member_index": member_index,
+                    "row": next_row,
+                    "menu_state": _build_menu_state_payload(
+                        battle_session, job_attr=job_attr
+                    ),
+                }
+            ),
+            200,
+        )
+
     @app.post("/menu/save")
     def post_menu_save():
         save_savedata(
             Path("assets/data/ffiii_savedata.json"), battle_session.state.save
         )
-        return jsonify({"ok": True}), 200
+        return jsonify({"ok": True, "message": "セーブしました"}), 200
 
     return app
 

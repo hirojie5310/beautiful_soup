@@ -262,19 +262,19 @@
   <body>
     <main class="battle-layout">
       <section class="frame top-section">
-        <h2 class="panel-title">上部: PARTY</h2>
+        <h2 class="panel-title">PARTY</h2>
         <div id="partyGrid" class="party-grid"></div>
       </section>
 
       <section id="enemySpriteBoard" class="frame mid-section">
-        <h2 class="panel-title">中部: Enemy Sprites（攻撃対象をタップ）</h2>
+        <h2 class="panel-title">Enemy Sprites（攻撃対象をタップ）</h2>
         <div id="enemySpriteGrid" class="sprite-grid"></div>
         <div id="battleVfxLayer" class="battle-vfx-layer" aria-hidden="true"></div>
       </section>
 
       <section class="frame bottom-section">
         <div>
-          <h2 id="bottomSectionTitle" class="panel-title">下部: COMMAND</h2>
+          <h2 id="bottomSectionTitle" class="panel-title">COMMAND</h2>
           <div id="statusLine" class="status-line"></div>
         </div>
 
@@ -407,7 +407,7 @@
             <img class="portrait" alt="${escapeHtml(member.name)}" src="${buildPortraitUrl(member?.portrait_key, member?.name)}" />
             <div class="party-name">${escapeHtml(member.name || `Member ${index + 1}`)}</div>
             <div class="party-hp-bar"><div class="party-hp-fill" style="width:${hpRate}%"></div></div>
-            <div class="party-hp-text">HP ${hp}/${maxHp} &nbsp; LV ${member.level ?? "-"}</div>
+            <div class="party-hp-text">${hp}/${maxHp} &nbsp; LV ${member.level ?? "-"}</div>
             <div class="status-icons">${statusIconHtml}</div>
           `;
           partyGrid.appendChild(card);
@@ -749,8 +749,8 @@
       function renderBottomSectionTitle() {
         if (!bottomSectionTitle) return;
         bottomSectionTitle.textContent = battleFinished
-          ? "下部: BATTLE RESULT LOG"
-          : "下部: COMMAND";
+          ? "BATTLE RESULT LOG"
+          : "COMMAND";
       }
 
       function startResultMode(logsText, options = {}) {

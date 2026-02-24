@@ -3,388 +3,168 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Field Menu (Flask)</title>
+    <title>Field Menu</title>
     <style>
       :root {
-        --bg: #000;
-        --panel: #0a2a96;
-        --border: #d6d9de;
-        --text: #e6e8f0;
-        --muted: #8f95a6;
-        --accent: #50e093;
-        --warn: #f4de70;
+        --bg: #04143f;
+        --panel: #143a86;
+        --panel-deep: #102f6f;
+        --border: #d9dde7;
+        --text: #edf1ff;
+        --muted: #d6dcf1;
+        --accent: #a8dc91;
       }
-      * {
-        box-sizing: border-box;
-      }
+      * { box-sizing: border-box; }
       body {
         margin: 0;
         min-height: 100vh;
-        background: var(--bg);
-        color: var(--text);
-        font-family: "Segoe UI", "Hiragino Kaku Gothic ProN", sans-serif;
         display: flex;
         justify-content: center;
-        padding: 18px;
+        background: #000;
+        font-family: "Segoe UI", "Hiragino Kaku Gothic ProN", sans-serif;
+        color: var(--text);
+        padding: 8px;
       }
       .menu-root {
-        width: min(1380px, 98vw);
+        width: min(100vw, 480px);
       }
       .window {
-        border: 4px solid var(--border);
-        border-radius: 12px;
+        border: 2px solid var(--border);
+        border-radius: 10px;
         background: var(--panel);
-        box-shadow: 0 0 0 2px #444 inset;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3) inset;
       }
       .top {
         display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 24px;
+        grid-template-columns: minmax(0, 1fr) 142px;
+        gap: 6px;
       }
-      .party-panel {
-        padding: 20px 24px;
-      }
+      .party-panel { padding: 6px; }
       .member-row {
         display: grid;
-        grid-template-columns: 122px 1fr auto;
-        gap: 14px;
-        padding: 8px 0;
+        grid-template-columns: 92px 1fr;
+        gap: 8px;
         align-items: center;
-      }
-      .member-portrait-wrap {
-        width: 112px;
-        height: 112px;
-        display: flex;
-        align-items: center;
-        transition: transform 0.15s ease;
-      }
-      .member-portrait-wrap.row-front {
-        transform: translateX(0);
-        justify-content: flex-start;
-      }
-      .member-portrait-wrap.row-back {
-        transform: translateX(14px);
-        justify-content: flex-start;
-      }
-      .member-portrait {
-        width: 96px;
-        height: 96px;
-        object-fit: cover;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-      }
-      .member-name {
-        font-size: 44px;
-        line-height: 1;
-      }
-      .member-job {
-        font-size: 22px;
-        line-height: 1;
-        text-align: right;
-      }
-      .member-hp {
-        color: var(--accent);
-        font-size: 42px;
-      }
-      .member-row-mode {
-        opacity: 0.85;
-      }
-      .member-row-selected {
-        text-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
-      }
-      .member-row-status-selected {
-        outline: 2px solid rgba(244, 222, 112, 0.8);
+        padding: 3px;
         border-radius: 8px;
       }
-      .menu-panel {
-        padding: 20px 24px;
+      .member-row + .member-row { margin-top: 4px; }
+      .member-row.row-selected {
+        outline: 2px solid rgba(255, 255, 255, 0.75);
       }
+      .portrait-frame {
+        width: 92px;
+        height: 72px;
+        background: linear-gradient(to right, #3b72ba 22%, #f8f8f8 22%);
+        border: 1px solid #051c56;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+      }
+      .portrait-wrap {
+        width: 100%;
+        transition: transform 0.15s ease;
+      }
+      .portrait-wrap.row-front { transform: translateX(0); }
+      .portrait-wrap.row-back { transform: translateX(12px); }
+      .portrait {
+        width: 64px;
+        height: 64px;
+        object-fit: cover;
+        margin-left: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.4);
+      }
+      .name { font-size: 18px; font-weight: 700; line-height: 1.1; }
+      .job, .lv { font-size: 11px; line-height: 1.2; }
+      .hp { font-size: 16px; color: var(--accent); line-height: 1.15; }
+
+      .menu-side {
+        display: grid;
+        grid-template-rows: minmax(0, 1fr) auto;
+        gap: 6px;
+      }
+      .menu-panel { padding: 10px 10px; }
       .menu-item {
         display: block;
-        font-size: 46px;
-        line-height: 1.55;
         color: var(--muted);
-        cursor: pointer;
+        text-decoration: none;
+        font-size: 14px;
+        line-height: 2;
       }
-      .menu-item.active {
-        color: var(--text);
-      }
-      .main {
-        margin-top: 24px;
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 24px;
-      }
-      .inventory-panel,
-      .action-panel {
-        min-height: 460px;
-        padding: 16px 20px;
-      }
-      .section-title {
-        margin: 0 0 12px;
-        font-size: 28px;
-        color: #d8dcf1;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      th,
-      td {
-        text-align: left;
-        padding: 8px 6px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.18);
-        font-size: 25px;
-      }
-      th {
-        color: var(--warn);
-      }
-      tr.selectable-row {
-        cursor: pointer;
-      }
-      tr.selected-row {
-        background: rgba(80, 224, 147, 0.2);
-      }
-      .bottom {
-        margin-top: 24px;
-        padding: 14px 24px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 16px;
-      }
-      .controls {
-        font-size: 34px;
-        color: var(--muted);
-      }
-      .meta {
-        font-size: 40px;
-        color: var(--warn);
-      }
-      .field {
-        margin-bottom: 8px;
-      }
-      .field label {
-        display: block;
-        margin-bottom: 6px;
-        font-size: 21px;
-      }
-      input,
-      select,
-      button {
-        width: 100%;
-        background: rgba(0, 0, 0, 0.35);
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        color: var(--text);
-        padding: 8px;
-        border-radius: 4px;
-        font-size: 19px;
-      }
-      button {
-        cursor: pointer;
-        background: #192f8f;
-      }
-      .action-grid {
-        display: grid;
-        gap: 8px;
-      }
-      .action-grid.two {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-      .hidden {
-        display: none;
-      }
-      .response {
-        margin-top: 10px;
-        background: rgba(0, 0, 0, 0.5);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 6px;
+      .menu-item.active { color: #fff; }
+      .resource-panel {
         padding: 10px;
-        max-height: 180px;
-        overflow-y: auto;
-        white-space: pre-wrap;
-        font-size: 15px;
+        font-size: 16px;
+        line-height: 1.35;
+      }
+
+      .bottom {
+        margin-top: 6px;
+        padding: 8px 10px;
+        font-size: 16px;
+      }
+      .message {
+        margin-top: 6px;
+        min-height: 24px;
+        font-size: 14px;
+        color: #f5f2c2;
       }
       .toolbar {
-        margin-bottom: 12px;
+        margin-bottom: 6px;
       }
-      .toolbar button {
-        width: auto;
-        padding: 8px 14px;
-      }
-      .status-icons {
-        display: inline-flex;
-        gap: 4px;
-        align-items: center;
-        flex-wrap: wrap;
-      }
-      .status-icon {
-        width: 22px;
-        height: 22px;
-        image-rendering: pixelated;
-      }
-      .status-empty {
-        color: var(--muted);
+      .toolbar a {
+        color: #d2defc;
+        font-size: 12px;
       }
     </style>
   </head>
   <body>
     <div class="menu-root">
-      <div class="toolbar"><a href="/"><button type="button">Battle API Playgroundへ戻る</button></a></div>
+      <div class="toolbar"><a href="/">← Battle API Playgroundへ戻る</a></div>
       <div class="top">
         <section class="window party-panel" id="partyPanel"></section>
-        <section class="window menu-panel" id="menuPanel"></section>
+        <div class="menu-side">
+          <section class="window menu-panel" id="menuPanel"></section>
+          <section class="window resource-panel"><div id="metaCp">CP ???</div><div id="metaGil">GIL ???</div></section>
+        </div>
       </div>
-
-      <div class="main">
-        <section class="window inventory-panel">
-          <h2 class="section-title" id="stockTitle">INVENTORY</h2>
-          <table>
-            <thead><tr><th id="stockCol1">Type</th><th id="stockCol2">Name</th><th id="stockCol3">Count</th></tr></thead>
-            <tbody id="menuInventoryBody"></tbody>
-          </table>
-        </section>
-
-        <section class="window action-panel">
-          <h2 class="section-title" id="actionTitle">アイテム</h2>
-
-          <div id="pane-item" class="action-pane">
-            <div class="field"><label>使用者 index</label><input id="menuItemUser" type="number" min="0" value="0" /></div>
-            <div class="field"><label>アイテム選択 (Anywhere/Field)</label><select id="menuItemSelect"></select></div>
-            <div class="action-grid two">
-              <div class="field"><label>対象 index</label><input id="menuItemTarget" type="number" min="0" value="0" /></div>
-              <div class="field"><label>タイプ(自動)</label><input id="menuItemType" type="text" readonly /></div>
-            </div>
-            <button id="menuUseItemBtn" type="button">実行</button>
-          </div>
-
-          <div id="pane-magic" class="action-pane hidden">
-            <div class="field"><label>使用者</label><select id="menuMagicCaster"></select></div>
-            <div class="field"><label>まほう</label><select id="menuSpellSelect"></select></div>
-            <div class="field"><label>対象 index</label><input id="menuMagicTarget" type="number" min="0" value="0" /></div>
-            <button id="menuCastMagicBtn" type="button">実行</button>
-          </div>
-
-          <div id="pane-equip" class="action-pane hidden">
-            <div class="field"><label>メンバー index</label><input id="menuEquipMember" type="number" min="0" value="0" /></div>
-            <div class="field"><label>スロット</label><select id="menuEquipSlot"><option value="main_hand">main_hand</option><option value="off_hand">off_hand</option><option value="head">head</option><option value="body">body</option><option value="arms">arms</option></select></div>
-            <div class="field"><label>装備名（空で外す）</label><input id="menuEquipName" type="text" /></div>
-            <button id="menuChangeEquipBtn" type="button">実行</button>
-          </div>
-
-          <div id="pane-status" class="action-pane hidden">
-            <div id="menuStatusDetail">ステータス対象をパーティ欄から選択してください。</div>
-          </div>
-
-          <div id="pane-job" class="action-pane hidden">
-            <div class="field"><label>転職するキャラクター</label><select id="menuJobMember"></select></div>
-            <div class="field"><label>ジョブ</label><select id="menuJobName"></select></div>
-            <button id="menuChangeJobBtn" type="button">実行</button>
-          </div>
-
-          <div id="pane-row" class="action-pane hidden">
-            <div class="field"><label>並び順（例: 1,0,2,3）</label><input id="menuReorder" type="text" /></div>
-            <button id="menuReorderBtn" type="button">実行</button>
-          </div>
-
-          <div id="pane-save" class="action-pane hidden">
-            <button id="menuSaveBtn" type="button">セーブ</button>
-          </div>
-
-          <div class="response" id="menuResponseView">menu state ready.</div>
-        </section>
-      </div>
-
       <section class="window bottom">
-        <div class="controls" id="menuHelp">↑ ↓: Select　Enter: OK　Esc: Back</div>
-        <div class="meta"><span id="metaCp">CP ???</span>　<span id="metaGil">GIL ???</span></div>
+        <div id="menuHelp">↑ ↓: Select　Enter: OK　Esc: Back</div>
+        <div class="message" id="menuMessage"></div>
       </section>
     </div>
 
     <script id="initialMenuStateJson" type="application/json">{{ initial_menu_state|tojson }}</script>
     <script>
       const menuItems = ["アイテム", "まほう", "そうび", "ステータス", "ならびかえ", "ジョブ", "セーブ"];
-      const actionMap = {
-        アイテム: "pane-item",
-        まほう: "pane-magic",
-        そうび: "pane-equip",
-        ステータス: "pane-status",
-        ならびかえ: "pane-row",
-        ジョブ: "pane-job",
-        セーブ: "pane-save",
+      const menuRoutes = {
+        アイテム: "/menu/item",
+        まほう: "/menu/magic",
+        そうび: "/menu/equip",
+        ステータス: "/menu/status",
+        ジョブ: "/menu/job",
       };
-
       const partyPanel = document.getElementById("partyPanel");
       const menuPanel = document.getElementById("menuPanel");
-      const menuInventoryBody = document.getElementById("menuInventoryBody");
-      const menuResponseView = document.getElementById("menuResponseView");
-      const actionTitle = document.getElementById("actionTitle");
       const menuHelp = document.getElementById("menuHelp");
+      const menuMessage = document.getElementById("menuMessage");
       const metaCp = document.getElementById("metaCp");
       const metaGil = document.getElementById("metaGil");
       const initialMenuStateNode = document.getElementById("initialMenuStateJson");
-      const menuItemSelect = document.getElementById("menuItemSelect");
-      const stockTitle = document.getElementById("stockTitle");
-      const stockCol1 = document.getElementById("stockCol1");
-      const stockCol2 = document.getElementById("stockCol2");
-      const stockCol3 = document.getElementById("stockCol3");
-      const menuMagicCaster = document.getElementById("menuMagicCaster");
-      const menuSpellSelect = document.getElementById("menuSpellSelect");
-      const menuJobMember = document.getElementById("menuJobMember");
-      const menuJobName = document.getElementById("menuJobName");
-      const menuStatusDetail = document.getElementById("menuStatusDetail");
-      let menuState = { party: [], inventory: [], magic_candidates_by_member: [], job_candidates_by_member: [], jobs: [] };
 
+      let menuState = { party: [], resources: {} };
       let mode = "menu";
       let idx = 0;
-      let memberIdx = 0;
-      let statusMemberIdx = 0;
-      let statusFocus = "menu";
+      let rowMemberIdx = 0;
 
-      const partySelectableMenus = new Set(["アイテム", "まほう", "ジョブ", "ステータス"]);
-
-      function isPartySelectionMenu(menuName) {
-        return partySelectableMenus.has(menuName);
-      }
-
-      function getCurrentPartySelectionIndex() {
-        const current = menuItems[idx];
-        if (current === "アイテム") {
-          return Number(document.getElementById("menuItemUser").value || "0");
-        }
-        if (current === "まほう") {
-          return Number(menuMagicCaster.value || "0");
-        }
-        if (current === "ジョブ") {
-          return Number(menuJobMember.value || "0");
-        }
-        return statusMemberIdx;
-      }
-
-      function setCurrentPartySelectionIndex(memberIndex) {
-        const current = menuItems[idx];
-        if (current === "アイテム") {
-          document.getElementById("menuItemUser").value = String(memberIndex);
-          return;
-        }
-        if (current === "まほう") {
-          menuMagicCaster.value = String(memberIndex);
-          renderMagicSpellSelect();
-          return;
-        }
-        if (current === "ジョブ") {
-          menuJobMember.value = String(memberIndex);
-          renderJobNameSelect();
-          renderInventory();
-          return;
-        }
-        statusMemberIdx = memberIndex;
-      }
-
-      if (initialMenuStateNode) {
+      function parseInitialMenuState() {
         try {
-          menuState = JSON.parse(initialMenuStateNode.textContent || "{}");
+          const parsed = JSON.parse(initialMenuStateNode.textContent || "{}");
+          if (parsed && typeof parsed === "object") {
+            menuState = parsed;
+          }
         } catch (error) {
-          menuResponseView.textContent = `initial menu JSON parse error: ${error}`;
+          menuMessage.textContent = `初期データの読込に失敗: ${error}`;
         }
       }
 
@@ -396,410 +176,48 @@
           .replaceAll('"', "&quot;")
           .replaceAll("'", "&#39;");
       }
-
       function resolvePortraitUrl(portraitKey) {
-        if (!portraitKey) {
-          return "";
-        }
-        return `/assets/portraits/${encodeURIComponent(String(portraitKey))}`;
-      }
-
-      function resolveStatusIconUrl(iconKey) {
-        if (!iconKey) {
-          return "";
-        }
-        return `/assets/status-icons/${encodeURIComponent(String(iconKey))}.png`;
+        return portraitKey ? `/assets/portraits/${encodeURIComponent(String(portraitKey))}` : "";
       }
 
       function refreshMeta() {
         const cp = menuState?.resources?.cp;
         const cpMax = menuState?.resources?.cp_max;
         const gil = menuState?.resources?.gil;
-        metaCp.textContent = Number.isFinite(cp) && Number.isFinite(cpMax) ? `CP ${cp}/${cpMax}` : "CP MAX";
+        metaCp.textContent = Number.isFinite(cp) && Number.isFinite(cpMax) ? `CP ${cp}/${cpMax}` : "CP ???";
         metaGil.textContent = Number.isFinite(gil) ? `GIL ${gil.toLocaleString()}` : "GIL ???";
       }
 
       function renderParty() {
         const party = Array.isArray(menuState?.party) ? menuState.party : [];
-        const current = menuItems[idx];
-        const selectedPartyIndex = getCurrentPartySelectionIndex();
-        const rows = party
-          .map((m, i) => {
-            const selected = mode === "row" && i === memberIdx;
-            const partySelected = mode === "menu" && isPartySelectionMenu(current) && i === selectedPartyIndex;
-            const rowClass = String(m.row || "front") === "back" ? "row-back" : "row-front";
-            const portraitUrl = resolvePortraitUrl(m.portrait_key);
-            return `
-              <div class="member-row ${mode === "row" ? "member-row-mode" : ""} ${selected ? "member-row-selected" : ""} ${partySelected ? "member-row-status-selected" : ""}" data-member-index="${i}">
-                <div class="member-portrait-wrap ${rowClass}">
-                  ${portraitUrl ? `<img class="member-portrait" src="${portraitUrl}" alt="${escapeHtml(m.name)} portrait" loading="lazy" />` : ""}
-                </div>
-                <div>
-                  <div class="member-name">${escapeHtml(m.name)}</div>
-                  <div class="member-hp">HP ${m.hp}/${m.max_hp}</div>
-                </div>
-                <div>
-                  <div class="member-job">${escapeHtml(m.job)}&nbsp;&nbsp;LV ${escapeHtml(m.level ?? "?")}</div>
-                  <div class="member-job">${escapeHtml(m.row || "front")}</div>
-                </div>
-              </div>`;
+        if (!party.length) {
+          partyPanel.innerHTML = '<div class="name">No party members</div>';
+          return;
+        }
+        partyPanel.innerHTML = party
+          .map((member, i) => {
+            const rowClass = String(member.row || "front") === "back" ? "row-back" : "row-front";
+            const selected = mode === "row" && i === rowMemberIdx;
+            const portraitUrl = resolvePortraitUrl(member.portrait_key);
+            return `<div class="member-row ${selected ? "row-selected" : ""}" data-member-index="${i}">
+              <div class="portrait-frame"><div class="portrait-wrap ${rowClass}">${portraitUrl ? `<img class="portrait" src="${portraitUrl}" alt="${escapeHtml(member.name)}" />` : ""}</div></div>
+              <div>
+                <div class="name">${escapeHtml(member.name)}</div>
+                <div class="job">${escapeHtml(member.job)}</div>
+                <div class="lv">LV${Number(member.level || 0)} / ${escapeHtml(member.row || "front")}</div>
+                <div class="hp">${Number(member.hp || 0)}/${Number(member.max_hp || 0)}</div>
+              </div>
+            </div>`;
           })
           .join("");
-        partyPanel.innerHTML = rows || '<div class="member-name">No party members</div>';
       }
 
       function renderMenu() {
         menuPanel.innerHTML = menuItems
-          .map((name, i) => `<span class="menu-item ${mode === "menu" && i === idx ? "active" : ""}" data-menu-index="${i}">${mode === "menu" && i === idx ? "▶" : ""} ${name}</span>`)
+          .map((name, i) => `<a class="menu-item ${mode === "menu" && i === idx ? "active" : ""}" data-menu-index="${i}" href="#">${mode === "menu" && i === idx ? "▶" : "　"}${name}</a>`)
           .join("");
-      }
-
-      function getMagicCandidatesForCaster(casterIndex) {
-        const byMember = Array.isArray(menuState?.magic_candidates_by_member) ? menuState.magic_candidates_by_member : [];
-        const candidates = byMember[casterIndex];
-        if (!Array.isArray(candidates)) {
-          return [];
-        }
-        return candidates.filter((name) => typeof name === "string" && name);
-      }
-
-
-      function getJobCandidatesForMember(memberIndex) {
-        const byMember = Array.isArray(menuState?.job_candidates_by_member) ? menuState.job_candidates_by_member : [];
-        const candidates = byMember[memberIndex];
-        if (!Array.isArray(candidates)) {
-          return [];
-        }
-        return candidates.filter((row) => row && typeof row.job_name === "string" && row.job_name);
-      }
-
-      function selectListChoiceByDelta(delta) {
-        const current = menuItems[idx];
-        if (current === "アイテム") {
-          const options = Array.from(menuItemSelect.options).filter((opt) => opt.value);
-          if (!options.length) return;
-          const currentIndex = options.findIndex((opt) => opt.value === menuItemSelect.value);
-          const base = currentIndex >= 0 ? currentIndex : 0;
-          const next = (base + delta + options.length) % options.length;
-          menuItemSelect.value = options[next].value;
-          const selectedOption = menuItemSelect.selectedOptions[0];
-          document.getElementById("menuItemType").value = selectedOption?.dataset?.itemType || "";
-          renderInventory();
-          return;
-        }
-        if (current === "まほう") {
-          const options = Array.from(menuSpellSelect.options).filter((opt) => opt.value);
-          if (!options.length) return;
-          const currentIndex = options.findIndex((opt) => opt.value === menuSpellSelect.value);
-          const base = currentIndex >= 0 ? currentIndex : 0;
-          const next = (base + delta + options.length) % options.length;
-          menuSpellSelect.value = options[next].value;
-          renderInventory();
-          return;
-        }
-        if (current === "ジョブ") {
-          const options = Array.from(menuJobName.options).filter((opt) => opt.value);
-          if (!options.length) return;
-          const currentIndex = options.findIndex((opt) => opt.value === menuJobName.value);
-          const base = currentIndex >= 0 ? currentIndex : 0;
-          const next = (base + delta + options.length) % options.length;
-          menuJobName.value = options[next].value;
-          renderInventory();
-        }
-      }
-
-      function renderInventory() {
-        const current = menuItems[idx];
-        menuInventoryBody.innerHTML = "";
-
-        if (current === "ステータス") {
-          stockTitle.textContent = "STATUS";
-          stockCol1.textContent = "Param";
-          stockCol2.textContent = "Value";
-          stockCol3.textContent = "";
-          const party = Array.isArray(menuState?.party) ? menuState.party : [];
-          const member = party[statusMemberIdx] || {};
-          const st = member.status || {};
-          const rows = [
-            ["LEVEL", Number(st.level || member.level || 0)],
-            ["HP", `${Number(st.hp || member.hp || 0)}/${Number(st.max_hp || member.max_hp || 0)}`],
-            ["MP", st.mp_text || "0/0/0/0/0/0/0/0"],
-            ["Job Level", Number(st.job_level || 0)],
-            ["EXP", Number(st.exp || 0)],
-            ["EXP to Next Level", Number(st.exp_to_next || 0)],
-            ["STR/ATK/TIMES", `${Number(st.strength || 0)}/${Number(st.atk_value || 0)}/${Number(st.atk_times || 0)}`],
-            ["AGI/HIT/EVA", `${Number(st.agility || 0)}/${Number(st.acc_value || 0)}/${Number(st.evasion_percent || 0)}`],
-            ["VIT/DEF/TIMES", `${Number(st.vitality || 0)}/${Number(st.defense || 0)}/${Number(st.def_times || 0)}`],
-            ["INT", Number(st.intelligence || 0)],
-            ["MND/MDEF/MEVA", `${Number(st.mind || 0)}/${Number(st.magic_defense || 0)}/${Number(st.magic_resistance || 0)}`],
-            ["ROW", st.row_label || "FRONT"],
-            ["Status", "__STATUS_ICONS__"],
-          ];
-          rows.forEach(([k, v]) => {
-            const tr = document.createElement("tr");
-            if (v === "__STATUS_ICONS__") {
-              const iconKeys = Array.isArray(st.status_icons) ? st.status_icons.filter((x) => typeof x === "string" && x) : [];
-              const iconsHtml = iconKeys.length
-                ? `<span class="status-icons">${iconKeys
-                    .map((key) => `<img class="status-icon" src="${resolveStatusIconUrl(key)}" alt="${escapeHtml(key)}" title="${escapeHtml(key)}" loading="lazy" />`)
-                    .join("")}</span>`
-                : `<span class="status-empty">-</span>`;
-              tr.innerHTML = `<td>${escapeHtml(k)}</td><td>${iconsHtml}</td><td></td>`;
-            } else {
-              tr.innerHTML = `<td>${escapeHtml(k)}</td><td>${escapeHtml(v)}</td><td></td>`;
-            }
-            menuInventoryBody.appendChild(tr);
-          });
-          return;
-        }
-
-        if (current === "ジョブ") {
-          stockTitle.textContent = "JOB";
-          stockCol1.textContent = "Job";
-          stockCol2.textContent = "Need CP";
-          stockCol3.textContent = "Lv";
-          const memberIndex = Number(menuJobMember.value || "0");
-          const candidates = getJobCandidatesForMember(memberIndex);
-          const selectedJobName = menuJobName.value;
-          candidates.forEach((row) => {
-            const tr = document.createElement("tr");
-            const currentMark = row.is_current ? " ★" : "";
-            if (row.job_name === selectedJobName) {
-              tr.classList.add("selected-row");
-            }
-            tr.classList.add("selectable-row");
-            tr.dataset.choiceType = "job";
-            tr.dataset.jobName = row.job_name;
-            tr.innerHTML = `<td>${escapeHtml(row.job_name)}${currentMark}</td><td>${Number(row.required_cp || 0)}</td><td>${Number(row.saved_job_level || 1)}</td>`;
-            menuInventoryBody.appendChild(tr);
-          });
-          if (!candidates.length) {
-            const tr = document.createElement("tr");
-            tr.innerHTML = "<td colspan=\"3\">(転職可能ジョブなし)</td>";
-            menuInventoryBody.appendChild(tr);
-          }
-          return;
-        }
-
-        if (current === "まほう") {
-          stockTitle.textContent = "MAGIC";
-          stockCol1.textContent = "Caster";
-          stockCol2.textContent = "Spell";
-          stockCol3.textContent = "";
-          const party = Array.isArray(menuState?.party) ? menuState.party : [];
-          const selectedCasterIndex = Number(menuMagicCaster.value || "0");
-          const selectedSpellName = menuSpellSelect.value;
-          party.forEach((member, memberIndex) => {
-            const spells = getMagicCandidatesForCaster(memberIndex);
-            if (!spells.length) {
-              const tr = document.createElement("tr");
-              tr.innerHTML = `<td>${escapeHtml(member.name || `Member ${memberIndex}`)}</td><td>(使用可能な魔法なし)</td><td></td>`;
-              menuInventoryBody.appendChild(tr);
-              return;
-            }
-            spells.forEach((spellName, spellIndex) => {
-              const tr = document.createElement("tr");
-              if (memberIndex === selectedCasterIndex && spellName === selectedSpellName) {
-                tr.classList.add("selected-row");
-              }
-              tr.classList.add("selectable-row");
-              tr.dataset.choiceType = "magic";
-              tr.dataset.casterIndex = String(memberIndex);
-              tr.dataset.spellName = spellName;
-              tr.innerHTML = `<td>${spellIndex === 0 ? escapeHtml(member.name || `Member ${memberIndex}`) : ""}</td><td>${escapeHtml(spellName)}</td><td></td>`;
-              menuInventoryBody.appendChild(tr);
-            });
-          });
-          return;
-        }
-
-        stockTitle.textContent = "INVENTORY";
-        stockCol1.textContent = "Type";
-        stockCol2.textContent = "Name";
-        stockCol3.textContent = "Count";
-        const selectedItemName = menuItemSelect.value;
-        const inventory = Array.isArray(menuState?.inventory) ? menuState.inventory : [];
-        inventory.forEach((row) => {
-          const tr = document.createElement("tr");
-          const selectable = row && (row.item_type === "Anywhere" || row.item_type === "Field");
-          if (row.name === selectedItemName) {
-            tr.classList.add("selected-row");
-          }
-          if (selectable) {
-            tr.classList.add("selectable-row");
-            tr.dataset.choiceType = "item";
-            tr.dataset.itemName = row.name;
-          }
-          tr.innerHTML = `<td>${escapeHtml(row.item_type)}</td><td>${escapeHtml(row.name)}</td><td>${row.count}</td>`;
-          menuInventoryBody.appendChild(tr);
-        });
-      }
-
-      function buildSelectableInventory() {
-        const inventory = Array.isArray(menuState?.inventory) ? menuState.inventory : [];
-        return inventory.filter((row) => row && (row.item_type === "Anywhere" || row.item_type === "Field"));
-      }
-
-      function renderItemSelect() {
-        const options = buildSelectableInventory();
-        const prev = menuItemSelect.value;
-        menuItemSelect.innerHTML = "";
-        if (!options.length) {
-          menuItemSelect.innerHTML = '<option value="">(使用可能なアイテムなし)</option>';
-          document.getElementById("menuItemType").value = "";
-          return;
-        }
-        options.forEach((row, i) => {
-          const opt = document.createElement("option");
-          opt.value = row.name;
-          opt.dataset.itemType = row.item_type;
-          opt.textContent = `${row.name} (${row.item_type}) x${row.count}`;
-          if ((prev && prev === row.name) || (!prev && i === 0)) {
-            opt.selected = true;
-          }
-          menuItemSelect.appendChild(opt);
-        });
-        const selectedOption = menuItemSelect.selectedOptions[0];
-        document.getElementById("menuItemType").value = selectedOption?.dataset?.itemType || "";
-      }
-
-      function renderMagicCasterSelect() {
-        const party = Array.isArray(menuState?.party) ? menuState.party : [];
-        const prevCaster = Number(menuMagicCaster.value || "0");
-        menuMagicCaster.innerHTML = "";
-        party.forEach((member, i) => {
-          const opt = document.createElement("option");
-          opt.value = String(i);
-          opt.textContent = `${i}: ${member.name || `Member ${i}`}`;
-          if ((Number.isInteger(prevCaster) && prevCaster === i) || (!menuMagicCaster.options.length && i === 0)) {
-            opt.selected = true;
-          }
-          menuMagicCaster.appendChild(opt);
-        });
-        if (!party.length) {
-          const opt = document.createElement("option");
-          opt.value = "0";
-          opt.textContent = "(使用者なし)";
-          menuMagicCaster.appendChild(opt);
-        }
-        renderMagicSpellSelect();
-      }
-
-      function renderMagicSpellSelect() {
-        const casterIndex = Number(menuMagicCaster.value || "0");
-        const spells = getMagicCandidatesForCaster(casterIndex);
-        const prevSpell = menuSpellSelect.value;
-        menuSpellSelect.innerHTML = "";
-        if (!spells.length) {
-          const opt = document.createElement("option");
-          opt.value = "";
-          opt.textContent = "(使用可能な魔法なし)";
-          menuSpellSelect.appendChild(opt);
-          return;
-        }
-        spells.forEach((spellName, i) => {
-          const opt = document.createElement("option");
-          opt.value = spellName;
-          opt.textContent = spellName;
-          if ((prevSpell && prevSpell === spellName) || (!prevSpell && i === 0)) {
-            opt.selected = true;
-          }
-          menuSpellSelect.appendChild(opt);
-        });
-      }
-
-
-      function renderJobMemberSelect() {
-        const party = Array.isArray(menuState?.party) ? menuState.party : [];
-        const prevMember = Number(menuJobMember.value || "0");
-        menuJobMember.innerHTML = "";
-        party.forEach((member, i) => {
-          const opt = document.createElement("option");
-          opt.value = String(i);
-          opt.textContent = `${i}: ${member.name || `Member ${i}`}`;
-          if ((Number.isInteger(prevMember) && prevMember === i) || (!menuJobMember.options.length && i === 0)) {
-            opt.selected = true;
-          }
-          menuJobMember.appendChild(opt);
-        });
-        if (!party.length) {
-          const opt = document.createElement("option");
-          opt.value = "0";
-          opt.textContent = "(メンバーなし)";
-          menuJobMember.appendChild(opt);
-        }
-        renderJobNameSelect();
-      }
-
-      function renderJobNameSelect() {
-        const memberIndex = Number(menuJobMember.value || "0");
-        const candidates = getJobCandidatesForMember(memberIndex);
-        const prevJob = menuJobName.value;
-        menuJobName.innerHTML = "";
-        if (!candidates.length) {
-          const opt = document.createElement("option");
-          opt.value = "";
-          opt.textContent = "(ジョブ候補なし)";
-          menuJobName.appendChild(opt);
-          return;
-        }
-        candidates.forEach((row, i) => {
-          const opt = document.createElement("option");
-          opt.value = row.job_name;
-          opt.dataset.requiredCp = String(Number(row.required_cp || 0));
-          opt.textContent = `${row.job_name} (CP ${Number(row.required_cp || 0)})`;
-          if ((prevJob && prevJob === row.job_name) || (!prevJob && i === 0)) {
-            opt.selected = true;
-          }
-          menuJobName.appendChild(opt);
-        });
-      }
-
-      function renderStatusDetail() {
-        const party = Array.isArray(menuState?.party) ? menuState.party : [];
-        if (!party.length) {
-          statusMemberIdx = 0;
-          menuStatusDetail.textContent = "パーティメンバーがいません。";
-          return;
-        }
-        if (statusMemberIdx < 0 || statusMemberIdx >= party.length) {
-          statusMemberIdx = 0;
-        }
-        const member = party[statusMemberIdx] || {};
-        const st = member.status || {};
-        const statusIconKeys = Array.isArray(st.status_icons) ? st.status_icons.filter((x) => typeof x === "string" && x) : [];
-        const statusIconHtml = statusIconKeys.length
-          ? statusIconKeys
-              .map((key) => `<img class="status-icon" src="${resolveStatusIconUrl(key)}" alt="${escapeHtml(key)}" title="${escapeHtml(key)}" loading="lazy" />`)
-              .join("")
-          : '<span class="status-empty">-</span>';
-        menuStatusDetail.innerHTML = `
-          <div>対象: ${escapeHtml(member.name || `Member ${statusMemberIdx}`)} / ${escapeHtml(member.job || "Unknown")}</div>
-          <div>LEVEL ${Number(st.level || member.level || 0)} / HP ${Number(st.hp || member.hp || 0)}/${Number(st.max_hp || member.max_hp || 0)} / MP ${escapeHtml(st.mp_text || "0/0/0/0/0/0/0/0")}</div>
-          <div>Job Level ${Number(st.job_level || 0)} / EXP ${Number(st.exp || 0)} / EXP to Next ${Number(st.exp_to_next || 0)}</div>
-          <div>STR/ATK/TIMES ${Number(st.strength || 0)}/${Number(st.atk_value || 0)}/${Number(st.atk_times || 0)}</div>
-          <div>AGI/HIT/EVA ${Number(st.agility || 0)}/${Number(st.acc_value || 0)}/${Number(st.evasion_percent || 0)}</div>
-          <div>VIT/DEF/TIMES ${Number(st.vitality || 0)}/${Number(st.defense || 0)}/${Number(st.def_times || 0)}</div>
-          <div>INT ${Number(st.intelligence || 0)} / MND/MDEF/MEVA ${Number(st.mind || 0)}/${Number(st.magic_defense || 0)}/${Number(st.magic_resistance || 0)}</div>
-          <div>ROW ${escapeHtml(st.row_label || "FRONT")}</div>
-          <div>Status <span class="status-icons">${statusIconHtml}</span></div>
-        `;
-      }
-
-      function renderActionPane() {
-        const current = menuItems[idx];
-        actionTitle.textContent = current;
-        Object.values(actionMap).forEach((id) => document.getElementById(id).classList.add("hidden"));
-        const paneId = actionMap[current];
-        if (paneId) {
-          document.getElementById(paneId).classList.remove("hidden");
-        }
         if (mode === "row") {
-          menuHelp.textContent = "↑ ↓: Member Select　Enter: Swap(先頭と入替)　Esc: Back";
-        } else if (["アイテム", "まほう", "ジョブ"].includes(current) && statusFocus === "party") {
-          menuHelp.textContent = "↑ ↓: Member Select　← →: List Select　Backspace: Menu Select　Esc: Back";
-        } else if (isPartySelectionMenu(current) && statusFocus === "party") {
-          menuHelp.textContent = "↑ ↓: Member Select　Backspace: Menu Select　Esc: Back";
+          menuHelp.textContent = "↑ ↓: キャラ選択　Enter: 前列/後列切替　Esc: Back";
         } else {
           menuHelp.textContent = "↑ ↓: Select　Enter: OK　Esc: Back";
         }
@@ -808,225 +226,95 @@
       function render() {
         renderParty();
         renderMenu();
-        renderItemSelect();
-        renderMagicCasterSelect();
-        renderJobMemberSelect();
-        renderStatusDetail();
-        renderInventory();
-        renderActionPane();
         refreshMeta();
-      }
-
-      async function postMenu(path, payload) {
-        const resp = await fetch(path, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        const body = await resp.json();
-        if (body && body.menu_state) {
-          menuState = body.menu_state;
-          render();
-        }
-        menuResponseView.textContent = JSON.stringify({ status: resp.status, body }, null, 2);
       }
 
       async function refreshState() {
         const resp = await fetch("/menu/state");
-        const body = await resp.json();
-        menuState = body;
+        menuState = await resp.json();
         render();
+      }
+
+      async function toggleRow(memberIndex) {
+        const resp = await fetch("/menu/toggle-row", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ member_index: memberIndex }),
+        });
+        const body = await resp.json();
+        if (body && body.menu_state) {
+          menuState = body.menu_state;
+        }
+        const row = menuState?.party?.[memberIndex]?.row;
+        menuMessage.textContent = `ならびかえ: ${menuState?.party?.[memberIndex]?.name || "member"} を${row === "back" ? "後列" : "前列"}に変更しました。`;
+        render();
+      }
+
+      async function saveGame() {
+        const resp = await fetch("/menu/save", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+        if (resp.ok) {
+          menuMessage.textContent = "セーブしました。";
+        } else {
+          menuMessage.textContent = "セーブに失敗しました。";
+        }
       }
 
       async function executeCurrentMenu() {
         const current = menuItems[idx];
-        if (current === "アイテム") {
-          await postMenu("/menu/use-item", {
-            user_index: Number(document.getElementById("menuItemUser").value || "0"),
-            item_name: menuItemSelect.value,
-            target_index: Number(document.getElementById("menuItemTarget").value || "0"),
-            item_type: document.getElementById("menuItemType").value || null,
-          });
-        } else if (current === "まほう") {
-          const spellName = menuSpellSelect.value;
-          if (!spellName) {
-            menuResponseView.textContent = "使用可能な魔法がありません。";
-            return;
-          }
-          await postMenu("/menu/cast-magic", {
-            caster_index: Number(menuMagicCaster.value || "0"),
-            spell_name: spellName,
-            target_index: Number(document.getElementById("menuMagicTarget").value || "0"),
-          });
-        } else if (current === "そうび") {
-          await postMenu("/menu/change-equipment", {
-            member_index: Number(document.getElementById("menuEquipMember").value || "0"),
-            slot: document.getElementById("menuEquipSlot").value,
-            item_name: document.getElementById("menuEquipName").value || null,
-          });
-        } else if (current === "ジョブ") {
-          const selectedJob = menuJobName.value;
-          if (!selectedJob) {
-            menuResponseView.textContent = "転職可能なジョブがありません。";
-            return;
-          }
-          await postMenu("/menu/change-job", {
-            member_index: Number(menuJobMember.value || "0"),
-            job_name: selectedJob,
-          });
-        } else if (current === "ならびかえ") {
+        if (current in menuRoutes) {
+          window.location.href = menuRoutes[current];
+          return;
+        }
+        if (current === "ならびかえ") {
           mode = "row";
-          memberIdx = 0;
+          rowMemberIdx = 0;
           render();
-        } else if (current === "セーブ") {
-          await postMenu("/menu/save", {});
+          return;
+        }
+        if (current === "セーブ") {
+          await saveGame();
         }
       }
 
       document.addEventListener("keydown", async (event) => {
-        if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Enter", "Escape", "Backspace"].includes(event.key)) {
-          event.preventDefault();
-        }
+        if (["ArrowUp", "ArrowDown", "Enter", "Escape"].includes(event.key)) event.preventDefault();
         if (mode === "menu") {
-          const current = menuItems[idx];
-          if (isPartySelectionMenu(current)) {
-            const partyLen = Array.isArray(menuState?.party) ? menuState.party.length : 0;
-            if (event.key === "Backspace") {
-              statusFocus = "menu";
-            }
-            if (statusFocus === "party") {
-              if (partyLen > 0) {
-                let nextMemberIndex = getCurrentPartySelectionIndex();
-                if (event.key === "ArrowUp") nextMemberIndex = (nextMemberIndex - 1 + partyLen) % partyLen;
-                if (event.key === "ArrowDown") nextMemberIndex = (nextMemberIndex + 1) % partyLen;
-                if (["ArrowUp", "ArrowDown"].includes(event.key)) {
-                  setCurrentPartySelectionIndex(nextMemberIndex);
-                }
-              }
-              if (["アイテム", "まほう", "ジョブ"].includes(current) && event.key === "ArrowLeft") {
-                selectListChoiceByDelta(-1);
-              }
-              if (["アイテム", "まほう", "ジョブ"].includes(current) && event.key === "ArrowRight") {
-                selectListChoiceByDelta(1);
-              }
-              if (event.key === "Enter") {
-                await executeCurrentMenu();
-              }
-            } else {
-              if (event.key === "ArrowUp") idx = (idx - 1 + menuItems.length) % menuItems.length;
-              if (event.key === "ArrowDown") idx = (idx + 1) % menuItems.length;
-              if (event.key === "Enter") {
-                statusFocus = "party";
-              }
-            }
-          } else {
-            statusFocus = "menu";
-            if (event.key === "ArrowUp") idx = (idx - 1 + menuItems.length) % menuItems.length;
-            if (event.key === "ArrowDown") idx = (idx + 1) % menuItems.length;
-            if (event.key === "Enter") await executeCurrentMenu();
-          }
+          if (event.key === "ArrowUp") idx = (idx - 1 + menuItems.length) % menuItems.length;
+          if (event.key === "ArrowDown") idx = (idx + 1) % menuItems.length;
+          if (event.key === "Enter") await executeCurrentMenu();
           if (event.key === "Escape") window.location.href = "/";
         } else if (mode === "row") {
           const partyLen = Array.isArray(menuState?.party) ? menuState.party.length : 0;
           if (!partyLen) {
             mode = "menu";
           } else {
-            if (event.key === "ArrowUp") memberIdx = (memberIdx - 1 + partyLen) % partyLen;
-            if (event.key === "ArrowDown") memberIdx = (memberIdx + 1) % partyLen;
-            if (event.key === "Enter") {
-              const order = [...Array(partyLen).keys()];
-              [order[0], order[memberIdx]] = [order[memberIdx], order[0]];
-              document.getElementById("menuReorder").value = order.join(",");
-              await postMenu("/menu/reorder", { order });
-              mode = "menu";
-            }
+            if (event.key === "ArrowUp") rowMemberIdx = (rowMemberIdx - 1 + partyLen) % partyLen;
+            if (event.key === "ArrowDown") rowMemberIdx = (rowMemberIdx + 1) % partyLen;
+            if (event.key === "Enter") await toggleRow(rowMemberIdx);
             if (event.key === "Escape") mode = "menu";
           }
         }
         render();
       });
 
-      document.getElementById("menuUseItemBtn").addEventListener("click", executeCurrentMenu);
-      document.getElementById("menuCastMagicBtn").addEventListener("click", executeCurrentMenu);
-      document.getElementById("menuChangeEquipBtn").addEventListener("click", executeCurrentMenu);
-      document.getElementById("menuChangeJobBtn").addEventListener("click", executeCurrentMenu);
-      document.getElementById("menuReorderBtn").addEventListener("click", async () => {
-        const raw = document.getElementById("menuReorder").value.trim();
-        const order = raw
-          .split(",")
-          .map((v) => Number(v.trim()))
-          .filter((v) => Number.isInteger(v));
-        await postMenu("/menu/reorder", { order });
-      });
-      document.getElementById("menuSaveBtn").addEventListener("click", executeCurrentMenu);
-      menuItemSelect.addEventListener("change", () => {
-        const selectedOption = menuItemSelect.selectedOptions[0];
-        document.getElementById("menuItemType").value = selectedOption?.dataset?.itemType || "";
-        renderInventory();
-      });
-      menuMagicCaster.addEventListener("change", () => {
-        renderMagicSpellSelect();
-        renderInventory();
-      });
-      menuJobMember.addEventListener("change", () => {
-        renderJobNameSelect();
-        renderInventory();
-      });
-      menuSpellSelect.addEventListener("change", renderInventory);
-      menuJobName.addEventListener("change", renderInventory);
-      menuInventoryBody.addEventListener("click", (event) => {
-        const row = event.target.closest("tr[data-choice-type]");
-        if (!row) return;
-        const choiceType = row.dataset.choiceType;
-        if (choiceType === "item") {
-          const itemName = row.dataset.itemName || "";
-          if (itemName) {
-            menuItemSelect.value = itemName;
-            const selectedOption = menuItemSelect.selectedOptions[0];
-            document.getElementById("menuItemType").value = selectedOption?.dataset?.itemType || "";
-          }
-        }
-        if (choiceType === "magic") {
-          const casterIndex = Number(row.dataset.casterIndex || "0");
-          const spellName = row.dataset.spellName || "";
-          menuMagicCaster.value = String(casterIndex);
-          renderMagicSpellSelect();
-          if (spellName) {
-            menuSpellSelect.value = spellName;
-          }
-        }
-        if (choiceType === "job") {
-          const jobName = row.dataset.jobName || "";
-          if (jobName) {
-            menuJobName.value = jobName;
-          }
-        }
-        renderInventory();
-      });
-
-      menuPanel.addEventListener("click", (event) => {
+      menuPanel.addEventListener("click", async (event) => {
         const item = event.target.closest("[data-menu-index]");
         if (!item) return;
-        const nextIdx = Number(item.getAttribute("data-menu-index") || "0");
-        if (!Number.isInteger(nextIdx) || nextIdx < 0 || nextIdx >= menuItems.length) return;
-        idx = nextIdx;
-        statusFocus = "menu";
+        event.preventDefault();
+        idx = Number(item.getAttribute("data-menu-index") || "0");
+        await executeCurrentMenu();
         render();
       });
 
       partyPanel.addEventListener("click", (event) => {
+        if (mode !== "row") return;
         const row = event.target.closest("[data-member-index]");
         if (!row) return;
-        const memberIndex = Number(row.getAttribute("data-member-index") || "0");
-        if (!Number.isInteger(memberIndex)) return;
-        const current = menuItems[idx];
-        if (isPartySelectionMenu(current)) {
-          setCurrentPartySelectionIndex(memberIndex);
-          statusFocus = "party";
-        }
+        rowMemberIdx = Number(row.getAttribute("data-member-index") || "0");
         render();
       });
 
+      parseInitialMenuState();
       refreshState().catch(() => render());
     </script>
   </body>

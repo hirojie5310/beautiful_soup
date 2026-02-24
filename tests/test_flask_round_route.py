@@ -111,11 +111,28 @@ def test_menu_page_renders_html(monkeypatch):
     assert resp.status_code == 200
     assert "text/html" in resp.content_type
     body = resp.get_data(as_text=True)
-    assert "Field Menu (Flask)" in body
-    assert "menuUseItemBtn" in body
-    assert "menuJobMember" in body
-    assert "menuJobName" in body
-    assert "menuStatusDetail" in body
+    assert "Field Menu" in body
+    assert "menuHelp" in body
+    assert "menuMessage" in body
+    assert "/menu/item" in body
+    assert "/menu/toggle-row" in body
+
+
+def test_menu_sub_pages_render(monkeypatch):
+    app = _build_app(monkeypatch)
+    client = app.test_client()
+
+    for path, marker in [
+        ("/menu/item", "アイテム画面です"),
+        ("/menu/magic", "まほう画面です"),
+        ("/menu/equip", "そうび画面です"),
+        ("/menu/status", "ステータス画面です"),
+        ("/menu/job", "ジョブ画面です"),
+    ]:
+        resp = client.get(path)
+        assert resp.status_code == 200
+        body = resp.get_data(as_text=True)
+        assert marker in body
 
 
 def test_post_round_accepts_shorter_planned_actions_with_padding(monkeypatch):
