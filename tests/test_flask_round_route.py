@@ -123,11 +123,11 @@ def test_menu_sub_pages_render(monkeypatch):
     client = app.test_client()
 
     for path, marker in [
-        ("/menu/item", "アイテム画面です"),
-        ("/menu/magic", "まほう画面です"),
-        ("/menu/equip", "そうび画面です"),
-        ("/menu/status", "ステータス画面です"),
-        ("/menu/job", "ジョブ画面です"),
+        ("/menu/item", 'id="itemPane"'),
+        ("/menu/magic", 'id="magicScreen"'),
+        ("/menu/equip", 'id="equipScreen"'),
+        ("/menu/status", 'id="statusScreen"'),
+        ("/menu/job", 'id="jobScreen"'),
     ]:
         resp = client.get(path)
         assert resp.status_code == 200

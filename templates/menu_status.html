@@ -5,18 +5,358 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ステータス</title>
     <style>
-      body { margin:0; background:#000; color:#eef1ff; font-family: "Segoe UI", "Hiragino Kaku Gothic ProN", sans-serif; display:flex; justify-content:center; padding:16px; }
-      .window { width:min(100vw,480px); border:2px solid #d9dde7; border-radius:10px; background:#143a86; padding:16px; }
-      h1 { margin:0 0 12px; font-size:24px; }
-      p { margin:0 0 14px; }
-      a { color:#d2defc; }
+      :root {
+        --bg: #04081d;
+        --panel: rgba(15, 23, 66, 0.94);
+        --panel-soft: rgba(22, 36, 95, 0.94);
+        --border: rgba(233, 240, 255, 0.72);
+        --text: #f4f7ff;
+        --muted: #c3cdec;
+        --accent: #ffe37f;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        font-family: "BIZ UDPGothic", "Yu Gothic UI", sans-serif;
+        background: radial-gradient(circle at 20% 0%, #1a2b84 0%, transparent 45%), var(--bg);
+      }
+      .status-layout {
+        width: min(980px, 100vw);
+        min-height: 100vh;
+        margin: 0 auto;
+        padding: 10px;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        gap: 8px;
+      }
+      .frame {
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        background: var(--panel);
+      }
+      .status-title {
+        width: 170px;
+        padding: 14px 18px;
+        font-size: 2rem;
+        font-weight: 700;
+      }
+      .main-panel {
+        padding: 18px 20px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.22)), var(--panel-soft);
+      }
+      .main-top {
+        display: grid;
+        grid-template-columns: 170px 1fr;
+        column-gap: 18px;
+        align-items: start;
+      }
+      .portrait-frame {
+        width: 148px;
+        aspect-ratio: 1 / 1;
+        border: 2px solid rgba(255, 255, 255, 0.28);
+        background: rgba(0, 0, 0, 0.2);
+        padding: 6px;
+      }
+      .portrait {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        image-rendering: pixelated;
+        display: block;
+        background: #101010;
+      }
+      .stat-head {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: end;
+        border-bottom: 2px solid rgba(233, 240, 255, 0.4);
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+      }
+      .name { font-size: 3rem; font-weight: 700; line-height: 1; }
+      .lv { font-size: 2.2rem; font-weight: 700; }
+      .top-columns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px 26px;
+      }
+      .rows .row {
+        display: grid;
+        grid-template-columns: 150px 30px 1fr;
+        align-items: baseline;
+        font-size: 2.2rem;
+        line-height: 1.25;
+      }
+      .rows .dot { text-align: center; color: var(--muted); }
+      .rows.compact .row { font-size: 2.05rem; }
+      .separator {
+        margin: 10px 0;
+        border: 0;
+        border-top: 2px solid rgba(233, 240, 255, 0.4);
+      }
+      .status-icons {
+        margin-top: 6px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        min-height: 32px;
+      }
+      .status-icon {
+        width: 30px;
+        height: 30px;
+        image-rendering: pixelated;
+      }
+      .main-bottom {
+        margin-top: 12px;
+        border-top: 2px solid rgba(233, 240, 255, 0.26);
+        padding-top: 14px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px 30px;
+      }
+      .main-bottom .row {
+        display: grid;
+        grid-template-columns: 180px 40px 1fr;
+        font-size: 2.05rem;
+        line-height: 1.35;
+      }
+      .footer {
+        display: grid;
+        grid-template-columns: 1fr 1.7fr 1fr;
+        min-height: 86px;
+      }
+      .footer button {
+        width: 100%;
+        border: 0;
+        border-right: 2px solid rgba(233, 240, 255, 0.25);
+        border-left: 2px solid rgba(233, 240, 255, 0.25);
+        background: transparent;
+        color: var(--text);
+        font: inherit;
+        font-size: 2.1rem;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .footer .side { color: var(--muted); font-size: 1.25rem; }
+      .footer button:hover,
+      .footer button:focus-visible {
+        background: rgba(255, 255, 255, 0.07);
+        outline: none;
+      }
+      .help {
+        text-align: center;
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 1rem;
+      }
+      @media (max-width: 900px) {
+        .status-title { font-size: 1.6rem; width: 136px; }
+        .name { font-size: 2.3rem; }
+        .lv { font-size: 1.8rem; }
+        .rows .row,
+        .rows.compact .row,
+        .main-bottom .row,
+        .footer button { font-size: 1.45rem; }
+        .main-top { grid-template-columns: 130px 1fr; }
+        .portrait-frame { width: 120px; }
+      }
     </style>
   </head>
   <body>
-    <section class="window">
-      <h1>ステータス</h1>
-      <p>ステータス画面です。ここでステータス表示・確認を行います。</p>
-      <a href="/menu">← メニューへ戻る</a>
-    </section>
+    <main class="status-layout" id="statusScreen">
+      <section class="frame status-title">ステータス</section>
+
+      <section class="frame main-panel">
+        <div class="main-top">
+          <div class="portrait-frame">
+            <img id="memberPortrait" class="portrait" src="" alt="" />
+          </div>
+
+          <div>
+            <header class="stat-head">
+              <div id="memberName" class="name">-</div>
+              <div id="memberLv" class="lv">LV 1</div>
+            </header>
+
+            <div class="top-columns">
+              <div>
+                <div class="rows compact" id="basicStats"></div>
+                <div class="status-icons" id="statusIcons"></div>
+              </div>
+
+              <div>
+                <div class="rows compact" id="extraStats"></div>
+                <hr class="separator" />
+                <div class="rows compact" id="expStats"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <section class="main-bottom">
+          <div class="rows" id="leftGrowth"></div>
+          <div class="rows" id="rightGrowth"></div>
+        </section>
+
+        <p class="help" id="statusHelp">← →: キャラ切替 / Enter・Esc・Backspace: もどる</p>
+      </section>
+
+      <section class="frame footer">
+        <button type="button" class="side" id="prevBtn">◀</button>
+        <button type="button" id="backBtn">もどる</button>
+        <button type="button" class="side" id="nextBtn">▶</button>
+      </section>
+    </main>
+
+    <script id="initialMenuStateJson" type="application/json">{{ initial_menu_state | tojson }}</script>
+    <script>
+      const initialMenuStateNode = document.getElementById("initialMenuStateJson");
+      let menuState = { party: [] };
+      let idx = 0;
+
+      const memberPortrait = document.getElementById("memberPortrait");
+      const memberName = document.getElementById("memberName");
+      const memberLv = document.getElementById("memberLv");
+      const basicStats = document.getElementById("basicStats");
+      const extraStats = document.getElementById("extraStats");
+      const expStats = document.getElementById("expStats");
+      const leftGrowth = document.getElementById("leftGrowth");
+      const rightGrowth = document.getElementById("rightGrowth");
+      const statusIcons = document.getElementById("statusIcons");
+
+      function parseInitialState() {
+        try {
+          const parsed = JSON.parse(initialMenuStateNode.textContent || "{}");
+          if (parsed && typeof parsed === "object") {
+            menuState = parsed;
+          }
+        } catch (_error) {
+          menuState = { party: [] };
+        }
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+      function resolvePortraitUrl(portraitKey) {
+        return portraitKey ? `/assets/portraits/${encodeURIComponent(String(portraitKey))}` : "";
+      }
+      function resolveStatusIconUrl(iconKey) {
+        return iconKey ? `/assets/status-icons/${encodeURIComponent(String(iconKey))}.png` : "";
+      }
+      function rowHtml(label, value) {
+        return `<div class="row"><div>${escapeHtml(label)}</div><div class="dot">..</div><div>${escapeHtml(value)}</div></div>`;
+      }
+      function goMenu() {
+        window.location.assign("/menu");
+      }
+
+      function render() {
+        const party = Array.isArray(menuState?.party) ? menuState.party : [];
+        if (!party.length) {
+          memberName.textContent = "No party members";
+          memberLv.textContent = "LV -";
+          basicStats.innerHTML = "";
+          extraStats.innerHTML = "";
+          expStats.innerHTML = "";
+          leftGrowth.innerHTML = "";
+          rightGrowth.innerHTML = "";
+          statusIcons.innerHTML = "";
+          memberPortrait.removeAttribute("src");
+          return;
+        }
+
+        idx = ((idx % party.length) + party.length) % party.length;
+        const member = party[idx] || {};
+        const st = member.status || {};
+
+        memberName.textContent = String(member.name || "-");
+        memberLv.textContent = `LV ${Number(st.level || member.level || 0)}`;
+
+        const portraitUrl = resolvePortraitUrl(member.portrait_key);
+        if (portraitUrl) {
+          memberPortrait.src = portraitUrl;
+        } else {
+          memberPortrait.removeAttribute("src");
+        }
+        memberPortrait.alt = String(member.name || "member");
+
+        basicStats.innerHTML = [
+          rowHtml("HP", `${Number(st.hp || 0)} / ${Number(st.max_hp || 0)}`),
+          rowHtml("MP", String(st.mp_text || "0/0/0/0/0/0/0/0")),
+        ].join("");
+
+        extraStats.innerHTML = [
+          rowHtml("ジョブ", String(member.job || "-")),
+          rowHtml("じゅくれんど", Number(st.job_level || 0)),
+        ].join("");
+
+        expStats.innerHTML = [
+          rowHtml("けいけんち", Number(st.exp || 0)),
+          rowHtml("つぎのレベルまで", Number(st.exp_to_next || 0)),
+        ].join("");
+
+        const leftStats = [
+          ["ちから", Number(st.strength || 0)],
+          ["すばやさ", Number(st.agility || 0)],
+          ["たいりょく", Number(st.vitality || 0)],
+          ["ちせい", Number(st.intelligence || 0)],
+          ["せいしん", Number(st.mind || 0)],
+        ];
+        leftGrowth.innerHTML = leftStats.map(([k, v]) => rowHtml(k, v)).join("");
+
+        const rightStats = [
+          ["こうげき", `${Number(st.atk_times || 0)}かい  ${Number(st.atk_value || 0)}`],
+          ["めいちゅう", `${Number(st.acc_value || 0)}%`],
+          ["ぼうぎょ", `${Number(st.def_times || 0)}かい  ${Number(st.defense || 0)}`],
+          ["かいひりつ", `${Number(st.evasion_percent || 0)}%`],
+          ["まほうぼうぎょ", Number(st.magic_defense || 0)],
+          ["まほうかいひりつ", `${Number(st.magic_resistance || 0)}%`],
+          ["れつ", String(st.row_label || "FRONT")],
+        ];
+        rightGrowth.innerHTML = rightStats.map(([k, v]) => rowHtml(k, v)).join("");
+
+        const iconKeys = Array.isArray(st.status_icons) ? st.status_icons.filter((x) => typeof x === "string" && x) : [];
+        if (iconKeys.length > 0) {
+          statusIcons.innerHTML = iconKeys
+            .map((iconKey) => `<img class="status-icon" src="${resolveStatusIconUrl(iconKey)}" alt="${escapeHtml(iconKey)}" title="${escapeHtml(iconKey)}" loading="lazy" />`)
+            .join("");
+        } else {
+          statusIcons.innerHTML = `<span>${escapeHtml(st.status_line || "-")}</span>`;
+        }
+      }
+
+      function move(delta) {
+        idx += delta;
+        render();
+      }
+
+      document.getElementById("prevBtn").addEventListener("click", () => move(-1));
+      document.getElementById("nextBtn").addEventListener("click", () => move(1));
+      document.getElementById("backBtn").addEventListener("click", () => goMenu());
+
+      window.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowLeft") {
+          event.preventDefault();
+          move(-1);
+        } else if (event.key === "ArrowRight") {
+          event.preventDefault();
+          move(1);
+        } else if (event.key === "Escape" || event.key === "Backspace" || event.key === "Enter") {
+          event.preventDefault();
+          goMenu();
+        }
+      });
+
+      parseInitialState();
+      render();
+    </script>
   </body>
 </html>

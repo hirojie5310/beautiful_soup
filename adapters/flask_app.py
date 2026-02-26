@@ -25,6 +25,7 @@ from combat.magic_menu import build_party_magic_info, build_party_magic_lists
 from combat.magic_damage import healing_spell_kind
 from combat.runtime_state import init_runtime_state
 from combat.char_build import (
+    apply_job_equipment_restrictions,
     build_party_members_from_save,
     compute_character_final_stats,
 )
@@ -389,6 +390,148 @@ def _build_job_candidates_by_member(
     return rows
 
 
+def _canon_job_code(value: str) -> str:
+    return normalize_text_basic(value or "")
+
+
+JOB_NAME_TO_CODE_WEB: dict[str, str] = {
+    "Onion Knight": "OK",
+    "Warrior": "Wa",
+    "Monk": "Mo",
+    "White Mage": "WM",
+    "Black Mage": "BM",
+    "Red Mage": "RM",
+    "Ranger": "Ra",
+    "Knight": "Kn",
+    "Thief": "Th",
+    "Scholar": "Sc",
+    "Geomancer": "Ge",
+    "Dragoon": "Dr",
+    "Viking": "Vi",
+    "Black Belt": "BB",
+    "Evoker": "Ev",
+    "Bard": "Ba",
+    "Magus": "Ma",
+    "Devout": "De",
+    "Summoner": "Su",
+    "Sage": "Sa",
+    "Ninja": "Ni",
+    "Mystic Knight": "MK",
+}
+
+
+def _actor_job_code(member: Any) -> str:
+    job = getattr(member, "job", None)
+    slug = str(getattr(job, "slug", "") or "").strip()
+    if slug and len(slug) <= 3:
+        return slug
+    name = str(getattr(job, "name", "") or "").strip()
+    if name in JOB_NAME_TO_CODE_WEB:
+        return JOB_NAME_TO_CODE_WEB[name]
+    inv = {_canon_job_code(k): v for k, v in JOB_NAME_TO_CODE_WEB.items()}
+    name_norm = _canon_job_code(name)
+    if name_norm in inv:
+        return inv[name_norm]
+    return slug or name
+
+
+def _item_allowed_for_member(member: Any, item_raw: dict[str, Any]) -> bool:
+    equipped_by = item_raw.get("EquippedBy") if isinstance(item_raw, dict) else None
+    if not isinstance(equipped_by, list) or not equipped_by:
+        return True
+    actor_code = _canon_job_code(_actor_job_code(member))
+    allow = {_canon_job_code(str(code)) for code in equipped_by}
+    return actor_code in allow
+
+
+def _is_two_handed_weapon(raw: dict[str, Any]) -> bool:
+    if not isinstance(raw, dict):
+        return False
+    hands = raw.get("Hands")
+    if isinstance(hands, int):
+        return hands >= 2
+    if isinstance(hands, str) and hands.isdigit():
+        return int(hands) >= 2
+    return bool(raw.get("TwoHanded"))
+
+
+def _build_equip_candidates_by_member(
+    session: BattleSession,
+) -> list[dict[str, list[dict[str, Any]]]]:
+    state = getattr(session, "state", None)
+    weapons = getattr(state, "weapons", {}) if state is not None else {}
+    armors = getattr(state, "armors", {}) if state is not None else {}
+    if not isinstance(weapons, dict):
+        weapons = {}
+    if not isinstance(armors, dict):
+        armors = {}
+
+    out: list[dict[str, list[dict[str, Any]]]] = []
+    slot_to_armor_type = {"head": "Helm", "body": "Armor", "arms": "Gloves"}
+
+    for member in getattr(session, "party_members", []):
+        by_slot: dict[str, list[dict[str, Any]]] = {}
+
+        for slot in ("main_hand", "off_hand"):
+            rows: list[dict[str, Any]] = [{"kind": "none", "name": None}]
+            for name, raw in weapons.items():
+                if not isinstance(name, str) or not isinstance(raw, dict):
+                    continue
+                if not _item_allowed_for_member(member, raw):
+                    continue
+                if slot == "off_hand" and _is_two_handed_weapon(raw):
+                    continue
+                rows.append(
+                    {
+                        "kind": "weapon",
+                        "name": name,
+                        "atk": _safe_int(raw.get("AttackPower", 0), 0),
+                        "acc": _safe_int(raw.get("HitRate", 0), 0),
+                    }
+                )
+
+            if slot == "off_hand":
+                for name, raw in armors.items():
+                    if not isinstance(name, str) or not isinstance(raw, dict):
+                        continue
+                    if str(raw.get("ArmorType", "")) != "Shield":
+                        continue
+                    if not _item_allowed_for_member(member, raw):
+                        continue
+                    rows.append(
+                        {
+                            "kind": "armor",
+                            "name": name,
+                            "def": _safe_int(raw.get("Defense", 0), 0),
+                            "eva": _safe_int(raw.get("EvasionPenalty", 0), 0),
+                        }
+                    )
+            by_slot[slot] = rows
+
+        for slot, armor_type in slot_to_armor_type.items():
+            rows = [{"kind": "none", "name": None}]
+            for name, raw in armors.items():
+                if not isinstance(name, str) or not isinstance(raw, dict):
+                    continue
+                if str(raw.get("ArmorType", "")) != armor_type:
+                    continue
+                if not _item_allowed_for_member(member, raw):
+                    continue
+                rows.append(
+                    {
+                        "kind": "armor",
+                        "name": name,
+                        "def": _safe_int(raw.get("Defense", 0), 0),
+                        "eva": _safe_int(raw.get("EvasionPenalty", 0), 0),
+                        "mdef": _safe_int(raw.get("MagicDefense", 0), 0),
+                    }
+                )
+            by_slot[slot] = rows
+
+        out.append(by_slot)
+    return out
+
+
 def _build_menu_state_payload(
     session: BattleSession,
     *,
@@ -408,6 +551,7 @@ def _build_menu_state_payload(
         ),
         "jobs": job_names,
         "job_candidates_by_member": _build_job_candidates_by_member(session, job_attr),
+        "equip_candidates_by_member": _build_equip_candidates_by_member(session),
         "resources": {"gil": gil, "cp": cp, "cp_max": 255},
     }
 
@@ -475,6 +619,8 @@ def _build_magic_spell_meta(session: BattleSession) -> dict[str, dict[str, Any]]
             "target_norm": target_norm,
             "can_select_all": can_select_all,
             "healing_type": str(healing_spell_kind(raw) or ""),
+            "type": str(raw.get("Type") or ""),
+            "level": _safe_int(raw.get("Level", 1), 1),
         }
     return rows
 
@@ -855,19 +1001,40 @@ def create_app(
 
     @app.get("/menu/magic")
     def menu_magic_page():
-        return render_template("menu_magic.html")
+        return render_template(
+            "menu_magic.html",
+            initial_menu_state=_build_menu_state_payload(
+                battle_session, job_attr=job_attr
+            ),
+            magic_spell_meta=_build_magic_spell_meta(battle_session),
+        )
 
     @app.get("/menu/equip")
     def menu_equip_page():
-        return render_template("menu_equip.html")
+        return render_template(
+            "menu_equip.html",
+            initial_menu_state=_build_menu_state_payload(
+                battle_session, job_attr=job_attr
+            ),
+        )
 
     @app.get("/menu/status")
     def menu_status_page():
-        return render_template("menu_status.html")
+        return render_template(
+            "menu_status.html",
+            initial_menu_state=_build_menu_state_payload(
+                battle_session, job_attr=job_attr
+            ),
+        )
 
     @app.get("/menu/job")
     def menu_job_page():
-        return render_template("menu_job.html")
+        return render_template(
+            "menu_job.html",
+            initial_menu_state=_build_menu_state_payload(
+                battle_session, job_attr=job_attr
+            ),
+        )
 
     @app.get("/assets/status-icons/<path:filename>")
     def get_status_icon(filename: str):
@@ -974,9 +1141,53 @@ def create_app(
         equipment = member.equipment if member.equipment is not None else EquipmentSet()
         member.equipment = equipment
         setattr(equipment, slot, item_name)
+        member.equipment, _removed_logs = apply_job_equipment_restrictions(
+            equipment, member.job
+        )
         member.stats = compute_character_final_stats(
             member.base,
             equipment,
+            battle_session.state.weapons,
+            battle_session.state.armors,
+            job_name=member.job.name,
+        )
+        sync_equipment_to_save(member, battle_session.state.save)
+        return (
+            jsonify(
+                {
+                    "ok": True,
+                    "menu_state": _build_menu_state_payload(
+                        battle_session, job_attr=job_attr
+                    ),
+                }
+            ),
+            200,
+        )
+
+    @app.post("/menu/unequip-all")
+    def post_menu_unequip_all():
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict):
+            raise InputValidationError("request body must be JSON object")
+
+        member_index = _require_int(payload, "member_index")
+        if member_index < 0 or member_index >= len(battle_session.party_members):
+            raise InputValidationError("member_index out of range")
+
+        member = battle_session.party_members[member_index]
+        equipment = member.equipment if member.equipment is not None else EquipmentSet()
+        member.equipment = equipment
+        equipment.main_hand = None
+        equipment.off_hand = None
+        equipment.head = None
+        equipment.body = None
+        equipment.arms = None
+        member.equipment, _removed_logs = apply_job_equipment_restrictions(
+            equipment, member.job
+        )
+        member.stats = compute_character_final_stats(
+            member.base,
+            member.equipment,
             battle_session.state.weapons,
             battle_session.state.armors,
             job_name=member.job.name,

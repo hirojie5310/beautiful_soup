@@ -5,18 +5,317 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>まほう</title>
     <style>
-      body { margin:0; background:#000; color:#eef1ff; font-family: "Segoe UI", "Hiragino Kaku Gothic ProN", sans-serif; display:flex; justify-content:center; padding:16px; }
-      .window { width:min(100vw,480px); border:2px solid #d9dde7; border-radius:10px; background:#143a86; padding:16px; }
-      h1 { margin:0 0 12px; font-size:24px; }
-      p { margin:0 0 14px; }
-      a { color:#d2defc; }
+      :root {
+        --bg: #04081d;
+        --panel: rgba(15, 23, 66, 0.94);
+        --panel-soft: rgba(22, 36, 95, 0.94);
+        --border: rgba(233, 240, 255, 0.72);
+        --text: #f4f7ff;
+        --muted: #c3cdec;
+        --accent: #ffe37f;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        font-family: "BIZ UDPGothic", "Yu Gothic UI", sans-serif;
+        background: radial-gradient(circle at 20% 0%, #1a2b84 0%, transparent 45%), var(--bg);
+      }
+      .magic-layout { width: min(980px, 100vw); min-height: 100vh; margin: 0 auto; padding: 10px; display: grid; grid-template-rows: auto auto 1fr auto auto; gap: 8px; }
+      .frame { border: 2px solid var(--border); border-radius: 12px; background: var(--panel); }
+      .tabs { display: grid; grid-template-columns: repeat(5, 1fr); min-height: 92px; }
+      .tab { border-right: 2px solid rgba(233,240,255,.2); display:grid; place-items:center; font-size: 1.95rem; font-weight: 700; }
+      .tab:last-child { border-right: 0; }
+      .tab.active { color: var(--accent); box-shadow: inset 0 0 0 2px rgba(255,227,127,.33); }
+      .member-strip { min-height: 84px; display:grid; grid-template-columns: 1fr 1fr; align-items:center; padding: 0 20px; font-size: 2rem; font-weight: 700; }
+      .magic-grid { background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.22)), var(--panel-soft); overflow: hidden; }
+      .grid-head, .grid-row { display: grid; grid-template-columns: 180px 120px repeat(4, 1fr); }
+      .grid-head > div, .grid-row > div { min-height: 84px; display:flex; align-items:center; padding: 0 14px; border-right: 2px solid rgba(233,240,255,.2); border-bottom: 2px solid rgba(233,240,255,.2); }
+      .grid-head > div:last-child, .grid-row > div:last-child { border-right: 0; }
+      .grid-head { color: var(--muted); font-size: 1.02rem; }
+      .grid-row { font-size: 2rem; }
+      .lv.sel, .spell.sel { box-shadow: inset 0 0 0 2px rgba(255,227,127,.5); }
+      .spell.disabled { color: #8d96b8; }
+      .target-pane { min-height: 92px; padding: 12px 18px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+      .target-card { border: 1px solid rgba(233,240,255,.25); border-radius: 8px; padding: 8px; display:grid; gap:4px; }
+      .target-card.sel { box-shadow: inset 0 0 0 2px rgba(255,227,127,.5); }
+      .desc { min-height: 78px; padding: 16px 20px; font-size: 2rem; }
+      .footer { display: grid; grid-template-columns: 1fr 1.7fr 1fr; min-height: 86px; }
+      .footer button { width: 100%; border: 0; border-right: 2px solid rgba(233,240,255,.25); border-left: 2px solid rgba(233,240,255,.25); background: transparent; color: var(--text); font: inherit; font-size: 2rem; font-weight: 700; cursor: pointer; }
+      .footer .side { color: var(--muted); font-size: 1.2rem; }
+      .help { text-align: center; color: var(--muted); font-size: .96rem; margin-top: 6px; }
+      @media (max-width: 900px) {
+        .tab { font-size: 1.35rem; }
+        .member-strip { font-size: 1.35rem; }
+        .grid-row { font-size: 1.28rem; }
+        .desc, .footer button { font-size: 1.35rem; }
+      }
     </style>
   </head>
   <body>
-    <section class="window">
-      <h1>まほう</h1>
-      <p>まほう画面です。ここで魔法関連処理を行います。</p>
-      <a href="/menu">← メニューへ戻る</a>
-    </section>
+    <main class="magic-layout" id="magicScreen">
+      <section class="frame tabs">
+        <div class="tab active">まほう</div>
+        <div class="tab">つかう</div>
+        <div class="tab">おぼえる</div>
+        <div class="tab">はずす</div>
+        <div class="tab">こうかん</div>
+      </section>
+
+      <section class="frame member-strip">
+        <div id="memberName">-</div>
+        <div id="memberJob">-</div>
+      </section>
+
+      <section class="frame magic-grid" id="magicGrid"></section>
+      <section class="frame target-pane" id="targetPane"></section>
+      <section class="frame desc" id="desc">-</section>
+
+      <section class="frame footer">
+        <button type="button" class="side" id="prevBtn">◀</button>
+        <button type="button" id="backBtn">もどる</button>
+        <button type="button" class="side" id="nextBtn">▶</button>
+      </section>
+      <p class="help" id="help">←→: キャラ切替 / ↑↓: レベル / Enter: 選択 / Backspace: 戻る</p>
+    </main>
+
+    <script id="initialMenuStateJson" type="application/json">{{ initial_menu_state | tojson }}</script>
+    <script id="magicSpellMetaJson" type="application/json">{{ magic_spell_meta | tojson }}</script>
+    <script>
+      const initialMenuStateNode = document.getElementById("initialMenuStateJson");
+      const magicSpellMetaNode = document.getElementById("magicSpellMetaJson");
+      let menuState = { party: [], magic_candidates_by_member: [] };
+      let magicMeta = {};
+
+      let memberIdx = 0;
+      let lvIdx = 1;
+      let mode = "level"; // level | spell | target
+      let spellSel = 0;
+      let targetSel = 0;
+
+      const memberName = document.getElementById("memberName");
+      const memberJob = document.getElementById("memberJob");
+      const magicGrid = document.getElementById("magicGrid");
+      const targetPane = document.getElementById("targetPane");
+      const desc = document.getElementById("desc");
+      const help = document.getElementById("help");
+
+      function parseInitialState() {
+        try {
+          const parsed = JSON.parse(initialMenuStateNode.textContent || "{}");
+          if (parsed && typeof parsed === "object") menuState = parsed;
+        } catch (_e) {
+          menuState = { party: [], magic_candidates_by_member: [] };
+        }
+        try {
+          const parsedMeta = JSON.parse(magicSpellMetaNode.textContent || "{}");
+          if (parsedMeta && typeof parsedMeta === "object") magicMeta = parsedMeta;
+        } catch (_e) {
+          magicMeta = {};
+        }
+      }
+
+      function currentMember() {
+        const party = Array.isArray(menuState?.party) ? menuState.party : [];
+        return party[memberIdx] || null;
+      }
+      function memberMagicList() {
+        const rows = Array.isArray(menuState?.magic_candidates_by_member)
+          ? menuState.magic_candidates_by_member[memberIdx] : [];
+        return Array.isArray(rows) ? rows : [];
+      }
+      function spellInfo(name) {
+        return magicMeta?.[name] || {};
+      }
+      function spellLevel(name) {
+        const lv = Number(spellInfo(name)?.level || spellInfo(name)?.Level || 1);
+        return Math.min(8, Math.max(1, Number.isFinite(lv) ? lv : 1));
+      }
+      function mpNowAtLv(member, lv) {
+        const statusMp = String(member?.status?.mp_text || "").split("/").map((x) => Number(String(x).trim() || 0));
+        const now = statusMp[lv - 1];
+        return Number.isFinite(now) ? now : 0;
+      }
+      function spellMark(name) {
+        const target = String(spellInfo(name)?.target || "");
+        const typ = String(spellInfo(name)?.type || "");
+        if (typ.includes("White")) return "〇";
+        if (typ.includes("Black")) return "●";
+        if (typ.includes("Summon")) return "◎";
+        return "・";
+      }
+      function spellsByLevel() {
+        const table = {1:[],2:[],3:[],4:[],5:[],6:[],7:[],8:[]};
+        for (const name of memberMagicList()) {
+          table[spellLevel(name)].push(name);
+        }
+        for (let lv = 1; lv <= 8; lv += 1) {
+          table[lv].sort((a,b) => String(a).localeCompare(String(b)));
+          table[lv] = table[lv].slice(0, 4);
+        }
+        return table;
+      }
+      function selectedSpellName() {
+        const rows = spellsByLevel()[lvIdx] || [];
+        const safe = Math.max(0, Math.min(spellSel, Math.max(rows.length - 1, 0)));
+        spellSel = safe;
+        return rows[safe] || null;
+      }
+      function needsTarget(name) {
+        const key = String(name || "").toLowerCase();
+        if (key === "raise" || key === "arise") return true;
+        const t = String(spellInfo(name)?.target_norm || "").toLowerCase();
+        return t.includes("ally") || t.includes("one");
+      }
+      function targetCandidates(name) {
+        const party = Array.isArray(menuState?.party) ? menuState.party : [];
+        const key = String(name || "").toLowerCase();
+        if (key === "raise" || key === "arise") {
+          const dead = party.map((m,i)=>({m,i})).filter(({m}) => Number(m?.hp || 0) <= 0).map(({i})=>i);
+          return dead.length ? dead : party.map((_,i)=>i);
+        }
+        const alive = party.map((m,i)=>({m,i})).filter(({m}) => Number(m?.hp || 0) > 0).map(({i})=>i);
+        return alive.length ? alive : party.map((_,i)=>i);
+      }
+      function goMenu() { window.location.assign("/menu"); }
+
+      function render() {
+        const party = Array.isArray(menuState?.party) ? menuState.party : [];
+        if (!party.length) {
+          memberName.textContent = "No party members";
+          memberJob.textContent = "-";
+          magicGrid.innerHTML = "";
+          targetPane.innerHTML = "";
+          return;
+        }
+        memberIdx = ((memberIdx % party.length) + party.length) % party.length;
+        const member = currentMember();
+        const byLv = spellsByLevel();
+
+        memberName.textContent = member?.name || "-";
+        memberJob.textContent = member?.job || "-";
+
+        let html = '<div class="grid-head"><div>LV</div><div>MP</div><div>まほう1</div><div>まほう2</div><div>まほう3</div><div>まほう4</div></div>';
+        for (let lv = 1; lv <= 8; lv += 1) {
+          const row = byLv[lv] || [];
+          html += `<div class="grid-row">`;
+          html += `<div class="lv ${mode === "level" && lvIdx === lv ? "sel" : ""}">LV ${lv}</div>`;
+          html += `<div>${mpNowAtLv(member, lv)}</div>`;
+          for (let col = 0; col < 4; col += 1) {
+            const nm = row[col] || "";
+            const canCast = nm ? mpNowAtLv(member, lv) >= 1 : false;
+            const sel = mode === "spell" && lvIdx === lv && spellSel === col;
+            html += `<div class="spell ${sel ? "sel" : ""} ${nm && !canCast ? "disabled" : ""}">${nm ? `${spellMark(nm)} ${nm}` : ""}</div>`;
+          }
+          html += `</div>`;
+        }
+        magicGrid.innerHTML = html;
+
+        const selected = selectedSpellName();
+        if (mode === "target" && selected) {
+          const cands = targetCandidates(selected);
+          targetSel = Math.max(0, Math.min(targetSel, Math.max(cands.length - 1, 0)));
+          targetPane.innerHTML = cands.map((partyIdx, i) => {
+            const m = party[partyIdx] || {};
+            return `<div class="target-card ${i === targetSel ? "sel" : ""}"><div>${m.name || "-"}</div><div>${Number(m.hp || 0)} / ${Number(m.max_hp || 0)}</div></div>`;
+          }).join("");
+        } else {
+          targetPane.innerHTML = '<div class="target-card">対象を選ぶ魔法で Enter を押すとここに表示されます。</div>';
+        }
+
+        const info = selected ? spellInfo(selected) : null;
+        desc.textContent = selected ? `${selected} ${info?.target ? ` / ${info.target}` : ""}` : "魔法を選択してください。";
+
+        if (mode === "level") help.textContent = "←→: キャラ切替 / ↑↓: レベル / Enter: 魔法選択 / Backspace: 戻る";
+        else if (mode === "spell") help.textContent = "↑↓: 魔法 / Enter: つかう / Backspace: レベルへ";
+        else help.textContent = "↑↓: 対象 / Enter: 決定 / Backspace: 魔法へ";
+      }
+
+      async function castSelected() {
+        const name = selectedSpellName();
+        if (!name) return;
+
+        if (needsTarget(name)) {
+          if (mode !== "target") {
+            mode = "target";
+            targetSel = 0;
+            render();
+            return;
+          }
+        }
+
+        let targetIndex = null;
+        if (mode === "target") {
+          const cands = targetCandidates(name);
+          targetIndex = cands[targetSel] ?? null;
+        }
+
+        const resp = await fetch('/menu/cast-magic', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ caster_index: memberIdx, spell_name: name, target_index: targetIndex }),
+        });
+        const body = await resp.json();
+        if (body?.menu_state) menuState = body.menu_state;
+        desc.textContent = body?.ok ? `${name} をとなえた。` : `${name} はつかえない。`;
+        mode = "level";
+        render();
+      }
+
+      function moveMember(delta) {
+        const party = Array.isArray(menuState?.party) ? menuState.party : [];
+        if (!party.length) return;
+        memberIdx = (memberIdx + delta + party.length) % party.length;
+        lvIdx = 1; spellSel = 0; targetSel = 0; mode = "level";
+        render();
+      }
+      function moveUpDown(delta) {
+        if (mode === "level") {
+          lvIdx = ((lvIdx - 1 + delta + 8) % 8) + 1;
+          spellSel = 0;
+        } else if (mode === "spell") {
+          const row = spellsByLevel()[lvIdx] || [];
+          if (row.length) spellSel = (spellSel + delta + row.length) % row.length;
+        } else {
+          const cands = targetCandidates(selectedSpellName());
+          if (cands.length) targetSel = (targetSel + delta + cands.length) % cands.length;
+        }
+        render();
+      }
+
+      document.getElementById('prevBtn').addEventListener('click', () => moveMember(-1));
+      document.getElementById('nextBtn').addEventListener('click', () => moveMember(1));
+      document.getElementById('backBtn').addEventListener('click', () => goMenu());
+
+      window.addEventListener('keydown', async (event) => {
+        if (event.key === 'ArrowLeft') { event.preventDefault(); moveMember(-1); }
+        else if (event.key === 'ArrowRight') { event.preventDefault(); moveMember(1); }
+        else if (event.key === 'ArrowUp') { event.preventDefault(); moveUpDown(-1); }
+        else if (event.key === 'ArrowDown') { event.preventDefault(); moveUpDown(1); }
+        else if (event.key === 'Enter') {
+          event.preventDefault();
+          if (mode === 'level') {
+            mode = 'spell';
+            spellSel = 0;
+            render();
+          } else {
+            await castSelected();
+          }
+        } else if (event.key === 'Backspace') {
+          event.preventDefault();
+          if (mode === 'target') mode = 'spell';
+          else if (mode === 'spell') mode = 'level';
+          else goMenu();
+          render();
+        } else if (event.key === 'Escape') {
+          event.preventDefault();
+          goMenu();
+        }
+      });
+
+      parseInitialState();
+      render();
+    </script>
   </body>
 </html>

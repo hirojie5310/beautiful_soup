@@ -5,18 +5,396 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ジョブ</title>
     <style>
-      body { margin:0; background:#000; color:#eef1ff; font-family: "Segoe UI", "Hiragino Kaku Gothic ProN", sans-serif; display:flex; justify-content:center; padding:16px; }
-      .window { width:min(100vw,480px); border:2px solid #d9dde7; border-radius:10px; background:#143a86; padding:16px; }
-      h1 { margin:0 0 12px; font-size:24px; }
-      p { margin:0 0 14px; }
-      a { color:#d2defc; }
+      :root {
+        --bg: #04081d;
+        --panel: rgba(15, 23, 66, 0.94);
+        --panel-soft: rgba(22, 36, 95, 0.94);
+        --border: rgba(233, 240, 255, 0.72);
+        --text: #f4f7ff;
+        --muted: #c3cdec;
+        --accent: #ffe37f;
+        --ok: #7cff94;
+        --ng: #ff8b8b;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        font-family: "BIZ UDPGothic", "Yu Gothic UI", sans-serif;
+        background: radial-gradient(circle at 20% 0%, #1a2b84 0%, transparent 45%), var(--bg);
+      }
+      .job-layout {
+        width: min(980px, 100vw);
+        min-height: 100vh;
+        margin: 0 auto;
+        padding: 10px;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        gap: 8px;
+      }
+      .frame {
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        background: var(--panel);
+      }
+      .job-title {
+        width: 138px;
+        padding: 14px 18px;
+        font-size: 2rem;
+        font-weight: 700;
+      }
+      .main-panel {
+        padding: 14px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.22)), var(--panel-soft);
+      }
+      .top-bar {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .member-title {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 700;
+      }
+      .cp {
+        color: var(--accent);
+        font-size: 1.45rem;
+        font-weight: 700;
+      }
+      .hint {
+        margin: 4px 0 10px;
+        color: var(--muted);
+        font-size: 0.98rem;
+      }
+      .content {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 10px;
+        min-height: 520px;
+      }
+      .jobs-pane,
+      .meta-pane {
+        border: 2px solid rgba(233, 240, 255, 0.35);
+        border-radius: 10px;
+        padding: 10px;
+        background: rgba(0, 0, 0, 0.15);
+      }
+      .jobs-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px 14px;
+      }
+      .job-item {
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        padding: 8px 9px;
+        background: rgba(0, 0, 0, 0.18);
+        color: var(--text);
+        text-align: left;
+        font: inherit;
+        cursor: pointer;
+        min-height: 74px;
+      }
+      .job-item.sel {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(255, 227, 127, 0.33) inset;
+      }
+      .job-item.cur {
+        border-color: rgba(124, 255, 148, 0.76);
+      }
+      .job-name { font-size: 1.2rem; font-weight: 700; }
+      .job-meta { font-size: 0.9rem; color: var(--muted); margin-top: 2px; }
+      .meta-title { margin: 0 0 8px; font-size: 1.1rem; color: var(--accent); }
+      .rows .row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        align-items: center;
+        padding: 4px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+      }
+      .rows .row:last-child { border-bottom: 0; }
+      .muted { color: var(--muted); }
+      .ok { color: var(--ok); }
+      .ng { color: var(--ng); }
+      .message {
+        margin-top: 10px;
+        min-height: 1.5rem;
+        color: var(--muted);
+      }
+      .footer {
+        display: grid;
+        grid-template-columns: 1fr 1.7fr 1fr;
+        min-height: 86px;
+      }
+      .footer button {
+        width: 100%;
+        border: 0;
+        border-right: 2px solid rgba(233, 240, 255, 0.25);
+        border-left: 2px solid rgba(233, 240, 255, 0.25);
+        background: transparent;
+        color: var(--text);
+        font: inherit;
+        font-size: 2rem;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .footer .side { color: var(--muted); font-size: 1.2rem; }
+      .footer button:hover,
+      .footer button:focus-visible {
+        background: rgba(255, 255, 255, 0.07);
+        outline: none;
+      }
+      @media (max-width: 900px) {
+        .content { grid-template-columns: 1fr; min-height: 0; }
+        .member-title { font-size: 1.6rem; }
+        .job-title { font-size: 1.6rem; width: 116px; }
+        .footer button { font-size: 1.45rem; }
+      }
     </style>
   </head>
   <body>
-    <section class="window">
-      <h1>ジョブ</h1>
-      <p>ジョブ画面です。ここでジョブ関連処理を行います。</p>
-      <a href="/menu">← メニューへ戻る</a>
-    </section>
+    <main class="job-layout" id="jobScreen">
+      <section class="frame job-title">ジョブ</section>
+
+      <section class="frame main-panel">
+        <div class="top-bar">
+          <h1 class="member-title" id="memberTitle">-</h1>
+          <div class="cp" id="cpText">CP 0/255</div>
+        </div>
+        <p class="hint">←→: キャラ切替 / ↑↓: ジョブ選択 / Enter: 決定 / Esc・Backspace: もどる</p>
+
+        <div class="content">
+          <section class="jobs-pane">
+            <div class="jobs-grid" id="jobsGrid"></div>
+          </section>
+
+          <aside class="meta-pane">
+            <h2 class="meta-title">選択ジョブ</h2>
+            <div class="rows" id="jobMeta"></div>
+            <div class="message" id="jobMessage"></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="frame footer">
+        <button type="button" class="side" id="prevMemberBtn">◀</button>
+        <button type="button" id="backBtn">もどる</button>
+        <button type="button" class="side" id="nextMemberBtn">▶</button>
+      </section>
+    </main>
+
+    <script id="initialMenuStateJson" type="application/json">{{ initial_menu_state | tojson }}</script>
+    <script>
+      const initialMenuStateNode = document.getElementById("initialMenuStateJson");
+      let menuState = { party: [], resources: {}, job_candidates_by_member: [] };
+      let memberIdx = 0;
+      let jobSelIdx = 0;
+
+      const memberTitle = document.getElementById("memberTitle");
+      const cpText = document.getElementById("cpText");
+      const jobsGrid = document.getElementById("jobsGrid");
+      const jobMeta = document.getElementById("jobMeta");
+      const jobMessage = document.getElementById("jobMessage");
+
+      function parseInitialState() {
+        try {
+          const parsed = JSON.parse(initialMenuStateNode.textContent || "{}");
+          if (parsed && typeof parsed === "object") menuState = parsed;
+        } catch (_error) {
+          menuState = { party: [], resources: {}, job_candidates_by_member: [] };
+        }
+      }
+
+      function rowsForMember() {
+        const rows = Array.isArray(menuState?.job_candidates_by_member)
+          ? menuState.job_candidates_by_member[memberIdx]
+          : [];
+        return Array.isArray(rows) ? rows : [];
+      }
+      function currentMember() {
+        const party = Array.isArray(menuState?.party) ? menuState.party : [];
+        return party[memberIdx] || null;
+      }
+      function currentRow() {
+        const rows = rowsForMember();
+        if (!rows.length) return null;
+        jobSelIdx = ((jobSelIdx % rows.length) + rows.length) % rows.length;
+        return rows[jobSelIdx] || null;
+      }
+      function clampSelectionToCurrentJob() {
+        const rows = rowsForMember();
+        const m = currentMember();
+        if (!rows.length || !m) {
+          jobSelIdx = 0;
+          return;
+        }
+        const i = rows.findIndex((r) => String(r?.job_name || "") === String(m.job || ""));
+        jobSelIdx = i >= 0 ? i : 0;
+      }
+      function fmt(value) { return String(value ?? "-"); }
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+      function goMenu() { window.location.assign("/menu"); }
+
+      function render() {
+        const party = Array.isArray(menuState?.party) ? menuState.party : [];
+        if (!party.length) {
+          memberTitle.textContent = "No party members";
+          cpText.textContent = "CP ???";
+          jobsGrid.innerHTML = "";
+          jobMeta.innerHTML = "";
+          jobMessage.textContent = "";
+          return;
+        }
+        memberIdx = ((memberIdx % party.length) + party.length) % party.length;
+
+        const cp = Number(menuState?.resources?.cp ?? 0);
+        const cpMax = Number(menuState?.resources?.cp_max ?? 255);
+        const m = currentMember();
+        const rows = rowsForMember();
+        const sel = currentRow();
+
+        memberTitle.textContent = `${fmt(m?.name)}   ${fmt(m?.job)}`;
+        cpText.textContent = `CP ${Number.isFinite(cp) ? cp : 0}/${Number.isFinite(cpMax) ? cpMax : 255}`;
+
+        jobsGrid.innerHTML = rows.map((row, i) => {
+          const isSel = i === jobSelIdx;
+          const isCur = !!row?.is_current;
+          const labelClass = Number(cp) >= Number(row?.required_cp ?? 0) ? "ok" : "ng";
+          return `<button type="button" class="job-item ${isSel ? "sel" : ""} ${isCur ? "cur" : ""}" data-job-index="${i}">
+            <div class="job-name">${isSel ? "▶ " : "　"}${escapeHtml(row?.job_name || "-")}${isCur ? " [E]" : ""}</div>
+            <div class="job-meta">Lv ${Number(row?.saved_job_level || 1)}</div>
+            <div class="job-meta ${labelClass}">CP ${Number(row?.required_cp || 0)}</div>
+          </button>`;
+        }).join("");
+
+        const canAfford = Number(cp) >= Number(sel?.required_cp ?? 0);
+        jobMeta.innerHTML = `
+          <div class="row"><div class="muted">ジョブ</div><div>${escapeHtml(sel?.job_name || "-")}</div></div>
+          <div class="row"><div class="muted">保存LV</div><div>${Number(sel?.saved_job_level || 1)}</div></div>
+          <div class="row"><div class="muted">必要CP</div><div class="${canAfford ? "ok" : "ng"}">${Number(sel?.required_cp || 0)}</div></div>
+          <div class="row"><div class="muted">現在CP</div><div>${Number(cp || 0)}</div></div>
+        `;
+
+        if (sel?.is_current) {
+          jobMessage.textContent = "現在のジョブです。";
+          jobMessage.className = "message muted";
+        } else if (!canAfford) {
+          jobMessage.textContent = "CP がたりません。";
+          jobMessage.className = "message ng";
+        } else {
+          jobMessage.textContent = "Enter でジョブを変更できます。";
+          jobMessage.className = "message ok";
+        }
+
+        jobsGrid.querySelectorAll(".job-item").forEach((el) => {
+          el.addEventListener("click", () => {
+            const i = Number(el.getAttribute("data-job-index") || 0);
+            if (Number.isFinite(i)) {
+              jobSelIdx = i;
+              render();
+            }
+          });
+          el.addEventListener("dblclick", async () => {
+            const i = Number(el.getAttribute("data-job-index") || 0);
+            if (Number.isFinite(i)) {
+              jobSelIdx = i;
+              await commitChange();
+            }
+          });
+        });
+      }
+
+      async function refreshState() {
+        const resp = await fetch("/menu/state");
+        menuState = await resp.json();
+      }
+
+      async function commitChange() {
+        const row = currentRow();
+        if (!row) return;
+        if (row.is_current) {
+          jobMessage.textContent = "現在のジョブです。";
+          jobMessage.className = "message muted";
+          return;
+        }
+
+        const resp = await fetch("/menu/change-job", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ member_index: memberIdx, job_name: row.job_name }),
+        });
+        const body = await resp.json();
+        if (body?.menu_state) menuState = body.menu_state;
+
+        if (body?.ok) {
+          clampSelectionToCurrentJob();
+          jobMessage.textContent = `${currentMember()?.name || "member"} のジョブを ${row.job_name} に変更しました。`;
+          jobMessage.className = "message ok";
+        } else if (body?.reason === "not_enough_cp") {
+          jobMessage.textContent = `CP不足: ${Number(body?.current_cp || 0)} / ${Number(body?.required_cp || 0)}`;
+          jobMessage.className = "message ng";
+        } else {
+          await refreshState();
+          jobMessage.textContent = "ジョブ変更に失敗しました。";
+          jobMessage.className = "message ng";
+        }
+        render();
+      }
+
+      function moveMember(delta) {
+        const party = Array.isArray(menuState?.party) ? menuState.party : [];
+        if (!party.length) return;
+        memberIdx = (memberIdx + delta + party.length) % party.length;
+        clampSelectionToCurrentJob();
+        render();
+      }
+      function moveJob(delta) {
+        const rows = rowsForMember();
+        if (!rows.length) return;
+        jobSelIdx = (jobSelIdx + delta + rows.length) % rows.length;
+        render();
+      }
+
+      document.getElementById("prevMemberBtn").addEventListener("click", () => moveMember(-1));
+      document.getElementById("nextMemberBtn").addEventListener("click", () => moveMember(1));
+      document.getElementById("backBtn").addEventListener("click", () => goMenu());
+
+      window.addEventListener("keydown", async (event) => {
+        if (event.key === "ArrowLeft") {
+          event.preventDefault();
+          moveMember(-1);
+        } else if (event.key === "ArrowRight") {
+          event.preventDefault();
+          moveMember(1);
+        } else if (event.key === "ArrowUp") {
+          event.preventDefault();
+          moveJob(-1);
+        } else if (event.key === "ArrowDown") {
+          event.preventDefault();
+          moveJob(1);
+        } else if (event.key === "Enter") {
+          event.preventDefault();
+          await commitChange();
+        } else if (event.key === "Escape" || event.key === "Backspace") {
+          event.preventDefault();
+          goMenu();
+        }
+      });
+
+      parseInitialState();
+      clampSelectionToCurrentJob();
+      render();
+    </script>
   </body>
 </html>
