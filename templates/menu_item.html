@@ -5,18 +5,395 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>アイテム</title>
     <style>
-      body { margin:0; background:#000; color:#eef1ff; font-family: "Segoe UI", "Hiragino Kaku Gothic ProN", sans-serif; display:flex; justify-content:center; padding:16px; }
-      .window { width:min(100vw,480px); border:2px solid #d9dde7; border-radius:10px; background:#143a86; padding:16px; }
-      h1 { margin:0 0 12px; font-size:24px; }
-      p { margin:0 0 14px; }
-      a { color:#d2defc; }
+      :root {
+        --bg: #04081d;
+        --panel: rgba(15, 23, 66, 0.94);
+        --panel-deep: rgba(7, 12, 37, 0.9);
+        --line: rgba(233, 240, 255, 0.45);
+        --line-strong: rgba(233, 240, 255, 0.7);
+        --text: #f4f7ff;
+        --muted: #b2bcdf;
+        --accent: #ffe37f;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        padding: 10px;
+        color: var(--text);
+        font-family: "BIZ UDPGothic", "Yu Gothic UI", sans-serif;
+        background: radial-gradient(circle at 20% 0%, #1a2b84 0%, transparent 45%), var(--bg);
+      }
+      .app {
+        width: min(100vw, 760px);
+        border: 2px solid var(--line-strong);
+        border-radius: 12px;
+        background: var(--panel);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        overflow: hidden;
+      }
+      .tabs {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        border-bottom: 2px solid var(--line-strong);
+      }
+      .tab {
+        min-height: 62px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: clamp(20px, 3vw, 38px);
+        font-weight: 700;
+        border-right: 1px solid var(--line);
+      }
+      .tab:last-child { border-right: 0; }
+      .tab.active {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent);
+        color: #fff;
+      }
+      .main {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        min-height: min(66vh, 860px);
+      }
+      .pane {
+        border-right: 1px solid var(--line-strong);
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .pane:last-child { border-right: 0; }
+      .row {
+        min-height: 84px;
+        border-bottom: 1px solid var(--line);
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        padding: 0 18px;
+        font-size: clamp(20px, 2.6vw, 34px);
+      }
+      .row.inactive { color: #7f88ab; }
+      .row.cursor { color: var(--accent); }
+      .target-card {
+        min-height: 120px;
+        border-bottom: 1px solid var(--line);
+        display: grid;
+        grid-template-columns: 92px 1fr;
+        align-items: center;
+        padding: 12px 16px;
+        gap: 12px;
+        font-size: clamp(20px, 2.6vw, 32px);
+      }
+      .target-card.cursor { outline: 2px solid rgba(255, 227, 127, 0.85); outline-offset: -2px; }
+      .target-card.disabled { color: #7f88ab; }
+      .portrait {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.35);
+      }
+      .desc {
+        border-top: 2px solid var(--line-strong);
+        border-bottom: 2px solid var(--line-strong);
+        padding: 18px;
+        font-size: clamp(24px, 2.8vw, 36px);
+        min-height: 88px;
+      }
+      .footer {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        min-height: 72px;
+      }
+      .help { padding: 0 14px; color: var(--muted); font-size: 14px; }
+      .back {
+        border-left: 1px solid var(--line);
+        min-width: 180px;
+        height: 100%;
+        display: grid;
+        place-items: center;
+        color: var(--text);
+        text-decoration: none;
+        font-size: clamp(24px, 2.8vw, 34px);
+      }
+      @media (max-width: 720px) {
+        .main { grid-template-columns: 1fr; }
+        .pane { border-right: 0; }
+        .tabs .tab:nth-child(n + 3) { display: none; }
+        .tabs { grid-template-columns: repeat(2, 1fr); }
+      }
     </style>
   </head>
   <body>
-    <section class="window">
-      <h1>アイテム</h1>
-      <p>アイテム画面です。ここでアイテム関連処理を行います。</p>
-      <a href="/menu">← メニューへ戻る</a>
-    </section>
+    <main class="app">
+      <header class="tabs">
+        <div class="tab active">アイテム</div>
+        <div class="tab">つかう</div>
+        <div class="tab">せいとん</div>
+        <div class="tab">だいじなもの</div>
+      </header>
+
+      <section class="main">
+        <div class="pane" id="itemPane"></div>
+        <div class="pane" id="targetPane"></div>
+      </section>
+
+      <section class="desc" id="description">-</section>
+      <footer class="footer">
+        <div class="help" id="help">↑ ↓: Select / Enter: OK / Esc: Back</div>
+        <a class="back" href="/menu">もどる</a>
+      </footer>
+    </main>
+
+    <script id="initialMenuStateJson" type="application/json">{{ initial_menu_state|tojson }}</script>
+    <script>
+      const itemPane = document.getElementById("itemPane");
+      const targetPane = document.getElementById("targetPane");
+      const description = document.getElementById("description");
+      const help = document.getElementById("help");
+      const initialMenuStateNode = document.getElementById("initialMenuStateJson");
+
+      const targetRequiredItems = new Set([
+        "potion", "hi potion", "hi-potion", "elixir", "antidote", "echo herbs", "mallet",
+        "maiden's kiss", "gold needle", "eye drops", "phoenix down",
+      ]);
+
+      let menuState = { party: [], inventory: [] };
+      let mode = "item";
+      let itemIdx = 0;
+      let targetIdx = 0;
+      let targetCandidates = [];
+
+      function parseInitialState() {
+        try {
+          menuState = JSON.parse(initialMenuStateNode.textContent || "{}");
+        } catch (_e) {
+          menuState = { party: [], inventory: [] };
+        }
+      }
+
+      function normalizeName(name) {
+        return String(name || "").trim().toLowerCase().replaceAll("　", " ").replace(/\s+/g, " ");
+      }
+
+      function needsTarget(name) {
+        return targetRequiredItems.has(normalizeName(name));
+      }
+
+      function resolvePortraitUrl(portraitKey) {
+        return portraitKey ? `/assets/portraits/${encodeURIComponent(String(portraitKey))}` : "";
+      }
+
+      function itemRows() {
+        const rows = Array.isArray(menuState.inventory) ? [...menuState.inventory] : [];
+        rows.sort((a, b) => String(a.name).localeCompare(String(b.name), "ja"));
+        return rows;
+      }
+
+      function parseStatusText(member) {
+        const line = String(member?.status?.status_line || "").toLowerCase();
+        return line;
+      }
+
+      function canAffect(itemName, member) {
+        const key = normalizeName(itemName);
+        const hp = Number(member?.hp || 0);
+        const maxHp = Number(member?.max_hp || 0);
+        const statusText = parseStatusText(member);
+        if (key === "potion" || key === "hi potion" || key === "hi-potion") return hp > 0 && hp < maxHp;
+        if (key === "elixir") return true;
+        if (key === "antidote") return statusText.includes("poison");
+        if (key === "eye drops") return statusText.includes("blind");
+        if (key === "echo herbs") return statusText.includes("silence");
+        if (key === "gold needle") return statusText.includes("petrify");
+        if (key === "phoenix down") return hp <= 0;
+        return true;
+      }
+
+      function buildTargetCandidates(itemName) {
+        const party = Array.isArray(menuState.party) ? menuState.party : [];
+        const key = normalizeName(itemName);
+        if (key === "phoenix down") {
+          const deadOnly = party.map((m, i) => ({ m, i })).filter(({ m }) => Number(m.hp || 0) <= 0).map(({ i }) => i);
+          return deadOnly.length ? deadOnly : party.map((_, i) => i);
+        }
+        const aliveOnly = party.map((m, i) => ({ m, i })).filter(({ m }) => Number(m.hp || 0) > 0).map(({ i }) => i);
+        return aliveOnly.length ? aliveOnly : party.map((_, i) => i);
+      }
+
+      function itemDescription(item) {
+        if (!item) return "アイテムがありません。";
+        const key = normalizeName(item.name);
+        if (key === "potion") return "HPを90かいふくする";
+        if (key === "hi potion" || key === "hi-potion") return "HPを360かいふくする";
+        if (key === "elixir") return "HP/MPをぜんかいふくする";
+        if (key === "phoenix down") return "せんとうふのうをかいふくする";
+        if (key === "antidote") return "どくをなおす";
+        if (key === "echo herbs") return "ちんもくをなおす";
+        if (key === "eye drops") return "くらやみをなおす";
+        if (key === "gold needle") return "せきかをなおす";
+        return `${item.name} をつかいます`;
+      }
+
+      function renderItems() {
+        const rows = itemRows();
+        itemIdx = Math.min(Math.max(itemIdx, 0), Math.max(rows.length - 1, 0));
+        itemPane.innerHTML = "";
+        for (let i = 0; i < Math.max(rows.length, 7); i++) {
+          const row = rows[i];
+          const rowEl = document.createElement("div");
+          rowEl.className = `row ${mode === "item" && i === itemIdx ? "cursor" : ""}`;
+          if (!row) {
+            rowEl.innerHTML = '<span>&nbsp;</span><span>&nbsp;</span>';
+          } else {
+            rowEl.innerHTML = `<span>💰 ${row.name}</span><strong>${row.count}</strong>`;
+            if (row.count <= 0) rowEl.classList.add("inactive");
+          }
+          itemPane.appendChild(rowEl);
+        }
+        description.textContent = itemDescription(rows[itemIdx]);
+      }
+
+      function renderTargets() {
+        const rows = itemRows();
+        const selectedItem = rows[itemIdx];
+        const party = Array.isArray(menuState.party) ? menuState.party : [];
+
+        if (mode === "target" && selectedItem) {
+          targetCandidates = buildTargetCandidates(selectedItem.name);
+          targetIdx = Math.min(Math.max(targetIdx, 0), Math.max(targetCandidates.length - 1, 0));
+        } else {
+          targetCandidates = [];
+          targetIdx = 0;
+        }
+
+        targetPane.innerHTML = "";
+        for (let i = 0; i < Math.max(party.length, 7); i++) {
+          const member = party[i];
+          const el = document.createElement("div");
+          el.className = "target-card";
+          if (!member) {
+            el.innerHTML = '<div></div><div>&nbsp;</div>';
+            targetPane.appendChild(el);
+            continue;
+          }
+
+          const portrait = resolvePortraitUrl(member.portrait_key);
+          const selectable = !selectedItem || canAffect(selectedItem.name, member);
+          if (!selectable) el.classList.add("disabled");
+
+          const selectedMemberIndex = targetCandidates[targetIdx];
+          if (mode === "target" && selectedMemberIndex === i) {
+            el.classList.add("cursor");
+          }
+          el.innerHTML = `
+            <div>${portrait ? `<img class="portrait" src="${portrait}" alt="${member.name}" />` : ""}</div>
+            <div>
+              <div>${member.name}</div>
+              <div>${member.hp} / ${member.max_hp}</div>
+            </div>
+          `;
+          targetPane.appendChild(el);
+        }
+      }
+
+      function render() {
+        renderItems();
+        renderTargets();
+        help.textContent = mode === "target" ? "↑ ↓: 対象選択 / Enter: 決定 / Esc: キャンセル" : "↑ ↓: Select / Enter: OK / Esc: Back";
+      }
+
+      async function useSelectedItem() {
+        const rows = itemRows();
+        const selectedItem = rows[itemIdx];
+        if (!selectedItem) return;
+
+        if (mode === "item") {
+          if (needsTarget(selectedItem.name)) {
+            mode = "target";
+            targetCandidates = buildTargetCandidates(selectedItem.name);
+            targetIdx = 0;
+            render();
+            return;
+          }
+          const resp = await fetch("/menu/use-item", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_index: 0, item_name: selectedItem.name, item_type: selectedItem.item_type }),
+          });
+          const body = await resp.json();
+          if (body?.menu_state) menuState = body.menu_state;
+          description.textContent = body?.ok ? `${selectedItem.name} をつかった。` : `${selectedItem.name} はつかえない。`;
+          render();
+          return;
+        }
+
+        if (mode === "target") {
+          const targetMemberIndex = targetCandidates[targetIdx];
+          const member = menuState.party[targetMemberIndex];
+          if (!canAffect(selectedItem.name, member)) {
+            description.textContent = "そのあいてにはこうかがない。";
+            return;
+          }
+          const resp = await fetch("/menu/use-item", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              user_index: 0,
+              item_name: selectedItem.name,
+              item_type: selectedItem.item_type,
+              target_index: targetMemberIndex,
+            }),
+          });
+          const body = await resp.json();
+          if (body?.menu_state) menuState = body.menu_state;
+          description.textContent = body?.ok ? `${member.name} に ${selectedItem.name} をつかった。` : `${selectedItem.name} はつかえない。`;
+          mode = "item";
+          targetCandidates = [];
+          render();
+        }
+      }
+
+      document.addEventListener("keydown", async (event) => {
+        const rows = itemRows();
+        if (event.key === "Escape" || event.key === "Backspace") {
+          event.preventDefault();
+          if (mode === "target") {
+            mode = "item";
+            targetCandidates = [];
+            render();
+          } else {
+            window.location.href = "/menu";
+          }
+          return;
+        }
+
+        if (event.key === "ArrowUp") {
+          event.preventDefault();
+          if (mode === "item") itemIdx = Math.max(0, itemIdx - 1);
+          else if (targetCandidates.length) targetIdx = (targetIdx - 1 + targetCandidates.length) % targetCandidates.length;
+          render();
+          return;
+        }
+
+        if (event.key === "ArrowDown") {
+          event.preventDefault();
+          if (mode === "item") itemIdx = Math.min(Math.max(rows.length - 1, 0), itemIdx + 1);
+          else if (targetCandidates.length) targetIdx = (targetIdx + 1) % targetCandidates.length;
+          render();
+          return;
+        }
+
+        if (event.key === "Enter") {
+          event.preventDefault();
+          await useSelectedItem();
+        }
+      });
+
+      parseInitialState();
+      render();
+    </script>
   </body>
 </html>

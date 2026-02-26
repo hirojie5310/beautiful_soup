@@ -846,7 +846,12 @@ def create_app(
 
     @app.get("/menu/item")
     def menu_item_page():
-        return render_template("menu_item.html")
+        return render_template(
+            "menu_item.html",
+            initial_menu_state=_build_menu_state_payload(
+                battle_session, job_attr=job_attr
+            ),
+        )
 
     @app.get("/menu/magic")
     def menu_magic_page():

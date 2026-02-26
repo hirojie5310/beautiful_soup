@@ -6,13 +6,13 @@
     <title>Field Menu</title>
     <style>
       :root {
-        --bg: #04143f;
-        --panel: #143a86;
-        --panel-deep: #102f6f;
-        --border: #d9dde7;
-        --text: #edf1ff;
-        --muted: #d6dcf1;
-        --accent: #a8dc91;
+        --bg: #04081d;
+        --panel: rgba(15, 23, 66, 0.94);
+        --panel-deep: rgba(7, 12, 37, 0.9);
+        --border: rgba(233, 240, 255, 0.7);
+        --text: #f4f7ff;
+        --muted: #b2bcdf;
+        --accent: #ffe37f;
       }
       * { box-sizing: border-box; }
       body {
@@ -20,8 +20,8 @@
         min-height: 100vh;
         display: flex;
         justify-content: center;
-        background: #000;
-        font-family: "Segoe UI", "Hiragino Kaku Gothic ProN", sans-serif;
+        background: radial-gradient(circle at 20% 0%, #1a2b84 0%, transparent 45%), var(--bg);
+        font-family: "BIZ UDPGothic", "Yu Gothic UI", sans-serif;
         color: var(--text);
         padding: 8px;
       }
@@ -32,7 +32,7 @@
         border: 2px solid var(--border);
         border-radius: 10px;
         background: var(--panel);
-        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
       }
       .top {
         display: grid;
@@ -47,16 +47,19 @@
         align-items: center;
         padding: 3px;
         border-radius: 8px;
+        background: rgba(0, 0, 0, 0.2);
       }
       .member-row + .member-row { margin-top: 4px; }
       .member-row.row-selected {
-        outline: 2px solid rgba(255, 255, 255, 0.75);
+        outline: 2px solid rgba(255, 227, 127, 0.9);
+        box-shadow: 0 0 0 2px rgba(255, 227, 127, 0.35);
       }
       .portrait-frame {
         width: 92px;
         height: 72px;
-        background: linear-gradient(to right, #3b72ba 22%, #f8f8f8 22%);
-        border: 1px solid #051c56;
+        background: linear-gradient(90deg, rgba(255, 227, 127, 0.25) 24%, rgba(255, 255, 255, 0.08) 24%);
+        border: 1px solid rgba(233, 240, 255, 0.45);
+        border-radius: 6px;
         overflow: hidden;
         display: flex;
         align-items: center;
@@ -72,10 +75,11 @@
         height: 64px;
         object-fit: cover;
         margin-left: 8px;
-        border: 1px solid rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        border-radius: 4px;
       }
       .name { font-size: 18px; font-weight: 700; line-height: 1.1; }
-      .job, .lv { font-size: 11px; line-height: 1.2; }
+      .job, .lv { font-size: 11px; line-height: 1.2; color: var(--muted); }
       .hp { font-size: 16px; color: var(--accent); line-height: 1.15; }
 
       .menu-side {
@@ -91,11 +95,12 @@
         font-size: 14px;
         line-height: 2;
       }
-      .menu-item.active { color: #fff; }
+      .menu-item.active { color: #fff; text-shadow: 0 0 8px rgba(255, 227, 127, 0.5); }
       .resource-panel {
         padding: 10px;
         font-size: 16px;
         line-height: 1.35;
+        background: var(--panel-deep);
       }
 
       .bottom {
@@ -107,13 +112,13 @@
         margin-top: 6px;
         min-height: 24px;
         font-size: 14px;
-        color: #f5f2c2;
+        color: var(--accent);
       }
       .toolbar {
         margin-bottom: 6px;
       }
       .toolbar a {
-        color: #d2defc;
+        color: var(--muted);
         font-size: 12px;
       }
     </style>
