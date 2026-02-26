@@ -35,7 +35,7 @@
       .portrait-frame { width: 150px; aspect-ratio: 1/1; border: 2px solid rgba(255,255,255,.28); background: rgba(0,0,0,.2); padding: 6px; }
       .portrait { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; background:#111; }
       .slots-grid { border: 2px solid rgba(233,240,255,.34); border-radius: 10px; overflow: hidden; display:grid; grid-template-columns: 1fr 1fr; }
-      .slot-cell { min-height: 68px; padding: 10px 12px; border-right: 2px solid rgba(233,240,255,.2); border-bottom: 2px solid rgba(233,240,255,.2); }
+      .slot-cell { min-height: 68px; padding: 10px 12px; border-right: 2px solid rgba(233,240,255,.2); border-bottom: 2px solid rgba(233,240,255,.2); cursor: pointer; }
       .slot-cell:nth-child(2n) { border-right: 0; }
       .slot-cell.sel { box-shadow: inset 0 0 0 2px rgba(255,227,127,.45); }
       .slot-label { color: var(--muted); font-size: 1rem; }
@@ -183,7 +183,7 @@
           } else {
             val = eq?.[slot] || "-";
           }
-          return `<div class="slot-cell ${sel ? "sel" : ""}"><div class="slot-label">${slotLabel[slot]}</div><div class="slot-val">${val}</div></div>`;
+          return `<div class="slot-cell ${sel ? "sel" : ""}" data-slot-index="${i}"><div class="slot-label">${slotLabel[slot]}</div><div class="slot-val">${val}</div></div>`;
         }).join("");
 
         const slot = slots[slotIdx] || "main_hand";
@@ -198,16 +198,11 @@
         }).join("");
 
         candidateGrid.querySelectorAll(".candidate").forEach((el) => {
-          el.onclick = () => {
+          el.onclick = async () => {
             const i = Number(el.getAttribute("data-candidate-index") || 0);
             candIdx = Number.isFinite(i) ? i : 0;
             mode = "candidate";
             render();
-          };
-          el.ondblclick = async () => {
-            const i = Number(el.getAttribute("data-candidate-index") || 0);
-            candIdx = Number.isFinite(i) ? i : 0;
-            mode = "candidate";
             await commitSelection();
           };
         });
@@ -297,7 +292,26 @@
 
       document.getElementById("prevBtn").addEventListener("click", () => moveMember(-1));
       document.getElementById("nextBtn").addEventListener("click", () => moveMember(1));
-      document.getElementById("backBtn").addEventListener("click", () => goMenu());
+      document.getElementById("backBtn").addEventListener("click", () => {
+        if (mode === "candidate") {
+          mode = "slot";
+          render();
+          return;
+        }
+        goMenu();
+      });
+
+      slotsGrid.addEventListener("click", async (event) => {
+        const slotCell = event.target.closest("[data-slot-index]");
+        if (!slotCell) return;
+        const nextSlotIdx = Number(slotCell.getAttribute("data-slot-index") || slotIdx);
+        if (!Number.isInteger(nextSlotIdx)) return;
+        slotIdx = Math.max(0, Math.min(slots.length - 1, nextSlotIdx));
+        mode = "slot";
+        candIdx = 0;
+        render();
+        await commitSelection();
+      });
 
       window.addEventListener("keydown", async (event) => {
         if (event.key === "ArrowLeft") { event.preventDefault(); moveMember(-1); }

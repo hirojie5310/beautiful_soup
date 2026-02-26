@@ -36,6 +36,7 @@
       .grid-head { color: var(--muted); font-size: 1.02rem; }
       .grid-row { font-size: 2rem; }
       .lv.sel, .spell.sel { box-shadow: inset 0 0 0 2px rgba(255,227,127,.5); }
+      .lv, .spell, .target-card { cursor: pointer; }
       .spell.disabled { color: #8d96b8; }
       .target-pane { min-height: 92px; padding: 12px 18px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
       .target-card { border: 1px solid rgba(233,240,255,.25); border-radius: 8px; padding: 8px; display:grid; gap:4px; }
@@ -200,13 +201,13 @@
         for (let lv = 1; lv <= 8; lv += 1) {
           const row = byLv[lv] || [];
           html += `<div class="grid-row">`;
-          html += `<div class="lv ${mode === "level" && lvIdx === lv ? "sel" : ""}">LV ${lv}</div>`;
+          html += `<div class="lv ${mode === "level" && lvIdx === lv ? "sel" : ""}" data-lv="${lv}">LV ${lv}</div>`;
           html += `<div>${mpNowAtLv(member, lv)}</div>`;
           for (let col = 0; col < 4; col += 1) {
             const nm = row[col] || "";
             const canCast = nm ? mpNowAtLv(member, lv) >= 1 : false;
             const sel = mode === "spell" && lvIdx === lv && spellSel === col;
-            html += `<div class="spell ${sel ? "sel" : ""} ${nm && !canCast ? "disabled" : ""}">${nm ? `${spellMark(nm)} ${nm}` : ""}</div>`;
+            html += `<div class="spell ${sel ? "sel" : ""} ${nm && !canCast ? "disabled" : ""}" data-lv="${lv}" data-col="${col}" data-spell-name="${nm}">${nm ? `${spellMark(nm)} ${nm}` : ""}</div>`;
           }
           html += `</div>`;
         }
@@ -218,7 +219,7 @@
           targetSel = Math.max(0, Math.min(targetSel, Math.max(cands.length - 1, 0)));
           targetPane.innerHTML = cands.map((partyIdx, i) => {
             const m = party[partyIdx] || {};
-            return `<div class="target-card ${i === targetSel ? "sel" : ""}"><div>${m.name || "-"}</div><div>${Number(m.hp || 0)} / ${Number(m.max_hp || 0)}</div></div>`;
+            return `<div class="target-card ${i === targetSel ? "sel" : ""}" data-target-pos="${i}"><div>${m.name || "-"}</div><div>${Number(m.hp || 0)} / ${Number(m.max_hp || 0)}</div></div>`;
           }).join("");
         } else {
           targetPane.innerHTML = '<div class="target-card">対象を選ぶ魔法で Enter を押すとここに表示されます。</div>';
@@ -286,7 +287,53 @@
 
       document.getElementById('prevBtn').addEventListener('click', () => moveMember(-1));
       document.getElementById('nextBtn').addEventListener('click', () => moveMember(1));
-      document.getElementById('backBtn').addEventListener('click', () => goMenu());
+      document.getElementById('backBtn').addEventListener('click', () => {
+        if (mode === 'target') mode = 'spell';
+        else if (mode === 'spell') mode = 'level';
+        else goMenu();
+        render();
+      });
+
+
+      magicGrid.addEventListener('click', async (event) => {
+        const lvEl = event.target.closest('[data-lv]');
+        const spellEl = event.target.closest('[data-spell-name]');
+
+        if (spellEl) {
+          const spellName = String(spellEl.dataset.spellName || '');
+          if (!spellName) return;
+          const nextLv = Number(spellEl.dataset.lv || lvIdx);
+          const nextCol = Number(spellEl.dataset.col || 0);
+          if (!Number.isInteger(nextLv) || !Number.isInteger(nextCol)) return;
+          lvIdx = Math.min(8, Math.max(1, nextLv));
+          spellSel = Math.max(0, Math.min(3, nextCol));
+          mode = 'spell';
+          render();
+          await castSelected();
+          return;
+        }
+
+        if (lvEl) {
+          const nextLv = Number(lvEl.dataset.lv || lvIdx);
+          if (!Number.isInteger(nextLv)) return;
+          lvIdx = Math.min(8, Math.max(1, nextLv));
+          spellSel = 0;
+          if (mode === 'target') mode = 'spell';
+          else mode = 'level';
+          render();
+        }
+      });
+
+      targetPane.addEventListener('click', async (event) => {
+        if (mode !== 'target') return;
+        const targetEl = event.target.closest('[data-target-pos]');
+        if (!targetEl) return;
+        const nextPos = Number(targetEl.dataset.targetPos || targetSel);
+        if (!Number.isInteger(nextPos)) return;
+        targetSel = nextPos;
+        render();
+        await castSelected();
+      });
 
       window.addEventListener('keydown', async (event) => {
         if (event.key === 'ArrowLeft') { event.preventDefault(); moveMember(-1); }
