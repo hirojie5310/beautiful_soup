@@ -36,7 +36,7 @@
     <main class="magic-layout" id="magicScreen">
       <section class="frame tabs" id="tabs">
         <div class="tab">まほう</div>
-        <div class="tab">つかう</div>
+        <div class="tab" data-action="use">つかう</div>
         <div class="tab active" data-action="learn">おぼえる</div>
         <div class="tab" data-action="remove">はずす</div>
         <div class="tab" data-action="swap">こうかん</div>
@@ -121,15 +121,28 @@
           stockPane.innerHTML = stock.length
             ? stock.map((name, i) => `<div class="stock ${phase === "stock" && i === stockSel ? "sel" : ""}" data-stock="${i}">${name}</div>`).join("")
             : '<div class="stock">このLvに在庫はありません。</div>';
-        } else if (action === "swap" && phase === "target") {
+        } else if ((action === "swap" || action === "use") && phase === "target") {
           targetSel = Math.max(0, Math.min(targetSel, Math.max(party.length - 1, 0)));
           stockPane.innerHTML = party.map((m, i) => `<div class="target-card ${i === targetSel ? "sel" : ""}" data-target="${i}"><div>${m.name || "-"}</div><div>${m.job || "-"}</div></div>`).join("");
         } else {
           stockPane.innerHTML = '<div class="stock">操作モードに応じてここに候補が表示されます。</div>';
         }
 
-        desc.textContent = `モード: ${action === "learn" ? "おぼえる" : action === "remove" ? "はずす" : "こうかん"} / LV${lvIdx}`;
-        help.textContent = action === "learn" ? "Enter: スロット→ストック→実行" : action === "remove" ? "Enter: スロットを外す" : "Enter: スロット→交換先";
+        const modeLabel = action === "learn"
+          ? "おぼえる"
+          : action === "use"
+            ? "つかう"
+            : action === "remove"
+              ? "はずす"
+              : "こうかん";
+        desc.textContent = `モード: ${modeLabel} / LV${lvIdx}`;
+        help.textContent = action === "learn"
+          ? "Enter: スロット→ストック→実行"
+          : action === "use"
+            ? "Enter: スロット→対象→使用"
+            : action === "remove"
+              ? "Enter: スロットを外す"
+              : "Enter: スロット→交換先";
       }
 
       async function api(path, payload) {
@@ -146,6 +159,21 @@
           const spell = stock[stockSel];
           if (!spell) return;
           await api("/menu/magic/learn", { member_index: memberIdx, level: lvIdx, slot_index: slotSel, spell_name: spell });
+          phase = "slot";
+          render();
+          return;
+        }
+        if (action === "use") {
+          const row = equippedByMember(memberIdx, lvIdx);
+          const spell = row[slotSel];
+          if (!spell) return;
+          if (phase === "slot") { phase = "target"; render(); return; }
+          await api("/menu/magic/use", {
+            caster_index: memberIdx,
+            level: lvIdx,
+            slot_index: slotSel,
+            target_index: targetSel,
+          });
           phase = "slot";
           render();
           return;

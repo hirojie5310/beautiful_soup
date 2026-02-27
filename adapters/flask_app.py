@@ -1311,6 +1311,75 @@ def create_app(
             200,
         )
 
+    @app.post("/menu/magic/use")
+    def post_menu_magic_use():
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict):
+            raise InputValidationError("request body must be JSON object")
+
+        caster_index = _require_int(payload, "caster_index")
+        level = _require_int(payload, "level")
+        slot_index = _require_int(payload, "slot_index")
+        target_index = _require_int(payload, "target_index")
+
+        setup = _ensure_menu_magic_setup(battle_session)
+        equipped = setup.get("equipped_by_member", [])
+
+        if caster_index < 0 or caster_index >= len(equipped):
+            raise InputValidationError("caster_index out of range")
+        if level < 1 or level > 8:
+            raise InputValidationError("level out of range")
+        if slot_index < 0 or slot_index > 2:
+            raise InputValidationError("slot_index out of range")
+        if target_index < 0 or target_index >= len(battle_session.party_members):
+            raise InputValidationError("target_index out of range")
+
+        lv_key = str(level)
+        row = equipped[caster_index].get(lv_key, [None, None, None])
+        spell_name = row[slot_index]
+        if not isinstance(spell_name, str) or not spell_name:
+            return (
+                jsonify(
+                    {
+                        "ok": False,
+                        "menu_state": _build_menu_state_payload(
+                            battle_session, job_attr=job_attr
+                        ),
+                    }
+                ),
+                200,
+            )
+
+        def _build_magic_fn(member_index: int) -> list[tuple[str, int, int]]:
+            member_rows = equipped[member_index]
+            out: list[tuple[str, int, int]] = []
+            for lv in range(1, 9):
+                spells = member_rows.get(str(lv), [None, None, None])
+                for slot_spell in spells:
+                    if isinstance(slot_spell, str) and slot_spell:
+                        out.append((slot_spell, lv, 1))
+            return out
+
+        cast_magic = make_cast_field_magic_fn(
+            party=battle_session.party_members,
+            spells_by_name=battle_session.spells_expanded,
+            build_magic_fn=_build_magic_fn,
+            save_dict=battle_session.state.save,
+        )
+
+        ok = cast_magic(caster_index, spell_name, target_index)
+        return (
+            jsonify(
+                {
+                    "ok": ok,
+                    "menu_state": _build_menu_state_payload(
+                        battle_session, job_attr=job_attr
+                    ),
+                }
+            ),
+            200,
+        )
+
     @app.post("/menu/change-equipment")
     def post_menu_change_equipment():
         payload = request.get_json(silent=True)
