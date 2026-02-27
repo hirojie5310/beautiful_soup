@@ -328,6 +328,11 @@
           jobMessage.className = "message muted";
           return;
         }
+        if (!window.confirm(`${row.job_name}にジョブチェンジしますか？`)) {
+          jobMessage.textContent = "ジョブチェンジをやめた。";
+          jobMessage.className = "message muted";
+          return;
+        }
 
         const resp = await fetch("/menu/change-job", {
           method: "POST",

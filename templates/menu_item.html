@@ -315,12 +315,18 @@
         const selectedItem = rows[itemIdx];
         if (!selectedItem) return;
 
+        const confirmUse = (itemName) => window.confirm(`${itemName}を使用しますか？`);
+
         if (mode === "item") {
           if (needsTarget(selectedItem.name)) {
             mode = "target";
             targetCandidates = buildTargetCandidates(selectedItem.name);
             targetIdx = 0;
             render();
+            return;
+          }
+          if (!confirmUse(selectedItem.name)) {
+            description.textContent = "つかうのをやめた。";
             return;
           }
           const resp = await fetch("/menu/use-item", {
@@ -340,6 +346,13 @@
           const member = menuState.party[targetMemberIndex];
           if (!canAffect(selectedItem.name, member)) {
             description.textContent = "そのあいてにはこうかがない。";
+            return;
+          }
+          if (!confirmUse(selectedItem.name)) {
+            description.textContent = "つかうのをやめた。";
+            mode = "item";
+            targetCandidates = [];
+            render();
             return;
           }
           const resp = await fetch("/menu/use-item", {

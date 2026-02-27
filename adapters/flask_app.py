@@ -543,12 +543,14 @@ def _build_menu_state_payload(
     job_names = sorted(jobs.keys()) if isinstance(jobs, dict) else []
     gil = _safe_int(save.get("gil", 0), 0) if isinstance(save, dict) else 0
     cp = _safe_int(save.get("CP", 0), 0) if isinstance(save, dict) else 0
+    menu_magic_setup = _ensure_menu_magic_setup(session)
     return {
         "party": _build_party_menu_snapshot(session),
         "inventory": _build_inventory_snapshot(session),
         "magic_candidates_by_member": _build_magic_command_candidates_by_member(
             session
         ),
+        "magic_setup": menu_magic_setup,
         "jobs": job_names,
         "job_candidates_by_member": _build_job_candidates_by_member(session, job_attr),
         "equip_candidates_by_member": _build_equip_candidates_by_member(session),
@@ -623,6 +625,51 @@ def _build_magic_spell_meta(session: BattleSession) -> dict[str, dict[str, Any]]
             "level": _safe_int(raw.get("Level", 1), 1),
         }
     return rows
+
+
+def _ensure_menu_magic_setup(session: BattleSession) -> dict[str, Any]:
+    existing = getattr(session, "menu_magic_setup", None)
+    if isinstance(existing, dict):
+        return existing
+
+    spell_meta = _build_magic_spell_meta(session)
+    slots_by_level: dict[str, list[tuple[int, str]]] = {
+        str(lv): [] for lv in range(1, 9)
+    }
+
+    for name, info in spell_meta.items():
+        level = _safe_int(info.get("level", 1), 1)
+        level = max(1, min(8, level))
+        magic_type = str(info.get("type") or "")
+        if "Black" in magic_type:
+            type_order = 0
+        elif "White" in magic_type:
+            type_order = 1
+        elif "Summon" in magic_type:
+            type_order = 2
+        else:
+            continue
+        slots_by_level[str(level)].append((type_order, name))
+
+    stock_by_level: dict[str, list[str]] = {}
+    for lv in range(1, 9):
+        grouped = sorted(slots_by_level[str(lv)], key=lambda row: (row[0], row[1]))
+        black = [name for typ, name in grouped if typ == 0][:3]
+        white = [name for typ, name in grouped if typ == 1][:3]
+        summon = [name for typ, name in grouped if typ == 2][:1]
+        stock_by_level[str(lv)] = black + white + summon
+
+    member_count = len(getattr(session, "party_members", []))
+    equipped_by_member = [
+        {str(lv): [None, None, None] for lv in range(1, 9)} for _ in range(member_count)
+    ]
+
+    setup = {
+        "stock_by_level": stock_by_level,
+        "equipped_by_member": equipped_by_member,
+    }
+    setattr(session, "menu_magic_setup", setup)
+    return setup
 
 
 def _build_battle_commands_by_member(
@@ -1111,6 +1158,151 @@ def create_app(
             jsonify(
                 {
                     "ok": ok,
+                    "menu_state": _build_menu_state_payload(
+                        battle_session, job_attr=job_attr
+                    ),
+                }
+            ),
+            200,
+        )
+
+    @app.post("/menu/magic/learn")
+    def post_menu_magic_learn():
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict):
+            raise InputValidationError("request body must be JSON object")
+
+        member_index = _require_int(payload, "member_index")
+        level = _require_int(payload, "level")
+        slot_index = _require_int(payload, "slot_index")
+        spell_name = _require_str(payload, "spell_name")
+
+        setup = _ensure_menu_magic_setup(battle_session)
+        stock = setup.get("stock_by_level", {})
+        equipped = setup.get("equipped_by_member", [])
+
+        if member_index < 0 or member_index >= len(equipped):
+            raise InputValidationError("member_index out of range")
+        if level < 1 or level > 8:
+            raise InputValidationError("level out of range")
+        if slot_index < 0 or slot_index > 2:
+            raise InputValidationError("slot_index out of range")
+
+        lv_key = str(level)
+        stock_row = stock.get(lv_key, [])
+        if spell_name not in stock_row:
+            raise InputValidationError("spell_name is not in stock")
+
+        row = equipped[member_index].get(lv_key, [None, None, None])
+        old = row[slot_index]
+        if isinstance(old, str) and old:
+            stock_row.append(old)
+        row[slot_index] = spell_name
+        if spell_name in stock_row:
+            stock_row.remove(spell_name)
+        equipped[member_index][lv_key] = row
+        stock[lv_key] = sorted(set(stock_row))
+
+        return (
+            jsonify(
+                {
+                    "ok": True,
+                    "menu_state": _build_menu_state_payload(
+                        battle_session, job_attr=job_attr
+                    ),
+                }
+            ),
+            200,
+        )
+
+    @app.post("/menu/magic/remove")
+    def post_menu_magic_remove():
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict):
+            raise InputValidationError("request body must be JSON object")
+
+        member_index = _require_int(payload, "member_index")
+        level = _require_int(payload, "level")
+        slot_index = _require_int(payload, "slot_index")
+
+        setup = _ensure_menu_magic_setup(battle_session)
+        stock = setup.get("stock_by_level", {})
+        equipped = setup.get("equipped_by_member", [])
+
+        if member_index < 0 or member_index >= len(equipped):
+            raise InputValidationError("member_index out of range")
+        if level < 1 or level > 8:
+            raise InputValidationError("level out of range")
+        if slot_index < 0 or slot_index > 2:
+            raise InputValidationError("slot_index out of range")
+
+        lv_key = str(level)
+        row = equipped[member_index].get(lv_key, [None, None, None])
+        old = row[slot_index]
+        if not isinstance(old, str) or not old:
+            return (
+                jsonify(
+                    {
+                        "ok": False,
+                        "menu_state": _build_menu_state_payload(
+                            battle_session, job_attr=job_attr
+                        ),
+                    }
+                ),
+                200,
+            )
+        row[slot_index] = None
+        equipped[member_index][lv_key] = row
+        stock_row = stock.get(lv_key, [])
+        stock_row.append(old)
+        stock[lv_key] = sorted(set(stock_row))
+
+        return (
+            jsonify(
+                {
+                    "ok": True,
+                    "menu_state": _build_menu_state_payload(
+                        battle_session, job_attr=job_attr
+                    ),
+                }
+            ),
+            200,
+        )
+
+    @app.post("/menu/magic/swap")
+    def post_menu_magic_swap():
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict):
+            raise InputValidationError("request body must be JSON object")
+
+        from_member_index = _require_int(payload, "from_member_index")
+        to_member_index = _require_int(payload, "to_member_index")
+        level = _require_int(payload, "level")
+        slot_index = _require_int(payload, "slot_index")
+
+        setup = _ensure_menu_magic_setup(battle_session)
+        equipped = setup.get("equipped_by_member", [])
+
+        if from_member_index < 0 or from_member_index >= len(equipped):
+            raise InputValidationError("from_member_index out of range")
+        if to_member_index < 0 or to_member_index >= len(equipped):
+            raise InputValidationError("to_member_index out of range")
+        if level < 1 or level > 8:
+            raise InputValidationError("level out of range")
+        if slot_index < 0 or slot_index > 2:
+            raise InputValidationError("slot_index out of range")
+
+        lv_key = str(level)
+        row_a = equipped[from_member_index].get(lv_key, [None, None, None])
+        row_b = equipped[to_member_index].get(lv_key, [None, None, None])
+        row_a[slot_index], row_b[slot_index] = row_b[slot_index], row_a[slot_index]
+        equipped[from_member_index][lv_key] = row_a
+        equipped[to_member_index][lv_key] = row_b
+
+        return (
+            jsonify(
+                {
+                    "ok": True,
                     "menu_state": _build_menu_state_payload(
                         battle_session, job_attr=job_attr
                     ),

@@ -79,8 +79,8 @@
       .lv { font-size: 2.2rem; font-weight: 700; }
       .top-columns {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px 26px;
+        grid-template-columns: 1fr;
+        gap: 10px;
       }
       .rows .row {
         display: grid;
@@ -113,8 +113,8 @@
         border-top: 2px solid rgba(233, 240, 255, 0.26);
         padding-top: 14px;
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px 30px;
+        grid-template-columns: 1fr;
+        gap: 8px;
       }
       .main-bottom .row {
         display: grid;
@@ -184,11 +184,8 @@
               <div>
                 <div class="rows compact" id="basicStats"></div>
                 <div class="status-icons" id="statusIcons"></div>
-              </div>
-
-              <div>
-                <div class="rows compact" id="extraStats"></div>
                 <hr class="separator" />
+                <div class="rows compact" id="extraStats"></div>
                 <div class="rows compact" id="expStats"></div>
               </div>
             </div>
@@ -197,7 +194,6 @@
 
         <section class="main-bottom">
           <div class="rows" id="leftGrowth"></div>
-          <div class="rows" id="rightGrowth"></div>
         </section>
 
         <p class="help" id="statusHelp">← →: キャラ切替 / Enter・Esc・Backspace: もどる</p>
@@ -223,7 +219,6 @@
       const extraStats = document.getElementById("extraStats");
       const expStats = document.getElementById("expStats");
       const leftGrowth = document.getElementById("leftGrowth");
-      const rightGrowth = document.getElementById("rightGrowth");
       const statusIcons = document.getElementById("statusIcons");
 
       function parseInitialState() {
@@ -267,7 +262,6 @@
           extraStats.innerHTML = "";
           expStats.innerHTML = "";
           leftGrowth.innerHTML = "";
-          rightGrowth.innerHTML = "";
           statusIcons.innerHTML = "";
           memberPortrait.removeAttribute("src");
           return;
@@ -303,16 +297,12 @@
           rowHtml("つぎのレベルまで", Number(st.exp_to_next || 0)),
         ].join("");
 
-        const leftStats = [
+        const growthStats = [
           ["ちから", Number(st.strength || 0)],
           ["すばやさ", Number(st.agility || 0)],
           ["たいりょく", Number(st.vitality || 0)],
           ["ちせい", Number(st.intelligence || 0)],
           ["せいしん", Number(st.mind || 0)],
-        ];
-        leftGrowth.innerHTML = leftStats.map(([k, v]) => rowHtml(k, v)).join("");
-
-        const rightStats = [
           ["こうげき", `${Number(st.atk_times || 0)}かい  ${Number(st.atk_value || 0)}`],
           ["めいちゅう", `${Number(st.acc_value || 0)}%`],
           ["ぼうぎょ", `${Number(st.def_times || 0)}かい  ${Number(st.defense || 0)}`],
@@ -321,7 +311,7 @@
           ["まほうかいひりつ", `${Number(st.magic_resistance || 0)}%`],
           ["れつ", String(st.row_label || "FRONT")],
         ];
-        rightGrowth.innerHTML = rightStats.map(([k, v]) => rowHtml(k, v)).join("");
+        leftGrowth.innerHTML = growthStats.map(([k, v]) => rowHtml(k, v)).join("");
 
         const iconKeys = Array.isArray(st.status_icons) ? st.status_icons.filter((x) => typeof x === "string" && x) : [];
         if (iconKeys.length > 0) {
