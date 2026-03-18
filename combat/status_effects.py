@@ -784,45 +784,95 @@ def calc_buff_hit_percent(base_acc_raw: float | int | None, mind: int) -> int:
     return int(round(hit_percent))
 
 
-# Haste / Protect 共通ヘルパ: Haste 系バフ適用
-def apply_haste_buff(
-    stats: FinalCharacterStats,
+def calc_haste_buff_amounts(
     *,
     base_power: float,
     base_factor: int,
-    mul_default: int,
+    target_magic_defense: int,
+    target_magic_def_multiplier: int,
+    target_magic_resistance_percent: int,
     rng: random.Random,
-) -> tuple[int, int, int, int]:
+    use_expectation: bool = False,
+) -> tuple[int, int]:
+    """
+    Haste の魔法式を物理へ転写するための加算量を返す。
+
+    戻り値:
+      - add_power: FAQ の「Final Damage」を物理 Base Damage 加算へ転写した値
+      - add_mul: FAQ の「M」を物理 Attack Multiplier 加算へ転写した値
+    """
+    if base_factor <= 0:
+        return 0, 0
+
+    magic_acc_percent = 100
+    hit_rate = magic_acc_percent / 100.0
+    resist_rate = max(0, min(target_magic_resistance_percent, 100)) / 100.0
+
+    if use_expectation:
+        net_hits = max(
+            base_factor * hit_rate - target_magic_def_multiplier * resist_rate,
+            0.0,
+        )
+        factor = 1.25
+    else:
+        attack_hits = sum(1 for _ in range(base_factor) if rng.random() < hit_rate)
+        evade_hits = sum(
+            1
+            for _ in range(max(target_magic_def_multiplier, 0))
+            if rng.random() < resist_rate
+        )
+        net_hits = float(max(attack_hits - evade_hits, 0))
+        factor = rng.uniform(1.0, 1.5)
+
+    if net_hits <= 0:
+        return 0, 0
+
+    base_damage = int(base_power * factor) - target_magic_defense
+    final_damage = max(int(base_damage * net_hits), 1)
+    return final_damage, int(net_hits if use_expectation else net_hits)
+
+
+# Haste / Protect 共通ヘルパ: Haste 系バフ適用
+def apply_haste_buff(
+    stats: FinalCharacterStats | FinalEnemyStats,
+    *,
+    base_power: float,
+    base_factor: int,
+    rng: random.Random,
+    target_magic_defense: int,
+    target_magic_def_multiplier: int,
+    target_magic_resistance_percent: int,
+) -> tuple[int, int, int, int, int, int]:
     """
     Haste 相当のバフを stats に適用し、
-    適用前の (main_pow, off_pow, main_mul, off_mul) を返す。
+    適用前後の値と FAQ 転写量を返す。
     """
-    base_amount = base_power * base_factor
-    rand_mul = 1.0 + rng.random() * 0.5
-    add_power = int(base_amount * rand_mul)
-    if add_power < 1:
-        add_power = 1
+    add_power, add_mul = calc_haste_buff_amounts(
+        base_power=base_power,
+        base_factor=base_factor,
+        target_magic_defense=target_magic_defense,
+        target_magic_def_multiplier=target_magic_def_multiplier,
+        target_magic_resistance_percent=target_magic_resistance_percent,
+        rng=rng,
+    )
 
-    add_mul = mul_default
-    if add_mul < 1:
-        add_mul = 1
+    old_power_bonus = getattr(stats, "haste_power_bonus", 0)
+    old_mul_bonus = getattr(stats, "haste_multiplier_bonus", 0)
 
-    old_main_pow = stats.main_power
-    old_off_pow = stats.off_power
-    old_main_mul = stats.main_atk_multiplier
-    old_off_mul = stats.off_atk_multiplier
+    new_power_bonus = min(255, old_power_bonus + add_power)
+    new_mul_bonus = min(16, old_mul_bonus + add_mul)
 
-    # 攻撃力 累積＆上限
-    stats.main_power = min(255, stats.main_power + add_power)
-    if stats.off_power > 0:
-        stats.off_power = min(255, stats.off_power + add_power)
+    stats.haste_power_bonus = new_power_bonus
+    stats.haste_multiplier_bonus = new_mul_bonus
 
-    # 攻撃回数 累積＆上限
-    stats.main_atk_multiplier = min(16, stats.main_atk_multiplier + add_mul)
-    if stats.off_atk_multiplier > 0:
-        stats.off_atk_multiplier = min(16, stats.off_atk_multiplier + add_mul)
-
-    return old_main_pow, old_off_pow, old_main_mul, old_off_mul
+    return (
+        old_power_bonus,
+        new_power_bonus,
+        old_mul_bonus,
+        new_mul_bonus,
+        add_power,
+        add_mul,
+    )
 
 
 # Haste / Protect 共通ヘルパ: Protect 系バフ適用

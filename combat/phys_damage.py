@@ -189,6 +189,9 @@ def physical_damage_char_to_enemy(
         if cheer_bonus > 0:
             atk_power += cheer_bonus
 
+    atk_power += getattr(char, "haste_power_bonus", 0)
+    atk_mul = min(16, atk_mul + getattr(char, "haste_multiplier_bonus", 0))
+
     if atk_power <= 0 or atk_mul <= 0:
         return AttackResult(damage=0, hit_count=0, is_critical=False)
 
@@ -268,7 +271,8 @@ def _calc_base_phys_damage_per_hit_enemy_to_char(
         if rng is None:
             rng = random.Random()
         factor = rng.uniform(1.0, 1.5)
-    raw = int(enemy.attack_power * factor)
+    attack_power = enemy.attack_power + getattr(enemy, "haste_power_bonus", 0)
+    raw = int(attack_power * factor)
     return raw - defense_value
 
 
@@ -332,6 +336,9 @@ def physical_damage_enemy_to_char(
             def_mul = 0
 
     hit_percent = _cap_physical_hit_percent(enemy.accuracy_percent)
+    attack_multiplier = min(
+        16, enemy.attack_multiplier + getattr(enemy, "haste_multiplier_bonus", 0)
+    )
     if attacker_is_blind:
         hit_percent //= 2
 
@@ -340,7 +347,7 @@ def physical_damage_enemy_to_char(
         hit_percent //= 2
 
     net_hits = _calc_net_hits(
-        atk_multiplier=enemy.attack_multiplier,
+        atk_multiplier=attack_multiplier,
         hit_percent=hit_percent,
         def_multiplier=def_mul,
         evade_percent=evade_percent,

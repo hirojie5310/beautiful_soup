@@ -822,19 +822,22 @@ def run_character_turn(
 
             base_factor = (mind // 16) + (L // 16) + (J // 32) + 1
             base_power = float(char_spell_json.get("BasePower", 5))
-            mul_default = base_factor
 
             (
-                old_main_pow,
-                old_off_pow,
-                old_main_mul,
-                old_off_mul,
+                old_power_bonus,
+                new_power_bonus,
+                old_mul_bonus,
+                new_mul_bonus,
+                add_power,
+                add_mul,
             ) = apply_haste_buff(
                 target_stats,
                 base_power=base_power,
                 base_factor=base_factor,
-                mul_default=mul_default,
                 rng=rng,
+                target_magic_defense=target_stats.magic_defense,
+                target_magic_def_multiplier=target_stats.magic_def_multiplier,
+                target_magic_resistance_percent=target_stats.magic_resistance,
             )
 
             remain = char_state.mp_pool[lvl]
@@ -843,19 +846,9 @@ def run_character_turn(
 
             logs.append(
                 f"{char_name}は{target_name}に《{spell_label}》を唱えた！ "
-                f"攻撃力 右手 {old_main_pow}→{target_stats.main_power}"
-                + (
-                    f" / 左手 {old_off_pow}→{target_stats.off_power}"
-                    if old_off_pow > 0
-                    else ""
-                )
-                + f"、攻撃回数 右手 {old_main_mul}→{target_stats.main_atk_multiplier}"
-                + (
-                    f" / 左手 {old_off_mul}→{target_stats.off_atk_multiplier}"
-                    if old_off_mul > 0
-                    else ""
-                )
-                + f" に上がった。 {suffix}"
+                f"物理加算値 {old_power_bonus}→{new_power_bonus}"
+                f"、攻撃回数加算 {old_mul_bonus}→{new_mul_bonus}"
+                f"（今回 +{add_power}, +{add_mul}）に上がった。 {suffix}"
             )
 
             dmg_to_enemy = 0
@@ -2670,21 +2663,33 @@ def run_enemy_turn(
                         dmg_to_char = 0
                         enemy_attack = None
                     else:
-                        # ★敵は main_power 等を持たない前提で、attack_multiplier を上げる
                         L = getattr(enemy_stats, "level", 1)
                         J = getattr(enemy_stats, "job_level", 0)
                         base_factor = (mind // 16) + (L // 16) + (J // 32) + 1
 
                         base_power = float((spell_def or {}).get("BasePower", 5) or 5)
-                        # ざっくり：base_factor を 1 以上上げる（運用に合わせて調整OK）
-                        # 例：BasePower に応じて上昇幅を増やす
-                        add = max(1, int(round(base_power / 5.0)))
-                        old_mul = int(getattr(enemy_stats, "attack_multiplier", 1))
-                        enemy_stats.attack_multiplier = max(1, old_mul + add)
+                        (
+                            old_power_bonus,
+                            new_power_bonus,
+                            old_mul_bonus,
+                            new_mul_bonus,
+                            add_power,
+                            add_mul,
+                        ) = apply_haste_buff(
+                            enemy_stats,
+                            base_power=base_power,
+                            base_factor=base_factor,
+                            rng=rng,
+                            target_magic_defense=enemy_stats.magic_defense,
+                            target_magic_def_multiplier=enemy_stats.magic_def_multiplier,
+                            target_magic_resistance_percent=enemy_stats.magic_resistance_percent,
+                        )
 
                         logs.append(
                             f"{enemy_name}は《Haste》を唱えた！ "
-                            f"攻撃回数が {old_mul}→{enemy_stats.attack_multiplier} に上がった。"
+                            f"物理加算値 {old_power_bonus}→{new_power_bonus}"
+                            f"、攻撃回数加算 {old_mul_bonus}→{new_mul_bonus}"
+                            f"（今回 +{add_power}, +{add_mul}）に上がった。"
                         )
 
                         dmg_to_char = 0

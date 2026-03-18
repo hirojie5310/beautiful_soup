@@ -109,34 +109,30 @@ def apply_item_effect_to_actor(
 
         base_power = float(spell_info.get("BasePower", 5))
 
-        # Bacchus's Cider の攻撃回数増加量（デフォルト3）
-        mul_default = int(spell_info.get("Multiplier") or 3)
-
-        # ✅ 実際の攻撃力・攻撃回数の更新は共通ヘルパへ
-        old_main_pow, old_off_pow, old_main_mul, old_off_mul = apply_haste_buff(
+        # ✅ FAQ 相当の Haste 転写量を共通ヘルパで算出・蓄積
+        (
+            old_power_bonus,
+            new_power_bonus,
+            old_mul_bonus,
+            new_mul_bonus,
+            add_power,
+            add_mul,
+        ) = apply_haste_buff(
             target_stats,
             base_power=base_power,
             base_factor=base_factor,
-            mul_default=mul_default,
             rng=rng,
+            target_magic_defense=target_stats.magic_defense,
+            target_magic_def_multiplier=target_stats.magic_def_multiplier,
+            target_magic_resistance_percent=target_stats.magic_resistance,
         )
 
         if logs is not None:
             logs.append(
                 f"{prefix} "
-                f"攻撃力 右手 {old_main_pow}→{target_stats.main_power}"
-                + (
-                    f" / 左手 {old_off_pow}→{target_stats.off_power}"
-                    if old_off_pow > 0
-                    else ""
-                )
-                + f"、攻撃回数 右手 {old_main_mul}→{target_stats.main_atk_multiplier}"
-                + (
-                    f" / 左手 {old_off_mul}→{target_stats.off_atk_multiplier}"
-                    if old_off_mul > 0
-                    else ""
-                )
-                + " に上がった。"
+                f"物理加算値 {old_power_bonus}→{new_power_bonus}"
+                f"、攻撃回数加算 {old_mul_bonus}→{new_mul_bonus}"
+                f"（今回 +{add_power}, +{add_mul}）に上がった。"
             )
 
         return

@@ -229,6 +229,10 @@ class FinalCharacterStats:
     main_weapon_elements: List[str] = field(default_factory=list)
     off_weapon_elements: List[str] = field(default_factory=list)
 
+    # 一時バフ: Haste の魔法式から転写される物理加算値
+    haste_power_bonus: int = 0
+    haste_multiplier_bonus: int = 0
+
 
 @dataclass
 class FinalEnemyStats:
@@ -256,6 +260,10 @@ class FinalEnemyStats:
 
     # 行動順決定用の「擬似 Agility」
     agility: int
+
+    # 一時バフ: Haste の魔法式から転写される物理加算値
+    haste_power_bonus: int = 0
+    haste_multiplier_bonus: int = 0
 
 
 # 魔法用構造体
