@@ -784,6 +784,29 @@ def calc_buff_hit_percent(base_acc_raw: float | int | None, mind: int) -> int:
     return int(round(hit_percent))
 
 
+def buff_target_magic_parameters(
+    *,
+    target_magic_defense: int,
+    target_magic_def_multiplier: int,
+    target_magic_resistance_percent: int,
+    target_is_friendly: bool,
+) -> tuple[int, int, int]:
+    """
+    FAQ の self-targetting に合わせた補助/回復用の魔法防御パラメータを返す。
+
+    味方対象の魔法では Step 4 で Magic Defense / Magic Defense Multiplier を 0 と
+    みなすため、Haste / Protect の転写量計算でも同じ補正を使う。
+    Magic Evade% 相当の耐性値は FAQ 記述どおりそのまま残す。
+    """
+    if target_is_friendly:
+        return 0, 0, target_magic_resistance_percent
+    return (
+        target_magic_defense,
+        target_magic_def_multiplier,
+        target_magic_resistance_percent,
+    )
+
+
 def calc_haste_buff_amounts(
     *,
     base_power: float,
@@ -875,34 +898,67 @@ def apply_haste_buff(
     )
 
 
+def calc_protect_buff_amount(
+    *,
+    base_power: float,
+    base_factor: int,
+    target_magic_defense: int,
+    target_magic_def_multiplier: int,
+    target_magic_resistance_percent: int,
+    rng: random.Random,
+    use_expectation: bool = False,
+) -> int:
+    """
+    FAQ の Safe / Protect 用に、Step1-6 相当の Final Damage を返す。
+
+    Haste と同様に魔法ダメージ式を経由し、その最終値を Defense / Magic Defense へ
+    同量加算する。
+    """
+    add_value, _ = calc_haste_buff_amounts(
+        base_power=base_power,
+        base_factor=base_factor,
+        target_magic_defense=target_magic_defense,
+        target_magic_def_multiplier=target_magic_def_multiplier,
+        target_magic_resistance_percent=target_magic_resistance_percent,
+        rng=rng,
+        use_expectation=use_expectation,
+    )
+    return add_value
+
+
 # Haste / Protect 共通ヘルパ: Protect 系バフ適用
 def apply_protect_buff(
-    target_stats: FinalCharacterStats,
+    target_stats: FinalCharacterStats | FinalEnemyStats,
     *,
     base_power: float,
     base_factor: int,
     rng: random.Random,
-) -> tuple[int, int]:
+    target_magic_defense: int,
+    target_magic_def_multiplier: int,
+    target_magic_resistance_percent: int,
+    use_expectation: bool = False,
+) -> tuple[int, int, int]:
     """
     Protect 系バフの効果量を計算して target_stats に反映するヘルパー。
 
-    ・防御力 / 魔法防御 を同じだけ上げる
-    ・加算値 = base_power * base_factor * (1.0〜1.5)
-    ・最低1、最大255でクランプ
-    戻り値は (適用前の defense, magic_defense)。
+    FAQ の Safe / Protect に合わせ、Step1-6 相当の Final Damage を Defense /
+    Magic Defense の両方へ同量加算する。戻り値は
+    (適用前の defense, magic_defense, 今回の加算値)。
     """
-    # 追加量 = BasePower * base_factor * (1〜1.5)
-    base_amount = base_power * base_factor
-    rand_mul = 1.0 + rng.random() * 0.5
-    add_value = int(base_amount * rand_mul)
-    if add_value < 1:
-        add_value = 1
+    add_value = calc_protect_buff_amount(
+        base_power=base_power,
+        base_factor=base_factor,
+        target_magic_defense=target_magic_defense,
+        target_magic_def_multiplier=target_magic_def_multiplier,
+        target_magic_resistance_percent=target_magic_resistance_percent,
+        rng=rng,
+        use_expectation=use_expectation,
+    )
 
     old_def = target_stats.defense
     old_mdef = target_stats.magic_defense
 
-    # 累積 & 上限255
     target_stats.defense = min(255, target_stats.defense + add_value)
     target_stats.magic_defense = min(255, target_stats.magic_defense + add_value)
 
-    return old_def, old_mdef
+    return old_def, old_mdef, add_value

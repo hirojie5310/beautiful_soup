@@ -75,12 +75,17 @@ tests/test_magic_damage_floor.py に回帰テストを追加・拡張し、キ�
    キャラの Haste 詠唱、敵の自己 Haste、Bacchus's Cider の Haste 相当処理を新しい転写ロジックに載せ替え、ログも「物理加算値 / 攻撃回数加算」を表示する形に更新しました。.
    Haste が基礎ステータスを破壊せず、転写ボーナスとして蓄積されて物理計算時に効くことを確認する回帰テストを追加しました。
 
-   - **Safe**: FAQ では Step1-6 相当の `Final Damage` を Defense / Magic Defense へ加算する。現状は Safe 系の補助概念はあるものの、FAQ の加算先・加算量を一貫して再現する専用処理が不足している可能性がある。
+   - **Safe (Protect)**: FAQ では Step1-6 相当の `Final Damage` を Defense / Magic Defense へ加算する。現状は Safe 系の補助概念はあるものの、FAQ の加算先・加算量を一貫して再現する専用処理が不足している可能性がある。
+
+   Protect/Safe 用に calc_protect_buff_amount() を追加し、従来の単純な base_power * base_factor * (1.0〜1.5) ではなく、FAQ の Step1-6 相当の魔法式から得た Final Damage を Defense / Magic Defense の加算量として使うようにしました。これにより Safe (Protect) の加算先と加算量が Haste と同じ転写ロジック基盤で一貫するようになりました。
+   キャラの Protect、敵の Protect、そして Turtle Shell の Protect 相当効果を、新しい Protect 転写ヘルパに接続しました。各処理で対象側の magic_defense / magic_def_multiplier / 魔法耐性を渡すようにし、ログにも今回の加算値を明示するよう更新しました。
+   味方対象の Haste / Protect / Safe 系転写で、FAQ の self-targetting どおり Magic Defense と Magic Defense Multiplier を 0 扱いにする buff_target_magic_parameters() を追加しました。これで、味方に Protect を掛けたときに対象自身の高い魔法防御のせいで +1 まで潰れる問題を防げます。
+   
    - **Kill のレベル閾値**: FAQ では `IF Target Level >= ((((Attacker Level)/2)*3)/2) THEN Hit%=0`。現状は通常の魔法命中式中心で、Kill 専用のレベル門番を明示した処理差し込みが必要。
-   - **Wall 反射**: FAQ では「次に受ける反射可能魔法を敵側へ跳ね返し、1回で消える」。現状は reflect 用の状態値は存在しても、FAQ 基準の対象判定・反射先・消費タイミングまで含む厳密再現かを個別確認する必要がある。
+   - **Wall (Reflect) 反射**: FAQ では「次に受ける反射可能魔法を敵側へ跳ね返し、1回で消える」。現状は reflect 用の状態値は存在しても、FAQ 基準の対象判定・反射先・消費タイミングまで含む厳密再現かを個別確認する必要がある。
    - **Terrain Backfire**: FAQ では Geomancer の Terrain が全対象で `M<=0` のとき `Ineffective` ではなく `Backfired` になり、使用者が `MaxHP/4` ダメージを受ける。現状は Terrain を黒魔法寄りに扱う前提はあるが、この専用失敗処理を独立に点検・実装する余地がある。
-   - **Cure4 単体全回復**: FAQ では単体対象時のみ全回復、複数対象時は通常計算。現状も近い実装はあるが、FAQ の単体/全体分岐と完全一致かは回復ルート全体で再確認したい。
-   - **WWind**: FAQ では `Final Damage` を使わず、成功時に HP を `(Spell Damage..Spell Damage*2)` に直接する特殊処理。通常ダメージ式とは別分岐が必要。
+   - **Cure4 (Curaja) 単体全回復**: FAQ では単体対象時のみ全回復、複数対象時は通常計算。現状も近い実装はあるが、FAQ の単体/全体分岐と完全一致かは回復ルート全体で再確認したい。
+   - **WWind (Tornado)**: FAQ では `Final Damage` を使わず、成功時に HP を `(Spell Damage..Spell Damage*2)` に直接する特殊処理。通常ダメージ式とは別分岐が必要。
    - **自分側対象時の防御0処理**: FAQ では味方への物理は Defense=0、味方への魔法は Magic Defense / Magic Defense Multiplier = 0。現状も一部同趣旨の処理はあるが、攻撃種別ごとに漏れなく統一されているか要確認。
 
 ## まとめ

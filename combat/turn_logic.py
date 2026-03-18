@@ -51,6 +51,7 @@ from combat.status_effects import (
     ff3_confused_self_dummy_enemy,
     ff3_confused_self_dummy_char,
     calc_buff_hit_percent,
+    buff_target_magic_parameters,
     apply_protect_buff,
     apply_haste_buff,
 )
@@ -760,12 +761,23 @@ def run_character_turn(
 
             base_factor = (mind // 16) + (L // 16) + (J // 32) + 1
             base_power = float(char_spell_json.get("BasePower", 5))
+            magic_defense, magic_def_multiplier, magic_resistance_percent = (
+                buff_target_magic_parameters(
+                    target_magic_defense=target_stats.magic_defense,
+                    target_magic_def_multiplier=target_stats.magic_def_multiplier,
+                    target_magic_resistance_percent=target_stats.magic_resistance,
+                    target_is_friendly=True,
+                )
+            )
 
-            old_def, old_mdef = apply_protect_buff(
+            old_def, old_mdef, add_value = apply_protect_buff(
                 target_stats,
                 base_power=base_power,
                 base_factor=base_factor,
                 rng=rng,
+                target_magic_defense=magic_defense,
+                target_magic_def_multiplier=magic_def_multiplier,
+                target_magic_resistance_percent=magic_resistance_percent,
             )
 
             remain = char_state.mp_pool[lvl]
@@ -775,7 +787,7 @@ def run_character_turn(
             logs.append(
                 f"{char_name}は{target_name}に《{spell_label}》を唱えた！ "
                 f"防御力 {old_def}→{target_stats.defense}、"
-                f"魔法防御 {old_mdef}→{target_stats.magic_defense} に上がった。 {suffix}"
+                f"魔法防御 {old_mdef}→{target_stats.magic_defense}（今回 +{add_value}）に上がった。 {suffix}"
             )
 
             dmg_to_enemy = 0
@@ -822,6 +834,14 @@ def run_character_turn(
 
             base_factor = (mind // 16) + (L // 16) + (J // 32) + 1
             base_power = float(char_spell_json.get("BasePower", 5))
+            magic_defense, magic_def_multiplier, magic_resistance_percent = (
+                buff_target_magic_parameters(
+                    target_magic_defense=target_stats.magic_defense,
+                    target_magic_def_multiplier=target_stats.magic_def_multiplier,
+                    target_magic_resistance_percent=target_stats.magic_resistance,
+                    target_is_friendly=True,
+                )
+            )
 
             (
                 old_power_bonus,
@@ -835,9 +855,9 @@ def run_character_turn(
                 base_power=base_power,
                 base_factor=base_factor,
                 rng=rng,
-                target_magic_defense=target_stats.magic_defense,
-                target_magic_def_multiplier=target_stats.magic_def_multiplier,
-                target_magic_resistance_percent=target_stats.magic_resistance,
+                target_magic_defense=magic_defense,
+                target_magic_def_multiplier=magic_def_multiplier,
+                target_magic_resistance_percent=magic_resistance_percent,
             )
 
             remain = char_state.mp_pool[lvl]
@@ -2669,6 +2689,16 @@ def run_enemy_turn(
 
                         base_power = float((spell_def or {}).get("BasePower", 5) or 5)
                         (
+                            magic_defense,
+                            magic_def_multiplier,
+                            magic_resistance_percent,
+                        ) = buff_target_magic_parameters(
+                            target_magic_defense=enemy_stats.magic_defense,
+                            target_magic_def_multiplier=enemy_stats.magic_def_multiplier,
+                            target_magic_resistance_percent=enemy_stats.magic_resistance_percent,
+                            target_is_friendly=True,
+                        )
+                        (
                             old_power_bonus,
                             new_power_bonus,
                             old_mul_bonus,
@@ -2680,9 +2710,9 @@ def run_enemy_turn(
                             base_power=base_power,
                             base_factor=base_factor,
                             rng=rng,
-                            target_magic_defense=enemy_stats.magic_defense,
-                            target_magic_def_multiplier=enemy_stats.magic_def_multiplier,
-                            target_magic_resistance_percent=enemy_stats.magic_resistance_percent,
+                            target_magic_defense=magic_defense,
+                            target_magic_def_multiplier=magic_def_multiplier,
+                            target_magic_resistance_percent=magic_resistance_percent,
                         )
 
                         logs.append(
@@ -2724,18 +2754,32 @@ def run_enemy_turn(
                         else:
                             base_power = 5.0
 
+                        (
+                            magic_defense,
+                            magic_def_multiplier,
+                            magic_resistance_percent,
+                        ) = buff_target_magic_parameters(
+                            target_magic_defense=enemy_stats.magic_defense,
+                            target_magic_def_multiplier=enemy_stats.magic_def_multiplier,
+                            target_magic_resistance_percent=enemy_stats.magic_resistance_percent,
+                            target_is_friendly=True,
+                        )
+
                         enemy_stats_any = cast(Any, enemy_stats)
-                        old_def, old_mdef = apply_protect_buff(
+                        old_def, old_mdef, add_value = apply_protect_buff(
                             enemy_stats_any,
                             base_power=base_power,
                             base_factor=base_factor,
                             rng=rng,
+                            target_magic_defense=magic_defense,
+                            target_magic_def_multiplier=magic_def_multiplier,
+                            target_magic_resistance_percent=magic_resistance_percent,
                         )
 
                         logs.append(
                             f"{enemy_name}は《Protect》を唱えた！ "
                             f"防御力 {old_def}→{enemy_stats.defense}、"
-                            f"魔法防御 {old_mdef}→{enemy_stats.magic_defense} に上がった。"
+                            f"魔法防御 {old_mdef}→{enemy_stats.magic_defense}（今回 +{add_value}）に上がった。"
                         )
                         dmg_to_char = 0
                         enemy_attack = None

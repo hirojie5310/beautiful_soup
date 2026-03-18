@@ -108,6 +108,14 @@ def apply_item_effect_to_actor(
         base_factor = (mind // 16) + (L // 16) + (J // 32) + 1
 
         base_power = float(spell_info.get("BasePower", 5))
+        magic_defense, magic_def_multiplier, magic_resistance_percent = (
+            buff_target_magic_parameters(
+                target_magic_defense=target_stats.magic_defense,
+                target_magic_def_multiplier=target_stats.magic_def_multiplier,
+                target_magic_resistance_percent=target_stats.magic_resistance,
+                target_is_friendly=True,
+            )
+        )
 
         # ✅ FAQ 相当の Haste 転写量を共通ヘルパで算出・蓄積
         (
@@ -122,9 +130,9 @@ def apply_item_effect_to_actor(
             base_power=base_power,
             base_factor=base_factor,
             rng=rng,
-            target_magic_defense=target_stats.magic_defense,
-            target_magic_def_multiplier=target_stats.magic_def_multiplier,
-            target_magic_resistance_percent=target_stats.magic_resistance,
+            target_magic_defense=magic_defense,
+            target_magic_def_multiplier=magic_def_multiplier,
+            target_magic_resistance_percent=magic_resistance_percent,
         )
 
         if logs is not None:
@@ -176,18 +184,29 @@ def apply_item_effect_to_actor(
         # --- ここから成功時のバフ計算（白魔法 Protect と同じ式）---
         base_factor = (mind // 16) + (L // 16) + (J // 32) + 1
         base_power = float(spell_info.get("BasePower", 5))
+        magic_defense, magic_def_multiplier, magic_resistance_percent = (
+            buff_target_magic_parameters(
+                target_magic_defense=target_stats.magic_defense,
+                target_magic_def_multiplier=target_stats.magic_def_multiplier,
+                target_magic_resistance_percent=target_stats.magic_resistance,
+                target_is_friendly=True,
+            )
+        )
 
-        old_def, old_mdef = apply_protect_buff(
+        old_def, old_mdef, add_value = apply_protect_buff(
             target_stats,
             base_power=base_power,
             base_factor=base_factor,
             rng=rng,
+            target_magic_defense=magic_defense,
+            target_magic_def_multiplier=magic_def_multiplier,
+            target_magic_resistance_percent=magic_resistance_percent,
         )
 
         logs.append(
             f"{prefix} "
             f"防御力 {old_def}→{target_stats.defense}、"
-            f"魔法防御 {old_mdef}→{target_stats.magic_defense} に上がった。"
+            f"魔法防御 {old_mdef}→{target_stats.magic_defense}（今回 +{add_value}）に上がった。"
         )
         return
 
