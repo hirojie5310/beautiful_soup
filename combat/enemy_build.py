@@ -71,9 +71,17 @@ def build_enemies(
 def compute_enemy_base_agility(monster: Dict[str, Any]) -> int:
     """
     敵 JSON から「行動順決定用の擬似 Agility」を計算する。
-    - Level が高い敵ほど素早く
-    - Attack.Count が多い敵は手数が多い＝素早い印象に
-    - Evasion.Rate が高い敵も素早い印象に
+
+    公式ガイドの実数値に近づけるため、以下の近似式を採用する。
+
+        Agility = (Level * level_factor)
+                 + (Attack.Count - 1) * 1.5
+                 + (Evasion.Rate * 10)
+
+    - 通常は level_factor = 0.5
+    - Level > 50 の強敵は伸びを抑えるため level_factor = 0.4
+
+    小数点以下は切り捨て、最低値は 1 とする。
     """
     lvl = int(monster.get("Level", 1))
 
@@ -83,12 +91,13 @@ def compute_enemy_base_agility(monster: Dict[str, Any]) -> int:
     ev = monster.get("Evasion") or {}
     eva_rate = float(ev.get("Rate") or 0.0)  # 0.1 → 10% みたいな値
 
-    # 適当な指標：あとで好きに調整してOK
-    agi = lvl
-    agi += 2 * max(0, atk_count - 1)  # 攻撃回数が多いほど +2, +4, ...
-    agi += int(eva_rate * 20)  # 回避 10% → +2, 50% → +10 くらいのノリ
+    level_factor = 0.4 if lvl > 50 else 0.5
 
-    return max(1, agi)
+    agi = lvl * level_factor
+    agi += max(0, atk_count - 1) * 1.5
+    agi += eva_rate * 10
+
+    return max(1, int(agi))
 
 
 def compute_enemy_final_stats(

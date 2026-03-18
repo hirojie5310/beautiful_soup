@@ -1,0 +1,24 @@
+現状の実装では 「Jumpを選んだターンは上昇だけ」「次ターンで自動的に着地攻撃」 という2段階で実現しています。
+
+## 実現フロー
+1. 状態保持用のフラグを持つ
+各キャラ状態に is_jumping と jump_target_index があり、ジャンプ中かどうかと着地先ターゲットを保持します。
+
+2. Jump入力を戦闘種別 jump に変換
+行動解釈時に PlannedAction.kind == "jump" を char_attack_kind = "jump" に変換します。
+
+3. Jumpの1ターン目（上昇）
+run_character_turn 側で char_attack_kind == "jump" かつ is_jumping=False の場合、
+is_jumping=True
+jump_target_index=target_index
+ログ「次のターンに攻撃する」
+ダメージ0で終了
+となります。
+
+4. 次ターン（着地）を自動予約
+ラウンド実行時、pm.state.is_jumping が true なら、プレイヤー入力より優先して PlannedAction(kind="jump", command="Jump", target_index=...) を自動差し込みします（対象が死んでいたら生存敵へ差し替え）。
+その後 run_character_turn で is_jumping=True 分岐に入り、着地攻撃を実行し、is_jumping=False に戻して jump_target_index をクリアします。
+
+## 補足（現実装の挙動）
+着地ダメージ計算は、現状 attack_damage * attack_multiplier ベースで直接計算しており、通常物理計算と同一経路ではありません（この分、命中/回避や防御処理の統一性には改善余地があります）。
+CLI入力側ではジャンプ中に JumpDive（kind="special"）を予約する経路もあり、UI層ごとに扱いが少し異なります。

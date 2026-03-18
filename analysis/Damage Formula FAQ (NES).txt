@@ -1,0 +1,2296 @@
+https://gamefaqs.gamespot.com/ds/924897-final-fantasy-iii/faqs/29389
+
+Damage Formula FAQ (NES) by instructrtrepe
+Version: 1.03 | Updated: 11/24/2004
+ Highest Rated Guide
+
+------------------------------------------------------------------------------
+
+FF3j DAMAGE CALCAULATION FORMULA FAQ
+Version 1.02
+by J.L. Tseng, 2004
+
+------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------
+
+TABLE OF CONTENTS
+
+------------------------------------------------------------------------------
+
+I.    INTRODUCTION
+II.   CREDITS AND ACKNOWLEDGEMENTS
+III.  VERSION HISTORY
+IV.   BRIEF OVERVIEW OF FAQ CONTENTS
+V.    NOTES
+VI.   GLOSSARY AND DEFINITIONS
+VII.  DAMAGE CALCULATION FORMULA:  BRIEF GENERAL FORMULA
+VIII. DAMAGE CALCULATION FORMULA:  BONUSES AND PENALTIES REFERENCE
+IX.   DAMAGE CALCULATION FORMULA:  CHARACTER PHYSICAL ATTACKS
+X.    DAMAGE CALCULATION FORMULA:  MONSTER PHYSICAL ATTACKS
+XI.   DAMAGE CALCULATION FORMULA:  MAGIC ATTACKS & ITEMS
+XII.  DATA
+XIII. OTHER ISSUES
+
+------------------------------------------------------------------------------
+
+I.  INTRODUCTION
+
+------------------------------------------------------------------------------
+
+This is my attempt at creating a FF3j damage formula that can predict how much 
+damage will be done from various attacks within the game.  Note that I'm NOT 
+an employee at Square nor have access to their source code or algorithms.  All 
+formulas in this FAQ were derived from experimental observations done by me.  
+This means that although I've done quite a lot of carefully set up experiments 
+to be very confident with the results in this FAQ, I by no means guarantee 
+that everything is absolutely 100% correct, nor do I disclude the possibility 
+that I have may missed some things.  If you do notice any discrepancies, 
+errors, omissions, etc. or have any suggestions or comments, please send your 
+feedback to instructrtrepe@hotmail.com, or post at the FF3j message board at 
+http://www.gamefaqs.com
+
+------------------------------------------------------------------------------
+
+II.  CREDITS AND ACKNOWLEDGEMENTS
+
+------------------------------------------------------------------------------
+
+From the FF3j message board at http://www.gamefaqs.com, I'd like to thank Sir 
+Bahamut for all his feedback and help and sqpat17 for finding and posting the 
+hex offset data for the FF3j rom.
+
+Using sqpat17's hex offset data, I extracted the hex data from the rom myself 
+to create my own data tables, but FAQ's and guides that I used as references 
+to verify my own data:
+
+lordskylark's extended Ff3j monster list at 
+http://www.geocities.com/lord_skylark
+cidolfas's FF3j shrine at http://www.rpgclassics.com/shrines/nes/ff3/
+BSiron's FFII (US) FAQ at http://www.gamefaqs.com
+
+FF3j actually shares a lot of similar damage formula mechanics as FFIV, so 
+BSiron's FAQ for FFII(US) provided an excellent starting point for my FAQ.
+
+My emulator of choice for this game is VirtuaNES at 
+http://virtuanes.s1.xrea.com:8080/
+The translation .ips file I used was created by Alex W. Jackson, Neill Corlett 
+and SoM2Freak (downloaded at http://www.zophar.net)
+
+Copyright:
+
+Final Fantasy 3 (Japan) is Copyright 1990, Square
+This FAQ is Copyright 2004, InstructorTrepe
+
+This FAQ is not to be sold for profit.
+Changes to this FAQ are not permitted.
+Do not post this FAQ without asking permission (e-mail: 
+instructrtrepe@hotmail.com).
+Do not steal any information in this FAQ for your own FAQs or documents.  
+You may reference or quote from this document as long as you explicitly state 
+and credit this FAQ and myself as the author of your source.
+
+------------------------------------------------------------------------------
+
+III.  VERSION HISTORY
+
+------------------------------------------------------------------------------
+
+Version 1.0:  Initial release.
+Version 1.01: Corrected some spelling errors.  Thanks to Sir Bahamut for
+              spotting and notifying me of them!
+Version 1.02: More spelling, grammar fixes.
+Version 1.03: Corrected the mix-up between Intellect and Spirit in the 
+              Glossary section for White, Black and Call Magic Multipliers
+
+------------------------------------------------------------------------------
+
+IV.  BRIEF OVERVIEW OF FAQ CONTENTS
+
+------------------------------------------------------------------------------
+
+Section VI contains a glossary and explanation of all the terms I've used in 
+this FAQ.
+
+Sections VII and VIII contain a brief overview and summary of the damage 
+calculation formula and the various effects of commands, spells, elemental and 
+status effects.  If you want a general understanding of how damage is 
+calculated, these are the sections you want to read.
+
+Sections IX, X and XI provide detailed steps on the damage calculation formula 
+for character attacks, monster attacks and magic attacks.  They essentially 
+take the information in Sections VII and VIII and explicitly state all the 
+Steps that would occur for each type of attack.
+
+Section XII is the data reference section.  It contains weapon, armour, skill, 
+magic and enemy magic data that is used in the damage calculation formula.
+
+------------------------------------------------------------------------------
+
+V.  NOTES
+
+------------------------------------------------------------------------------
+
+This game uses integer values.  Therefore after every division shown in any 
+formula in this FAQ, immediately round down before proceeding with any further 
+calculation.
+
+Due to the way Level and Skill are stored internally in the game, all 
+references to Skill and Level in this FAQ actually refer to one minus the 
+value that is displayed in the game.  For example, at the start of New Game, 
+all characters begin at Level 0 and Skill 0 for calculation purposes of this 
+FAQ.
+
+------------------------------------------------------------------------------
+
+VI.  GLOSSARY AND DEFINITIONS
+
+------------------------------------------------------------------------------
+
+Just so everyone's on the same page in terms of terminology and for those who 
+may be unfamiliar with some the stats in FF3j, here's a list of stats that are 
+used in this FAQ.
+
+LEVEL:   Character level.  This is displayed in the game character status 
+screen as "Level".  As you increase in level, your main stats (Strength, 
+Agility, Vitality, Intellect, Spirit) increase as well as your HP and MP.  
+Level affects your Attack Multiplier, Defense Multiplier and your Magic Attack 
+Multiplier, as well as Steal Rate.  The difference between your level and 
+monster level affects whether an enemy will run from you, the chances of 
+getting "First Strike" or "Ambushed" and whether the Kill spell has a chance 
+of succeeding.  Monsters also have a Level stat.  In their case, however, 
+Level only affects Magic Attack Multiplier.
+
+SKILL:  The character's Skill level for his current job. This is displayed in 
+the game character status screen as "Skill".  Skill points are earned in 
+battle and are recorded separately for each job for every character.  Skill 
+affects your Attack Damage, Hit%, Magic Attack Multiplier and Steal rate.  It 
+also lowers the amount of Capacity points required to change into that job.  
+Monsters also have a Skill stat.  In their case, however, Skill only affects 
+Magic Attack Multiplier.
+
+STRENGTH:  The character's Strength, displayed in the game character status 
+screen as "Strength".  Strength affects your Attack Damage.
+
+AGILITY:  The character's Agility, displayed in the game character status 
+screen as "Agility".  Agility affects your Hit%, Attack Multiplier and Magic 
+Defense Multiplier.
+
+VITALITY: The character's Vitality, displayed in the game character status 
+screen as "Vitality".  Vitality affects your Defense.  Jobs with high Vitality 
+also get a higher HP gain on levelling up.
+
+INTELLECT: The character's Intellect, displayed in the game character status 
+screen as "Intellect".  Intellect affects your Black Magic Attack Damage, Call 
+Magic Attack Damage, Black Magic Hit%, Call Magic Hit%, Black Magic Attack 
+Multiplier, Call Magic Attack Multiplier, Magic Evade% and Magic Defense 
+Multiplier.  Monsters also have an Intellect stat.  In their case, however, 
+Intellect does not affect Magic Evade% nor Magic Defense Multiplier.
+
+SPIRIT: The character's Spirit, displayed in the game character status screen 
+as "Spirit".  Spirit affects your White Magic Attack Damage, White Magic Hit%, 
+White Magic Attack Multiplier, Magic Evade% and Magic Defense Multiplier.  
+Monsters also have a Spirit stat.  In their case, however, Spirit does not 
+affect Magic Evade% nor Magic Defense Multiplier.
+
+ATTACK DAMAGE:  The base amount of damage a character will do when attacking 
+physically.  This is displayed in the game character status screen to the 
+right of "Att. ?X ", parallel to the Strength stat.  If a character has a 
+weapon in both hands, the Attack Damage shown on the status screen is the sum 
+of the Attack Damages of each hand.  The formula for Attack Damage is:
+
+Attack Damage = (Weapon Damage) + (Strength/4)
+
+Monsters also have an Attack Damage stat.  In their case, however, they do not 
+follow the above formula and have their own specified value.
+
+ATTACK MULTIPLIER:  The maximum number times a character can hit in one 
+physical attack command.  This is displayed in the game character status 
+screen right after "Att.", to the left of the Attack Damage stat.  If a 
+character has a weapon in both hands, the Attack Multiplier shown on the 
+status screen is the sum of the Attack Multipliers of each hand.  The formula 
+for Attack Multiplier is:
+
+Attack Multiplier = (Agility/16) + (Level/16) + 1
+
+Monsters also have an Attack Multiplier stat.  In their case, however, they do 
+not follow the above formula and have their own specified value.
+
+HIT%: The chance a character has to land a hit.  This is displayed in the game 
+character status screen as "Hit %".  If a character has a weapon in both 
+hands, the Hit% shown on the status screen is the average of the Hit% of each 
+hand.  The formula for Hit% is:
+
+Hit% = (Weapon Hit%) + (Agility/4) + (Skill/4)
+
+Monsters also have a Hit% stat.  In their case, however, they do not follow 
+the above formula and have their own specified value.
+
+DEFENSE:  The amount of damage that any physical attack made on the character 
+will be reduced by. This is displayed in the game character status screen to 
+the right of "Def. ?X ", parallel to the Agility stat.  The formula for 
+Defense is:
+
+Defense = sum of all worn (Armour Defense) + (Vitality/2)
+
+Monsters also have a Defense stat.  In their case, however, they do not follow 
+the above formula and have their own specified value.
+
+DEFENSE MULTIPLIER:  The maximum number of hits a character can avoid from a 
+physical attack made on that character.  This is displayed in the game 
+character status screen right after "Def.", to the left of the Defense stat.  
+The formula for Defense Multiplier is:
+
+(with shield):
+
+Defense Multiplier = (Agility/16) + (Level/16) + 1 * (number of shields
+                     equipped)
+
+(without shield):
+
+Defense Multiplier = (Agility/32) + (Level/32)
+
+Monsters also have a Defense Multiplier stat.  In their case, however, they do 
+not follow the any of the above formulas and have their own specified value.
+
+EVADE%:  The chance a character has to evade a hit.  This is displayed in the 
+game character status screen as "Evade".  The formula for Evade% is:
+
+Evade% = sum of all worn (Armour Evade%) + (Agility/4)
+
+Monsters also have an Evade% stat.  In their case, however, they do not follow 
+the above formula and have their own specified value.
+
+MAGIC DEFENSE: The amount of damage that any magic attack made on the 
+character will be reduced by. This is displayed in the game character status 
+screen as "M. Def.".  The formula for Magic Defense is:
+
+Magic Defense = sum of all worn (Armour Magic Defense)
+
+Monsters also have a Magic Defense stat.  In their case, however, they do not 
+follow the above formula and have their own specified value.
+
+MAGIC EVADE%: The chance a character has to evade a magic hit.  This is 
+displayed in the game character status screen as "M. Evade".  The formula for 
+Magic Evade% is:
+
+Magic Evade% = (Intellect/2) + (Spirit/2)
+
+Monsters also have a Magic Evade% stat.  In their case, however, they do not 
+follow the above formula and have their own specified value.
+
+MAGIC ATTACK MULTIPLIER:  The maximum number times a character can hit in one 
+magic attack command.  This is not displayed anywhere in the game.  The number 
+of hits that succeed are not shown in battle either, only the final resulting 
+magic damage.  There are three different types of magic, and thus three 
+different formulas for Magic Attack Multiplier:
+
+Black Magic Attack Multiplier = (Intellect/16) + (Level/16) + (Skill/32) + 1
+
+White Magic Attack Multiplier = (Spirit/16) + (Level/16) + (Skill/32) + 1
+
+Call Magic Attack Multiplier = (Intellect/8) + (((Skill/8)*3)/2) + 1
+
+Monsters use the same formulas shown above when attacking with magic.
+
+MAGIC HIT%:  The chance a character has to land a magic hit.  This is not 
+displayed anywhere in the game.  There are three different types of magic, and 
+thus three different formulas for Magic Hit%:
+
+Black Magic Hit% = (Spell Hit%) + (Intellect/2)
+ 
+White Magic Hit% = (Spell Hit%) + (Spirit/2)
+
+Call Magic Hit% = (Spell Hit%) + (Intellect)
+
+Monsters use the same formulas shown above when attacking with magic.
+
+MAGIC ATTACK DAMAGE:  The base amount of damage a character will do when 
+attacking with magic.  This is not displayed anywhere in the game.  There are 
+four different formulas for Magic Attack Damage:
+
+Black Magic Attack Damage = (Spell Damage) + (Intellect/2)
+
+For offensive White spells (Holy, Aero2, Aero):
+White Magic Attack Damage = (Spell Damage) + (Spirit/2)
+
+For non-offensive White spells (Cure4, Cure3, Cure2, Cure, Haste, Safe):
+White Magic Attack Damage = (Spell Damage) 
+
+Call Magic Attack Damage = (Spell Damage) + (Intellect)
+
+Monsters use the same formulas shown above when attacking with magic.
+
+MAGIC DEFENSE MULTIPLIER:  The maximum number of hits a character can avoid 
+from a magic attack made on that character.  This is not displayed anywhere in 
+the game.  The formula for Magic Defense Multiplier is:
+
+Magic Defense Multiplier = (Agility/32) + (Intellect/32) + (Spirit/32)
+ 
+Monsters also have a Magic Defense Multiplier stat.  In their case, however, 
+they do not follow the above formula and have their own specified value.
+
+WEAPON DAMAGE:  The Attack Damage of the equipped weapon.  Each weapon has 
+their own Weapon Damage value (see Weapon Data).
+
+WEAPON HIT%:  The Hit% of the weapon equipped.  Each weapon has their own 
+Weapon Hit% value (see Weapon Data).
+
+ARMOUR DEFENSE:  The Defense of the armour equipped.  Each armour has their 
+own Armour Defense value (see Armour Data).
+
+ARMOUR EVADE%: The Evade% of the armour equipped.  Each armour has their own 
+Armour Evade% value (see Armour Data).
+
+ARMOUR MAGIC DEFENSE:  The Magic Defense of the armour equipped.  Each armour 
+has their own Armour Magic Defense value (see Armour Data).
+
+SPELL DAMAGE:  The Magic Attack Damage of that spell.  Each spell has their 
+own Spell Damage value (see Magic Data).
+
+SPELL HIT%:  The Magic Hit% of that spell.  Each spell has their own Spell 
+Hit% value (see Magic Data).
+
+ITEM MAGIC ATTACK MULTIPLIER:  When items are used, they essential cast the 
+spell that is associated with it.  Items use their own Magic Attack Multiplier, 
+though (see Item Data).
+
+ITEM MAGIC HIT%:  When items are used, they essential cast the spell that is 
+associated with it.  Items always have a Magic Hit% of 100.
+
+BLACK MAGIC:  Magic spells usable by the Black Wizard, Red Wizard, Warlock and 
+Sage.  Also, for damage calculation purposes, all Terrain commands used by the 
+Geomancer are considered Black magic.
+
+WHITE MAGIC:  Magic spells usable by the White Wizard, Red Wizard, Hunter, 
+Mystic Knight, Shaman and Sage.  Note that there is a different Magic Attack 
+Damage formula for offensive White magic (Holy, Aero2, Aero) and non-offensive 
+White magic (Cure4, Cure3, Cure2, Cure, Haste, Safe).  Also, Toad, Mini, Life 
+and Life2 have a Magic Hit% of 100 when cast on a party member.  When cast on 
+an enemy, the Magic Hit% listed in the Magic Data section is used.
+
+CALL MAGIC:  Magic spells usable by the Conjurer, Summoner and Sage.
+
+VULNERABLE STATE:  There can be times when a character becomes vulnerable.  In 
+these cases, the character's Defense, and Defense Multiplier become zero and 
+they also receive double damage from physical attacks.  Vulnerable states 
+include becoming Toad, Mini, and immediately after executing a 'Buildup' 
+command until just prior to a subsequent 'Fight' or 'Overload'.  In addition, 
+if ANY character in the party chooses the 'Run' or 'Escape' command, then ALL 
+party members become vulnerable for the entire round.  
+
+In the case Buildup, Toad or Mini, the character's Magic Defense also becomes 
+zero and they will also receive double damage from magic attacks.  They will 
+not, however, receive double healing from White magic.  Also, in the case of 
+Toad and Mini, the character's Magic Defense Multiplier will also become zero.
+
+ATTACKER:  The one that is initiating an action command.  An action command 
+can be either 'Fight', 'Magic', 'Item', 'Jump', 'Sing'.  In the damage 
+calculation formulas, the stats Attack Damage, Attack Multiplier, Hit%, Magic
+Attack Damage, Magic Hit%, Magic Attack Multiplier all refer to the attacker's 
+stats.
+
+TARGET:  The target of the attacker's action command.  Most actions allow the 
+attacker to choose a target.  Some allow the attacker to attack all targets.  
+Some will automatically target all enemies or all allies.  In the damage 
+calculation formulas, the stats Defense, Defense Multiplier, Evade%, Magic 
+Defense, Magic Defense Multiplier, Magic Evade% all refer to the target's 
+stats.
+
+------------------------------------------------------------------------------
+
+VII.  DAMAGE CALCULATION FORMULA:  BRIEF GENERAL FORMULA
+
+------------------------------------------------------------------------------
+
+The damage calculation formula is essentially the same regardless of what type 
+of attack is made or who the attacker or target is.  The following is a very 
+brief overview of how damage is calculated from an attack.  For magic attacks, 
+use the appropriate magic stats.
+
+**************************
+NOTATION AND ABBREVIATIONS
+**************************
+(x..y)    Refers to a uniformly distributed random number between x and y
+          inclusive.
+M         Net Attack Multiplier
+
+************************
+DAMAGE CALCULATION STEPS
+************************
+
+1) CALCULATE BASE DAMAGE
+      Base Damage = Attack Damage
+
+2) APPLY BASE DAMAGE BONUSES AND PENALTIES
+      Base Damage = (Base Damage + (additive bonuses)) * (multiplicative bonuses
+                    or penalties)
+
+3) APPLY RANDOM RANGE TO BASE DAMAGE
+      Base Damage = (Base Damage..Base Damage*1.5)
+
+4) SUBTRACT TARGET'S DEFENSE
+      Base Damage = Base Damage - Defense
+
+5) CALCULATE NET ATTACK MULTIPLIER
+      M (on average) ~= ((Attack Multiplier) * Hit%) - ((Defense Multiplier) *
+                        Evade%)
+
+6) MULTIPLY BASE DAMAGE BY NET ATTACK MULTIPLIER
+      Final Damage = Base Damage * M
+
+7) APPLY FINAL DAMAGE BONUSES AND PENALTIES
+      Final Damage = Final Damage * (bonuses or penalties)
+
+8) DUAL WIELDING OR MULTIPLE TARGETS
+      Repeat Steps 1-7 for each weapon in each hand.
+      Repeat Steps 1-7 for each target.
+
+------------------------------------------------------------------------------
+
+VIII. DAMAGE CALCULATION FORMULA:  BONUSES AND PENALTIES REFERENCE
+
+------------------------------------------------------------------------------
+
+For easy reference, here is a list of commands, spells etc. and a summary of 
+their effects in the damage calculation formula.
+
+***********
+1) COMMANDS
+***********
+
+1.1) DEFEND
+Immediately after a character executes a 'Defend' command, he will receive a 
+bonus against physical attacks.  This bonus only lasts until the end of the 
+current round.
+
+Defense = Defense * 4
+
+This bonus is applied in Step 4.
+
+1.2) TERRAIN
+A Geomancer's 'Terrain' commands are considered Black Magic.  The same 
+formulas that pertain to Black Magic are also used for Terrain, namely:
+
+Magic Damage = (Spell Damage) + (Intellect/2)
+Magic Hit% = (Spell Hit%) + (Intellect/2)
+Magic Attack Multiplier = (Intellect/16) + (Level/16) + 1
+
+One important difference, though, is that if the Geomancer misses all targets 
+(i.e. M (calculated from Step 5) = 0 for ALL targets) then instead of an 
+'Ineffective' message, you get a 'Backfired' message.  The Geomancer also 
+subsequently sustains (MAX HP)/4 damage.
+
+1.3) JUMP
+If a Dragoon is landing an attack from a 'Jump' command:
+
+Final Damage = Final Damage * 3
+
+This bonus is applied in Step 7.
+
+1.4) BUILDUP
+The Karateka's 'Buildup' command has three basic effects:  a bonus to Final 
+Damage, a penalty to the Karateka's Defense, Defense Multiplier and Magic 
+Defense, and finally, the Karateka receives double damage (but not double 
+healing) whenever he is the target of a physical or magic attack.
+
+If a Karateka has executed one 'Buildup' command prior to the current attack, 
+then:
+
+Final Damage = Final Damage * 2
+
+If a Karateka has executed two 'Buildup' commands prior to the current attack, 
+then:
+
+Final Damage = Final Damage * 3
+
+Note that immediately after a Karateka executes a third 'Buildup' command 
+without a 'Fight' command, then an 'Overload' occurs and the current attack is 
+aborted and HP = (Current HP)/2
+
+These bonuses are applied in Step 7.
+
+Immediately after a Karateka has executed a 'Buildup' command and just prior 
+to a subsequent 'Fight' or 'Overload', becomes vulnerable and has the 
+following penalties: 
+
+Defense = 0
+Defense Multiplier = 0
+
+In addition the Karateka receives a penalty to his Magic Defense:
+
+Magic Defense = 0
+
+These penalties are applied in Steps 4 and 5.
+
+Also during this period, whenever the Karateka is the target of a physical or 
+magic attack, that attacker receives a bonus to Base Damage.  Non-offensive 
+White magic spells (i.e. healing), however, do not receive this bonus:
+
+Base Damage = Base Damage * 2 (not for non-offensive White magic)
+
+This bonus is applied in Step 2 for the one attacking the Karateka.
+
+1.5) SCARE
+Each use the Bard's 'Scare' command reduces all enemies' levels:
+
+Enemy level = Enemy level - 3
+
+Multiple uses of 'Scare' can eventually lead to enemies running away instead 
+of attacking in battle.  An enemy will only run away if:
+
+(Lowest character level) - (Enemy level) > 15
+
+If the above condition is met, then the chance that a monster will choose to 
+Run will be:
+
+%Chance to Run = 100 - Monster Hit%
+
+Also note that as an enemy level is decreased there is also the potential of 
+reducing its Magic Attack Multiplier.
+
+Bosses are immune to 'Scare' and will also never attempt to Run.
+
+1.6) CHEER
+Each use of the Bard's 'Cheer' command gives an additive bonus to physical 
+Base Damage for each party member:
+Base Damage = Base Damage + 10 (for physical attacks only)
+
+This bonus is applied in Step 2.
+
+1.7) RUN AND ESCAPE
+If a character chooses the 'Run' or 'Escape' command, then for that entire 
+round, ALL party members will be in a vulnerable state and receive the 
+following defensive penalties:
+
+Defense = 0
+Defense Multiplier = 0
+
+These penalties are applied in Steps 4 and 5.
+
+Anyone attacking any of the party members will also receive a bonus to Base 
+Damage for physical attacks:
+
+Base Damage = Base Damage * 2 (for physical attacks only)
+
+This bonus is applied in Step 2 for the one attacking the party member.
+
+Note that monsters that attempt to Run receive NO penalties and party members 
+that attack monsters that attempt to Run receive no bonuses.
+
+1.8) ITEM
+Using an item is essentially the same as casting the spell that is associated 
+with that item.  The damage calculation formula is same for items as it is for 
+magic attacks. There are, however, two important differences:
+
+i)  Items have their own Magic Attack Multiplier.  This is not influenced by 
+any of the attacker's stats.
+
+ii)  Items have their Magic Hit% of 100. This is also not influenced by any of 
+the attacker's stats, nor is it affected by Blind.
+
+In general, all weapons that can be used to cast spells have a Magic Attack 
+Multiplier of one.  Most other items have a Magic Attack Multiplier of three.
+
+*********
+2) SPELLS
+*********
+
+2.1) HASTE
+Although Haste doesn't appear to cause or heal any damage, it does have a 
+Spell Damage value.  When someone casts Haste, apply Steps 1-6 to calculate M 
+and Final Damage for Haste.  The target of the Haste spell then receives a 
+bonus to his Attack Multiplier and Base Damage:
+
+Base Damage = Base Damage + (Final Damage calculated from Haste)
+A.M = A.M. + (M calculated from Haste)
+
+The Base Damage bonus is applied in Step 2 for the Hasted target.
+The Attack Multiplier is applied in Step 5 for the Hasted target.
+
+Note that the maximum value for Base Damage is 255 and the maximum value for 
+A.M. is 16.  If the target already has a maximum value in either Base Damage 
+of A.M., then the Haste spell becomes 'Ineffective'.
+
+2.2) SAFE
+Although Safe doesn't appear to cause or heal any damage, it does have a Spell 
+Damage value.  When someone casts Safe, apply Steps 1-6 to calculate Final 
+Damage for Safe.  The target of the Safe spell then receives a bonus to his 
+Defense and Magic Defense:
+
+Defense = Defense + (Final Damage calculated from Safe)
+Magic Defense = Magic Defense + (Final Damage calculated from Safe)
+
+These bonuses are applied in Step 4 for the Safe target.
+
+Note that the maximum value for Defense or Magic Defense is 255.  If the 
+target already has a maximum value in either Defense or Magic Defense, then 
+the Safe spell becomes 'Ineffective'.
+
+2.3) KILL
+The Kill spell follows the normal Magic Hit% formulas like all other spells, 
+but with one major difference.  The Kill spell will not work at all against 
+targets whose levels are too high, relative to the caster.
+
+IF Target Level >= ((((Attacker Level)/2)*3)/2)
+Magic Hit% = 0
+
+This penalty is applied in Step 5
+
+2.4) CURE4
+If Cure4 is cast on a single target, that target fully heals his HP.  If Cure4 
+is cast on multiple targets, use Steps 1-8 normally to calculate the amount 
+cured.
+
+2.5) TOAD, MINI, LIFE, LIFE2
+When these spells are cast on a party member, their Magic Hit% is 100.  If 
+they are cast on an enemy, use the normal Magic Hit% formula.
+
+2.6) OFFENSIVE AND NON-OFFENSIVE WHITE SPELLS
+Offensive and non-offensive White spells have different formulas for Magic 
+Damage:
+
+Offensive White spells:
+White Magic Attack Damage = (Spell Damage) + (Spirit/2)
+
+Non-offensive White spells:
+White Magic Attack Damage = (Spell Damage) 
+
+Offensive White spells include Holy, Aero2 and Aero.  Non-offensive White 
+spells include Cure4, Cure3, Cure2, Haste and Safe.
+
+Note that the non-offensive formula still applies to the Cure spells, even if 
+they are used to inflict damage against the undead.
+
+2.7) AUTO-TARGETTING SPELLS
+Normally, when you choose to cast a spell against multiple targets, Final 
+Damage receives a penalty:
+
+Final Damage = (Final Damage)/(# of targets selected)
+
+This penalty is applied in Step 7.
+
+Some spells however, will automatically target all enemies or all allies.  
+These spells do not receive the above penalty.  Spells that automatically 
+target all enemies include Quake, Meteo, some Terrain spells and all Call
+spells cast by a Summoner or Sage.  Enemy magic that automatically targets
+all party members include Flame, Blizzard, Thunder, Tsunami, Flarewave, Atom
+Edge, Poison, Mindblast and Megaflare.
+
+2.8) WALL
+A successful casting of Wall on a target creates a barrier in front of that 
+target.  The next time an enemy targets that character with a magic attack, 
+the spell is redirected back to an enemy party member.  For damage 
+calculation purposes, the formulas, bonuses and penalties are the same as if 
+the caster had self-targeted himself or his party member with that spell.  
+After reflecting one spell, the effects of Wall cease.  Only one Wall may be 
+in effect for one character at a time.  Multiple castings of Wall on the same 
+target have no effect.  Wall does not reflects spells that were cast by their 
+own party member (i.e. you may still heal someone with Wall).  Only certain 
+Black, White and Enemy magic spells may be reflected (see Magic Data).
+
+2.9) WWIND
+A successful casting of WWind on a target reduces that target's HP to (Spell 
+Damage..Spell Damage * 2).  Note that in this case, Final Damage in Step 6 is 
+not used and M from Step 5 is used only to check for spell success.
+
+********************
+3) ELEMENTAL EFFECTS
+********************
+
+3.1) ELEMENTAL WEAKNESS
+Note that for attacks with multiple elements, as long as the target is weak 
+against at least one of those elements, then the target will be considered 
+weak.  If the target is weak against the attacking element, then:
+
+Base Damage = Base Damage * 2
+
+This bonus is applied in Step 2.
+
+3.2) ELEMENTAL STRENGTH
+Note that for attacks with multiple elements, as long as the target is strong 
+against at least one of those elements and is not weak against any of those 
+elements, then the target will be considered strong.  If the target is strong 
+against the attacking element, then:
+
+Base Damage = Base Damage / 2
+
+This bonus is applied in Step 2.
+
+*****************
+4) STATUS EFFECTS
+*****************
+
+4.1) BLIND
+An attacker that is 'Blind' receives a penalty to his Hit% and Magic Hit%.  
+Note that Item Magic Hit% is not affected by Blind.
+
+Hit% = (Hit%/2)
+Magic Hit% = (Magic Hit%/2)
+
+These penalties are applied in Step 5.
+
+4.2) TOAD AND MINI
+If a character that is Toad or Mini makes a physical attack:
+
+Base Damage = 0 (for physical attacks only)
+
+This penalty is applied in Step 2.  This penalty supersedes every other bonus 
+in Step 2 (i.e. a Hasted or Cheered Toad still only does 1 damage).  The other 
+bonuses are still recorded and in the event that the character recovers from 
+Toad or Mini, he will be restored to the new improved Base Damage.
+
+A Toad or Mini character is in a vulnerable state.  Whenever a Toad or Mini 
+character is the target of an attack:
+
+Defense = 0
+Defense Multiplier = 0
+
+In addition, a Toad or Mini character also has a penalty to Magic Defense and 
+Magic Defense Multiplier:
+
+Magic Defense = 0
+Magic Defense Multiplier = 0
+
+These penalties are applied in Steps 4 and 5.
+
+The one attacking the Toad or Mini character also receives a bonus to Base 
+Damage.  Non-offensive White magic spells (i.e. healing), however, do not 
+receive this bonus:
+
+Base Damage = Base Damage * 2 (not for non-offensive White magic)
+
+This bonus is applied in Step 2 for the one attacking the Toad or Mini 
+character.
+
+4.3) BACK ROW
+OK, not exactly a status effect, but it is a state of being.  Anyway, an 
+attacker that makes a physical attack to or from the back row receives a 
+penalty to Hit%:
+
+Hit% = (Hit%/2)
+
+This penalty is applied in Step 5.
+
+**************
+MINIMUM DAMAGE
+**************
+
+As long as you connect with at least one hit (i.e. M > 0 in Step 5), then the 
+Final Damage will always be at least one.
+
+IF (M > 0) and (Final Damage <= 0)
+Final Damage = 1
+
+This is applied in Step 7.
+
+***************
+SELF-TARGETTING
+***************
+
+If you target your own party member with a physical attack then that target 
+receives penalty to its Defense:
+
+Defense = 0
+
+This penalty is applied in Step 4.
+
+If you target your own party member with a magic attack, then that target 
+receives the following penalties:
+
+Magic Defense = 0
+Magic Defense Multiplier = 0
+
+These penalties are applied in Step 4.
+
+------------------------------------------------------------------------------
+
+IX. DAMAGE CALCULATION FORMULA:  CHARACTER PHYSICAL ATTACKS
+
+------------------------------------------------------------------------------
+The following are detailed steps for calculating damage when a character uses 
+a physical attack.  These steps are all cumulative, calculated in the 
+following order:
+
+************************
+1) CALCULATE BASE DAMAGE
+************************
+
+Base Damage = Weapon Base + (Strength/4) + (Skill/4)
+
+******************************************
+2) APPLY BASE DAMAGE BONUSES AND PENALTIES
+******************************************
+
+2.1) BASE DAMAGE ADDITIVE BONUSES
+
+2.1.1) HASTE SPELL
+Attackers that have had Haste cast on them get an additive bonus for physical 
+attacks.  This bonus is equal to the calculated Final Damage from the caster's 
+Haste spell (via Steps 1-6).
+
+Base Damage = Base Damage + (Final Damage calculated from Haste)
+
+2.1.2) CHEER COMMAND
+Each use of the Bard's 'Cheer' command gives an additive bonus to physical 
+Base Damage for each party member:
+
+Base Damage = Base Damage + 10
+
+2.2) BASE DAMAGE MULTIPLICATIVE BONUSES
+
+2.2.1) ELEMENTAL WEAKNESS
+Note that for attacks with multiple elements, as long as the target is weak 
+against at least one of those elements, then the target will be considered 
+weak.  If the target is weak against the attacking element, then:
+
+Base Damage = Base Damage * 2
+
+2.2.2) VULNERABLE TARGET
+Vulnerable states include being a Frog, Mini, immediately after executing a 
+'Buildup' command and just prior to a subsequent 'Fight' or 'Overload', and 
+also during the entire round when the target or any of its party members 
+attempt to Run or Escape. If the target of the attack is in a vulnerable 
+state:
+
+Base Damage = Base Damage * 2 
+
+Note the above vulnerable conditions can only apply to party members.  This 
+bonus is only applied to a character that targets his own party member that is 
+vulnerable.
+
+2.3) BASE DAMAGE MULTIPLICATIVE PENALTIES
+
+2.3.1) ELEMENTAL STRENGTH
+Note that for attacks with multiple elements, as long as the target is strong 
+against at least one of those elements and is not weak against any of those 
+elements, then the target will be considered strong.  If the target is strong 
+against the attacking element, then:
+
+Base Damage = Base Damage / 2
+
+2.3.2) TOAD OR MINI
+If the attacker is Toad or Mini then:
+
+Base Damage = 0 
+
+Note that this penalty supersedes every other bonus list above.  However, 
+bonuses are still remembered and in the event that the target recovers from 
+Toad or Mini status, he will be restored to the new, higher Base Damage value.
+
+************************************
+3) APPLY RANDOM RANGE TO BASE DAMAGE
+************************************
+
+Apply a random range to the Base Damage:
+
+Base Damage = (Base Damage..Base Damage*1.5)
+
+****************************
+4) SUBTRACT TARGET'S DEFENSE
+****************************
+
+The target's defense value will reduce the Base Damage of the attack.
+
+4.1) INITIAL DEFENSE VALUE
+
+4.1.1) MONSTER DEFENSE
+Against physical attacks, Monsters have their own Defense stat (referenced via 
+a lookup table):
+
+Defense = Monster Defense
+
+4.1.2) SELF-TARGETTING
+If the attacker is targeting a party member:
+
+Defense = 0
+
+4.2) DEFENSE BONUSES
+
+4.2.1) SAFE SPELL
+Targets that have had Safe cast on them get an additive bonus.  This bonus is 
+equal to the calculated Final Damage from the caster's Safe spell (via Steps 
+1-6).
+
+Defense = Defense + (Final Damage calculated from Safe)
+
+4.3) BASE DAMAGE CALCULATION 
+Subtract the target's Defense value from the attacker's base Damage:
+
+Base Damage = Base Damage - Defense
+
+**********************************
+5) CALCULATE NET ATTACK MULTIPLIER
+**********************************
+
+A.M. = Attack Multiplier
+D.M. = Defense Multiplier
+M = Net Attack Multiplier
+
+5.1) ATTACK MULTIPLIER
+
+5.1.1) INITIAL VALUE OF ATTACK MULTIPLIER
+
+A.M. = (Agility/16) + (Level/16) + 1
+
+5.1.2) ATTACK MULTIPLIER BONUSES
+
+5.1.2.1) HASTE SPELL
+Attackers that have had Haste cast on them get an additive bonus for physical 
+attacks.  This bonus is equal to the calculated Net Multiplier from the 
+caster's Haste spell (via Step 5).  Note that A.M. has a maximum value of 16.  
+If Haste is cast on a target that already has an A.M. of 16, then the spell 
+will be ineffective (the target will NOT receive a damage bonus).
+
+A.M. = A.M. + (M calculated from Haste)
+
+5.2) HIT%
+
+5.2.1) INITIAL VALUE OF HIT%
+Note that Hit% has a maximum value of 99.  This maximum limit is applied 
+BEFORE applying any Hit% penalties.
+
+Hit% = Weapons Base Hit% + (Agility/4) + (Skill/4)
+
+5.2.2) HIT% PENALTIES
+
+5.2.2.1) BACK ROW
+For physical attacks, if attacking to or from the back row:
+
+Hit% = Hit%/2 
+
+5.2.2.2) BLIND STATUS
+If the attacker is Blind:
+
+Hit% = Hit%/2
+
+5.3) DEFENSE MULTIPLIER
+
+5.3.1) INITIAL VALUE OF DEFENSE MULTIPLIER
+
+5.3.1.1) MONSTER DEFENSE MULTIPLIER
+Against physical attacks, Monsters have their own Defense Multiplier stat 
+(referenced via a lookup table):
+
+D.M. = Monster Defense Multiplier
+
+5.3.1.2) SELF-TARGETTING
+If the attacker is targeting a party member, then if the target is equipped 
+with a shield:
+
+D.M. = (Agility/16) + (Level/16) + 1 * (number of shields equipped)
+
+If the party member target is not equipped with a shield:
+
+D.M. = (Agility/32) + (Level/32)
+
+5.3.2) DEFENSE MULTIPLIER PENALTIES
+
+5.3.2.1) VULNERABLE TARGET
+If the character is physically attacking their own party member who is in a 
+vulnerable state:
+
+D.M. = 0 
+
+5.4) EVADE%
+
+5.4.1) INITIAL VALUES OF EVADE%
+
+5.4.1.1) MONSTER EVADE%
+Against physical attacks, Monsters have their own Evade% (referenced via a 
+lookup table):
+
+Evade% = Monster Evade%
+
+5.4.1.1) SELF-TARGETTING
+If the attacker is targeting a party member:
+
+Evade% = Sum of all worn (Armour Evade%) + (Agility/4)
+
+5.5) NET ATTACK MULTIPLIER CALCALUTION
+The following is just a theory, but it does fit with observed testing:
+
+M = 0
+FOR I = 1..A.M.
+IF (1..100) <= Hit% 
+M = M + 1
+
+FOR I = 1..D.M.
+IF (1..100) <= Evade%
+M = M - 1
+
+M is Net Attack Multiplier. If M <= 0 then the attack is a 'Miss'.
+
+************************************************
+6) MULTIPLY BASE DAMAGE BY NET ATTACK MULTIPLIER
+************************************************
+
+Using Base Damage calculated from Steps 1-4, and Net Attack Multiplier (M) 
+from Step 5:
+
+Final Damage = Base Damage * M
+
+*******************************************
+7) APPLY FINAL DAMAGE BONUSES AND PENALTIES
+*******************************************
+
+7.1) FINAL DAMAGE BONUSES
+
+7.1.1) BUILDUP COMMAND
+If a Karateka has executed one 'Buildup' command prior to the current attack, 
+then:
+
+Final Damage = Final Damage * 2
+
+If a Karateka has executed two 'Buildup' commands prior to the current attack, 
+then:
+
+Final Damage = Final Damage * 3
+
+Note that immediately after a Karateka executes a third 'Buildup' command 
+without a 'Fight' command, then an 'Overload' occurs and the current attack is 
+aborted and HP = (Current HP)/2
+
+7.1.2) JUMP COMMAND
+If a Dragoon is landing an attack from a 'Jump' command:
+
+Final Damage = Final Damage * 3
+
+7.2) MINIMUM DAMAGE
+As long as M > 0, then Final Damage is always at least one:
+
+IF (M > 0) and (Final Damage <= 0)
+Final Damage = 1
+
+7.3) STATUS ATTACKS
+If the attacker's physical attack has a Status effect, then:
+
+N = 0
+FOR I = 1..M
+IF (1..100) <= (Hit%-Evade%)
+N = N + 1
+
+The status will be inflicted on the target as long as N > 0.
+
+****************
+8) DUAL WIELDING
+****************
+
+If the attacker is wielding two weapons, apply Steps 1-7 for each hand.  Final 
+Damage is the sum from each hand and the number of hits shown on screen is the 
+sum of the Net Attack Multipliers from each hand:
+
+Final Damage = Final Damage (from Right Hand) + Final Damage (from Left Hand)
+
+M (displayed on screen) = M (from Right Hand) + M (from Left Hand)
+
+------------------------------------------------------------------------------
+
+X.  DAMAGE CALCULATION FORMULA:  MONSTER PHYSICAL ATTACKS
+
+------------------------------------------------------------------------------
+
+The following are detailed steps for calculating damage when a monster uses a 
+physical attack.  These steps are all cumulative, calculated in the following 
+order:
+
+************************
+1) CALCULATE BASE DAMAGE
+************************
+
+Monsters have their own Attack Damage (referenced via a lookup table):
+
+Base Damage = Monster Attack Damage
+
+******************************************
+2) APPLY BASE DAMAGE BONUSES AND PENALTIES
+******************************************
+
+2.1) BASE DAMAGE ADDITIVE BONUSES
+
+2.1.1) HASTE SPELL
+Attackers that have had Haste cast on them get an additive bonus for physical 
+attacks.  This bonus is equal to the calculated Final Damage from the caster's 
+Haste spell (via Steps 1-6).
+
+Base Damage = Base Damage + (Final Damage calculated from Haste)
+
+2.2) BASE DAMAGE MULTIPLICATIVE BONUSES
+
+2.2.1) ELEMENTAL WEAKNESS
+Note that for attacks with multiple elements, as long as the target is weak 
+against at least one of those elements, then the target will be considered 
+weak.  If the target is weak against the attacking element, then:
+
+Base Damage = Base Damage * 2
+
+2.2.2) VULNERABLE TARGET
+Vulnerable states include being a Frog, Mini, immediately after executing a 
+'Buildup' command and just prior to a subsequent 'Fight' or 'Overload', and 
+also during the entire round when the target or any of its party members 
+attempt to Run or Escape. If the target of the attack is in a vulnerable 
+state:
+
+Base Damage = Base Damage * 2 
+
+2.3) BASE DAMAGE MULTIPLICATIVE PENALTIES
+
+2.3.1) ELEMENTAL STRENGTH
+Note that for attacks with multiple elements, as long as the target is strong 
+against at least one of those elements and is not weak against any of those 
+elements, then the target will be considered strong.  If the target is strong 
+against the attacking element, then:
+
+Base Damage = Base Damage / 2
+
+************************************
+3) APPLY RANDOM RANGE TO BASE DAMAGE
+************************************
+
+Apply a random range to the Base Damage:
+
+Base Damage = (Base Damage..Base Damage*1.5)
+
+****************************
+4) SUBTRACT TARGET'S DEFENSE
+****************************
+
+The target's defense value will reduce the Base Damage of the attack.
+
+4.1) INITIAL DEFENSE VALUE
+
+4.1.1) CHARACTER DEFENSE
+
+Defense = Sum of all worn (Armour Defense) + (Vitality/2)
+
+4.2) DEFENSE BONUSES
+
+4.2.1) SAFE SPELL
+Targets that have had Safe cast on them get an additive bonus.  This bonus is 
+equal to the calculated Final Damage from the caster's Safe spell (via Steps 
+1-6).
+
+Defense = Defense + (Final Damage calculated from Safe)
+
+4.2.2) DEFEND COMMAND
+Immediately after a target executes a 'Defend' command, he will receive a 
+bonus against physical attacks.  This bonus only lasts until the end of the 
+current round.
+
+Defense = Defense * 4
+
+4.3) DEFENSE PENALTIES
+
+4.3.1) VULNERABLE TARGET
+If the target of the attack is in a vulnerable state:
+
+Defense = 0
+
+4.4) BASE DAMAGE CALCULATION 
+Subtract the target's Defense value from the attacker's base Damage:
+
+Base Damage = Base Damage - Defense
+
+**********************************
+5) CALCULATE NET ATTACK MULTIPLIER
+**********************************
+
+A.M. = Attack Multiplier
+D.M. = Defense Multiplier
+M = Net Attack Multiplier
+
+5.1) ATTACK MULTIPLIER
+
+5.1.1) INITIAL VALUE OF ATTACK MULTIPLIER
+Monsters have their own Attack Multiplier (referenced via a lookup table):
+
+A.M. = Monster Attack Multiplier
+
+5.1.2) ATTACK MULTIPLIER BONUSES
+
+5.1.2.1) HASTE SPELL
+Attackers that have had Haste cast on them get an additive bonus for physical 
+attacks.  This bonus is equal to the calculated Net Multiplier from the 
+caster's Haste spell (via Step 5).  Note that A.M. has a maximum value of 16.  
+If Haste is cast on a target that already has an A.M. of 16, then the spell 
+will be ineffective (the target will NOT receive a damage bonus).
+
+A.M. = A.M. + (M calculated from Haste)
+
+5.2) HIT%
+
+5.2.1) INITIAL VALUE OF HIT%
+Monsters have their own Hit% (referenced via a lookup table):
+
+Hit% = Monster Hit%
+
+5.2.2) HIT% PENALTIES
+
+5.2.2.1) BACK ROW
+For physical attacks, if attacking to or from the back row:
+
+Hit% = Hit%/2 
+
+5.2.2.2) BLIND STATUS
+If the attacker is Blind:
+
+Hit% = Hit%/2
+
+5.3) DEFENSE MULTIPLIER
+
+5.3.1) INITIAL VALUE OF DEFENSE MULTIPLIER
+
+5.3.1.1) CHARACTER DEFENSE MULTIPLIER
+If the target is equipped with a shield:
+
+D.M. = (Agility/16) + (Level/16) + 1 * (number of shields equipped)
+
+If the target is not equipped with a shield:
+
+D.M. = (Agility/32) + (Level/32)
+
+5.3.2) DEFENSE MULTIPLIER PENALTIES
+
+5.3.2.1) VULNERABLE TARGET
+If the target of a physical attack is in a vulnerable state:
+
+D.M. = 0 
+
+5.4) EVADE%
+
+5.4.1) INITIAL VALUES OF EVADE%
+
+5.4.1.1) CHARACTER EVADE%
+
+Evade% = Sum of all worn (Armour Evade%) + (Agility/4)
+
+5.5) NET ATTACK MULTIPLIER CALCALUTION
+The following is just a theory, but it does fit with observed testing:
+
+M = 0
+FOR I = 1..A.M.
+IF (1..100) <= Hit% 
+M = M + 1
+
+FOR I = 1..D.M.
+IF (1..100) <= Evade%
+M = M - 1
+
+M is Net Attack Multiplier. If M <= 0 then the attack is a 'Miss'.
+
+************************************************
+6) MULTIPLY BASE DAMAGE BY NET ATTACK MULTIPLIER
+************************************************
+
+Using Base Damage calculated from Steps 1-4, and Net Attack Multiplier (M) 
+from Step 5:
+
+Final Damage = Base Damage * M
+
+*******************************************
+7) APPLY FINAL DAMAGE BONUSES AND PENALTIES
+*******************************************
+
+7.1) MINIMUM DAMAGE
+As long as M > 0, then Final Damage is always at least one:
+
+IF (M > 0) and (Final Damage <= 0)
+Final Damage = 1
+
+7.2) STATUS ATTACKS
+If the attacker's physical attack has a Status effect, then:
+
+N = 0
+FOR I = 1..M
+IF (1..100) <= (Hit%-Evade%)
+N = N + 1
+
+The status will be inflicted on the target as long as N > 0.
+
+------------------------------------------------------------------------------
+
+XI.  DAMAGE CALCULATION FORMULA:  MAGIC ATTACKS & ITEMS
+
+------------------------------------------------------------------------------
+
+Monsters cast spells or use special attacks similar to the way characters cast 
+spells.  The damage calculation formula is essentially same in either case.  
+Also, a character that uses an item is essentially casting the spell that is 
+associated with that item and again the damage calculation formula is similar.  
+Two important differences with items are:
+
+i)  Items have their own Magic Attack Multiplier.  This is not influenced by 
+any of the attacker's stats.
+
+ii)  Items have their Magic Hit% of 100. This is also not influenced by any of 
+the attacker's stats, nor is it affected by Blind.
+
+Finally, the Geomancer's 'Terrain' command is essentially the same as casting 
+Black Magic, without using MP.
+
+The following are detailed steps for calculating damage when a magic attack is 
+made.  These steps are all cumulative, calculated in the following order:
+
+************************
+1) CALCULATE BASE DAMAGE
+************************
+
+1.1) BLACK MAGIC DAMAGE
+Note that Black Magic also includes the Terrain command from the Geomancer.
+
+Base Damage = Spell Damage + (Intellect/2)
+
+1.2) WHITE MAGIC DAMAGE
+For offensive White magic (Holy, Aero2, Aero):
+
+Base Damage = Spell Damage + (Spirit/2)
+
+For non-offensive White magic (Cure4, Cure3, Cure2, Cure, Haste, Safe):
+
+Base Damage = Spell Damage
+
+1.3) CALL MAGIC DAMAGE
+For Call Magic:
+
+Base Damage = Spell Damage + Intellect
+
+******************************************
+2) APPLY BASE DAMAGE BONUSES AND PENALTIES
+******************************************
+
+2.1) BASE DAMAGE MULTIPLICATIVE BONUSES
+2.1.1) ELEMENTAL WEAKNESS
+Note that for attacks with multiple elements, as long as the target is weak 
+against at least one of those elements, then the target will be considered 
+weak.  If the target is weak against the attacking element, then:
+
+Base Damage = Base Damage * 2
+
+2.1.2) TARGETS THAT ARE TOAD, MINI OR BUILDUP
+If the target is a Frog, Mini or has executed a 'Buildup' command and not 
+executed a subsequent 'Fight' or 'Overload', the attacker gets a bonus to Base 
+Damage.  Note this does NOT apply for non-offensive White magic:
+
+Base Damage = Base Damage * 2 (not for non-offensive White magic)
+
+2.2) BASE DAMAGE MULTIPLICATIVE PENALTIES
+
+2.2.1) ELEMENTAL STRENGTH
+Note that for attacks with multiple elements, as long as the target is strong 
+against at least one of those elements and is not weak against any of those 
+elements, then the target will be considered strong.  If the target is strong 
+against the attacking element, then:
+
+Base Damage = Base Damage / 2
+
+************************************
+3) APPLY RANDOM RANGE TO BASE DAMAGE
+************************************
+
+Apply a random range to the Base Damage:
+
+Base Damage = (Base Damage..Base Damage*1.5)
+
+****************************
+4) SUBTRACT TARGET'S DEFENSE
+****************************
+
+The target's magic defense value will reduce the Base Damage of the attack.
+
+4.1) INITIAL DEFENSE VALUE
+
+4.1.1) CHARACTER MAGIC DEFENSE
+
+Defense = Sum of all (Armour Base Magic Defense) worn 
+
+4.1.2) MONSTER MAGIC DEFENSE
+Against magic attacks, Monsters have their own Magic Defense stat (referenced 
+via a lookup table):
+
+Defense = Monster Magic Defense
+
+4.1.3) SELF-TARGETTING
+If the attacker is targeting his own party member:
+
+Defense = 0
+
+4.2) DEFENSE BONUSES
+
+4.2.1) SAFE SPELL
+Targets that have had Safe cast on them get an additive bonus.  This bonus is 
+equal to the calculated Final Damage from the caster's Safe spell (via Steps 
+1-6).
+
+Defense = Defense + (Final Damage calculated from Safe)
+
+4.3) DEFENSE PENALTIES
+
+4.3.1) TARGETS THAT ARE TOAD, MINI OR BUILDUP
+If the target is a Frog, Mini or has executed a 'Buildup' command and not 
+executed a subsequent 'Fight' or 'Overload', the target gets a penalty to 
+Defense:
+
+Defense = 0
+4.4) BASE DAMAGE CALCULATION 
+Subtract the target's Defense value from the attacker's base Damage:
+
+Base Damage = Base Damage - Defense
+
+**********************************
+5) CALCULATE NET ATTACK MULTIPLIER
+**********************************
+
+A.M. = Attack Multiplier
+D.M. = Defense Multiplier
+M = Net Attack Multiplier
+
+5.1) ATTACK MULTIPLIER
+
+5.1.1) BLACK MAGIC ATTACK MULTIPLIER
+Note that Black Magic also includes the Terrain command from the Geomancer.
+
+A.M. = (Intellect/16) + (Level/16) + (Skill/32) + 1
+
+5.1.2) WHITE MAGIC ATTACK MULTIPLIER
+For White magic:
+
+A.M. = (Spirit/16) + (Level/16) + (Skill/32) + 1
+
+5.1.3) CALL MAGIC ATTACK MULTIPLIER
+For Call magic:
+
+A.M. = (Intellect/8) + (((Skill/8)*3)/2) + 1
+
+5.1.4) ITEM ATTACK MULTIPLIER
+Items have their own attack multiplier that is not influenced by any of the 
+character's stats.
+
+A.M. = Item Attack Multiplier
+
+5.2) HIT%
+
+5.2.1) INITIAL VALUE OF HIT%
+
+5.2.1.1) BLACK SPELL HIT%
+Note that Black Magic also includes the Terrain command from the Geomancer.
+
+Hit% = Spell Hit% + (Intellect/2)
+
+5.2.1.2) WHITE SPELL HIT%
+For White magic:
+
+Hit% = Spell Hit% + (Spirit/2)
+
+5.2.1.3) CALL SPELL HIT%
+For Call Magic:
+
+Hit% = Spell Hit% + Intellect
+
+5.2.1.4) ITEM HIT%
+All items have a Hit% of 100 that is not influenced by any of the character's 
+stats.
+
+Hit% = 100 (for items only)
+
+5.2.2) HIT% BONUSES
+
+5.2.2.1) TOAD OR MINI ON PARTY MEMBERS
+Toad, Mini, Life and Life2 appear to have a Hit% of 100 when cast on party 
+members:
+
+Hit% = 100 (for Toad, Mini, Life and Life2 cast on party members)
+
+5.2.3) HIT% PENALTIES
+
+5.2.3.1) BLIND STATUS
+Note that being Blind does not affect the Hit% of items.  If the attacker is 
+Blind:
+
+Hit% = Hit%/2 (not for items)
+
+5.2.3.2) KILL SPELL
+The success rate of the Kill spell also depends on the relative levels between 
+the target and caster:
+
+IF Target Level >= ((((Attacker Level)/2)*3)/2)
+Hit% = 0
+
+5.3) DEFENSE MULTIPLIER
+
+5.3.1) INITIAL VALUE OF DEFENSE MULTIPLIER
+
+5.3.1.1) CHARACTER MAGIC DEFENSE MULTIPLIER
+
+D.M. = (Agility/32) + (Intellect/32) + (Spirit/32)
+
+5.3.1.2) MONSTER MAGIC DEFENSE MULTIPLIER
+Against magic attacks, Monsters have their own Base Magic Defense Multiplier 
+(referenced via a lookup table):
+
+D.M. = Monster Base Magic Defense Multiplier
+
+5.3.2) DEFENSE MULTIPLIER PENALTIES
+
+5.3.2.1) TOAD OR MINI
+If the target of a magic attack is a Toad or Mini:
+
+D.M. = 0 
+
+5.3.2.2) SELF-TARGETTING
+If the attacker is targeting a party member with magic, then:
+
+D.M. = 0 
+
+5.4) EVADE%
+
+5.4.1) INITIAL VALUES OF EVADE%
+
+5.4.1.1) CHARACTER MAGIC EVADE%
+
+Magic Evade% = (Intellect/2) + (Spirit/2)
+
+5.4.1.2) MONSTER MAGIC EVADE%
+Against magic attacks, Monsters have their own Magic Evade% (referenced via a 
+lookup table):
+
+Evade% = Monster Magic Evade%
+
+5.5) NET ATTACK MULTIPLIER CALCALUTION
+The following is just a theory, but it does fit with observed testing:
+
+M = 0
+FOR I = 1..A.M.
+IF (1..100) <= Hit% 
+M = M + 1
+
+FOR I = 1..D.M.
+IF (1..100) <= Evade%
+M = M - 1
+
+M is Net Attack Multiplier. If M <= 0 then the attack is 'Ineffective'.  For 
+the
+'Terrain' command, if M <= 0 against ALL targets, instead of 'Ineffective', 
+then 'Backfired' occurs.  The attacker subsequently also sustains (MAX HP)/4 
+damage.
+
+************************************************
+6) MULTIPLY BASE DAMAGE BY NET ATTACK MULTIPLIER
+************************************************
+
+Using Base Damage calculated from Steps 1-4, and Net Attack Multiplier (M) 
+from Step 5:
+
+Final Damage = Base Damage * M
+
+*******************************************
+7) APPLY FINAL DAMAGE BONUSES AND PENALTIES
+*******************************************
+
+7.1) FINAL DAMAGE BONUSES
+
+7.1.1) CURE4
+If Cure4 is cast on a single target, that target heals to full HP.  If Cure4 
+is cast on multiple targets, follow all Steps in Damage Calculation normally.
+
+7.2) FINAL DAMAGE PENALTIES
+
+7.2.1) MULTIPLE TARGETS
+If the attacker has selected multiple targets instead of single target, then:
+
+Final Damage = (Final Damage)/(number of targets selected)
+
+Note this does NOT apply to spells that automatically targets multiple targets 
+(Quake, Meteo, Call Spells)
+
+7.3) MINIMUM DAMAGE
+As long as M > 0, then Final Damage is always at least one:
+
+IF (M > 0) and (Final Damage <= 0)
+Final Damage = 1
+
+7.4) STATUS ATTACKS
+If the attacking spell has a Status effect, then the status will be inflicted 
+on the target as long as M > 0.
+
+*******************
+8) MULTIPLE TARGETS
+*******************
+
+If the attacker is attacking multiple targets, repeat Steps 1-7 for each 
+target.
+
+------------------------------------------------------------------------------
+
+XII.  DATA
+
+------------------------------------------------------------------------------
+
+These are my own data tables I've compiled from the FF3j rom hex data.  
+Special thanks goes again to sqpat17 for finding and posting the hex offset 
+data which let me find the data in the first place.
+
+Abbreviations:
+
+DAMAGE:  Any letters that precede damage indicate an attack element:
+
+F       Fire                    E       Earth
+I       Ice                     A       Air
+T       Thunder                 Dr      Drain
+H       Holy                    D       Dark
+
+Petr(1/2) Slow Petrify.  Requires two successful, separate attacks to Petrify
+Petr(1/3) Slow Petrify.  Requires three successful, separate attacks to 
+Petrify
+
+Str     Strength                Agl     Agility
+Vit     Vitality                Int     Intellect
+Spr     Spirit
+
+F Mag   Fire Magic Power Up 
+B Mag   Bolt Magic Power Up
+I Mag   Ice Magic Power Up
+
+On  Onion Kid           Fi  Fighter
+Mo  Monk                Ww  White Wizard
+Bw  Black Wizard        Rw  Red Wizard
+Hu  Hunter              Kn  Knight
+Th  Thief               Sc  Scholar
+Ge  Geomancer           Dr  Dragoon
+Vi  Viking              Ka  Karateka
+Mk  Mystic Knight       Co  Conjurer
+Ba  Bard                Wa  Warlock
+Sh  Shaman              Su  Summoner
+Sa  Sage                Ni  Ninja
+
+-Mk refers to all classes except the Mystic Knight
+
+***********
+WEAPON DATA
+***********
+
+FISTS+CLAWS                        
+WEAPON    DAMAGE  HIT%  NOTES          PRICE  JOB EQUIPPABLE
+Empty          1   80%                     0  All
+Kaiser        36  100%                  7000  Ka Ni
+CatClaw       42  100%                 14000  Ka Ni
+Dragon    F,T:48  100%                 18000  Ka Ni
+Elven         37  100%  Casts 'Confu'  18000  Ka Ni  
+HellClaw    D:60  100%  Adds Poison    40000  Ka Ni
+                        
+NUNCHUCKS                        
+WEAPON    DAMAGE  HIT%  NOTES          PRICE  JOB EQUIPPABLE
+Nunchuck      12   70%                    60  Mo Ni
+Tonfa         20   80%                   500  Mo Ni
+3-Part        25   70%                  3000  Mo Ni
+                        
+RODS                        
+WEAPON    DAMAGE  HIT%  NOTES          PRICE  JOB EQUIPPABLE
+Mithril        5   60%                   400  Ww Bw Rw Co Wa Sh Su Sa Ni
+Flame       F:12   70%  F Mag Up        3000  Bw Rw Co Wa Su Sa Ni
+Ice         I:12   70%  I Mag Up        3000  Bw Rw Co Wa Su Sa Ni
+Light       T:12   60%  B Mag Up        3000  Bw Rw Co Wa Su Sa Ni
+Ultimate H,E,A,    80%  Adds Petr(1/2) 30000  Wa Sa Ni
+        F,I,T:20  
+             
+STAVES                        
+WEAPON    DAMAGE  HIT%  NOTES          PRICE  JOB EQUIPPABLE
+Staff          3   50%                    40  Ww Rw Sh Sa Ni
+Burning        8   50%  Casts 'Fire'    3500  Ww Rw Sh Sa Ni
+Freezing       8   50%  Casts 'Ice'     3500  Ww Rw Sh Sa Ni
+Shining        8   50%  Casts 'Bolt'    3500  Ww Rw Sh Sa Ni
+Golem       E:16   70%  Casts 'Break', 13500  Ww Rw Sh Sa Ni
+                        Str+5,
+                        Adds Petr(1/3)  
+Rune          20   80%  Casts 'Ice 3'  18000  Ww Rw Sh Sa Ni
+Eldest        30   90%  Casts 'Cure',  65000  Sh Sa Ni
+                        Int+5, Spr+5,
+                        F Mag Up,
+                        I Mag Up,
+                        B Mag Up,
+                           
+AXES AND HAMMERS                        
+WEAPON    DAMAGE  HIT%  NOTES          PRICE  JOB EQUIPPABLE
+Hammer      T:25   60%                   500  Vi Ni
+Thor        T:30   70%  Casts 'Bolt2'  14000  Vi Ni
+Battle      T:45   60%                  5500  Vi Ni
+M.Star      T:50   70%                  8000  Vi Ni
+Tomahawk      60   80%                 20000  Vi Ni
+GreatAxe    T:75   80%                 14000  Vi Ni
+Triton      A:85   80%                 20000  Vi Ni
+                        
+SPEARS                        
+WEAPON    DAMAGE  HIT%  NOTES          PRICE  JOB EQUIPPABLE
+Thunder   A,T:35   80%  Casts 'Bolt2'   8000  Dr Ni
+Wind        A:50   80%  Casts 'Aero'   10000  Dr Ni
+Blood    A,Dr:70   80%                 20000  Dr Ni
+Holy     H,A:100   80%                 45000  Dr Ni
+                        
+KNIVES                        
+WEAPON    DAMAGE  HIT%  NOTES          PRICE  JOB EQUIPPABLE
+Knife          6   85%                    20  On Fi Bw Rw Kn Th Ni
+Dagger         8   85%                    60  On Fi Bw Rw Kn Th Ni
+Mithril       10   85%                   500  On Fi Bw Rw Kn Th Ni
+M.Gauche      30  100%                  7000  Th Ni
+Orialcon   Dr:45  100%                  1200  Th Ni
+AirKnife    A:60  100%  Casts 'Aero'   10000  Th Ni
+                        
+SWORDS                        
+WEAPON    DAMAGE  HIT%  NOTES          PRICE  JOB EQUIPPABLE
+Shiny          5   20%                  5000  Fi Kn Ni
+Long          10   80%                   100  On Fi Kn Ni
+W.Slayer    H:15   80%                  1000  Rw Ni
+Mithril       17   85%                   500  On Fi Kn Ni
+Serpent     T:25   80%                  1500  Fi Kn Ni
+Tyrving       29   75%                  2800  Rw Ni
+Salamand    F:32   80%  Casts 'Fire'    3000  Fi Kn Ni
+IceBlade    I:40   80%  Casts 'Ice'     3000  Fi Kn Ni
+King          50   80%                  5000  Fi Kn Ni
+Ancient      H:5   80%  Adds Paralysis 16500  Fi Kn Ni
+Blood      Dr:35   80%                 16500  Fi Kn Ni
+Defender      95   80%  Casts 'Safe',  16500  Kn Ni
+                        Vit+5
+Break      E:120   80%  Adds Petr(1/2) 30000  Kn Ni
+Excalibur    160   80%  Str+5          65000  Kn Ni
+Ragnarok   D:180  100%  Str+5, Agl+5,  65500  Kn Mk Ni
+                        Vit+5
+Onion        200  100%  Str+5, Agl+5,  65500  On
+                        Vit+5
+
+KATANAS
+WEAPON    DAMAGE  HIT%  NOTES          PRICE  JOB EQUIPPABLE
+Ashura      D:65  100%                 20000  Mk Ni
+Kotetsu    D:105   90%                 21000  Mk Ni
+Kiku       D:125  100%                 22000  Mk Ni
+Masamune   D:160   90%  Agl+5, Vit+5   65000  Mk Ni
+                        
+BOOKS                         
+WEAPON    DAMAGE  HIT%  NOTES          PRICE  JOB EQUIPPABLE
+Flame       F:32   70%                  3300  Sc Sa Ni
+Ice         I:32   70%                  3300  Sc Sa Ni
+Light       T:32   70%                  3300  Sc Sa Ni
+Inferno     F:65   70%                 15000  Sc Sa Ni
+Illumina    T:65   80%                 15000  Sc Sa Ni
+Blizzard    I:65   80%                 15000  Sc Sa Ni
+          
+THROWING WEAPONS             
+WEAPON    DAMAGE  HIT%  NOTES          PRICE  JOB EQUIPPABLE
+Boomerng      35   70%                  9000  Th Ni
+FullMoon     160   90%                 62000  Kn Mk Ni
+Shuriken     200  100%                 65500  Ni
+
+BELLS                        
+WEAPON    DAMAGE  HIT%  NOTES          PRICE  JOB EQUIPPABLE
+Giyaman       25   80%                  4500  Ge Ni
+Earth         30   80%  Adds Paralysis  5500  Ge Ni
+Rune          40  100%                  5500  Ge Ni
+                        
+HARPS                        
+WEAPON    DAMAGE  HIT%  NOTES          PRICE  JOB EQUIPPABLE
+Madora        40   70%                  8000  Ba Ni
+Dream          0   60%  Adds Sleep      7500  Ba Ni
+Lamia          0   80%  Adds Confusion 21500  Ba Ni
+Loki          60  100%                 40000  Ba Ni
+                        
+BOWS                        
+WEAPON    DAMAGE  HIT%  NOTES          PRICE  JOB EQUIPPABLE
+Bow            5   90%                   100  On Fi Rw Hu Ni
+GreatBow       8   85%                  1200  On Fi Rw Hu Ni
+Killer        15   85%                  2000  Hu Ni
+Rune          25   90%                  3000  Hu Ni
+Yoichi        50  100%                 42000  Hu Ni
+                        
+ARROWS                        
+WEAPON    DAMAGE  HIT%  NOTES          PRICE  JOB EQUIPPABLE
+Wooden         6   90%                     5  On Fi Rw Hu Ni
+Holy        H:13   85%                    10  On Fi Rw Hu Ni
+Iron          17   85%                    10  On Fi Rw Hu Ni
+Bolt        T:30   85%                    30  Hu Ni
+Fire        F:30   90%                    30  Hu Ni
+Ice         I:30   90%                    30  Hu Ni
+Medusa      E:20  100%   Adds Petrified  100  Hu Ni
+Yoichi        70  100%                   200  Hu Ni
+ 
+***********
+ARMOUR DATA
+***********
+
+DEF:  Any letters that precede defense indicate element resistance.
+
+SHIELDS                  
+ARMOUR     DEF   EV% M.DEF  NOTES          PRICE  JOB EQUIPPABLE
+Leather      3    3%     2                    40  On Fi Rw Kn Th Dr Vi Ni
+Mithril      5    7%     7                   180  On Fi Rw Kn Th Dr Vi Ni
+Ice        F:8    9%     8  Weak:I          1800  On Fi Rw Kn Th Dr Vi Ni
+Hero        10   10%    12  Resist Petr,    3500  Kn Dr Vi Ni
+                            Sleep 
+Demon       12   14%    18  Resist Frog,   12500  Mk Ni
+                            Conf
+Diamond   T:13   14%    15  Resist Frog,   18000  Kn Dr Vi Ni
+                            Conf
+Aegis       16   16%    25  Resist Petr,   28000  Kn Dr Vi Ni
+                            Sleep, Frog,
+                            Conf,
+                            Agl+5 
+Genji       20   18%    35  Resist Petr,   38000  Mk Ni
+                            Sleep, Frog,
+                            Conf, Poison,
+                            Str+5, Agl+5 
+Crystal     20   20%    30  Resist Petr,   50000  On Fi Rw Kn Dr Vi Mk Ni
+                            Sleep, Frog,
+                            Conf, Mini,
+                            Parlyz,
+                            Str+5, Agl+5,
+                            Vit+5 
+Onion       48   48%    48  Resist Dead,   65500  On
+                            Parlyz, Petr,
+                            Sleep, Frog,
+                            Conf, Mute,
+                            Mini, Blind,
+                            Poison
+
+HEADGEAR             
+ARMOUR     DEF   EV% M.DEF  NOTES          PRICE  JOB EQUIPPABLE
+Leather      1    1%     1                    15  -Mk
+Mithril      2    4%     4                   130  On Fi Rw Kn Th Dr Vi Ni
+Carapace     3    5%     5                   450  On Fi Kn Dr Vi Ni
+Ice        F:4    6%     6  Weak:I          1200  Fi Rw Hu Kn Th Dr Vi Ni
+Headband     4    6%     4                  1200  Mo Ka Ni
+Scholar      5   10%     6                  7500  Ww Bw Sc Wa Sh Sa Ni
+DarkHood     5    8%     5  Str+5           2000  Th Ni
+Chakra       6   10%     6  Str+5, Vit+5    2000  Mo Ka Ni
+Viking       7   10%     7                  3000  Vi Ni
+Dragon       7   10%     7                  8000  Dr Ni
+Feather      7   10%     8  Agl+5           8000  Hu Sc Ge Co Ba Wa Sh Su Sa
+                                                  Ni
+Diamond    T:8   12%     9  Resist Frog,   20000  Kn Dr Vi Ni
+                            Conf
+Genji       10   15%    11  Resist Petr,   32000  Mk Ni
+                            Sleep, Frog,
+                            Conf, Poison
+Crystal     12   15%    15  Resist Petr,   50000  On Fi Rw Kn Dr Vi Mk Ni
+                            Sleep, Frog,
+                            Conf, Mini,
+                            Parlyz
+Ribbon   E,A,    10%    10  Resist Dead,      10  All
+         F,I,               Parlyz, Petr,
+         Dr:9               Sleep, Frog,
+                            Conf, Mute,
+                            Mini, Blind,
+                            Poison
+Onion    E,A,    48%    48  Resist Dead,   65500  On
+         F,I,               Parlyz, Petr,
+         Dr:48              Sleep, Frog,
+                            Conf, Mute,
+                            Mini, Blind,
+                            Poison
+
+BODY ARMOUR           
+ARMOUR     DEF   EV% M.DEF  NOTES          PRICE  JOB EQUIPPABLE
+Rusted       0    0%     0                   100  None
+Leather      2    1%     1                    95  -Mk
+Mithril      3    3%     3                   350  On Fi Rw Hu Kn Dr Vi Ni
+Carapace     4    4%     4                  1250  Fi Hu Kn Dr Vi Ni
+Ice        F:5    6%     4  Weak:I          2400  Fi Hu Kn Dr Vi Ni
+FlameMail  I:5    6%     4  Weak:F          2400  Fi Hu Kn Dr Vi Ni
+Viking      10    8%     7                  4000  Vi Ni
+Knight      12    9%     7  Resist Petr,    7500  Kn Ni
+                            Sleep
+Dragon      15   10%     7                  8000  Dr Ni
+Demon       17   15%     9  Resist Frog,   25000  Mk Ni
+                            Conf
+Diamond   T:18   10%    10  Resist Frog,   33000  Kn Dr Vi Ni
+                            Conf
+Reflect     20   12%    12                 35000  Kn Dr Vi Ni
+Genji       24   20%    15  Resist Petr,   40000  Mk Ni
+                            Sleep, Frog,
+                            Conf, Poison
+Crystal     28   20%    18  Resist Petr,   65000  On Fi Rw Kn Dr Vi Mk Ni
+                            Sleep, Frog,
+                            Conf, Mini,
+                            Parlyz
+Onion    E,A,    48%    48  Resist Dead,   65500  On
+         F,I,               Parlyz, Petr,
+         Dr:48              Sleep, Frog,
+                            Conf, Mute,
+                            Mini, Blind,
+                            Poison
+
+ROBES
+ARMOUR     DEF   EV% M.DEF  NOTES          PRICE  JOB EQUIPPABLE
+Cloth        1    0%     0                    50  -Mk
+Kenpo        6    8%     3                  2000  Mo Ka Ni
+DarkSuit     8   70%     5  Agl+5           3800  Th Ni
+Wizard       9    7%     7                  2000  Ww Bw Rw Co Wa Sh Su Sa Ni
+BlackBelt   11   10%     5  Agl+5           3800  Mo Ka Ni
+Bard        15   12%     7                  5500  Ba Ni
+Scholar     15   12%     7                  5500  Ww Bw Sc Wa Sh Sa Ni
+Gaia        16   12%     8                  4200  Ge Ni
+WhiteRobe   20   12%    14  Spr+5           7000  Ww Rw Co Sh Su Sa Ni
+BlackRobe   20   12%    14  Int+5           7000  Bw Rw Co Wa Su Sa Ni
+
+GLOVES 
+ARMOUR     DEF   EV% M.DEF  NOTES          PRICE  JOB EQUIPPABLE
+Mithril      1    5%     2                   120  On Fi Rw Kn Dr Vi Ni
+Thief        3    9%     4  Str+5           2500  Th Ni
+Gauntlet     2    8%     3                  2500  Kn Dr Vi Ni
+Diamond    T:6   10%     5  Resist Frog,   15000  Kn Dr Vi Ni
+                            Conf
+Genji        9   15%     7  Resist Petr,   30000  Mk Ni
+                            Sleep, Frog,
+                            Conf, Poison
+Crystal     10   15%    10  Resist Petr,   50000  On Fi Rw Kn Dr Vi Mk Ni
+                            Sleep, Frog,
+                            Conf, Mini,
+                            Parlyz
+Onion    E,A,    32%    32  Resist Dead,   65500  On
+         F,I,               Parlyz, Petr,
+         Dr:32              Sleep, Frog,
+                            Conf, Mute,
+                            Mini, Blind,
+                            Poison,
+                            Str+5, Agl+5,
+                            Vit+5 
+
+RINGS
+ARMOUR     DEF   EV% M.DEF  NOTES          PRICE  JOB EQUIPPABLE
+Copper       1    2%     3                    80  Ww Bw Rw Sc Ge Co Wa Sh Su
+                                                  Sa Ni
+Mithril      2    7%     3                   120  Ww Bw Rw Sc Ge Co Wa Sh Su
+                                                  Sa Ni
+Power        4   11%     1  Str+5           2500  Fi Mo Rw Hu Kn Th Sc Ge Dr
+                                                  Vi Ka Ba Ni
+Rune         5   10%     6                  5000  Ww Bw Rw Sc Ge Co Wa Sh Su
+                                                  Sa Ni
+Diamond    T:6   12%     6  Resist Frog,   10000  Ww Bw Rw Sc Ge Co Wa Sh Su
+                            Conf                  Sa Ni
+Protect      7   15%     7  Vit+5          30000  -Mk
+
+**********
+SKILL DATA
+**********
+
+Every time a command is entered in battle, that character will receive a 
+certain amount of Percentile Points, depending on its Job and the command that 
+was entered.  Every 100 Percentile Points accumulated gives +1 to the 
+character's current Job Skill.  Percentile Points over 100 are discarded after 
+the battle.  Characters that are Dead or Petrified at the end of battle
+receive no Percentile Points.  If the party successfully runs or escapes from
+battle then no one receives any Percentile Points.  The following is a list of 
+all Jobs and the amount of Percentile Points (%PTS) earned for each command:
+
+JOB        COMMAND %PTS   COMMAND %PTS   COMMAND  %PTS   COMMMAND %PTS
+Onion Kid    Fight    4    Defend    4       Run     4       Item    4
+Fighter      Fight   12    Defend    8       Run     0       Item    8
+Monk         Fight   12    Defend    8       Run     0       Item    8
+White Wiz.   Fight    4    Magic    12       Run     0       Item    4
+Black Wiz    Fight    4    Magic    12       Run     0       Item    4
+Red Wiz.     Fight    8    Magic    12       Run     0       Item    4
+Hunter       Fight   12    Defend    4     Magic     8       Item    4
+Knight       Fight   12    Defend    8       Run     0       Item    4
+Thief        Fight    8    Steal    12    Escape     4       Item    4
+Scholar      Fight   12    Peep     12      Scan    12       Item   12
+Geomancer    Fight    8    Terrain  12    Defend     4       Item    4
+Dragoon      Fight    8    Jump     12    Defend     8       Item    4
+Viking       Fight   12    Defend    8       Run     0       Item    8
+Karateka     Fight   12    BuildUp  12    Defend     0       Item    4
+M. Knight    Fight   12    Defend    4     Magic     8       Item    4
+Conjurer     Fight    8    Magic    12       Run     0       Item    4
+Bard         Sing    12    Scare     8     Cheer    12       Item    4
+Warlock      Fight    4    Magic    12       Run     0       Item    4
+Shaman       Fight    4    Magic    12       Run     0       Item    4
+Summoner     Fight    8    Magic    12       Run     0       Item    4
+Sage         Fight    4    Magic    12       Run     0       Item    4
+Ninja        Fight    8    Defend    8       Run     4       Item    4
+
+**********
+MAGIC DATA
+**********
+
+DAMAGE:  Any letters that precede damage indicate an attack element.
+
+REF? refers to whether the spell can be reflected by Wall.
+
+TAR:  Refers to targeting parameters.
+Targeting Abbreviations:
+
+E   Single or Multiple targeting, default Enemy
+A   Single or Multiple targeting, default Ally
+SE  Single only, default Enemy
+SA  Single only, default Ally
+AE  Automatically targets all Enemies
+AA  Automatically targets all Allies
+
+BLACK MAGIC
+SPELL         DAMAGE  HIT%  NOTES       REF?  TAR  LEV  PRICE  JOB EQUIPPABLE
+Fire            F:25  100%                Y     E    1    100  Bw Rw Wa Sa
+Ice             I:25  100%                Y     E    1    100  Bw Rw Wa Sa
+Sleep              0   15%  Adds Sleep    N     E    1    100  Bw Rw Wa Sa
+
+Bolt            T:35  100%                Y     E    2    700  Bw Rw Wa Sa
+Venom             20   60%  Adds Poison   Y     E    2    700  Bw Rw Wa Sa
+Blind             10   60%  Adds Blind    N     E    2    700  Bw Rw Wa Sa
+
+Fire2           F:55  100%                Y     E    3   1500  Bw Rw Wa Sa
+Ice 2           I:55  100%                Y     E    3   1500  Bw Rw Wa Sa
+Bolt2           T:55  100%                Y     E    3   1500  Bw Rw Wa Sa
+
+Break            E:0   50%  Adds Ptr(1/2) Y    SE    4   3000  Bw Rw Wa Sa
+Ice 3           I:85  100%                Y     E    4   3000  Bw Rw Wa Sa
+Shade              0   80%  Adds Parlyz   N     E    4   3000  Bw Rw Wa Sa
+
+Bolt3          T:110  100%                Y     E    5   5000  Bw Wa Sa
+Kill             100  100%  Adds Dead     N    AE    5   5000  Bw Wa Sa
+Erase              0   60%  Removes Refl. N     E    5   5000  Bw Wa Sa
+
+Fire3          F:150  100%                Y     E    6  10000  Bw Wa Sa
+Bio              130  100%                Y     E    6  10000  Bw Wa Sa
+Warp               0    0%  Adds Dead     N    SE    6  10000  Bw Wa Sa
+
+Quake          E:133  100%                N    AE    7  20000  Bw Wa Sa
+Brak2            E:0   40%  Adds Petr     N    SE    7  20000  Bw Wa Sa
+Drain         Dr:160  100%                N    SE    7  20000  Bw Wa Sa
+
+Flare            200  100%                Y     E    8  60000  Wa Sa
+Death              0   35%  Adds Dead     N    SE    8  60000  Wa Sa
+Meteo            180  100%                N    AE    8  60000  Wa Sa
+
+WHITE MAGIC
+SPELL         DAMAGE  HIT%  NOTES       REF?  TAR  LEV  PRICE  JOB EQUIPPABLE
+Cure           Dr:42  100%                N     A    1    100  Ww Rw Hu Mk Sh 
+Sa
+Pure               0   50%  Cures Poison  N    SA    1    100  Ww Rw Hu Mk Sh 
+Sa
+Sight              0  100%                N    SE    1    100  Ww Rw Hu Mk Sh 
+Sa
+
+Aero          A,I:45  100%                Y     E    2    700  Ww Rw Sh Sa
+Toad               0    0%  Adds Frog     N    SE    2    700  Ww Rw Hu Mk Sh 
+Sa
+Mini               0    0%  Adds Mini     N    SE    2    700  Ww Rw Hu Mk Sh 
+Sa
+
+Cure2         Dr:125  100%                N     A    3   1500  Ww Rw Hu Mk Sh 
+Sa
+Exit               0    0%  Adds Dead     N    SE    3   1500  Ww Rw Hu Mk Sh 
+Sa
+Wash               0   75%  Cures Blind   N    SA    3   1500  Ww Rw Hu Mk Sh 
+Sa
+
+Libra              0  100%  Scans HP      N    SE    4   3000  Ww Rw Sh Sa
+Confu              0   25%  Adds Conf     N     E    4   3000  Ww Rw Sh Sa
+Mute               0   60%  Adds Mute     N     E    4   3000  Ww Rw Sh Sa
+
+Cure3         Dr:180  100%                N     A    5   5000  Ww Sh Sa
+Life            Dr:1   15%  Cures Dead    N    SA    5   5000  Ww Sh Sa
+Safe               5   75%                N    SA    5   5000  Ww Sh Sa
+
+Aero2        A,I:115  100%                Y     E    6  10000  Ww Sh Sa
+Soft               0   60%  Cures Petr    N    SA    6  10000  Ww Sh Sa
+Haste              5   16%                N    SA    6  10000  Ww Sh Sa
+
+Cure4         Dr:220  100%                N     A    7  20000  Ww Sh Sa
+Heal               0   60%  Cures All     N    SA    7  20000  Ww Sh Sa
+Wall               0   75%  Adds Reflect  N    SA    7  20000  Ww Sh Sa
+
+WWind            A:4   40%                N     E    8  60000  Sh Sa
+Life2         Dr:255    0%  Cures Dead    N    SA    8  60000  Sh Sa
+Holy           H:160  100%                Y    SE    8  60000  Sh Sa
+
+CALL MAGIC
+SPELL         DAMAGE  HIT%  NOTES       REF?  TAR  LEV  PRICE  JOB EQUIPPABLE
+Chocb                                                1    100  Co Su Sa
+Escape             0  100%                N    AA
+Stumble            0  100%                N    SE
+ChocoboKick       16  100%                N    SE
+
+Shiva                                                2    700  Co Su Sa
+HypnoBeam          0   80%  Adds Sleep    N    AE
+Icy Glare         53  100%                N    SE
+Diamond Dust    I:32  100%                N    AE
+
+Ramuh                                                3   1500  Co Su Sa
+MindBlast          0   70%  Adds Parlyz   N    AE
+God's Thunder   T:48  100%                N    SE
+Heaven's Rage   T:96  100%                N    AE
+
+Ifrit                                                4   3000  Co Su Sa
+Recover        Dr:90  100%                N    AA
+Flames of Fury  F:85  100%                N    SE
+Hellfire       F:128  100%                N    AE
+
+Titan                                                5   5000  Co Su Sa
+Punch            101  100%                N    SE
+Kick             106  100%                N    SE
+Earthquake     E:160  100%                N    AE
+
+Odin                                                 6  45000  Co Su Sa
+Barrier            0  100%                N    AA
+Sword Cut        117  100%                N    SE
+Atom Edge        195  100%                N    AE
+
+Levia                                                7  55000  Co Su Sa
+Stony Glare      E:0    5%  Adds Petr     N    AE
+Tempest        A:133  100%                N    AE
+Tsunami        T:202  100%                N    AE
+
+Baham                                                8  65000  Co Su Sa
+Aura               0  100%                N    AA
+Rend             144  100%                N    SE
+MegaFlare        255  100%                N    AE
+
+TERRAIN
+SPELL         DAMAGE  HIT%  NOTES       REF?  TAR
+Earthquake      E:90   50%                N    AE
+Quicksand          0   30%  Adds Dead     N    SE
+Air Blade      A:120   30%                N    SE
+Sinkhole           0   40%  Adds Dead     N    SE
+Rapids           T:0   40%  Adds Dead     N    SE
+Waterspout     A:120   60%                N    SE
+Tornado        A:120   60%                N    SE
+Cave In        E:120   40%                N    AE
+
+ENEMY MAGIC
+SPELL         DAMAGE  HIT%  NOTES       REF?  TAR 
+Recovery       Dr:30  100%                N    SA
+EchoHerb        Dr:0  100%  Cures Mute    N    SA
+LuckMallet      Dr:0  100%  Cures Mini    N    SA
+MaidKiss        Dr:0  100%  Cures Frog    N    SA
+Flame           F:40  100%                Y    AE
+Blizzard        I:40  100%                Y    AE
+Thunder         T:40  100%                Y    AE
+Glare (Sleep)      0   80%  Adds Sleep    N    SE
+Glare (Conf)       0   80%  Adds Confu    N    SE
+Glare (Petr)     E:0   80%  Adds Petr     N    SE
+Breath             0   60%  Adds Parlyz   N    SE
+Mindblast          0   80%  Adds Parlyz   N    AE
+Poison             0   80%  Adds Poison   Y    AE
+Quake           E:80  100%                N    AE
+Atom Edge         32  100%                N    AE
+Tsunami           37  100%                N    AE
+MegaFlare         80  100%                Y    AE
+FlareWave         80  100%                N    AE
+
+*********
+ITEM DATA
+*********
+A.M.   Refers to Item Attack Multiplier
+
+ITEMS
+ITEM          SPELL       A.M.  PRICE
+Magic Key                         100
+Carrot                            150
+Potion        Recovery       3    150
+HiPotion      Recovery      12   1200
+Elixir        Elixir             3000
+FenixDown     Life               3000
+MidgBread     Sight               200
+Soft          Soft                300
+MaidKiss      MaidKiss            100
+EchoHerb      EchoHerb            100
+LuckMallet    LuckMallet          100
+Eyedrop       Wash                 40
+Antidote      Pure                 80
+OtterHead     Exit (Menu only)   2000
+BombShard     Fire2          2   1000
+SouthWind     Ice2           2   1000
+Zeus' Rage    Bolt2          2   1000
+BombR.Arm     Fire3          3   1500
+NorthWind     Ice3           3   1500
+Gods' Rage    Bolt3          3   1500
+EarthDrum     Quake          3   2500
+LamiaScl.     Confu          3   3000
+Gods' Wine    Haste          3   3000
+TurtlShell    Safe           3   3000
+Devil'sSigh   Kill           3   3000
+BlackHole     Warp           3   4000
+              (Battle only) 
+DarkScent     Death          3   5000
+LilithKiss    Drain          3   3000
+Imp'sYawn     Aero2          3   3000
+SplitShell    Erase          3   3000
+Paralyzer     Shade          3   3000
+MuteCharm     Mute           3   2000
+Pillow        Sleep          3   2000
+BombHead      Flare          3   2000
+Barrier       Wall           3   5000
+ChocoRage     Flare          3   5000
+WhiteScent    Holy           3   5000
+
+WEAPONS USUABLE AS ITEMS
+CLAWS
+ITEM          SPELL       A.M.
+Dragon        Aero           1
+Elven         Confu          1
+
+STAVES
+ITEM          SPELL       A.M.
+Burning       Fire           1
+Freezing      Ice            1
+Shining       Bolt           1
+Golem         Break          1
+Rune          Ice 3          1
+Eldest        Cure           1
+
+HAMMERS
+ITEM          SPELL       A.M.
+Thor          Bolt2          1
+
+SPEARS
+ITEM          SPELL       A.M.
+Thunder       Bolt2          1
+Wind          Aero           1
+
+KNIVES
+ITEM          SPELL       A.M.
+AirKnife      Aero           1
+
+SWORDS
+ITEM          SPELL       A.M.
+IceBlade      Ice            1
+Salamand      Fire           1
+Defender      Safe           1
+
+------------------------------------------------------------------------------
+
+XIII.  OTHER ISSUES
+
+------------------------------------------------------------------------------
+
+*************
+CRITICAL HITS
+*************
+
+I don't know how to manipulate the critical hit rate of Weapons or Monsters, 
+so it is very difficult to figure out where and how much criticals affect the 
+damage calculation formula. Casual observation has shown it to sometimes be 
+double damage, and other times to be indistinguishable from the normal damage 
+range. The final damage shown is not always a multiple of 2, so if anything, 
+the damage bonus would probably be applied in Step 1 somewhere.
+
+**********
+STEAL RATE
+**********
+
+Steal rate is much harder to derive a formula for since there appears to only 
+be a single success rate% to check. With Magic Hit%, attack multipliers made it 
+easier to distinguish the observed data. With only a single check and the 
+sometimes erratic behaviour of the pseudo-random number generator, it's hard 
+to distinguish between a 66% success rate and a 75% success rate, or even a 
+25% success and 50% success, unless I do > 300 trials. What I CAN say for sure 
+is that:
+
+i) Steal rate only depends on Skill and Level (NOT Agility). Target's Level 
+also doesn't seem to have any effect.
+
+ii) At Level 99 and Skill 99, Steal Rate is not 100%. It appears to be ~ 75% 
+but could be 66%.
+
+Best guess for the Steal Rate formula would be either:
+
+Steal Rate% = (Level/3) + (Skill/3)
+
+or 
+
+Steal Rate% = (Level/2) + (Skill/4)
+
+© 2026 FANDOM, INC. ALL RIGHTS RESERVED.
