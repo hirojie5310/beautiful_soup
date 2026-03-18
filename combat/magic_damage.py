@@ -243,7 +243,7 @@ def _calc_base_magic_damage_per_hit(
     rng: Optional[random.Random],
     use_expectation: bool,
 ) -> int:
-    """1ヒットあたり魔法ダメージ"""
+    """1ヒットあたり魔法ダメージ。最低 1 保証は最終ダメージ段で行う。"""
     if use_expectation:
         factor = 1.25
     else:
@@ -251,8 +251,14 @@ def _calc_base_magic_damage_per_hit(
             rng = random.Random()
         factor = rng.uniform(1.0, 1.5)
     raw = int(magic_power * factor)
-    base = raw - magic_defense
-    return max(base, 1)
+    return raw - magic_defense
+
+
+def _apply_magic_damage_floor(damage: float | int, hit_count: float | int) -> int:
+    """FAQ に寄せた魔法ダメージ下限。ヒット成立時のみ最終 1 を保証する。"""
+    if hit_count <= 0:
+        return 0
+    return max(int(damage), 1)
 
 
 def magic_damage_char_to_enemy(
@@ -271,6 +277,7 @@ def magic_damage_char_to_enemy(
       1) ヒット数を期待値でなく整数ロール
       2) 各ヒットごとに基礎ダメをロールして合計
     split_to_targets > 1 のときは単体魔法の全体化などでダメージを等分。
+    ただし Quake / Meteor / 召喚などの自動全体対象は分割しない。
     """
     if rng is None:
         rng = random.Random()
@@ -322,9 +329,10 @@ def magic_damage_char_to_enemy(
 
     dmg = apply_element_relation_to_damage(int(dmg), element_relation)
 
-    if split_to_targets > 1:
+    if split_to_targets > 1 and not spell.auto_all_target:
         dmg = int(dmg / split_to_targets)
 
+    dmg = _apply_magic_damage_floor(dmg, real_hits)
     return max(int(dmg), 0)
 
 
@@ -445,7 +453,7 @@ def calc_drain_damage_generic(
         rng=rng,
         use_expectation=use_expectation,
     )
-    dmg = int(base_per_hit * expected_hits)
+    dmg = _apply_magic_damage_floor(base_per_hit * expected_hits, expected_hits)
     return max(dmg, 0)
 
 
@@ -609,4 +617,5 @@ def magic_damage_enemy_to_char(
     if split_to_targets > 1:
         dmg = int(dmg / split_to_targets)
 
+    dmg = _apply_magic_damage_floor(dmg, expected_hits)
     return max(int(dmg), 0)

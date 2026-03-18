@@ -1,3 +1,4 @@
+# 260317
 # FF3 ダメージ式（instructrtrepe FAQ）との比較メモ
 
 このメモは、`combat` 実装を FAQ 記述と突き合わせた差分整理です。
@@ -34,7 +35,7 @@
 
 6. **全体化ペナルティの対象**
    - FAQ: 自動全体対象（例: Quake / Meteo / Call）には分割ペナルティなし。
-   - 実装: `split_to_targets` が 1 より大きい場合は常に割る設計。呼び出し側制御前提。
+   - 実装: `SpellInfo.auto_all_target` を導入し、`Target` が `All Enemies` / `All Allies` の魔法は `split_to_targets > 1` でも分割しない。
 
 7. **FAQ 固有の特殊仕様の網羅度**
    - Haste/Safe の「Step1-6 相当を再利用した加算」、Kill のレベル閾値、Wall 反射、Terrain Backfire などは

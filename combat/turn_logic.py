@@ -1193,10 +1193,9 @@ def run_character_turn(
                             element_relation=rel,
                             rng=rng,
                             use_expectation=False,
+                            split_to_targets=split,
                             blind=char_is_blind,
                         )
-                        if split > 1:
-                            dmg = int(dmg / split)
 
                     dmg = int(max(0, dmg))
 

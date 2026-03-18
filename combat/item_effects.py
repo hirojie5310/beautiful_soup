@@ -484,6 +484,7 @@ def spell_from_item(item_json: Dict[str, Any]) -> SpellInfo:
         accuracy_percent=acc_percent,
         magic_type=magic_type,
         elements=elements,  # ★正しく ["air","ice"] になる
+        auto_all_target=False,
     )
 
 

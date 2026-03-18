@@ -16,6 +16,12 @@ from typing import Optional, Dict, Any
 from copy import deepcopy
 from utils.text_normalize import normalize_text_basic
 
+
+def _is_auto_all_target(target: Any) -> bool:
+    normalized = normalize_text_basic(str(target or ""))
+    return normalized in {"all enemies", "all allies"}
+
+
 from combat.models import SpellInfo, EnemyAttackResult
 from combat.constants import MASTER_SPELLS_BY_NAME
 from combat.elements import parse_elements
@@ -83,6 +89,7 @@ def spell_from_json(spell_json: Dict[str, Any]) -> SpellInfo:
             accuracy_percent=acc_percent,
             magic_type="summon",
             elements=elements,
+            auto_all_target=_is_auto_all_target(spell_json.get("Target")),
         )
 
     # ----------------------------------------
@@ -107,6 +114,7 @@ def spell_from_json(spell_json: Dict[str, Any]) -> SpellInfo:
         accuracy_percent=acc_percent,
         magic_type=magic_type,
         elements=elements,
+        auto_all_target=_is_auto_all_target(spell_json.get("Target")),
     )
 
 
@@ -255,7 +263,9 @@ def enrich_monster_spells(
                 new_spells.append(s)
                 continue
 
-            master = spells_by_name.get(nm) or spells_by_name.get(normalize_text_basic(nm))
+            master = spells_by_name.get(nm) or spells_by_name.get(
+                normalize_text_basic(nm)
+            )
             if isinstance(master, dict):
                 new_spells.append(_merge_spell_defs(s, master))
             else:
@@ -278,7 +288,9 @@ def enrich_monster_spells(
                 continue
 
             # 「魔法DBに存在する名前なら補完」くらいの緩い判定でOK
-            master = spells_by_name.get(nm) or spells_by_name.get(normalize_text_basic(nm))
+            master = spells_by_name.get(nm) or spells_by_name.get(
+                normalize_text_basic(nm)
+            )
             if isinstance(master, dict):
                 new_specials.append(_merge_spell_defs(a, master))
             else:

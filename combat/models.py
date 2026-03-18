@@ -265,6 +265,7 @@ class SpellInfo:
     accuracy_percent: int
     magic_type: str  # "black", "white" など
     elements: List[str]
+    auto_all_target: bool = False  # Quake / Meteor / 召喚などの自動全体対象
 
 
 @dataclass

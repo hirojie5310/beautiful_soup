@@ -2,7 +2,7 @@
 # phys_damage: 通常攻撃関連
 
 # roll_critical: 敏捷と基礎確率からクリティカル発生を判定するヘルパー
-# _calc_net_hits: 攻撃側/防御側の倍率と命中/回避率から物理攻撃の実効ヒット数（期待値）を求める
+# _calc_net_hits: 攻撃側/防御側の倍率と命中/回避率から物理攻撃の実効ヒット数を求める
 # _calc_base_phys_damage_per_hit: 攻撃力と防御力から1ヒットあたりの物理ダメージ（乱数込み）を算出する
 # physical_damage_char_to_enemy: キャラ→敵の物理攻撃ダメージを計算し、必要に応じてクリティカル判定も行う
 # _calc_base_phys_damage_per_hit_enemy_to_char: 敵攻撃力とキャラ防御値から、敵→キャラ用の1ヒットあたり物理ダメージを算出する
@@ -49,17 +49,34 @@ def roll_critical(
 # ============================================================
 
 
+def _cap_physical_hit_percent(hit_percent: int) -> int:
+    """物理 Hit% は FAQ に合わせて 99 を上限にする。"""
+    return max(0, min(hit_percent, 99))
+
+
 def _calc_net_hits(
     atk_multiplier: int,
     hit_percent: int,
     def_multiplier: int,
     evade_percent: int,
+    *,
+    rng: Optional[random.Random] = None,
+    use_expectation: bool,
 ) -> float:
-    """平均ヒット数（期待値）を近似計算"""
-    h = max(0, min(hit_percent, 100)) / 100.0
+    """物理攻撃の実効ヒット数を求める。乱数モードでは FAQ に寄せて 1 ヒットずつ判定する。"""
+    h = _cap_physical_hit_percent(hit_percent) / 100.0
     e = max(0, min(evade_percent, 100)) / 100.0
-    m = atk_multiplier * h - def_multiplier * e
-    return max(m, 0.0)
+
+    if use_expectation:
+        m = atk_multiplier * h - def_multiplier * e
+        return max(m, 0.0)
+
+    if rng is None:
+        rng = random.Random()
+
+    attack_hits = sum(1 for _ in range(max(atk_multiplier, 0)) if rng.random() < h)
+    evade_hits = sum(1 for _ in range(max(def_multiplier, 0)) if rng.random() < e)
+    return float(max(attack_hits - evade_hits, 0))
 
 
 def _calc_base_phys_damage_per_hit(
@@ -71,7 +88,8 @@ def _calc_base_phys_damage_per_hit(
 ) -> int:
     """
     1ヒットあたりの物理ダメージ（乱数込み）
-    AttackPower * [1.0, 1.5] - Defense （最低 1）
+    AttackPower * [1.0, 1.5] - Defense
+    FAQ に寄せるため、最低 1 の保証はヒット単位ではなく最終ダメージ段で行う。
     """
     if use_expectation:
         factor = 1.25
@@ -80,8 +98,7 @@ def _calc_base_phys_damage_per_hit(
             rng = random.Random()
         factor = rng.uniform(1.0, 1.5)
     raw = int(attack_power * factor)
-    base = raw - defense
-    return max(base, 1)
+    return raw - defense
 
 
 @overload
@@ -175,6 +192,8 @@ def physical_damage_char_to_enemy(
     if atk_power <= 0 or atk_mul <= 0:
         return AttackResult(damage=0, hit_count=0, is_critical=False)
 
+    hit_percent = _cap_physical_hit_percent(hit_percent)
+
     if blind:
         hit_percent //= 2
 
@@ -190,10 +209,11 @@ def physical_damage_char_to_enemy(
         hit_percent=hit_percent,
         def_multiplier=enemy.defense_multiplier,
         evade_percent=enemy.evasion_percent,
+        rng=rng,
+        use_expectation=use_expectation,
     )
 
-    # _calc_net_hits が float を返す可能性があるなら、表示用は丸めて int 化
-    hit_count = int(round(net_hits)) if isinstance(net_hits, float) else int(net_hits)
+    hit_count = int(round(net_hits)) if use_expectation else int(net_hits)
 
     if hit_count <= 0:
         return AttackResult(damage=0, hit_count=0, is_critical=False)
@@ -206,7 +226,7 @@ def physical_damage_char_to_enemy(
         use_expectation=use_expectation,
     )
 
-    dmg = int(base_per_hit * net_hits)
+    dmg = _apply_physical_damage_floor(base_per_hit * net_hits, net_hits)
     dmg = apply_element_relation_to_damage(dmg, element_relation)
     dmg = max(dmg, 0)
 
@@ -228,6 +248,13 @@ def physical_damage_char_to_enemy(
 # ============================================================
 
 
+def _apply_physical_damage_floor(damage: float | int, net_hits: float) -> int:
+    """FAQ に寄せた物理ダメージ下限。ヒット成立時のみ最終 1 を保証する。"""
+    if net_hits <= 0:
+        return 0
+    return max(int(damage), 1)
+
+
 def _calc_base_phys_damage_per_hit_enemy_to_char(
     enemy: FinalEnemyStats,
     defense_value: int,
@@ -242,8 +269,35 @@ def _calc_base_phys_damage_per_hit_enemy_to_char(
             rng = random.Random()
         factor = rng.uniform(1.0, 1.5)
     raw = int(enemy.attack_power * factor)
-    base = raw - defense_value
-    return max(base, 1)
+    return raw - defense_value
+
+
+@overload
+def physical_damage_enemy_to_char(
+    enemy: FinalEnemyStats,
+    char: FinalCharacterStats,
+    rng: Optional[random.Random] = None,
+    use_expectation: bool = True,
+    attacker_is_blind: bool = False,
+    attacker_is_mini_or_toad: bool = False,
+    target_is_mini_or_toad: bool = False,
+    return_crit: Literal[False] = False,
+    target_state: Optional[BattleActorState] = None,
+) -> int: ...
+
+
+@overload
+def physical_damage_enemy_to_char(
+    enemy: FinalEnemyStats,
+    char: FinalCharacterStats,
+    rng: Optional[random.Random] = None,
+    use_expectation: bool = True,
+    attacker_is_blind: bool = False,
+    attacker_is_mini_or_toad: bool = False,
+    target_is_mini_or_toad: bool = False,
+    return_crit: Literal[True] = True,
+    target_state: Optional[BattleActorState] = None,
+) -> tuple[int, bool, float]: ...
 
 
 def physical_damage_enemy_to_char(
@@ -277,7 +331,7 @@ def physical_damage_enemy_to_char(
             defense_value = 0
             def_mul = 0
 
-    hit_percent = enemy.accuracy_percent
+    hit_percent = _cap_physical_hit_percent(enemy.accuracy_percent)
     if attacker_is_blind:
         hit_percent //= 2
 
@@ -290,6 +344,8 @@ def physical_damage_enemy_to_char(
         hit_percent=hit_percent,
         def_multiplier=def_mul,
         evade_percent=evade_percent,
+        rng=rng,
+        use_expectation=use_expectation,
     )
     if net_hits <= 0:
         return (0, False, 0) if return_crit else 0
@@ -301,7 +357,7 @@ def physical_damage_enemy_to_char(
         use_expectation=use_expectation,
     )
 
-    dmg = base_per_hit * net_hits
+    dmg = _apply_physical_damage_floor(base_per_hit * net_hits, net_hits)
     is_crit = False
     if not use_expectation:
         if rng is None:
