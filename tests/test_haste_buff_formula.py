@@ -3,20 +3,28 @@ import random
 
 from combat.models import FinalCharacterStats, FinalEnemyStats
 from combat.phys_damage import physical_damage_char_to_enemy
-from combat.status_effects import apply_haste_buff
+from combat.status_effects import apply_haste_buff, buff_target_magic_parameters
 
 
-def make_char() -> FinalCharacterStats:
+def make_char(
+    *,
+    level: int = 16,
+    job_level: int = 32,
+    mind: int = 32,
+    magic_defense: int = 0,
+    magic_def_multiplier: int = 0,
+    magic_resistance: int = 0,
+) -> FinalCharacterStats:
     return FinalCharacterStats(
-        level=16,
-        job_level=32,
+        level=level,
+        job_level=job_level,
         job_skill_point=0,
         max_hp=100,
         strength=10,
         agility=10,
         vitality=10,
         intelligence=10,
-        mind=32,
+        mind=mind,
         row="front",
         main_power=10,
         main_accuracy=100,
@@ -31,9 +39,9 @@ def make_char() -> FinalCharacterStats:
         defense=0,
         defense_multiplier=0,
         evasion_percent=0,
-        magic_defense=0,
-        magic_def_multiplier=0,
-        magic_resistance=0,
+        magic_defense=magic_defense,
+        magic_def_multiplier=magic_def_multiplier,
+        magic_resistance=magic_resistance,
         shield_count=0,
     )
 
@@ -107,3 +115,78 @@ def test_physical_damage_uses_haste_bonus_without_mutating_base_stats() -> None:
     assert char.main_atk_multiplier == 2
     assert result.hit_count == 6
     assert result.damage == 190
+
+
+def test_friendly_haste_uses_zeroed_magic_defense_parameters() -> None:
+    char = make_char(magic_defense=48, magic_def_multiplier=11, magic_resistance=37)
+    magic_defense, magic_def_multiplier, magic_resistance_percent = (
+        buff_target_magic_parameters(
+            target_magic_defense=char.magic_defense,
+            target_magic_def_multiplier=char.magic_def_multiplier,
+            target_magic_resistance_percent=char.magic_resistance,
+            target_is_friendly=True,
+        )
+    )
+
+    (
+        _,
+        new_power_bonus,
+        _,
+        new_mul_bonus,
+        add_power,
+        add_mul,
+    ) = apply_haste_buff(
+        char,
+        base_power=5,
+        base_factor=4,
+        rng=random.Random(0),
+        target_magic_defense=magic_defense,
+        target_magic_def_multiplier=magic_def_multiplier,
+        target_magic_resistance_percent=magic_resistance_percent,
+    )
+
+    assert (magic_defense, magic_def_multiplier, magic_resistance_percent) == (0, 0, 37)
+    assert add_power == 24
+    assert add_mul == 4
+    assert new_power_bonus == 24
+    assert new_mul_bonus == 4
+
+
+def test_high_magic_defense_friendly_target_no_longer_suppresses_haste_bonus() -> None:
+    char = make_char(
+        level=40,
+        job_level=40,
+        mind=55,
+        magic_defense=80,
+        magic_def_multiplier=12,
+    )
+    magic_defense, magic_def_multiplier, magic_resistance_percent = (
+        buff_target_magic_parameters(
+            target_magic_defense=char.magic_defense,
+            target_magic_def_multiplier=char.magic_def_multiplier,
+            target_magic_resistance_percent=char.magic_resistance,
+            target_is_friendly=True,
+        )
+    )
+
+    (
+        _,
+        new_power_bonus,
+        _,
+        new_mul_bonus,
+        add_power,
+        add_mul,
+    ) = apply_haste_buff(
+        char,
+        base_power=5,
+        base_factor=(char.mind // 16) + (char.level // 16) + (char.job_level // 32) + 1,
+        rng=random.Random(0),
+        target_magic_defense=magic_defense,
+        target_magic_def_multiplier=magic_def_multiplier,
+        target_magic_resistance_percent=magic_resistance_percent,
+    )
+
+    assert add_power > 1
+    assert add_mul == 7
+    assert new_power_bonus == add_power
+    assert new_mul_bonus == add_mul

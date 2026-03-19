@@ -1185,7 +1185,7 @@ def run_character_turn(
                 reflect_total = 0
 
                 for em in alive_enemies:
-                    em_name = em.name
+                    em_name = getattr(em, "label", em.name)
                     em_state = em.state
                     em_stats = em.stats
                     em_json = em.json
@@ -1394,6 +1394,23 @@ def run_character_turn(
                         f"{char_name}は{enemy_name}からHPを{actual_heal}吸収した！"
                         f"（{char_name} 残りHP: {char_state.hp}）"
                     )
+
+            enemies_defeated_now = False
+            if enemies is not None:
+                enemies_defeated_now = all(
+                    getattr(e.state, "hp", 0) <= 0 for e in enemies
+                )
+            elif enemy_state.hp <= 0:
+                enemies_defeated_now = True
+
+            if enemies_defeated_now:
+                return dmg_to_enemy, OneTurnResult(
+                    char_state=char_state,
+                    enemy_state=enemy_state,
+                    logs=logs,
+                    enemy_attack_result=None,
+                    end_reason="enemy_defeated",
+                )
 
             return dmg_to_enemy, None
 

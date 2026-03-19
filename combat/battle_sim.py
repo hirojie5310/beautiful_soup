@@ -176,6 +176,14 @@ def _build_character_action_inputs(
     )
 
 
+def _status_event_names(statuses: set) -> list[str]:
+    names: list[str] = []
+    for status in sorted(list(statuses), key=lambda x: str(x)):
+        status_name = getattr(status, "name", None)
+        names.append(status_name if isinstance(status_name, str) else str(status))
+    return names
+
+
 def _append_enemy_diff_events(
     *,
     enemies: List[EnemyRuntime],
@@ -203,14 +211,14 @@ def _append_enemy_diff_events(
                 }
             )
 
-        added = sorted(list(new_statuses - old_status_map[i]), key=lambda x: str(x))
+        added = new_statuses - old_status_map[i]
         if added:
             events.append(
                 {
                     "type": "status",
                     "target_side": "enemy",
                     "target_index": i,
-                    "names": added,
+                    "names": _status_event_names(added),
                     "actor_side": actor_side,
                     "actor_index": actor_index,
                 }
@@ -258,14 +266,14 @@ def _append_party_diff_events(
                 }
             )
 
-        added = sorted(list(new_statuses - old_status_map[i]), key=lambda x: str(x))
+        added = new_statuses - old_status_map[i]
         if added:
             events.append(
                 {
                     "type": "status",
                     "target_side": "char",
                     "target_index": i,
-                    "names": added,
+                    "names": _status_event_names(added),
                     "actor_side": actor_side,
                     "actor_index": actor_index,
                 }
@@ -308,7 +316,7 @@ def simulate_one_round_multi_party(
 
     for em in enemies:
         start_of_turn_for_actor(
-            actor_name=em.name,
+            actor_name=em.label,
             stats=em.stats,
             state=em.state,
             logs=logs,
@@ -439,7 +447,7 @@ def simulate_one_round_multi_party(
             # --- 実行 ---
             dmg_to_enemy, char_result = run_character_turn(
                 char_name=pm.name,
-                enemy_name=em.name,
+                enemy_name=em.label,
                 char_stats=pm.stats,
                 enemy_stats=em.stats,
                 enemy_json=em.json,
@@ -512,7 +520,7 @@ def simulate_one_round_multi_party(
             if is_out_of_battle(em.state):
                 continue
 
-            logs.append(f"◆ {em.name} の行動")
+            logs.append(f"◆ {em.label} の行動")
 
             target_idx = random_alive_char_index(party_members, rng)
             if target_idx is None:
@@ -533,7 +541,7 @@ def simulate_one_round_multi_party(
 
             enemy_result = run_enemy_turn(
                 char_name=pm.name,
-                enemy_name=em.name,
+                enemy_name=em.label,
                 char_stats=pm.stats,
                 enemy_stats=em.stats,
                 enemy_json=em.json,

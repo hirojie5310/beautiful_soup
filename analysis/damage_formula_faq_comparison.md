@@ -81,11 +81,22 @@ tests/test_magic_damage_floor.py に回帰テストを追加・拡張し、キ�
    キャラの Protect、敵の Protect、そして Turtle Shell の Protect 相当効果を、新しい Protect 転写ヘルパに接続しました。各処理で対象側の magic_defense / magic_def_multiplier / 魔法耐性を渡すようにし、ログにも今回の加算値を明示するよう更新しました。
    味方対象の Haste / Protect / Safe 系転写で、FAQ の self-targetting どおり Magic Defense と Magic Defense Multiplier を 0 扱いにする buff_target_magic_parameters() を追加しました。これで、味方に Protect を掛けたときに対象自身の高い魔法防御のせいで +1 まで潰れる問題を防げます。
    
-   - **Kill のレベル閾値**: FAQ では `IF Target Level >= ((((Attacker Level)/2)*3)/2) THEN Hit%=0`。現状は通常の魔法命中式中心で、Kill 専用のレベル門番を明示した処理差し込みが必要。
+   - **Kill (Raze) のレベル閾値**: FAQ では `IF Target Level >= ((((Attacker Level)/2)*3)/2) THEN Hit%=0`。現状は通常の魔法命中式中心で、Kill (Raze) 専用のレベル門番を明示した処理差し込みが必要。
+
+   combat/status_effects.py に NES版FF3 FAQ 準拠の Raze 専用レベル閾値ヘルパーを追加し、floor(floor(attacker_level / 2) * 3 / 2) をそのまま整数演算で再現しました。これにより Raze の門番条件を通常の魔法命中式から切り離して扱えるようにしました。
+   apply_status_spell_to_enemy の即死系分岐を拡張し、Raze を専用ルートで処理するよう変更しました。Raze の場合は対象レベルが閾値以上なら命中率を 0% にし、閾値未満のときだけ通常の BaseAccuracy + Mind/2 を使って KO 判定へ進むようにしています。既存の Erase 分岐は維持しつつ、Raze だけ別ルールを差し込んでいます。
+   Raze の回帰テストを追加し、「閾値に達した相手には 0% で失敗するケース」と「閾値未満の相手には命中して KO しうるケース」の両方を固定乱数で検証できるようにしました。
+   使用１回目にInternal Domain Error になり、２回目に突然敵が全滅する原因は、Raze 自体の KO 判定ではなく、KO が付いた後に生成される events の names に Status enum オブジェクトがそのまま入っていたことでした。これが Flask の JSON 直列化で落ち、初回は internal_domain_error、2回目はすでに敵HPが 0 のため「敵は全滅した！」だけが返る、という流れになっていました。combat/battle_sim.py に _status_event_names() を追加し、状態異常差分イベントの names を必ず文字列化するよう修正しました。
+   敵側・味方側の両方の status diff event で同じ文字列化処理を使うようにしたため、今回の Raze -> KO だけでなく、他の状態異常イベントでも同種の JSON 化エラーを防げます。
+
    - **Wall (Reflect) 反射**: FAQ では「次に受ける反射可能魔法を敵側へ跳ね返し、1回で消える」。現状は reflect 用の状態値は存在しても、FAQ 基準の対象判定・反射先・消費タイミングまで含む厳密再現かを個別確認する必要がある。
+
    - **Terrain Backfire**: FAQ では Geomancer の Terrain が全対象で `M<=0` のとき `Ineffective` ではなく `Backfired` になり、使用者が `MaxHP/4` ダメージを受ける。現状は Terrain を黒魔法寄りに扱う前提はあるが、この専用失敗処理を独立に点検・実装する余地がある。
+
    - **Cure4 (Curaja) 単体全回復**: FAQ では単体対象時のみ全回復、複数対象時は通常計算。現状も近い実装はあるが、FAQ の単体/全体分岐と完全一致かは回復ルート全体で再確認したい。
+
    - **WWind (Tornado)**: FAQ では `Final Damage` を使わず、成功時に HP を `(Spell Damage..Spell Damage*2)` に直接する特殊処理。通常ダメージ式とは別分岐が必要。
+
    - **自分側対象時の防御0処理**: FAQ では味方への物理は Defense=0、味方への魔法は Magic Defense / Magic Defense Multiplier = 0。現状も一部同趣旨の処理はあるが、攻撃種別ごとに漏れなく統一されているか要確認。
 
 ## まとめ

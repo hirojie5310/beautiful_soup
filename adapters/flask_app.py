@@ -145,7 +145,9 @@ def _build_enemy_status_snapshot(session: BattleSession) -> list[dict[str, Any]]
         snapshots.append(
             {
                 "index": idx,
-                "name": str(getattr(enemy, "name", f"Enemy {idx + 1}")),
+                "name": str(
+                    getattr(enemy, "label", getattr(enemy, "name", f"Enemy {idx + 1}"))
+                ),
                 "sprite_id": getattr(enemy, "sprite_id", None),
                 "hp": hp,
                 "max_hp": max_hp,

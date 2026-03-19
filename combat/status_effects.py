@@ -29,6 +29,11 @@ from combat.models import EnemyCasterStats
 from utils.text_normalize import normalize_text_basic
 
 
+def _ff3_raze_level_threshold(attacker_level: int) -> int:
+    """NES版FF3 FAQ準拠: floor(floor(attacker/2) * 3 / 2)。"""
+    return ((max(int(attacker_level), 0) // 2) * 3) // 2
+
+
 # <状態異常> =============================================================================
 
 
@@ -335,41 +340,63 @@ def apply_status_spell_to_enemy(
 
         return True  # Toad/Mini 用処理はここで完了
 
-    # ---- 3.6) Erase 専用処理（全体即死）----
+    # ---- 3.6) Erase / Raze 専用処理（即死系）----
+    instant_ko_spell = None
     if "erase" in ailments_list:
-        # 敵レベル / キャラレベル取得
+        instant_ko_spell = "erase"
+    elif spell_name == "raze":
+        instant_ko_spell = "raze"
+
+    if instant_ko_spell is not None:
         target_lv = int(enemy_json.get("Level", 1) or 1)
         caster_lv = caster_stats.level if caster_stats is not None else 1
 
-        # IF Target Level >= (Attacker Level)*3/4 → Magic Hit% = 0
-        if target_lv >= caster_lv * 0.75:
-            hit_percent = 0.0
+        base_acc = float(spell_json.get("BaseAccuracy") or 0.0)
+        if base_acc <= 1.0:
+            base_acc *= 100.0
+
+        mind = caster_stats.mind if caster_stats is not None else 0
+        hit_percent = base_acc + (mind / 2.0)
+
+        if instant_ko_spell == "raze":
+            level_threshold = _ff3_raze_level_threshold(caster_lv)
+            if target_lv >= level_threshold:
+                hit_percent = 0.0
         else:
-            base_acc = float(spell_json.get("BaseAccuracy") or 0.0)
-            # 0.6 のような値は 60% として扱う
-            if base_acc <= 1.0:
-                base_acc *= 100.0
+            if target_lv >= caster_lv * 0.75:
+                hit_percent = 0.0
 
-            mind = caster_stats.mind if caster_stats is not None else 0
-            hit_percent = base_acc + (mind / 2.0)
-            hit_percent = max(0.0, min(hit_percent, 100.0))
-
+        hit_percent = max(0.0, min(hit_percent, 100.0))
         roll = rng.random() * 100.0
+        spell_label = spell_json.get("Name") or instant_ko_spell.title()
 
         if roll < hit_percent:
             enemy_state.statuses.add(Status.KO)
             enemy_state.hp = 0
-            logs.append(
-                f"{enemy_name}は《Erase》の効果で消し去られた！"
-                f"（命中率{hit_percent:.1f}% 判定{roll:.1f}）"
-            )
+            if instant_ko_spell == "raze":
+                logs.append(
+                    f"{enemy_name}は《{spell_label}》の効果で倒れた！"
+                    f"（命中率{hit_percent:.1f}% 判定{roll:.1f}）"
+                )
+            else:
+                logs.append(
+                    f"{enemy_name}は《{spell_label}》の効果で消し去られた！"
+                    f"（命中率{hit_percent:.1f}% 判定{roll:.1f}）"
+                )
         else:
-            logs.append(
-                f"{enemy_name}には《Erase》が効かなかった…"
-                f"（命中率{hit_percent:.1f}% 判定{roll:.1f}）"
-            )
+            if instant_ko_spell == "raze" and hit_percent <= 0.0:
+                level_threshold = _ff3_raze_level_threshold(caster_lv)
+                logs.append(
+                    f"{enemy_name}には《{spell_label}》が効かなかった…"
+                    f"（対象Lv{target_lv} >= 閾値{level_threshold} で命中率0.0% 判定{roll:.1f}）"
+                )
+            else:
+                logs.append(
+                    f"{enemy_name}には《{spell_label}》が効かなかった…"
+                    f"（命中率{hit_percent:.1f}% 判定{roll:.1f}）"
+                )
 
-        return True  # Erase 用処理はここで完了
+        return True  # 即死系専用処理はここで完了
 
     # ---- 4) 名前→Status enum 対応 ----
     status_map = {

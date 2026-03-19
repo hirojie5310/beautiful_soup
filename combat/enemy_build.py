@@ -12,6 +12,26 @@ from combat.models import FinalEnemyStats, EnemyRuntime, BattleActorState
 from combat.spell_repo import enrich_monster_spells
 
 
+def _enemy_duplicate_suffix(index: int) -> str:
+    letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    if 0 <= index < len(letters):
+        return letters[index]
+    return str(index + 1)
+
+
+def _assign_enemy_display_names(enemies: List[EnemyRuntime]) -> None:
+    grouped: Dict[str, List[EnemyRuntime]] = {}
+    for enemy in enemies:
+        grouped.setdefault(enemy.name, []).append(enemy)
+
+    for name, group in grouped.items():
+        if len(group) <= 1:
+            group[0].display_name = name
+            continue
+        for idx, enemy in enumerate(group):
+            enemy.display_name = f"{name} {_enemy_duplicate_suffix(idx)}"
+
+
 # ============================================================
 # 敵最終ステータス計算
 # ============================================================
@@ -64,6 +84,7 @@ def build_enemies(
             )
         )
 
+    _assign_enemy_display_names(enemies)
     return enemies
 
 

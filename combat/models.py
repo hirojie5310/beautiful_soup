@@ -392,6 +392,7 @@ class EnemyRuntime:
     sprite_id: Optional[str] = None
 
     is_boss: bool = False
+    display_name: Optional[str] = None
 
     @property
     def hp(self) -> int:
@@ -400,6 +401,10 @@ class EnemyRuntime:
     @property
     def max_hp(self) -> int:
         return self.state.max_hp if self.state.max_hp is not None else self.state.hp
+
+    @property
+    def label(self) -> str:
+        return self.display_name or self.name
 
 
 @dataclass

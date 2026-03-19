@@ -73,7 +73,9 @@ def choose_target_index_from_enemies(
     output_func("攻撃対象の敵を選んでください。")
     for i in alive_indices:
         em = enemies[i]
-        output_func(f"  {i+1}: {format_state_line(em.name, em.state)}")
+        output_func(
+            f"  {i+1}: {format_state_line(getattr(em, 'label', em.name), em.state)}"
+        )
 
     while True:
         s = input_func(f"番号を入力してください (1-{len(enemies)}): ").strip()
