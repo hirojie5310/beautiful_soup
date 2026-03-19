@@ -88,13 +88,7 @@ def test_single_target_raze_returns_enemy_defeated_immediately():
         "BasePower": 100,
         "Reflectable": "No",
     }
-    spell = SpellInfo(
-        power=100,
-        accuracy_percent=100,
-        magic_type="black",
-        elements=[],
-        auto_all_target=True,
-    )
+    spell = SpellInfo(100, 100, "black", [], True)
     logs = []
 
     damage, result = run_character_turn(

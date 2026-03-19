@@ -36,6 +36,7 @@ def enemy_cast_aoe_damage_spell_to_party(
     spell_json: dict,
     enemy_name: str,
     party_members: list,
+    enemies: list | None,
     rng: random.Random,
     logs: list[str],
     caster_state: "BattleActorState",  # ★ 反射ダメを食らう敵
@@ -81,6 +82,18 @@ def enemy_cast_aoe_damage_spell_to_party(
     # ★ まとめログ用カウンタ
     reflect_count = 0
     reflect_total_damage = 0
+
+    def choose_enemy_reflect_target() -> tuple[BattleActorState, str]:
+        alive_enemies = [
+            em
+            for em in (enemies or [])
+            if not is_out_of_battle(getattr(em, "state", caster_state))
+        ]
+        if alive_enemies:
+            picked = rng.choice(alive_enemies)
+            picked_name = getattr(picked, "label", getattr(picked, "name", enemy_name))
+            return picked.state, picked_name
+        return caster_state, enemy_name
 
     for pm in alive_members:
         state = pm.state
@@ -136,18 +149,21 @@ def enemy_cast_aoe_damage_spell_to_party(
             reflect_count += 1
             reflect_total_damage += damage
 
-            old_enemy_hp = caster_state.hp
-            caster_state.hp = max(0, old_enemy_hp - damage)
+            reflect_target_state, reflect_target_name = choose_enemy_reflect_target()
+            old_enemy_hp = reflect_target_state.hp
+            reflect_target_state.hp = max(0, old_enemy_hp - damage)
 
             # 個別ログ（必要なら残す：あなたの案のまま）
-            max_hp_enemy = caster_max_hp or getattr(caster_state, "max_hp", None)
+            max_hp_enemy = caster_max_hp or getattr(
+                reflect_target_state, "max_hp", None
+            )
             log_damage(
                 logs,
                 f"{name}を覆う魔法障壁が《{spell_name}》を跳ね返した！ ",
-                enemy_name,
+                reflect_target_name,
                 damage,
                 old_enemy_hp,
-                caster_state.hp,
+                reflect_target_state.hp,
                 "target",
                 "arrow_with_max" if max_hp_enemy is not None else "arrow",
                 max_hp_enemy,
@@ -156,9 +172,9 @@ def enemy_cast_aoe_damage_spell_to_party(
             )
 
             # ★ 反射で敵が倒れたら即終了（呼び出し側に通知）
-            if caster_state.hp <= 0:
+            if reflect_target_state.hp <= 0:
                 # KOステータス管理しているならここで付けてもOK（任意）
-                # caster_state.statuses.add(Status.KO)
+                # reflect_target_state.statuses.add(Status.KO)
                 # ★ まとめログはここで出しておくと情報が欠けない
                 if reflect_count >= 2:
                     logs.append(

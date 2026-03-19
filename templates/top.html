@@ -557,7 +557,9 @@
         const meta = magicSpellMetaByName?.[spellName] || {};
         const canSelectAll = Boolean(meta?.can_select_all);
         const healingType = String(meta?.healing_type || "");
-        const isNonAttackMagic = ["hp", "status", "revive", "protect", "haste"].includes(healingType);
+        const targetMode = String(meta?.target_mode || "");
+        const isAllyOnlyMagic = targetMode === "ally_only";
+        const isNonAttackMagic = isAllyOnlyMagic || ["hp", "status", "revive", "protect", "haste", "reflect"].includes(healingType);
 
         if (!isNonAttackMagic) {
           let useAll = false;
@@ -567,6 +569,22 @@
           return buildAction("magic", "Magic", {
             spell_name: spellName,
             target_side: "enemy",
+            target_all: canSelectAll ? useAll : false,
+          });
+        }
+
+        if (isAllyOnlyMagic) {
+          let useAll = false;
+          if (canSelectAll) {
+            useAll = window.confirm("この魔法を味方全体に使いますか？\nOK: 全体 / Cancel: 単体");
+          }
+
+          const allyTargetIndex = useAll ? currentMemberIndex : chooseSingleAllyTargetIndex();
+          if (allyTargetIndex === null) return null;
+          return buildSelfAction("magic", "Magic", {
+            spell_name: spellName,
+            target_side: "ally",
+            target_index: allyTargetIndex,
             target_all: canSelectAll ? useAll : false,
           });
         }

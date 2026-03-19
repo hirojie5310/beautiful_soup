@@ -772,16 +772,18 @@ def apply_reflect_to_actor(
     logs: list[str],
     *,
     charges: int = 1,
-) -> None:
-    # とりあえず簡易に「上書き」。累積させたいなら += に変えてもOK。
+) -> bool:
     old = target_state.reflect_charges
+    if charges > 0 and old > 0:
+        logs.append(f"{target_name}には既にReflectがかかっている。")
+        return False
+
     target_state.reflect_charges = charges
     if old <= 0 and charges > 0:
         logs.append(f"{target_name}は魔法反射のバリアを張った！（Reflect）")
-    elif charges > 0:
-        logs.append(f"{target_name}のReflect効果が更新された。")
     else:
         logs.append(f"{target_name}のReflect効果が消えた。")
+    return True
 
 
 # ============================================================

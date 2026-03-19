@@ -84,8 +84,27 @@ from combat.phys_damage import (
     physical_damage_char_to_enemy,
     physical_damage_enemy_to_char,
 )
-from combat.life_check import any_char_alive, random_alive_char_index
+from combat.life_check import any_char_alive, is_out_of_battle, random_alive_char_index
 from combat.logging import log_damage, relation_comment
+
+
+def _choose_alive_reflect_target(
+    units: list | None,
+    *,
+    rng: Random,
+    fallback_state: BattleActorState,
+    fallback_name: str,
+) -> tuple[BattleActorState, str]:
+    alive_units = [
+        unit
+        for unit in (units or [])
+        if not is_out_of_battle(getattr(unit, "state", fallback_state))
+    ]
+    if alive_units:
+        picked = rng.choice(alive_units)
+        picked_name = getattr(picked, "label", getattr(picked, "name", fallback_name))
+        return picked.state, picked_name
+    return fallback_state, fallback_name
 
 
 def _to_int(v: Any) -> int:
@@ -930,20 +949,51 @@ def run_character_turn(
             suffix = f"（MP{lvl} {remain}/{maxmp}）"
 
             if roll < hit_percent:
-                target_state.reflect_charges = 1
-
                 if raw_name == "Odin: Protective Light":
-                    logs.append(
-                        f"{char_name}は召喚魔法《{spell_label}》を呼び出した！ "
-                        f"守護の光がパーティを包み、魔法を一度だけ跳ね返すバリアを張った。"
-                        f"（命中率{hit_percent:.1f}% 判定{roll:.1f}） {suffix}"
-                    )
+                    reflect_targets: list[BattleActorState] = []
+                    if party_members is not None:
+                        reflect_targets = [
+                            pm.state
+                            for pm in party_members
+                            if not is_out_of_battle(pm.state)
+                        ]
+                    if not reflect_targets:
+                        reflect_targets = [target_state]
+
+                    applied_count = 0
+                    for state in reflect_targets:
+                        if getattr(state, "reflect_charges", 0) > 0:
+                            continue
+                        state.reflect_charges = 1
+                        applied_count += 1
+
+                    if applied_count <= 0:
+                        logs.append(
+                            f"{char_name}は召喚魔法《{spell_label}》を呼び出した！ "
+                            f"しかし味方全員には既にReflectがかかっている。"
+                            f"（命中率{hit_percent:.1f}% 判定{roll:.1f}） {suffix}"
+                        )
+                    else:
+                        logs.append(
+                            f"{char_name}は召喚魔法《{spell_label}》を呼び出した！ "
+                            f"守護の光が味方全員を包み、魔法を一度だけ跳ね返すバリアを張った。"
+                            f"（命中率{hit_percent:.1f}% 判定{roll:.1f}） {suffix}"
+                        )
                 else:
-                    logs.append(
-                        f"{char_name}は《{spell_label}》を唱えた！ "
-                        f"魔法を一度だけ跳ね返すバリアを張った。"
-                        f"（命中率{hit_percent:.1f}% 判定{roll:.1f}） {suffix}"
-                    )
+                    already_reflected = getattr(target_state, "reflect_charges", 0) > 0
+                    if already_reflected:
+                        logs.append(
+                            f"{char_name}は《{spell_label}》を唱えた！ "
+                            f"しかし{target_name}には既にReflectがかかっている。"
+                            f"（命中率{hit_percent:.1f}% 判定{roll:.1f}） {suffix}"
+                        )
+                    else:
+                        target_state.reflect_charges = 1
+                        logs.append(
+                            f"{char_name}は{target_name}に《{spell_label}》を唱えた！ "
+                            f"魔法を一度だけ跳ね返すバリアを張った。"
+                            f"（命中率{hit_percent:.1f}% 判定{roll:.1f}） {suffix}"
+                        )
             else:
                 if raw_name == "Odin: Protective Light":
                     logs.append(
@@ -1112,16 +1162,24 @@ def run_character_turn(
                     blind=char_is_blind,
                 )
 
-                old_hp = char_state.hp
-                char_state.hp = max(char_state.hp - dmg_back, 0)
+                reflect_target_state, reflect_target_name = (
+                    _choose_alive_reflect_target(
+                        party_members,
+                        rng=rng,
+                        fallback_state=char_state,
+                        fallback_name=char_name,
+                    )
+                )
+                old_hp = reflect_target_state.hp
+                reflect_target_state.hp = max(reflect_target_state.hp - dmg_back, 0)
 
                 log_damage(
                     logs,
                     f"{enemy_name}を覆う魔法障壁が《{spell_label}》を跳ね返した！ ",
-                    char_name,
+                    reflect_target_name,
                     dmg_back,
                     old_hp,
-                    char_state.hp,
+                    reflect_target_state.hp,
                     "target",
                     "remain",
                     None,
@@ -1224,17 +1282,25 @@ def run_character_turn(
                         reflect_count += 1
                         reflect_total += dmg
 
-                        old_hp = char_state.hp
-                        char_state.hp = max(0, old_hp - dmg)
+                        reflect_target_state, reflect_target_name = (
+                            _choose_alive_reflect_target(
+                                party_members,
+                                rng=rng,
+                                fallback_state=char_state,
+                                fallback_name=char_name,
+                            )
+                        )
+                        old_hp = reflect_target_state.hp
+                        reflect_target_state.hp = max(0, old_hp - dmg)
 
                         # 反射ログ（個別） ※個別ログ不要ならここを丸ごと削ってOK
                         log_damage(
                             logs,
                             f"{em_name}を覆う魔法障壁が《{spell_label}》を跳ね返した！ ",
-                            char_name,
+                            reflect_target_name,
                             dmg,
                             old_hp,
-                            char_state.hp,
+                            reflect_target_state.hp,
                             "target",
                             "remain",
                             None,
@@ -1242,7 +1308,7 @@ def run_character_turn(
                         )
 
                         # ★ 反射でキャラ死亡 → 即終了（ただし、ここまでの total_damage は返す）
-                        if char_state.hp <= 0:
+                        if reflect_target_state.hp <= 0:
                             # まとめログ（2回以上のときだけ出す例）
                             if reflect_count >= 2:
                                 logs.append(
@@ -1630,12 +1696,19 @@ def run_character_turn(
             roll = rng.random() * 100.0
 
             if roll < hit_percent:
-                target_state.reflect_charges = 1
-                logs.append(
-                    f"{char_name}は{item_name}を使った！ "
-                    f"{target_name}に魔法を一度だけ跳ね返すバリアを張った。"
-                    f"（命中率{hit_percent:.1f}% 判定{roll:.1f}）"
-                )
+                if getattr(target_state, "reflect_charges", 0) > 0:
+                    logs.append(
+                        f"{char_name}は{item_name}を使った！ "
+                        f"しかし{target_name}には既にReflectがかかっている。"
+                        f"（命中率{hit_percent:.1f}% 判定{roll:.1f}）"
+                    )
+                else:
+                    target_state.reflect_charges = 1
+                    logs.append(
+                        f"{char_name}は{item_name}を使った！ "
+                        f"{target_name}に魔法を一度だけ跳ね返すバリアを張った。"
+                        f"（命中率{hit_percent:.1f}% 判定{roll:.1f}）"
+                    )
             else:
                 logs.append(
                     f"{char_name}は{item_name}を使った！ "
@@ -2164,7 +2237,8 @@ def run_enemy_turn(
     logs: List[str],
     state: RuntimeState,
     rng: Optional[Random] = None,
-    party_members: list[PartyMemberRuntime],  # ← 型名はあなたの実装に合わせて
+    party_members: Optional[list[PartyMemberRuntime]] = None,
+    enemies: list | None = None,
 ) -> OneTurnResult:
     """
     「敵の1行動フェーズ」だけを担当する関数。
@@ -2174,6 +2248,11 @@ def run_enemy_turn(
     """
     if rng is None:
         rng = Random()
+
+    if party_members is None:
+        party_members = [
+            SimpleNamespace(name=char_name, stats=char_stats, state=char_state)
+        ]
 
     # print(f"[Debug:turn_logic/run_enemy_turn - enemy_json] {enemy_json.get("Spells")}")
 
@@ -2519,6 +2598,7 @@ def run_enemy_turn(
                     spell_json=spell_def,
                     enemy_name=enemy_name,
                     party_members=party_members,
+                    enemies=enemies,
                     rng=rng,
                     logs=logs,
                     caster_state=enemy_state,
@@ -2556,16 +2636,22 @@ def run_enemy_turn(
             reflected_damage = dmg_to_char
             dmg_to_char = 0  # キャラはノーダメージ
 
-            old_enemy_hp = enemy_state.hp
-            enemy_state.hp = max(enemy_state.hp - reflected_damage, 0)
+            reflect_target_state, reflect_target_name = _choose_alive_reflect_target(
+                enemies,
+                rng=rng,
+                fallback_state=enemy_state,
+                fallback_name=enemy_name,
+            )
+            old_enemy_hp = reflect_target_state.hp
+            reflect_target_state.hp = max(reflect_target_state.hp - reflected_damage, 0)
 
             log_damage(
                 logs,
                 f"{enemy_name}のスペル《{enemy_attack.attack_name}》はReflectで跳ね返された！ ",
-                enemy_name,
+                reflect_target_name,
                 reflected_damage,
                 old_enemy_hp,
-                enemy_state.hp,
+                reflect_target_state.hp,
                 "target",
                 "remain",
             )
@@ -2619,6 +2705,7 @@ def run_enemy_turn(
                         spell_json=spell_def,
                         enemy_name=enemy_name,
                         party_members=party_members,
+                        enemies=enemies,
                         rng=rng,
                         logs=logs,
                         caster_state=enemy_state,  # ★ ここが重要：敵のstate
@@ -2642,18 +2729,16 @@ def run_enemy_turn(
                 if name_lower == "drain":
                     if spell_def is not None:
                         spell_info = SpellInfo(
-                            power=int(spell_def.get("BasePower", 0) or 0),
-                            accuracy_percent=int(
+                            int(spell_def.get("BasePower", 0) or 0),
+                            int(
                                 (
                                     spell_def.get("BaseAccuracy")
                                     or spell_def.get("Accuracy")
                                     or 100
                                 )
                             ),
-                            magic_type=normalize_text_basic(
-                                spell_def.get("Type") or ""
-                            ),
-                            elements=parse_elements(spell_def.get("Element")),
+                            normalize_text_basic(spell_def.get("Type") or ""),
+                            parse_elements(spell_def.get("Element")),
                         )
                         enemy_caster = enemy_caster_from_monster(enemy_json)
                         enemy_cast_drain_to_char(

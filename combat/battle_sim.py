@@ -555,6 +555,7 @@ def simulate_one_round_multi_party(
                 state=state,
                 rng=rng,
                 party_members=party_members,
+                enemies=enemies,
             )
 
             _append_party_diff_events(
@@ -846,6 +847,7 @@ def simulate_one_turn(
         logs=logs,
         state=state,
         rng=rng,
+        enemies=None,
     )
 
 
@@ -1182,6 +1184,8 @@ def simulate_battle_multi_party(
                     logs=[],
                     state=state,
                     rng=rng,
+                    party_members=party_members,
+                    enemies=enemies,
                 )
 
                 for line in result_enemy.logs:

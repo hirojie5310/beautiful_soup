@@ -495,11 +495,11 @@ def spell_from_item(item_json: Dict[str, Any]) -> SpellInfo:
         magic_type = "white"
 
     return SpellInfo(
-        power=power,
-        accuracy_percent=acc_percent,
-        magic_type=magic_type,
-        elements=elements,  # ★正しく ["air","ice"] になる
-        auto_all_target=False,
+        power,
+        acc_percent,
+        magic_type,
+        elements,  # ★正しく ["air","ice"] になる
+        False,
     )
 
 

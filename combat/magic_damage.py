@@ -3,7 +3,7 @@
 
 # _is_offensive_white	SpellInfoにnameが無い環境でも落ちない攻撃白魔判定
 # use_mp_for_spell	FC版準拠：spell_json["Level"]のMPを1消費する
-# healing_spell_kind	回復/補助系なら種類を返す（hp/status/revive/protect/haste）
+# healing_spell_kind	回復/補助系なら種類を返す（hp/status/revive/protect/haste/reflect）
 # magic_heal_amount_to_char	回復白魔法の回復量を計算する簡易関数
 # _calc_magic_power	黒/白/召喚/その他に応じて魔法の威力を算出する
 # _calc_magic_multiplier	魔法攻撃のヒット回数（倍率）を計算
@@ -85,6 +85,7 @@ def healing_spell_kind(spell_json: Dict[str, Any]) -> str | None:
       "revive"  : 蘇生
       "protect" : 防御アップ
       "haste"   : 攻撃力・攻撃回数アップ
+      "reflect" : 魔法反射
     回復/補助系でなければ None
     """
     effect = normalize_text_basic(spell_json.get("Effect") or "")
@@ -113,6 +114,10 @@ def healing_spell_kind(spell_json: Dict[str, Any]) -> str | None:
     # ヘイスト（Haste）
     if "enhance accuracy and attack multiplier" in effect or name == "haste":
         return "haste"
+
+    # Reflect（Wall）
+    if "grant reflect" in effect or name == "reflect":
+        return "reflect"
 
     return None
 

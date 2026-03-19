@@ -89,7 +89,27 @@ tests/test_magic_damage_floor.py に回帰テストを追加・拡張し、キ�
    使用１回目にInternal Domain Error になり、２回目に突然敵が全滅する原因は、Raze 自体の KO 判定ではなく、KO が付いた後に生成される events の names に Status enum オブジェクトがそのまま入っていたことでした。これが Flask の JSON 直列化で落ち、初回は internal_domain_error、2回目はすでに敵HPが 0 のため「敵は全滅した！」だけが返る、という流れになっていました。combat/battle_sim.py に _status_event_names() を追加し、状態異常差分イベントの names を必ず文字列化するよう修正しました。
    敵側・味方側の両方の status diff event で同じ文字列化処理を使うようにしたため、今回の Raze -> KO だけでなく、他の状態異常イベントでも同種の JSON 化エラーを防げます。
 
-   - **Wall (Reflect) 反射**: FAQ では「次に受ける反射可能魔法を敵側へ跳ね返し、1回で消える」。現状は reflect 用の状態値は存在しても、FAQ 基準の対象判定・反射先・消費タイミングまで含む厳密再現かを個別確認する必要がある。
+   - **Wall (Reflect) 反射**: FAQ では「次に受ける反射可能魔法を敵側へ跳ね返し、1回で消える」かつ「同一対象への重ね掛けは無効」。
+
+   Reflectable フラグを持つ魔法に対してのみ反射判定し、反射発生時に reflect_charges を 1 回ぶん消費する処理は、キャラ→敵の単体/全体魔法と、敵→味方の単体/全体スペルの各ルートに実装されています。これにより「反射可能魔法だけを 1 回で消費して跳ね返す」という FAQ の骨格には概ね沿っています。
+   一方で、FAQ にある「同一対象への Wall 重ね掛けは無効」に対して、以前の実装では Reflect 付与時に既存バリアを更新扱いしていました。そこで apply_reflect_to_actor() を FAQ 準拠の非累積動作へ修正し、既に reflect_charges > 0 の対象には再付与しないようにしました。
+   tests/test_reflect_wall.py に、初回付与で 1 チャージ張られることと、既に Reflect 中の対象へ再使用してもチャージが増減せず無効になることを確認する回帰テストを追加しました。
+   1. 複数人に Reflect がある状態での消費順
+   現在の挙動: 敵の全体魔法は enemy_cast_aoe_damage_spell_to_party() で、party_members を先頭から順に回し、各対象ごとに Reflect を判定して 1 チャージ消費しています。つまり、消費順は party_members の並び順です。2人以上が Reflect を持っている場合、前から順に消費されます。また、途中で敵術者が反射ダメージで倒れると、そこで処理が即終了します。そのため、後ろの味方の Reflect はそのターンでは消費されません。
+   2. 全体魔法を受けたときの Reflect 消費のされ方
+   現在の挙動: 全体魔法でも、Reflect は対象ごとに独立して判定・消費されます。つまり、全体 Blizzara のような Reflectable な敵魔法を受けたとき:
+   Reflect のある味方A → 1回消費して反射
+   Reflect のある味方B → 1回消費して反射
+   Reflect のない味方C → 通常どおり被弾
+   という扱いです。
+   3. 全体魔法を受けたときの反射先
+   現在の挙動: ここは FAQ と差がある可能性が高い部分 です。
+   敵の全体魔法が味方に Reflect された場合、現実装ではすべて敵術者本人 (caster_state) に返しています。コード上でも、反射時は caster_state.hp を直接減らしています。】.同様に、敵の単体スペルが味方の Reflect に当たった場合も、反射先は敵術者本人 (enemy_state) 固定です。】.また、キャラ側が敵に全体魔法を撃って、敵側に Reflect があった場合も、反射先はキャラ術者本人 (char_state) 固定です。】
+   4. Reflect 中に再度 Odin / Reflect を使ったときの全体ログ文言
+   Reflect 単体: 単体 Reflect は、対象がすでに Reflect 中なら:しかし{target_name}には既にReflectがかかっている。というログになります。単体魔法としては分かりやすいです。】.
+   Odin: Protective Light 現在の Odin: Protective Light は、味方全体へ Reflect を配る実装になっており、1人以上に新規付与できた → 守護の光が味方全員を包み、魔法を一度だけ跳ね返すバリアを張った。
+   全員がすでに Reflect 中 → しかし味方全員には既にReflectがかかっている。
+   という2択です。】.
 
    - **Terrain Backfire**: FAQ では Geomancer の Terrain が全対象で `M<=0` のとき `Ineffective` ではなく `Backfired` になり、使用者が `MaxHP/4` ダメージを受ける。現状は Terrain を黒魔法寄りに扱う前提はあるが、この専用失敗処理を独立に点検・実装する余地がある。
 
