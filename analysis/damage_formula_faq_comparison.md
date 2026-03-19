@@ -114,7 +114,13 @@ tests/test_magic_damage_floor.py に回帰テストを追加・拡張し、キ�
 
    - **Terrain Backfire**: FAQ では Geomancer の Terrain が全対象で `M<=0` のとき `Ineffective` ではなく `Backfired` になり、使用者が `MaxHP/4` ダメージを受ける。現状は Terrain を黒魔法寄りに扱う前提はあるが、この専用失敗処理を独立に点検・実装する余地がある。
 
-   - **Cure4 (Curaja) 単体全回復**: FAQ では単体対象時のみ全回復、複数対象時は通常計算。現状も近い実装はあるが、FAQ の単体/全体分岐と完全一致かは回復ルート全体で再確認したい。
+   Geomancer の Terrain 用に、FAQ の M ループに寄せた命中計算ヘルパを追加し、BaseAccuracy + INT/2 を整数 % として扱いながら、攻撃側ヒットと防御側回避を 1 回ずつロールして net_hits を求めるようにしました。これにより、従来の単発命中判定ではなく「M<=0 かどうか」で効果判定できるようになりました。
+   Terrain 本体処理を更新し、各対象ごとに net_hits を評価して、net_hits <= 0 の対象は個別に「効かなかった」扱いにしつつ、全対象が無効だった場合だけ Backfired! を発生させ、使用者へ MaxHP/4 の自傷ダメージを与えるようにしました。あわせて、ダメージ計算も net_hits 回ぶんの魔法基礎ダメージを積み上げる形に変更しています。
+   Terrain の回帰テストを追加し、(1) 全対象が無効なときにのみバックファイアして使用者が 1/4 自傷するケース、(2) 全体対象で一部だけ無効でも誰かに通ればバックファイアしないケース、の 2 パターンを固定乱数で検証できるようにしました。
+
+   - **Cure4 (Curaja) 単体全回復**: FAQ では単体対象時のみ全回復、複数対象時は通常計算。
+
+   `combat/magic_damage.py` の `magic_heal_amount_to_char()` は Curaja の全回復ショートカットを `target_count == 1` のときだけ使うよう明確化しました。戦闘側でも `combat/turn_logic.py` で範囲選択時だけ `target_count` を生存対象数へ切り替え、その後に 1 回だけ人数割りを行っているため、単体時は全回復・複数時は通常回復ルートという FAQ の分岐に沿っています。あわせて `tests/test_curaja_turn_logic.py` で、単体指定では対象が最大HPまで回復し、全体指定では通常回復量の分配になることを回帰テスト化しました。
 
    - **WWind (Tornado)**: FAQ では `Final Damage` を使わず、成功時に HP を `(Spell Damage..Spell Damage*2)` に直接する特殊処理。通常ダメージ式とは別分岐が必要。
 

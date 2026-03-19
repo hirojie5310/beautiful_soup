@@ -136,8 +136,8 @@ def magic_heal_amount_to_char(
     回復白魔法の回復量を計算する簡易関数。
     攻撃魔法の式を流用し、相手側の魔防/抵抗は無視。
     """
-    # Curaja(Cure4) は単体対象時に全回復（実装上は 9999 固定値）
-    if normalize_text_basic(spell_name) == "curaja" and target_count <= 1:
+    # Curaja(Cure4) は単体対象時にのみ全回復（実装上は 9999 固定値）
+    if normalize_text_basic(spell_name) == "curaja" and target_count == 1:
         return 9999
 
     magic_power = _calc_magic_power(caster, spell)

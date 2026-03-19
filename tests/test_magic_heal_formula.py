@@ -75,3 +75,25 @@ def test_curaja_single_target_is_full_heal_value() -> None:
 
     assert heal_single == 9999
     assert heal_multi != 9999
+
+
+def test_curaja_non_single_target_never_uses_full_heal_shortcut() -> None:
+    caster = _caster(level=20, mind=20, job_level=20, job_skill_point=0)
+    curaja = SpellInfo(power=80, accuracy_percent=100, magic_type="white", elements=[])
+
+    heal_zero = magic_heal_amount_to_char(
+        caster=caster,
+        spell=curaja,
+        use_expectation=True,
+        target_count=0,
+        spell_name="Curaja",
+    )
+    heal_multi = magic_heal_amount_to_char(
+        caster=caster,
+        spell=curaja,
+        use_expectation=True,
+        target_count=4,
+        spell_name="Curaja",
+    )
+
+    assert heal_zero == heal_multi
