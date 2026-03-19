@@ -39,6 +39,8 @@ from combat.magic_damage import (
     magic_heal_amount_to_char,
     enemy_cast_drain_to_char,
     _calc_base_magic_damage_per_hit,
+    apply_tornado_to_state,
+    magic_hit_count_char_to_enemy,
 )
 from combat.status_effects import (
     _get_status_name_from_monster_spell,
@@ -82,6 +84,7 @@ from combat.inventory import (
     get_item_quantity,
 )
 from combat.phys_damage import (
+    physical_damage_char_to_ally,
     physical_damage_char_to_enemy,
     physical_damage_enemy_to_char,
 )
@@ -106,6 +109,15 @@ def _choose_alive_reflect_target(
         picked_name = getattr(picked, "label", getattr(picked, "name", fallback_name))
         return picked.state, picked_name
     return fallback_state, fallback_name
+
+
+def _enemy_is_tornado_immune(enemy_def: dict[str, Any] | None) -> bool:
+    if not isinstance(enemy_def, dict):
+        return False
+    plot_battles = enemy_def.get("PlotBattles")
+    if isinstance(plot_battles, list) and len(plot_battles) > 0:
+        return True
+    return bool(enemy_def.get("Boss") or enemy_def.get("IsBoss"))
 
 
 def _to_int(v: Any) -> int:
@@ -1247,9 +1259,14 @@ def run_character_turn(
 
             is_drain_spell = False
             effect_text = normalize_text_basic(char_spell_json.get("Effect") or "")
-            name_lower = normalize_text_basic(char_spell_json.get("Name") or "")
+            spell_name_raw = (
+                char_spell_json.get("Name") or char_spell_json.get("name") or ""
+            )
+            name_lower = normalize_text_basic(spell_name_raw)
             if "absorb hp" in effect_text or name_lower == "drain":
                 is_drain_spell = True
+
+            is_tornado_spell = name_lower == "tornado"
 
             # ------------------------
             # AoE 実装（Reflect対応版 / Drainは合計ダメージ吸収）
@@ -1285,7 +1302,9 @@ def run_character_turn(
                     )
 
                     # --- ダメージ算出 ---
-                    if is_pure_status_spell(spell_label):
+                    if is_tornado_spell:
+                        dmg = 0
+                    elif is_pure_status_spell(spell_label):
                         dmg = 0
                     else:
                         dmg = magic_damage_char_to_enemy(
@@ -1355,6 +1374,41 @@ def run_character_turn(
                             )
 
                         continue  # ★ この敵にはダメージも状態異常も適用しない
+
+                    if is_tornado_spell:
+                        if rel == "null":
+                            logs.append(
+                                f"{char_name}は《{spell_label}》を唱えた！ {em_name}には効果がない。 {suffix}"
+                            )
+                            continue
+                        if _enemy_is_tornado_immune(em_json):
+                            logs.append(
+                                f"{char_name}は《{spell_label}》を唱えた！ しかし{em_name}には効かなかった。 {suffix}"
+                            )
+                            continue
+                        hit_count = magic_hit_count_char_to_enemy(
+                            char_stats,
+                            char_spell,
+                            em_stats,
+                            rng=rng,
+                            use_expectation=False,
+                            blind=char_is_blind,
+                        )
+                        if hit_count <= 0:
+                            logs.append(
+                                f"{char_name}は《{spell_label}》を唱えた！ しかし{em_name}には効かなかった。 {suffix}"
+                            )
+                            continue
+                        dmg = apply_tornado_to_state(
+                            target_state=em_state,
+                            target_name=em_name,
+                            spell_damage=char_spell.power,
+                            rng=rng,
+                            logs=logs,
+                            prefix=f"{char_name}は《{spell_label}》を唱えた！ ",
+                        )
+                        total_damage += dmg
+                        continue
 
                     # --- 通常ダメージ適用 ---
                     old_hp = em_state.hp
@@ -1433,7 +1487,40 @@ def run_character_turn(
                 )
             )
 
-            if is_pure_status_spell(spell_label):
+            if is_tornado_spell:
+                if char_spell_relation == "null":
+                    logs.append(
+                        f"{char_name}は《{spell_label}》を唱えた！ しかし{enemy_name}には効果がない。 {suffix}"
+                    )
+                    return 0, None
+                if _enemy_is_tornado_immune(enemy_json):
+                    logs.append(
+                        f"{char_name}は《{spell_label}》を唱えた！ しかし{enemy_name}には効かなかった。 {suffix}"
+                    )
+                    return 0, None
+                hit_count = magic_hit_count_char_to_enemy(
+                    char_stats,
+                    char_spell,
+                    enemy_stats,
+                    rng=rng,
+                    use_expectation=False,
+                    blind=char_is_blind,
+                )
+                if hit_count <= 0:
+                    logs.append(
+                        f"{char_name}は《{spell_label}》を唱えた！ しかし{enemy_name}には効かなかった。 {suffix}"
+                    )
+                    return 0, None
+                dmg_to_enemy = apply_tornado_to_state(
+                    target_state=enemy_state,
+                    target_name=enemy_name,
+                    spell_damage=char_spell.power,
+                    rng=rng,
+                    logs=logs,
+                    prefix=f"{char_name}は《{spell_label}》を唱えた！ ",
+                )
+                return dmg_to_enemy, None
+            elif is_pure_status_spell(spell_label):
                 dmg_to_enemy = 0
             else:
                 dmg_to_enemy = magic_damage_char_to_enemy(
@@ -2161,6 +2248,61 @@ def run_character_turn(
     # 最後に physical（通常攻撃）
     # ----------------------------------------------------------------------
     if char_attack_kind == "physical":
+        if target_side in ("ally", "self"):
+            target_pm = None
+            if party_members is not None and target_index is not None:
+                idx = int(target_index)
+                if 0 <= idx < len(party_members):
+                    target_pm = party_members[idx]
+            if target_pm is None:
+                target_pm = SimpleNamespace(
+                    name=char_name, stats=char_stats, state=char_state
+                )
+
+            res = _as_attack_result(
+                physical_damage_char_to_ally(
+                    char=char_stats,
+                    target=target_pm.stats,
+                    hand=char_weapon_hand,
+                    rng=rng,
+                    use_expectation=False,
+                    blind=char_is_blind,
+                    attacker_is_mini_or_toad=char_is_mini_or_toad,
+                    attacker_state=char_state,
+                )
+            )
+            crit = res.is_critical
+            net_hits = res.hit_count
+            dmg_to_enemy = 0
+
+            hits_disp = max(0, int(round(net_hits)))
+            hits_msg = f"（{hits_disp}ヒット）" if hits_disp > 0 else "（ミス）"
+
+            dmg_to_ally = int(res.damage)
+            old_target_hp = target_pm.state.hp
+            target_pm.state.hp = max(target_pm.state.hp - dmg_to_ally, 0)
+
+            attack_label = "の物理攻撃"
+            if char_battle_command == "Sing":
+                attack_label = "は歌った"
+
+            if crit:
+                prefix = f"{char_name}{attack_label} クリティカルヒット！{hits_msg} "
+            else:
+                prefix = f"{char_name}{attack_label}！{hits_msg} "
+
+            log_damage(
+                logs,
+                prefix,
+                target_pm.name,
+                dmg_to_ally,
+                old_target_hp,
+                target_pm.state.hp,
+                "attacker",
+                "remain",
+            )
+            return dmg_to_enemy, None
+
         if char_weapon_hand == "main":
             attack_elems = char_stats.main_weapon_elements
         else:

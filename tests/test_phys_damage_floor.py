@@ -3,6 +3,7 @@ import random
 
 from combat.models import FinalCharacterStats, FinalEnemyStats
 from combat.phys_damage import (
+    physical_damage_char_to_ally,
     physical_damage_char_to_enemy,
     physical_damage_enemy_to_char,
 )
@@ -165,3 +166,13 @@ def test_enemy_hit_count_uses_per_hit_rolls_in_random_mode() -> None:
     assert damage == 24
     assert is_critical is False
     assert net_hits == 2.0
+
+
+def test_char_to_ally_uses_zero_defense_for_friendly_target() -> None:
+    attacker = make_char(main_power=20, main_accuracy=100, main_atk_multiplier=2)
+    target = make_char(defense=50, defense_multiplier=0, evasion_percent=0)
+
+    result = physical_damage_char_to_ally(attacker, target, use_expectation=True)
+
+    assert result.hit_count == 2
+    assert result.damage == 49

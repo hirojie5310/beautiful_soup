@@ -124,7 +124,15 @@ tests/test_magic_damage_floor.py に回帰テストを追加・拡張し、キ�
 
    - **WWind (Tornado)**: FAQ では `Final Damage` を使わず、成功時に HP を `(Spell Damage..Spell Damage*2)` に直接する特殊処理。通常ダメージ式とは別分岐が必要。
 
+   `combat/magic_damage.py` の Tornado 共通ヘルパーを FAQ 準拠に切り替え、割合削りではなく `Spell Damage..Spell Damage*2` の範囲へ HP を直接下げるようにしました。あわせて `combat/turn_logic.py` のキャラ→敵ルートでも Tornado を通常魔法ダメージ式から分離し、`tests/test_tornado_spell.py` で回帰テスト化しました。
+   プレイヤー側の Tornado は FAQ どおり HP 直接変更にはなっていたものの、成功判定で魔法のヒット計算を見ておらず、実質的に「通ればほぼ必中」のような挙動になっていました。そこで、通常魔法と同じ Step 5 相当の実ヒット数を返す共通ヘルパー _roll_magic_hit_count() / magic_hit_count_char_to_enemy() を追加し、Tornado もこの判定を通したうえで効果を発動するようにしました。
+   run_character_turn() の Tornado 専用分岐を、単体・全体の両ルートで magic_hit_count_char_to_enemy(...) > 0 のときだけ HP を Spell Damage..Spell Damage*2 に落とすよう修正しました。ヒット数が 0 のときは「効かなかった」ログを出して不発になります。
+
    - **自分側対象時の防御0処理**: FAQ では味方への物理は Defense=0、味方への魔法は Magic Defense / Magic Defense Multiplier = 0。現状も一部同趣旨の処理はあるが、攻撃種別ごとに漏れなく統一されているか要確認。
+
+   combat/phys_damage.py に、キャラ物理の共通計算ヘルパ _physical_damage_char_to_target() を追加し、既存の physical_damage_char_to_enemy() をその共通経路へ寄せました。これにより既存の敵向け計算を維持しつつ、味方/自分向け専用の分岐を安全に追加できる形へ整理しました。
+   同ファイルに physical_damage_char_to_ally() を追加し、NES版FF3 FAQ に合わせて、味方/自分を物理攻撃した場合は Defense=0 として計算するようにしました。防御倍率・回避率・後列ペナルティなどは従来ロジックを共有しつつ、防御値だけを 0 扱いにしています。
+   combat/turn_logic.py の通常物理ルートに、target_side in ("ally", "self") の専用処理を追加しました。これで API や内部経路から味方/自分対象の物理行動が来た場合でも、敵に誤って当てず、味方側 HP を正しく減らすようになりました。
 
 ## まとめ
 

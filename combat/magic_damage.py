@@ -11,7 +11,7 @@
 # _calc_expected_magic_hits	魔法の倍率・命中率と相手の魔法防御倍率/抵抗率から平均魔法ヒット数（期待値）を計算する
 # _calc_base_magic_damage_per_hit	魔法1ヒットあたりの基礎ダメージ（乱数込み）を計算
 # magic_damage_char_to_enemy	キャラ→敵の魔法ダメージ（期待値）を計算
-# apply_tornado_to_state	任意のアクターのHPを割合で削るTornado効果を適用し、ダメージログを出力する汎用ヘルパー
+# apply_tornado_to_state	任意のアクターのHPを WWind/Tornado FAQ 準拠で直接値へ下げる汎用ヘルパー
 # enemy_cast_tornado_to_char	敵がTornadoをキャラに使用する際の属性判定・命中判定・HP削り処理をまとめたヘルパー
 # calc_drain_damage_generic	Drain用に既存の攻撃魔法式を流用し、吸収ダメージの生ダメージ期待値を計算する
 # enemy_cast_drain_to_char	敵がDrainをキャラに使用したときの属性判定・ダメージ計算・HP吸収処理とログ出力を行うヘルパー
@@ -242,6 +242,49 @@ def _calc_expected_magic_hits(
     return max(expected, 0.0)
 
 
+def _roll_magic_hit_count(
+    expected_hits: float,
+    *,
+    rng: Optional[random.Random],
+    use_expectation: bool,
+) -> float | int:
+    """期待ヒット数から実ヒット数を作る共通ヘルパー。"""
+    if expected_hits <= 0:
+        return 0
+    if use_expectation:
+        return expected_hits
+    if rng is None:
+        rng = random.Random()
+    base_hits = int(expected_hits)
+    frac = expected_hits - base_hits
+    return base_hits + (1 if rng.random() < frac else 0)
+
+
+def magic_hit_count_char_to_enemy(
+    caster: FinalCharacterStats,
+    spell: SpellInfo,
+    enemy: FinalEnemyStats,
+    *,
+    rng: Optional[random.Random] = None,
+    use_expectation: bool = True,
+    blind: bool = False,
+) -> float | int:
+    """キャラ→敵の魔法で、FAQ Step5 相当の実ヒット数を返す。"""
+    magic_mult = _calc_magic_multiplier(caster, spell)
+    magic_acc = _calc_magic_accuracy(caster, spell, blind=blind)
+    expected_hits = _calc_expected_magic_hits(
+        magic_mult=magic_mult,
+        magic_acc_percent=magic_acc,
+        mdef_mult=enemy.magic_def_multiplier,
+        magic_resistance_percent=enemy.magic_resistance_percent,
+    )
+    return _roll_magic_hit_count(
+        expected_hits,
+        rng=rng,
+        use_expectation=use_expectation,
+    )
+
+
 def _calc_base_magic_damage_per_hit(
     magic_power: int,
     magic_defense: int,
@@ -291,22 +334,16 @@ def magic_damage_char_to_enemy(
     magic_mult = _calc_magic_multiplier(caster, spell)
     magic_acc = _calc_magic_accuracy(caster, spell, blind=blind)
 
-    expected_hits = _calc_expected_magic_hits(
-        magic_mult=magic_mult,
-        magic_acc_percent=magic_acc,
-        mdef_mult=enemy.magic_def_multiplier,
-        magic_resistance_percent=enemy.magic_resistance_percent,
+    real_hits = magic_hit_count_char_to_enemy(
+        caster,
+        spell,
+        enemy,
+        rng=rng,
+        use_expectation=use_expectation,
+        blind=blind,
     )
-    if expected_hits <= 0:
+    if real_hits <= 0:
         return 0
-
-    # --- ヒット数：期待値 or 整数ロール ---
-    if use_expectation:
-        real_hits = expected_hits
-    else:
-        base_hits = int(expected_hits)
-        frac = expected_hits - base_hits
-        real_hits = base_hits + (1 if rng.random() < frac else 0)
 
     # ---------------------------------------------
     # ★最小差分ポイント：ヒットごとロール
@@ -345,46 +382,49 @@ def magic_damage_char_to_enemy(
 # Tornado 汎用ヘルパー: 任意のActorに対するTornado
 def apply_tornado_to_state(
     target_state: BattleActorState,
-    target_stats_level: int,
     target_name: str,
+    spell_damage: int,
     rng: random.Random,
     logs: list[str],
     *,
-    min_ratio: float = 0.05,
-    max_ratio: float = 0.1,
-    prefix: str = "",  # ★ 追加：前置きの文言（誰が何をしたか）
-) -> None:
+    prefix: str = "",
+) -> int:
     """
-    Tornadoの効果を「誰にでも」適用できる共通ヘルパー。
-    - 現在HPの一定割合（5〜10%など）まで減らすが、0にはしない。
-    - ボス免疫などは呼び出し元で判定する想定。
+    FAQ 準拠の WWind/Tornado 効果。
+    - 成功時は通常の Final Damage を使わず、HP を Spell Damage..Spell Damage*2 に直接する。
+    - すでにその範囲以下の HP なら実ダメージ 0 とする。
+    戻り値は実際に減ったダメージ量。
     """
     if target_state.hp <= 1:
         logs.append(f"{target_name}にはTornadoの効果がなかった。")
-        return
+        return 0
 
     old_hp = target_state.hp
-    ratio = rng.uniform(min_ratio, max_ratio)
-    new_hp = max(1, int(target_state.hp * ratio))
+    low = max(1, int(spell_damage))
+    high = max(low, int(spell_damage) * 2)
+    new_hp = min(old_hp, rng.randint(low, high))
+    damage = max(0, old_hp - new_hp)
 
-    damage = old_hp - new_hp
+    if damage <= 0:
+        logs.append(f"{prefix}{target_name}にはTornadoの効果がなかった。")
+        return 0
+
     target_state.hp = new_hp
-
-    # max_hp が state にあるならそれも表示
     max_hp = getattr(target_state, "max_hp", None)
 
     log_damage(
         logs=logs,
-        prefix=prefix,  # 例: "Unei'S Cloneは《Tornado》を唱えた！ "
-        target_name=target_name,  # 例: "Runeth"
+        prefix=prefix,
+        target_name=target_name,
         damage=damage,
         old_hp=old_hp,
         new_hp=new_hp,
-        perspective="target",  # 「Runethは○ダメージを受けた」
+        perspective="target",
         hp_style="arrow_with_max" if max_hp is not None else "arrow",
         max_hp=max_hp,
-        shout=True,  # 「！」で〆る
+        shout=True,
     )
+    return damage
 
 
 # 敵→キャラ Tornado 専用ヘルパー
@@ -421,11 +461,11 @@ def enemy_cast_tornado_to_char(
     # 3) 実際のHP削り＋ログ
     apply_tornado_to_state(
         target_state=char_state,
-        target_stats_level=char_stats.level,
         target_name=char_name,
+        spell_damage=int(spell_json.get("BasePower") or 1),
         rng=rng,
         logs=logs,
-        prefix=f"{enemy_name}は《Tornado》を唱えた！ ",  # ★ ここが prefix
+        prefix=f"{enemy_name}は《Tornado》を唱えた！ ",
     )
 
 

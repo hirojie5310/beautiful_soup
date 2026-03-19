@@ -101,6 +101,87 @@ def _calc_base_phys_damage_per_hit(
     return raw - defense
 
 
+def _physical_damage_char_to_target(
+    *,
+    char: FinalCharacterStats,
+    target_defense: int,
+    target_def_multiplier: int,
+    target_evasion_percent: int,
+    attacker_row: str,
+    hand: str = "main",
+    rng: Optional[random.Random] = None,
+    use_expectation: bool = True,
+    blind: bool = False,
+    attacker_is_mini_or_toad: bool = False,
+    attacker_state: Optional[BattleActorState] = None,
+) -> AttackResult:
+    """キャラ → 任意対象の物理ダメージ共通処理。"""
+    if attacker_is_mini_or_toad:
+        return AttackResult(damage=0, hit_count=0, is_critical=False)
+
+    if hand == "off":
+        atk_power = char.off_power
+        atk_mul = char.off_atk_multiplier
+        hit_percent = char.off_accuracy
+    else:
+        atk_power = char.main_power
+        atk_mul = char.main_atk_multiplier
+        hit_percent = char.main_accuracy
+
+    if attacker_state is not None:
+        cheer_bonus = getattr(attacker_state, "cheer_bonus", 0)
+        if cheer_bonus > 0:
+            atk_power += cheer_bonus
+
+    atk_power += getattr(char, "haste_power_bonus", 0)
+    atk_mul = min(16, atk_mul + getattr(char, "haste_multiplier_bonus", 0))
+
+    if atk_power <= 0 or atk_mul <= 0:
+        return AttackResult(damage=0, hit_count=0, is_critical=False)
+
+    hit_percent = _cap_physical_hit_percent(hit_percent)
+    if blind:
+        hit_percent //= 2
+
+    if attacker_row == "back":
+        is_long = char.off_long if hand == "off" else char.main_long
+        if not is_long:
+            hit_percent //= 2
+
+    net_hits = _calc_net_hits(
+        atk_multiplier=atk_mul,
+        hit_percent=hit_percent,
+        def_multiplier=target_def_multiplier,
+        evade_percent=target_evasion_percent,
+        rng=rng,
+        use_expectation=use_expectation,
+    )
+    hit_count = int(round(net_hits)) if use_expectation else int(net_hits)
+    if hit_count <= 0:
+        return AttackResult(damage=0, hit_count=0, is_critical=False)
+
+    base_per_hit = _calc_base_phys_damage_per_hit(
+        attack_power=atk_power,
+        defense=target_defense,
+        rng=rng,
+        use_expectation=use_expectation,
+    )
+
+    dmg = _apply_physical_damage_floor(base_per_hit * net_hits, net_hits)
+    dmg = max(dmg, 0)
+
+    is_crit = False
+    if not use_expectation:
+        if rng is None:
+            rng = random.Random()
+        if roll_critical(char.agility, rng):
+            is_crit = True
+            dmg *= 2
+            dmg = max(dmg, 0)
+
+    return AttackResult(damage=dmg, hit_count=hit_count, is_critical=is_crit)
+
+
 @overload
 def physical_damage_char_to_enemy(
     char: FinalCharacterStats,
@@ -170,80 +251,51 @@ def physical_damage_char_to_enemy(
       - is_critical: クリティカルか（期待値モードでは常にFalse）
     """
 
-    # ★ Mini / Toad は物理攻撃力 0 扱い
-    if attacker_is_mini_or_toad:
-        return AttackResult(damage=0, hit_count=0, is_critical=False)
-
-    if hand == "off":
-        atk_power = char.off_power
-        atk_mul = char.off_atk_multiplier
-        hit_percent = char.off_accuracy
-    else:
-        atk_power = char.main_power
-        atk_mul = char.main_atk_multiplier
-        hit_percent = char.main_accuracy
-
-    # ★ Cheer による攻撃力ボーナスを加算
-    if attacker_state is not None:
-        cheer_bonus = getattr(attacker_state, "cheer_bonus", 0)
-        if cheer_bonus > 0:
-            atk_power += cheer_bonus
-
-    atk_power += getattr(char, "haste_power_bonus", 0)
-    atk_mul = min(16, atk_mul + getattr(char, "haste_multiplier_bonus", 0))
-
-    if atk_power <= 0 or atk_mul <= 0:
-        return AttackResult(damage=0, hit_count=0, is_critical=False)
-
-    hit_percent = _cap_physical_hit_percent(hit_percent)
-
-    if blind:
-        hit_percent //= 2
-
-    # ★後列ペナルティ：近距離武器のみ Hit% 半減（LongRangeは除外）
-    if char.row == "back":
-        is_long = char.off_long if hand == "off" else char.main_long
-        if not is_long:
-            hit_percent //= 2
-
-    # ネットヒット数
-    net_hits = _calc_net_hits(
-        atk_multiplier=atk_mul,
-        hit_percent=hit_percent,
-        def_multiplier=enemy.defense_multiplier,
-        evade_percent=enemy.evasion_percent,
+    result = _physical_damage_char_to_target(
+        char=char,
+        target_defense=enemy.defense,
+        target_def_multiplier=enemy.defense_multiplier,
+        target_evasion_percent=enemy.evasion_percent,
+        attacker_row=char.row,
+        hand=hand,
         rng=rng,
         use_expectation=use_expectation,
+        blind=blind,
+        attacker_is_mini_or_toad=attacker_is_mini_or_toad,
+        attacker_state=attacker_state,
     )
+    result.damage = apply_element_relation_to_damage(result.damage, element_relation)
+    result.damage = max(result.damage, 0)
+    return result
 
-    hit_count = int(round(net_hits)) if use_expectation else int(net_hits)
 
-    if hit_count <= 0:
-        return AttackResult(damage=0, hit_count=0, is_critical=False)
-
-    # 1ヒットあたり
-    base_per_hit = _calc_base_phys_damage_per_hit(
-        attack_power=atk_power,
-        defense=enemy.defense,
+def physical_damage_char_to_ally(
+    char: FinalCharacterStats,
+    target: FinalCharacterStats,
+    hand: str = "main",
+    rng: Optional[random.Random] = None,
+    use_expectation: bool = True,
+    blind: bool = False,
+    attacker_is_mini_or_toad: bool = False,
+    attacker_state: Optional[BattleActorState] = None,
+) -> AttackResult:
+    """
+    キャラクター → 味方/自分 の物理ダメージ。
+    FAQ の self-targetting に合わせて Defense は 0 扱いにする。
+    """
+    return _physical_damage_char_to_target(
+        char=char,
+        target_defense=0,
+        target_def_multiplier=target.defense_multiplier,
+        target_evasion_percent=target.evasion_percent,
+        attacker_row=char.row,
+        hand=hand,
         rng=rng,
         use_expectation=use_expectation,
+        blind=blind,
+        attacker_is_mini_or_toad=attacker_is_mini_or_toad,
+        attacker_state=attacker_state,
     )
-
-    dmg = _apply_physical_damage_floor(base_per_hit * net_hits, net_hits)
-    dmg = apply_element_relation_to_damage(dmg, element_relation)
-    dmg = max(dmg, 0)
-
-    # ★クリティカル（乱数モードのみ）
-    is_crit = False
-    if not use_expectation:
-        if rng is None:
-            rng = random.Random()
-        if roll_critical(char.agility, rng):
-            is_crit = True
-            dmg *= 2
-            dmg = max(dmg, 0)
-
-    return AttackResult(damage=dmg, hit_count=hit_count, is_critical=is_crit)
 
 
 # ============================================================
