@@ -38,6 +38,7 @@ from combat.magic_damage import (
     enemy_cast_tornado_to_char,
     magic_heal_amount_to_char,
     enemy_cast_drain_to_char,
+    _calc_base_magic_damage_per_hit,
 )
 from combat.status_effects import (
     _get_status_name_from_monster_spell,
@@ -112,6 +113,36 @@ def _to_int(v: Any) -> int:
         return int(v)
     except Exception:
         return 0
+
+
+def _terrain_accuracy_percent(base_accuracy: Any, intelligence: int) -> int:
+    """Terrain の命中率を黒魔法寄りに整数 % へ寄せる。"""
+    try:
+        base = float(base_accuracy)
+    except Exception:
+        base = 0.0
+    if base <= 1.0:
+        base *= 100.0
+    acc = int(base + intelligence / 2.0)
+    return max(0, min(acc, 100))
+
+
+def _roll_terrain_net_hits(
+    attack_multiplier: int,
+    hit_percent: int,
+    defense_multiplier: int,
+    evade_percent: int,
+    rng: Random,
+) -> int:
+    """FAQ の M ループに寄せて Terrain の実ヒット数を求める。"""
+    net_hits = 0
+    for _ in range(max(attack_multiplier, 0)):
+        if rng.randint(1, 100) <= max(0, min(hit_percent, 100)):
+            net_hits += 1
+    for _ in range(max(defense_multiplier, 0)):
+        if rng.randint(1, 100) <= max(0, min(evade_percent, 100)):
+            net_hits -= 1
+    return net_hits
 
 
 def _as_attack_result(x: Any) -> AttackResult:
@@ -1871,23 +1902,100 @@ def run_character_turn(
             else:
                 logs.append(f"{spell_name} が発動！")
 
-                base_power = spell.get("BasePower", 0)
-                base_acc = float(spell.get("BaseAccuracy", 0.0))
+                base_power = int(spell.get("BasePower", 0) or 0)
+                base_acc = spell.get("BaseAccuracy", 0.0)
 
                 INT = char_stats.intelligence
                 LV = char_stats.level
                 JL = getattr(char_stats, "job_level", 1)
 
-                magic_damage = base_power + (INT / 2.0)
-                magic_mul = (INT / 16.0) + (LV / 16.0) + (JL / 32.0) + 1.0
-                final_damage = max(0, int(magic_damage * magic_mul))
+                magic_power = base_power + (INT // 2)
+                magic_mul = max(1 + (INT // 16) + (LV // 16) + (JL // 32), 0)
+                hit_percent = _terrain_accuracy_percent(base_acc, INT)
 
-                hit_rate = base_acc + (INT / 200.0)
-                hit_rate = max(0.05, min(0.95, hit_rate))
+                effect = spell.get("Effect", "")
+                target = normalize_text_basic(spell.get("Target") or "")
+                is_aoe = target == "all enemies"
 
-                r = rng.random()
+                targets: list[
+                    tuple[str, BattleActorState, Dict[str, Any], FinalEnemyStats]
+                ] = []
+                if is_aoe and isinstance(enemies, list) and enemies:
+                    for er in enemies:
+                        er_state = getattr(er, "state", None)
+                        er_stats = getattr(er, "stats", None)
+                        if not isinstance(er_state, BattleActorState):
+                            continue
+                        if not isinstance(er_stats, FinalEnemyStats):
+                            continue
+                        if er_state.hp <= 0:
+                            continue
+                        er_name = str(getattr(er, "name", "Enemy"))
+                        er_json = getattr(er, "json", {})
+                        if not isinstance(er_json, dict):
+                            er_json = {}
+                        targets.append((er_name, er_state, er_json, er_stats))
 
-                if r > hit_rate:
+                if not targets:
+                    targets.append((enemy_name, enemy_state, enemy_json, enemy_stats))
+
+                total_damage = 0
+                any_effective_target = False
+                for tgt_name, tgt_state, tgt_json, tgt_stats in targets:
+                    net_hits = _roll_terrain_net_hits(
+                        magic_mul,
+                        hit_percent,
+                        tgt_stats.magic_def_multiplier,
+                        tgt_stats.magic_resistance_percent,
+                        rng,
+                    )
+                    if net_hits <= 0:
+                        logs.append(f"{tgt_name}には効かなかった。")
+                        continue
+
+                    any_effective_target = True
+
+                    if "Inflict KO" in effect:
+                        if tgt_json.get("PlotBattles"):
+                            logs.append(f"{spell_name}はボスには効かなかった！")
+                            continue
+
+                        old_enemy_hp = tgt_state.hp
+                        tgt_state.hp = 0
+                        tgt_state.statuses.add(Status.KO)
+                        logs.append(f"{tgt_name}は{spell_name}に飲み込まれた！即死！")
+                        total_damage += old_enemy_hp
+                        continue
+
+                    total_raw_damage = 0
+                    for _ in range(net_hits):
+                        total_raw_damage += _calc_base_magic_damage_per_hit(
+                            magic_power=magic_power,
+                            magic_defense=tgt_stats.magic_defense,
+                            rng=rng,
+                            use_expectation=False,
+                        )
+                    final_damage = max(int(total_raw_damage), 1)
+
+                    old_enemy_hp = tgt_state.hp
+                    tgt_state.hp = max(tgt_state.hp - final_damage, 0)
+
+                    log_damage(
+                        logs,
+                        "",
+                        tgt_name,
+                        final_damage,
+                        old_enemy_hp,
+                        tgt_state.hp,
+                        "attacker",
+                        "arrow",
+                        None,
+                        "",
+                        True,
+                    )
+                    total_damage += max(0, old_enemy_hp - tgt_state.hp)
+
+                if not any_effective_target:
                     max_hp_char = getattr(
                         char_stats,
                         "max_hp",
@@ -1898,12 +2006,9 @@ def run_character_turn(
                         ),
                     )
                     backfire = max(1, max_hp_char // 4)
-
-                    logs.append(f"{spell_name}は不発に終わった！")
-
+                    logs.append("Backfired!")
                     old_hp = char_state.hp
                     char_state.hp = max(char_state.hp - backfire, 0)
-
                     log_damage(
                         logs,
                         "バックファイア！",
@@ -1914,69 +2019,10 @@ def run_character_turn(
                         "target",
                         "arrow",
                     )
-
                     if char_state.hp <= 0:
                         char_state.statuses.add(Status.KO)
 
-                    dmg_to_enemy = 0
-
-                else:
-                    effect = spell.get("Effect", "")
-                    target = normalize_text_basic(spell.get("Target") or "")
-                    is_aoe = target == "all enemies"
-
-                    targets: list[tuple[str, BattleActorState, Dict[str, Any]]] = []
-                    if is_aoe and isinstance(enemies, list) and enemies:
-                        for er in enemies:
-                            er_state = getattr(er, "state", None)
-                            if not isinstance(er_state, BattleActorState):
-                                continue
-                            if er_state.hp <= 0:
-                                continue
-                            er_name = str(getattr(er, "name", "Enemy"))
-                            er_json = getattr(er, "json", {})
-                            if not isinstance(er_json, dict):
-                                er_json = {}
-                            targets.append((er_name, er_state, er_json))
-
-                    if not targets:
-                        targets.append((enemy_name, enemy_state, enemy_json))
-
-                    total_damage = 0
-                    for tgt_name, tgt_state, tgt_json in targets:
-                        if "Inflict KO" in effect:
-                            if tgt_json.get("PlotBattles"):
-                                logs.append(f"{spell_name}はボスには効かなかった！")
-                                continue
-
-                            old_enemy_hp = tgt_state.hp
-                            tgt_state.hp = 0
-                            tgt_state.statuses.add(Status.KO)
-                            logs.append(
-                                f"{tgt_name}は{spell_name}に飲み込まれた！即死！"
-                            )
-                            total_damage += old_enemy_hp
-                            continue
-
-                        old_enemy_hp = tgt_state.hp
-                        tgt_state.hp = max(tgt_state.hp - final_damage, 0)
-
-                        log_damage(
-                            logs,
-                            "",
-                            tgt_name,
-                            final_damage,
-                            old_enemy_hp,
-                            tgt_state.hp,
-                            "attacker",
-                            "arrow",
-                            None,
-                            "",
-                            True,
-                        )
-                        total_damage += max(0, old_enemy_hp - tgt_state.hp)
-
-                    dmg_to_enemy = total_damage
+                dmg_to_enemy = total_damage
 
         # Black Belt: Boost
         if char_battle_command == "Boost":
@@ -2249,10 +2295,14 @@ def run_enemy_turn(
     if rng is None:
         rng = Random()
 
-    if party_members is None:
-        party_members = [
-            SimpleNamespace(name=char_name, stats=char_stats, state=char_state)
-        ]
+    active_party_members: list[PartyMemberRuntime] = (
+        party_members
+        if party_members is not None
+        else cast(
+            list[PartyMemberRuntime],
+            [SimpleNamespace(name=char_name, stats=char_stats, state=char_state)],
+        )
+    )
 
     # print(f"[Debug:turn_logic/run_enemy_turn - enemy_json] {enemy_json.get("Spells")}")
 
@@ -2280,7 +2330,7 @@ def run_enemy_turn(
 
     # ★ キャラがこの時点で戦闘不能なら、敵ターンに入らず終了
     if char_state.hp <= 0:
-        idx = random_alive_char_index(party_members, rng)
+        idx = random_alive_char_index(active_party_members, rng)
         if idx is None:
             logs.append(f"{char_name}は力尽きた…")
             return OneTurnResult(
@@ -2292,7 +2342,7 @@ def run_enemy_turn(
                 end_reason="char_defeated",
             )
         # ターゲット差し替え
-        new_target = party_members[idx]
+        new_target = active_party_members[idx]
         char_name = new_target.name
         char_stats = new_target.stats
         char_state = new_target.state
@@ -2581,7 +2631,7 @@ def run_enemy_turn(
                     enemy_cast_aoe_status_spell_to_party(
                         spell_json=spell_def,
                         enemy_name=enemy_name,
-                        party_members=party_members,
+                        party_members=active_party_members,
                         rng=rng,
                         logs=logs,
                     )
@@ -2597,7 +2647,7 @@ def run_enemy_turn(
                 enemy_down = enemy_cast_aoe_damage_spell_to_party(
                     spell_json=spell_def,
                     enemy_name=enemy_name,
-                    party_members=party_members,
+                    party_members=active_party_members,
                     enemies=enemies,
                     rng=rng,
                     logs=logs,
@@ -2695,7 +2745,7 @@ def run_enemy_turn(
                     enemy_cast_aoe_status_spell_to_party(
                         spell_json=spell_def,
                         enemy_name=enemy_name,
-                        party_members=party_members,
+                        party_members=active_party_members,
                         rng=rng,
                         logs=logs,
                     )
@@ -2704,7 +2754,7 @@ def run_enemy_turn(
                     enemy_down = enemy_cast_aoe_damage_spell_to_party(
                         spell_json=spell_def,
                         enemy_name=enemy_name,
-                        party_members=party_members,
+                        party_members=active_party_members,
                         enemies=enemies,
                         rng=rng,
                         logs=logs,
@@ -3056,7 +3106,7 @@ def run_enemy_turn(
     # ------------------------------------------------------------
     if char_state.hp <= 0:
         logs.append(f"{char_name}は力尽きた…")
-        if not any_char_alive(party_members):
+        if not any_char_alive(active_party_members):
             end_reason = "char_defeated"
         else:
             end_reason = "continue"
