@@ -230,6 +230,9 @@ class FinalCharacterStats:
     main_weapon_elements: List[str] = field(default_factory=list)
     off_weapon_elements: List[str] = field(default_factory=list)
 
+    # 装備による属性魔法ブースト回数（例: fire rod 2本で {"fire": 2}）
+    elemental_magic_boosts: dict[str, int] = field(default_factory=dict)
+
     # 一時バフ: Haste の魔法式から転写される物理加算値
     haste_power_bonus: int = 0
     haste_multiplier_bonus: int = 0

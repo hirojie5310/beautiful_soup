@@ -309,6 +309,26 @@ def _apply_magic_damage_floor(damage: float | int, hit_count: float | int) -> in
     return max(int(damage), 1)
 
 
+def _elemental_magic_boost_multiplier(
+    caster: FinalCharacterStats,
+    spell: SpellInfo,
+) -> float:
+    """属性強化ロッドによる最終ダメージ倍率を返す。"""
+    spell_elements = parse_elements(getattr(spell, "elements", None))
+    if not spell_elements:
+        return 1.0
+
+    boosts = getattr(caster, "elemental_magic_boosts", None) or {}
+    if not boosts:
+        return 1.0
+
+    stacks = max(int(boosts.get(element, 0)) for element in spell_elements)
+    if stacks <= 0:
+        return 1.0
+
+    return 1.2**stacks
+
+
 def magic_damage_char_to_enemy(
     caster: FinalCharacterStats,
     spell: SpellInfo,
@@ -373,6 +393,8 @@ def magic_damage_char_to_enemy(
 
     if split_to_targets > 1 and not spell.auto_all_target:
         dmg = int(dmg / split_to_targets)
+
+    dmg *= _elemental_magic_boost_multiplier(caster, spell)
 
     dmg = _apply_magic_damage_floor(dmg, real_hits)
     return max(int(dmg), 0)

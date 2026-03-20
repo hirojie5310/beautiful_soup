@@ -34,6 +34,7 @@ from combat.models import (
 from combat.elements import parse_elements
 from system.exp_system import LevelTable
 from utils.name_normalize import normalize_name
+from utils.text_normalize import normalize_text_basic
 
 
 # １．セーブデータ → キャラ最終ステ（パーティ全員）
@@ -536,6 +537,38 @@ def _bonus_stat_key(raw_key: str) -> Optional[str]:
     return mapping.get(key)
 
 
+_ELEMENTAL_MAGIC_ROD_BOOSTS: dict[str, tuple[str, ...]] = {
+    "firerod": ("fire",),
+    "icerod": ("ice",),
+    "lightrod": ("thunder",),
+    "omnirod": ("fire", "ice", "thunder"),
+}
+
+
+def equipment_elemental_magic_boosts(
+    eq: EquipmentSet,
+    *,
+    normalizer: Callable[[str], str] = normalize_name,
+) -> Dict[str, int]:
+    """装備ロッドによる属性魔法ブースト回数を返す。"""
+    boosts: Dict[str, int] = {}
+
+    for name in (eq.main_hand, eq.off_hand):
+        if not name:
+            continue
+        key = normalizer(name)
+        elements = _ELEMENTAL_MAGIC_ROD_BOOSTS.get(key)
+        if elements is None:
+            normalized = normalize_text_basic(name).replace(" ", "")
+            elements = _ELEMENTAL_MAGIC_ROD_BOOSTS.get(normalized)
+        if not elements:
+            continue
+        for element in elements:
+            boosts[element] = boosts.get(element, 0) + 1
+
+    return boosts
+
+
 def equipment_stat_bonuses(
     weapons_by_name_norm: Dict[str, Dict[str, Any]],
     armors_by_name_norm: Dict[str, Dict[str, Any]],
@@ -751,6 +784,7 @@ def compute_character_final_stats(
     # ★ 追加：武器属性を共通パーサで正規化
     final.main_weapon_elements = parse_elements(main_weapon_elements)
     final.off_weapon_elements = parse_elements(off_weapon_elements)
+    final.elemental_magic_boosts = equipment_elemental_magic_boosts(eq)
 
     return final
 
