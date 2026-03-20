@@ -9,7 +9,7 @@ from random import Random
 from combat.runtime_state import RuntimeState
 from combat.usecases import BattleSession, execute_round
 from combat.battle_result import BattleResult
-from combat.initiative import calc_initiative
+from combat.initiative import calc_initiative, command_weight
 from combat.life_check import first_alive_enemy_index, is_out_of_battle
 
 # EnemyRuntime / PlannedAction / SideTurnResult の import 先もあなたの構成に合わせて調整してください
@@ -282,13 +282,17 @@ class BattleController:
         for idx, member in enumerate(party_members):
             if is_out_of_battle(member.state):
                 continue
-            init = calc_initiative(member.stats.agility, self.rng)
+            action = planned_actions[idx] if idx < len(planned_actions) else None
+            total_weight = member.stats.weight + command_weight(action)
+            init = calc_initiative(member.stats.agility, self.rng, weight=total_weight)
             actors.append(("char", idx, init))
 
         for idx, enemy in enumerate(enemies):
             if is_out_of_battle(enemy.state):
                 continue
-            init = calc_initiative(enemy.stats.agility, self.rng)
+            init = calc_initiative(
+                enemy.stats.agility, self.rng, weight=enemy.stats.weight
+            )
             actors.append(("enemy", idx, init))
 
         self.rng.setstate(rng_state)

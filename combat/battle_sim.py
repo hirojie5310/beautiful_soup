@@ -32,7 +32,7 @@ from combat.life_check import (
     all_enemies_defeated,
     all_chars_defeated,
 )
-from combat.initiative import calc_initiative
+from combat.initiative import calc_initiative, command_weight
 from combat.turn_logic import run_enemy_turn, run_character_turn
 from combat.spell_repo import spell_from_json
 from combat.magic_damage import healing_spell_kind
@@ -333,13 +333,15 @@ def simulate_one_round_multi_party(
     for i, pm in enumerate(party_members):
         if is_out_of_battle(pm.state):
             continue
-        init = calc_initiative(pm.stats.agility, rng)
+        action = planned_actions[i] if i < len(planned_actions) else None
+        total_weight = pm.stats.weight + command_weight(action)
+        init = calc_initiative(pm.stats.agility, rng, weight=total_weight)
         actors.append(("char", i, init))
 
     for i, em in enumerate(enemies):
         if is_out_of_battle(em.state):
             continue
-        init = calc_initiative(em.stats.agility, rng)
+        init = calc_initiative(em.stats.agility, rng, weight=em.stats.weight)
         actors.append(("enemy", i, init))
 
     actors.sort(key=lambda x: x[2], reverse=True)
@@ -1026,13 +1028,15 @@ def simulate_battle_multi_party(
         for i, member in enumerate(party_members):
             if is_out_of_battle(member.state):
                 continue
-            init = calc_initiative(member.stats.agility, rng)
+            action = planned_actions[i] if i < len(planned_actions) else None
+            total_weight = member.stats.weight + command_weight(action)
+            init = calc_initiative(member.stats.agility, rng, weight=total_weight)
             actors.append(("char", i, init))
 
         for i, enemy in enumerate(enemies):
             if is_out_of_battle(enemy.state):
                 continue
-            init = calc_initiative(enemy.stats.agility, rng)
+            init = calc_initiative(enemy.stats.agility, rng, weight=enemy.stats.weight)
             actors.append(("enemy", i, init))
 
         actors.sort(key=lambda x: x[2], reverse=True)

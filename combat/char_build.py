@@ -458,6 +458,25 @@ def armor_stats(
     return defense, evasion, mdef, is_shield, elem_resist, elem_null, status_imm
 
 
+def equipment_weight(
+    weapons_by_name_norm: Dict[str, Dict[str, Any]],
+    armors_by_name_norm: Dict[str, Dict[str, Any]],
+    name: Optional[str],
+    *,
+    normalizer: Callable[[str], str] = normalize_name,
+) -> int:
+    """装備1つぶんの Weight を返す。データ未設定時は 0。"""
+    if not name:
+        return 0
+
+    key = normalizer(name)
+    row = weapons_by_name_norm.get(key) or armors_by_name_norm.get(key)
+    if row is None:
+        return 0
+
+    return int(row.get("Weight", 0) or 0)
+
+
 # ============================================================
 # キャラクター最終ステータス計算
 # ============================================================
@@ -539,6 +558,7 @@ def compute_character_final_stats(
     total_eva = 0.0
     total_mdef = 0
     shield_count = 0
+    total_weight = 0
     elem_resist_total: set[str] = set()  # ★ 追加
     elem_null_total: set[str] = set()  # ★追加（現状は空のまま）
     status_imm_total: set[str] = set()
@@ -556,6 +576,9 @@ def compute_character_final_stats(
         elem_resist_total.update(elem_resist)  # ★ ここで耐性収集
         elem_null_total.update(elem_null)
         status_imm_total.update(status_imm)  # ★追加
+        total_weight += equipment_weight(weapons_norm, armors_norm, slot)
+
+    total_weight += equipment_weight(weapons_norm, armors_norm, eq.main_hand)
 
     # 防御力 = 防具合計 + Vit//2
     defense = total_def + base.vitality // 2
@@ -619,6 +642,7 @@ def compute_character_final_stats(
         magic_def_multiplier=magic_def_multiplier,
         magic_resistance=magic_resistance,
         shield_count=shield_count,
+        weight=total_weight,
         elemental_resists=frozenset(elem_resist_total),
         elemental_nulls=frozenset(elem_null_total),
         elemental_weaks=frozenset(),

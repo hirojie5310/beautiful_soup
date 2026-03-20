@@ -17,6 +17,7 @@
       "Value": 30000,
       "Reflectable": "Yes",
       "Target": "One/All Enemies",
+      "Weight": 10,
       "CastBy": [
         "Ma",
         "Sa"
@@ -70,6 +71,7 @@
       "Value": 30000,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 10,
       "CastBy": [
         "Ma",
         "Sa"
@@ -116,6 +118,7 @@
       "Value": 30000,
       "Reflectable": "No",
       "Target": "All Enemies",
+      "Weight": 11,
       "CastBy": [
         "Ma",
         "Sa"
@@ -165,6 +168,7 @@
       "Value": 10000,
       "Reflectable": "No",
       "Target": "All Enemies",
+      "Weight": 8,
       "CastBy": [
         "BM",
         "Ma",
@@ -248,6 +252,7 @@
       "Value": 10000,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 7,
       "CastBy": [
         "BM",
         "Ma",
@@ -326,6 +331,7 @@
       "Value": 10000,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 9,
       "CastBy": [
         "BM",
         "Ma",
@@ -396,6 +402,7 @@
       "Value": 5000,
       "Reflectable": "Yes",
       "Target": "One/All Enemies",
+      "Weight": 7,
       "CastBy": [
         "BM",
         "Ma",
@@ -441,6 +448,7 @@
       "Value": 5000,
       "Reflectable": "Yes",
       "Target": "One/All Enemies",
+      "Weight": 6,
       "CastBy": [
         "BM",
         "Ma",
@@ -468,6 +476,7 @@
       "Value": 5000,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 6,
       "CastBy": [
         "BM",
         "Ma",
@@ -496,6 +505,7 @@
       "Value": 2500,
       "Reflectable": "Yes",
       "Target": "One/All Enemies",
+      "Weight": 6,
       "CastBy": [
         "BM",
         "Ma",
@@ -542,6 +552,7 @@
       "Value": 2500,
       "Reflectable": "No",
       "Target": "All Enemies",
+      "Weight": 5,
       "CastBy": [
         "BM",
         "Ma",
@@ -579,6 +590,7 @@
       "Value": 2500,
       "Reflectable": "No",
       "Target": "One/All Enemies",
+      "Weight": 5,
       "CastBy": [
         "BM",
         "Ma",
@@ -608,6 +620,7 @@
       "Value": 1500,
       "Reflectable": "Yes",
       "Target": "One Enemy",
+      "Weight": 4,
       "CastBy": [
         "BM",
         "RM",
@@ -679,6 +692,7 @@
       "Value": 1500,
       "Reflectable": "Yes",
       "Target": "One/All Enemies",
+      "Weight": 5,
       "CastBy": [
         "BM",
         "RM",
@@ -744,6 +758,7 @@
       "Value": 1500,
       "Reflectable": "No",
       "Target": "One/All Enemies",
+      "Weight": 4,
       "CastBy": [
         "BM",
         "RM",
@@ -795,6 +810,7 @@
       "Value": 750,
       "Reflectable": "Yes",
       "Target": "One/All Enemies",
+      "Weight": 3,
       "CastBy": [
         "BM",
         "RM",
@@ -912,6 +928,7 @@
       "Value": 750,
       "Reflectable": "Yes",
       "Target": "One/All Enemies",
+      "Weight": 3,
       "CastBy": [
         "BM",
         "RM",
@@ -1047,6 +1064,7 @@
       "Value": 750,
       "Reflectable": "Yes",
       "Target": "One/All Enemies",
+      "Weight": 3,
       "CastBy": [
         "BM",
         "RM",
@@ -1178,6 +1196,7 @@
       "Value": 350,
       "Reflectable": "Yes",
       "Target": "One/All Enemies",
+      "Weight": 2,
       "CastBy": [
         "BM",
         "RM",
@@ -1245,6 +1264,7 @@
       "Value": 350,
       "Reflectable": "Yes",
       "Target": "One/All Enemies",
+      "Weight": 2,
       "CastBy": [
         "BM",
         "RM",
@@ -1304,6 +1324,7 @@
       "Value": 350,
       "Reflectable": "No",
       "Target": "One/All Enemies",
+      "Weight": 2,
       "CastBy": [
         "BM",
         "RM",
@@ -1401,6 +1422,7 @@
       "Value": 50,
       "Reflectable": "Yes",
       "Target": "One/All Enemies",
+      "Weight": 1,
       "CastBy": [
         "BM",
         "RM",
@@ -1490,6 +1512,7 @@
       "Value": 50,
       "Reflectable": "Yes",
       "Target": "One/All Enemies",
+      "Weight": 1,
       "CastBy": [
         "BM",
         "RM",
@@ -1587,6 +1610,7 @@
       "Value": 50,
       "Reflectable": "No",
       "Target": "One/All Enemies",
+      "Weight": 1,
       "CastBy": [
         "BM",
         "RM",
@@ -1646,6 +1670,7 @@
       "Value": 30000,
       "Reflectable": "No",
       "Target": "One/All Enemies",
+      "Weight": 10,
       "CastBy": [
         "De",
         "Sa"
@@ -1683,6 +1708,7 @@
       "Value": 30000,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 8,
       "CastBy": [
         "De",
         "Sa"
@@ -1706,6 +1732,7 @@
       "Value": 30000,
       "Reflectable": "Yes",
       "Target": "One Enemy",
+      "Weight": 7,
       "CastBy": [
         "De",
         "Sa"
@@ -1739,6 +1766,7 @@
       "Value": 10000,
       "Reflectable": "No",
       "Target": "One/All Enemies",
+      "Weight": 8,
       "CastBy": [
         "WM",
         "De",
@@ -1767,6 +1795,7 @@
       "Value": 10000,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 7,
       "CastBy": [
         "WM",
         "De",
@@ -1794,6 +1823,7 @@
       "Value": 10000,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 7,
       "CastBy": [
         "WM",
         "De",
@@ -1852,6 +1882,7 @@
       "Value": 5000,
       "Reflectable": "Yes",
       "Target": "One/All Enemies",
+      "Weight": 6,
       "CastBy": [
         "WM",
         "De",
@@ -1890,6 +1921,7 @@
       "Value": 5000,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 6,
       "CastBy": [
         "WM",
         "De",
@@ -1923,6 +1955,7 @@
       "Value": 5000,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 5,
       "CastBy": [
         "WM",
         "De",
@@ -1961,6 +1994,7 @@
       "Value": 2500,
       "Reflectable": "No",
       "Target": "One/All Enemies",
+      "Weight": 4,
       "CastBy": [
         "WM",
         "De",
@@ -1998,6 +2032,7 @@
       "Value": 2500,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 5,
       "CastBy": [
         "WM",
         "De",
@@ -2043,6 +2078,7 @@
       "Value": 2500,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 4,
       "CastBy": [
         "WM",
         "De",
@@ -2105,6 +2141,7 @@
       "Value": 1500,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 4,
       "CastBy": [
         "WM",
         "RM",
@@ -2152,6 +2189,7 @@
       "Value": 1500,
       "Reflectable": "No",
       "Target": "One/All Enemies",
+      "Weight": 4,
       "CastBy": [
         "WM",
         "RM",
@@ -2206,6 +2244,7 @@
       "Value": 1500,
       "Reflectable": "No",
       "Target": "One/All Enemies",
+      "Weight": 4,
       "CastBy": [
         "WM",
         "RM",
@@ -2247,6 +2286,7 @@
       "Value": 750,
       "Reflectable": "No",
       "Target": "One/All Enemies",
+      "Weight": 3,
       "CastBy": [
         "WM",
         "RM",
@@ -2307,6 +2347,7 @@
       "Value": 750,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 3,
       "CastBy": [
         "WM",
         "RM",
@@ -2364,6 +2405,7 @@
       "Value": 750,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 3,
       "CastBy": [
         "WM",
         "RM",
@@ -2413,6 +2455,7 @@
       "Value": 350,
       "Reflectable": "Yes",
       "Target": "One/All Enemies",
+      "Weight": 2,
       "CastBy": [
         "WM",
         "RM",
@@ -2475,6 +2518,7 @@
       "Value": 350,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 2,
       "CastBy": [
         "WM",
         "RM",
@@ -2524,6 +2568,7 @@
       "Value": 350,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 2,
       "CastBy": [
         "WM",
         "RM",
@@ -2559,6 +2604,7 @@
       "Value": 50,
       "Reflectable": "No",
       "Target": "One/All Enemies",
+      "Weight": 1,
       "CastBy": [
         "WM",
         "RM",
@@ -2612,6 +2658,7 @@
       "Value": 50,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 1,
       "CastBy": [
         "WM",
         "RM",
@@ -2648,6 +2695,7 @@
       "Value": 50,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 1,
       "CastBy": [
         "WM",
         "RM",
@@ -2698,6 +2746,7 @@
           "Target": "All Enemies",
           "Status": "-",
           "Element": "-",
+          "Weight": 7,
           "Cast By": "Ev"
         },
         {
@@ -2711,6 +2760,7 @@
           "Target": "One Enemy",
           "Status": "-",
           "Element": "-",
+          "Weight": 10,
           "Cast By": "Ev"
         },
         {
@@ -2724,6 +2774,7 @@
           "Target": "All Enemies",
           "Status": "-",
           "Element": "-",
+          "Weight": 12,
           "Cast By": "Sa, Su"
         }
       ],
@@ -2767,6 +2818,7 @@
           "Target": "All Enemies",
           "Status": "Petrification",
           "Element": "Earth",
+          "Weight": 6,
           "Cast By": "Ev"
         },
         {
@@ -2780,6 +2832,7 @@
           "Target": "All Enemies",
           "Status": "-",
           "Element": "Air",
+          "Weight": 9,
           "Cast By": "Ev"
         },
         {
@@ -2793,6 +2846,7 @@
           "Target": "All Enemies",
           "Status": "-",
           "Element": "Lightning",
+          "Weight": 11,
           "Cast By": "Sa, Su"
         }
       ],
@@ -2836,6 +2890,7 @@
           "Target": "All Enemies",
           "Status": "-",
           "Element": "-",
+          "Weight": 5,
           "Cast By": "Ev"
         },
         {
@@ -2849,6 +2904,7 @@
           "Target": "One Enemy",
           "Status": "-",
           "Element": "-",
+          "Weight": 7,
           "Cast By": "Ev"
         },
         {
@@ -2862,6 +2918,7 @@
           "Target": "All Enemies",
           "Status": "-",
           "Element": "-",
+          "Weight": 10,
           "Cast By": "Sa, Su"
         }
       ],
@@ -2905,6 +2962,7 @@
           "Target": "One Enemy",
           "Status": "-",
           "Element": "Fire",
+          "Weight": 8,
           "Cast By": "Ev"
         },
         {
@@ -2918,6 +2976,7 @@
           "Target": "One Enemy",
           "Status": "-",
           "Element": "-",
+          "Weight": 8,
           "Cast By": "Ev"
         },
         {
@@ -2931,6 +2990,7 @@
           "Target": "All Enemies",
           "Status": "-",
           "Element": "Earth",
+          "Weight": 9,
           "Cast By": "Sa, Su"
         }
       ],
@@ -2970,6 +3030,7 @@
           "Target": "All Enemies",
           "Status": "-",
           "Element": "Recovery",
+          "Weight": 5,
           "Cast By": "Ev"
         },
         {
@@ -2983,6 +3044,7 @@
           "Target": "One Enemy",
           "Status": "-",
           "Element": "Fire",
+          "Weight": 6,
           "Cast By": "Ev"
         },
         {
@@ -2996,6 +3058,7 @@
           "Target": "All Enemies",
           "Status": "-",
           "Element": "Fire",
+          "Weight": 7,
           "Cast By": "Sa, Su"
         }
       ],
@@ -3035,6 +3098,7 @@
           "Target": "All Enemies",
           "Status": "Paralysis",
           "Element": "-",
+          "Weight": 5,
           "Cast By": "Ev"
         },
         {
@@ -3048,6 +3112,7 @@
           "Target": "One Enemy",
           "Status": "-",
           "Element": "Lightning",
+          "Weight": 6,
           "Cast By": "Ev"
         },
         {
@@ -3061,6 +3126,7 @@
           "Target": "All Enemies",
           "Status": "-",
           "Element": "Lightning",
+          "Weight": 7,
           "Cast By": "Sa, Su"
         }
       ],
@@ -3100,6 +3166,7 @@
           "Target": "All Enemies",
           "Status": "Sleep",
           "Element": "-",
+          "Weight": 5,
           "Cast By": "Ev"
         },
         {
@@ -3113,6 +3180,7 @@
           "Target": "One Enemy",
           "Status": "-",
           "Element": "-",
+          "Weight": 6,
           "Cast By": "Ev"
         },
         {
@@ -3126,6 +3194,7 @@
           "Target": "All Enemies",
           "Status": "-",
           "Element": "Ice",
+          "Weight": 7,
           "Cast By": "Sa, Su"
         }
       ],
@@ -3165,6 +3234,7 @@
           "Target": "All Enemies",
           "Status": "-",
           "Element": "-",
+          "Weight": 4,
           "Cast By": "Ev"
         },
         {
@@ -3178,6 +3248,7 @@
           "Target": "One Enemy",
           "Status": "-",
           "Element": "-",
+          "Weight": 4,
           "Cast By": "Ev"
         },
         {
@@ -3191,6 +3262,7 @@
           "Target": "One Enemy",
           "Status": "-",
           "Element": "-",
+          "Weight": 4,
           "Cast By": "Sa, Su"
         }
       ],
@@ -3215,6 +3287,7 @@
       "BaseAccuracy": 1.0,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 0,
       "Items": [
         {
           "Name": "Potion",
@@ -3243,6 +3316,7 @@
       "BaseAccuracy": 1.0,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 0,
       "Items": [
         {
           "Name": "Elixir",
@@ -3265,6 +3339,7 @@
       "BaseAccuracy": 1.0,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 0,
       "Items": [
         {
           "Name": "Echo Herbs",
@@ -3287,6 +3362,7 @@
       "BaseAccuracy": 1.0,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 0,
       "Items": [
         {
           "Name": "Mallet",
@@ -3309,6 +3385,7 @@
       "BaseAccuracy": 1.0,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 0,
       "Items": [
         {
           "Name": "Maiden's Kiss",
@@ -3328,7 +3405,8 @@
       "BasePower": 32,
       "BaseAccuracy": 1.0,
       "Reflectable": "No",
-      "Target": "All Enemies"
+      "Target": "All Enemies",
+      "Weight": 8
     },
     {
       "name": "Flame",
@@ -3340,6 +3418,7 @@
       "BaseAccuracy": 1.0,
       "Reflectable": "Yes",
       "Target": "All Enemies",
+      "Weight": 6,
       "Monsters": [
         {
           "Name": "Dragon",
@@ -3395,6 +3474,7 @@
       "BaseAccuracy": 1.0,
       "Reflectable": "Yes",
       "Target": "All Enemies",
+      "Weight": 3,
       "Monsters": [
         {
           "Name": "Unei's Clone",
@@ -3426,6 +3506,7 @@
       "BaseAccuracy": 1.0,
       "Reflectable": "Yes",
       "Target": "All Enemies",
+      "Weight": 3,
       "Monsters": [
         {
           "Name": "Chimera Mage",
@@ -3474,7 +3555,8 @@
       "BasePower": 80,
       "BaseAccuracy": 1.0,
       "Reflectable": "No",
-      "Target": "All Enemies"
+      "Target": "All Enemies",
+      "Weight": 7
     },
     {
       "name": "Stare",
@@ -3487,6 +3569,7 @@
       "BaseAccuracy": 0.8,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 7,
       "Monsters": [
         {
           "Name": "Stalagmite",
@@ -3504,7 +3587,8 @@
       "BasePower": 37,
       "BaseAccuracy": 1.0,
       "Reflectable": "No",
-      "Target": "All Enemies"
+      "Target": "All Enemies",
+      "Weight": 7
     },
     {
       "name": "Particle Beam",
@@ -3515,6 +3599,7 @@
       "BaseAccuracy": 1.0,
       "Reflectable": "No",
       "Target": "All Enemies",
+      "Weight": 7,
       "Monsters": [
         {
           "Name": "Cloud of Darkness",
@@ -3539,6 +3624,7 @@
       "BaseAccuracy": 1.0,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 3,
       "Monsters": [
         {
           "Name": "Bomb",
@@ -3569,7 +3655,8 @@
       "BasePower": 0,
       "BaseAccuracy": 0.8,
       "Reflectable": "No",
-      "Target": "One Enemy"
+      "Target": "One Enemy",
+      "Weight": 3
     },
     {
       "name": "Bad Breath",
@@ -3581,6 +3668,7 @@
       "BaseAccuracy": 0.6,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 4,
       "Monsters": [
         {
           "Name": "Parademon",
@@ -3617,7 +3705,8 @@
       "BasePower": 0,
       "BaseAccuracy": 0.8,
       "Reflectable": "No",
-      "Target": "All Enemies"
+      "Target": "All Enemies",
+      "Weight": 4
     },
     {
       "name": "Summon",
@@ -3627,6 +3716,7 @@
       "BasePower": 0,
       "BaseAccuracy": 1.0,
       "Reflectable": "No",
+      "Weight": 3,
       "Monsters": [
         {
           "Name": "Greater Demon",
@@ -3650,7 +3740,8 @@
       "BasePower": 80,
       "BaseAccuracy": 1.0,
       "Reflectable": "Yes",
-      "Target": "All Enemies"
+      "Target": "All Enemies",
+      "Weight": 8
     },
     {
       "name": "Barrier Shift",
@@ -3661,6 +3752,7 @@
       "BaseAccuracy": 1.0,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 4,
       "Monsters": [
         {
           "Name": "Amon",
@@ -3685,6 +3777,7 @@
       "BaseAccuracy": 1.0,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 4,
       "Monsters": [
         {
           "Name": "Azrael",
@@ -3709,7 +3802,8 @@
       "BasePower": 80,
       "BaseAccuracy": 1.0,
       "Reflectable": "No",
-      "Target": "All Enemies"
+      "Target": "All Enemies",
+      "Weight": 7
     },
     {
       "name": "Quicksand",
@@ -3722,6 +3816,7 @@
       "BaseAccuracy": 0.3,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 3,
       "CastBy": [
         "Ge"
       ]
@@ -3737,6 +3832,7 @@
       "BaseAccuracy": 0.3,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 3,
       "CastBy": [
         "Ge"
       ],
@@ -3774,6 +3870,7 @@
       "BaseAccuracy": 0.4,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 4,
       "CastBy": [
         "Ge"
       ],
@@ -3793,6 +3890,7 @@
       "BaseAccuracy": 0.4,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 4,
       "CastBy": [
         "Ge"
       ],
@@ -3818,6 +3916,7 @@
       "BaseAccuracy": 0.6,
       "Reflectable": "No",
       "Target": "All Enemies",
+      "Weight": 4,
       "CastBy": [
         "Ge"
       ],
@@ -3845,6 +3944,7 @@
       "BaseAccuracy": 0.6,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "Weight": 3,
       "CastBy": [
         "Ge"
       ]
@@ -3859,6 +3959,7 @@
       "BaseAccuracy": 0.4,
       "Reflectable": "No",
       "Target": "All Enemies",
+      "Weight": 3,
       "CastBy": [
         "Ge"
       ],

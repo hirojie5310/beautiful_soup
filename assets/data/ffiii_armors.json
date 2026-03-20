@@ -15,6 +15,7 @@
       "BaseMagicDefense": 2,
       "Price": "40 gil",
       "Value": 20,
+      "Weight": 0,
       "EquippedBy": [
         "OK",
         "Wa",
@@ -60,6 +61,7 @@
       "Evasion": 0.48,
       "BaseMagicDefense": 48,
       "Value": 32750,
+      "Weight": 1,
       "EquippedBy": [
         "OK"
       ],
@@ -102,6 +104,7 @@
       "BaseMagicDefense": 7,
       "Price": "180 gil",
       "Value": 90,
+      "Weight": 1,
       "EquippedBy": [
         "OK",
         "Wa",
@@ -132,6 +135,7 @@
       "BaseMagicDefense": 8,
       "Price": "1,800 gil",
       "Value": 900,
+      "Weight": 1,
       "ElementalResist": [
         "Fire"
       ],
@@ -161,6 +165,7 @@
       "BaseMagicDefense": 12,
       "Price": "3,500 gil",
       "Value": 1750,
+      "Weight": 1,
       "EquippedBy": [
         "Kn",
         "Dr",
@@ -195,6 +200,7 @@
       "BaseMagicDefense": 18,
       "Price": "12,500 gil",
       "Value": 6250,
+      "Weight": 1,
       "EquippedBy": [
         "MK",
         "Ni"
@@ -227,6 +233,7 @@
       "BaseMagicDefense": 15,
       "Price": "18,000 gil",
       "Value": 9000,
+      "Weight": 1,
       "ElementalResist": [
         "Lightning"
       ],
@@ -280,6 +287,7 @@
       "BaseMagicDefense": 25,
       "Bonus": "Agility +5",
       "Value": 14000,
+      "Weight": 1,
       "EquippedBy": [
         "Kn",
         "Dr",
@@ -322,6 +330,7 @@
       "BaseMagicDefense": 35,
       "Bonus": "Agility +5, Strength +5",
       "Value": 19000,
+      "Weight": 1,
       "EquippedBy": [
         "MK",
         "Ni"
@@ -353,6 +362,7 @@
       "Bonus": "Vitality +5, Agility +5, Strength +5",
       "Price": "50,000 gil",
       "Value": 25000,
+      "Weight": 1,
       "EquippedBy": [
         "OK",
         "Wa",
@@ -400,6 +410,7 @@
       "BaseMagicDefense": 1,
       "Price": "15 gil",
       "Value": 7,
+      "Weight": 0,
       "EquippedBy": [
         "OK",
         "Wa",
@@ -446,6 +457,7 @@
       "Evasion": 0.48,
       "BaseMagicDefense": 48,
       "Value": 32750,
+      "Weight": 1,
       "ElementalResist": [
         "Fire",
         "Cold",
@@ -495,6 +507,7 @@
       "BaseMagicDefense": 4,
       "Price": "130 gil",
       "Value": 65,
+      "Weight": 1,
       "EquippedBy": [
         "OK",
         "Wa",
@@ -532,6 +545,7 @@
       "Evasion": 0.05,
       "BaseMagicDefense": 5,
       "Value": 225,
+      "Weight": 1,
       "EquippedBy": [
         "OK",
         "Wa",
@@ -561,6 +575,7 @@
       "ElementalResist": [
         "Fire"
       ],
+      "Weight": 1,
       "EquippedBy": [
         "Wa",
         "RM",
@@ -587,6 +602,7 @@
       "BaseMagicDefense": 4,
       "Price": "1,200 gil",
       "Value": 600,
+      "Weight": 0,
       "EquippedBy": [
         "Mo",
         "BB",
@@ -608,6 +624,7 @@
       "BaseMagicDefense": 6,
       "Price": "7,500 gil",
       "Value": 3750,
+      "Weight": 0,
       "EquippedBy": [
         "WM",
         "BM",
@@ -648,6 +665,7 @@
       "Bonus": "Strength +5",
       "Price": "2,000 gil",
       "Value": 1000,
+      "Weight": 0,
       "EquippedBy": [
         "Th",
         "Ni"
@@ -677,6 +695,7 @@
       "Bonus": "Vitality +5, Strength +5",
       "Price": "2,000 gil",
       "Value": 1000,
+      "Weight": 0,
       "EquippedBy": [
         "Mo",
         "BB",
@@ -706,6 +725,7 @@
       "BaseMagicDefense": 7,
       "Price": "3,000 gil",
       "Value": 1500,
+      "Weight": 1,
       "EquippedBy": [
         "Vi",
         "Ni"
@@ -733,6 +753,7 @@
       "Evasion": 0.1,
       "BaseMagicDefense": 7,
       "Value": 4000,
+      "Weight": 1,
       "EquippedBy": [
         "Dr",
         "Ni"
@@ -780,6 +801,7 @@
       "Bonus": "Agility +5",
       "Price": "8,000 gil",
       "Value": 4000,
+      "Weight": 0,
       "EquippedBy": [
         "Ra",
         "Sc",
@@ -808,6 +830,7 @@
       "BaseMagicDefense": 9,
       "Price": "20,000 gil",
       "Value": 10000,
+      "Weight": 1,
       "ElementalResist": [
         "Lightning"
       ],
@@ -854,6 +877,7 @@
       "Evasion": 0.15,
       "BaseMagicDefense": 11,
       "Value": 16000,
+      "Weight": 1,
       "EquippedBy": [
         "MK",
         "Ni"
@@ -884,6 +908,7 @@
       "BaseMagicDefense": 15,
       "Price": "50,000 gil",
       "Value": 25000,
+      "Weight": 1,
       "EquippedBy": [
         "OK",
         "Wa",
@@ -930,6 +955,7 @@
       "Evasion": 0.1,
       "BaseMagicDefense": 10,
       "Value": 5,
+      "Weight": 0,
       "ElementalResist": [
         "Fire",
         "Cold",
@@ -1015,6 +1041,7 @@
       "BaseMagicDefense": 0,
       "Price": "50 gil",
       "Value": 25,
+      "Weight": 0,
       "EquippedBy": [
         "OK",
         "Wa",
@@ -1068,6 +1095,7 @@
       "BaseMagicDefense": 1,
       "Price": "95 gil",
       "Value": 47,
+      "Weight": 0,
       "EquippedBy": [
         "OK",
         "Wa",
@@ -1120,6 +1148,7 @@
       "Evasion": 0.48,
       "BaseMagicDefense": 48,
       "Value": 32750,
+      "Weight": 1,
       "EquippedBy": [
         "OK"
       ],
@@ -1162,6 +1191,7 @@
       "BaseMagicDefense": 3,
       "Price": "350 gil",
       "Value": 175,
+      "Weight": 1,
       "EquippedBy": [
         "OK",
         "Wa",
@@ -1192,6 +1222,7 @@
       "BaseMagicDefense": 4,
       "Price": "1,250 gil",
       "Value": 625,
+      "Weight": 1,
       "EquippedBy": [
         "Wa",
         "Ra",
@@ -1224,6 +1255,7 @@
       "BaseMagicDefense": 4,
       "Price": "2,400 gil",
       "Value": 1200,
+      "Weight": 1,
       "ElementalResist": [
         "Fire"
       ],
@@ -1251,6 +1283,7 @@
       "BaseMagicDefense": 4,
       "Price": "2,400 gil",
       "Value": 1200,
+      "Weight": 1,
       "ElementalResist": [
         "Cold"
       ],
@@ -1286,6 +1319,7 @@
       "BaseMagicDefense": 3,
       "Price": "2,000 gil",
       "Value": 1000,
+      "Weight": 0,
       "EquippedBy": [
         "Mo",
         "BB",
@@ -1320,6 +1354,7 @@
       "Bonus": "Agility +5",
       "Price": "3,800 gil",
       "Value": 1900,
+      "Weight": 0,
       "EquippedBy": [
         "Th",
         "Ni"
@@ -1348,6 +1383,7 @@
       "BaseMagicDefense": 7,
       "Price": "2,000 gil",
       "Value": 1000,
+      "Weight": 0,
       "EquippedBy": [
         "WM",
         "BM",
@@ -1387,6 +1423,7 @@
       "BaseMagicDefense": 7,
       "Price": "4,000 gil",
       "Value": 2000,
+      "Weight": 1,
       "EquippedBy": [
         "Vi",
         "Ni"
@@ -1416,6 +1453,7 @@
       "Bonus": "Agility +5",
       "Price": "3,800 gil",
       "Value": 1900,
+      "Weight": 0,
       "EquippedBy": [
         "Mo",
         "BB",
@@ -1444,6 +1482,7 @@
       "Evasion": 0.09,
       "BaseMagicDefense": 7,
       "Value": 3750,
+      "Weight": 1,
       "EquippedBy": [
         "Kn",
         "Ni"
@@ -1468,6 +1507,7 @@
       "Defense": 15,
       "Evasion": 0.1,
       "BaseMagicDefense": 7,
+      "Weight": 1,
       "Value": 4000,
       "EquippedBy": [
         "Dr",
@@ -1509,6 +1549,7 @@
       "BaseMagicDefense": 7,
       "Price": "5,500 gil",
       "Value": 2750,
+      "Weight": 0,
       "EquippedBy": [
         "Ba",
         "Ni"
@@ -1529,6 +1570,7 @@
       "BaseMagicDefense": 7,
       "Price": "5,500 gil",
       "Value": 2750,
+      "Weight": 0,
       "EquippedBy": [
         "WM",
         "BM",
@@ -1568,6 +1610,7 @@
       "BaseMagicDefense": 8,
       "Price": "4,200 gil",
       "Value": 2100,
+      "Weight": 0,
       "EquippedBy": [
         "Ge",
         "Ni"
@@ -1610,6 +1653,7 @@
       "BaseMagicDefense": 9,
       "Price": "25,000 gil",
       "Value": 12500,
+      "Weight": 1,
       "EquippedBy": [
         "MK",
         "Ni"
@@ -1651,6 +1695,7 @@
       "ElementalResist": [
         "Lightning"
       ],
+      "Weight": 1,
       "EquippedBy": [
         "Kn",
         "Dr",
@@ -1694,6 +1739,7 @@
       "Evasion": 0.12,
       "BaseMagicDefense": 12,
       "Value": 17500,
+      "Weight": 1,
       "EquippedBy": [
         "Kn",
         "Dr",
@@ -1737,6 +1783,7 @@
       "Bonus": "Mind +5",
       "Price": "7,000 gil",
       "Value": 3500,
+      "Weight": 0,
       "EquippedBy": [
         "WM",
         "RM",
@@ -1767,6 +1814,7 @@
       "Bonus": "Intelligence +5",
       "Price": "7,000 gil",
       "Value": 3500,
+      "Weight": 0,
       "EquippedBy": [
         "BM",
         "RM",
@@ -1795,6 +1843,7 @@
       "Evasion": 0.2,
       "BaseMagicDefense": 15,
       "Value": 20000,
+      "Weight": 1,
       "EquippedBy": [
         "MK",
         "Ni"
@@ -1825,6 +1874,7 @@
       "BaseMagicDefense": 18,
       "Price": "65,000 gil",
       "Value": 32500,
+      "Weight": 1,
       "EquippedBy": [
         "OK",
         "Wa",
@@ -1870,6 +1920,7 @@
       "Defense": 0,
       "BaseMagicDefense": 0,
       "Value": 50,
+      "Weight": 1,
       "Treasures": [
         {
           "Treasure": "Rusty Mail",
@@ -1912,6 +1963,7 @@
       "BaseMagicDefense": 3,
       "Price": "80 gil",
       "Value": 40,
+      "Weight": 0,
       "EquippedBy": [
         "WM",
         "BM",
@@ -1949,6 +2001,7 @@
       "BaseMagicDefense": 32,
       "Bonus": "Vitality +5, Agility +5, Strength +5",
       "Value": 32750,
+      "Weight": 1,
       "EquippedBy": [
         "OK"
       ],
@@ -1984,6 +2037,7 @@
       "BaseMagicDefense": 2,
       "Price": "120 gil",
       "Value": 60,
+      "Weight": 1,
       "EquippedBy": [
         "OK",
         "Wa",
@@ -2013,6 +2067,7 @@
       "BaseMagicDefense": 3,
       "Price": "120 gil",
       "Value": 60,
+      "Weight": 0,
       "EquippedBy": [
         "WM",
         "BM",
@@ -2061,6 +2116,7 @@
       "Bonus": "Strength +5",
       "Price": "2,500 gil",
       "Value": 1250,
+      "Weight": 0,
       "EquippedBy": [
         "Th",
         "Ni"
@@ -2088,6 +2144,7 @@
       "Evasion": 0.08,
       "BaseMagicDefense": 3,
       "Value": 1250,
+      "Weight": 1,
       "EquippedBy": [
         "Kn",
         "Dr",
@@ -2112,6 +2169,7 @@
       "BaseMagicDefense": 1,
       "Bonus": "Strength +5",
       "Value": 1250,
+      "Weight": 1,
       "EquippedBy": [
         "Wa",
         "Mo",
@@ -2145,6 +2203,7 @@
       "BaseMagicDefense": 6,
       "Price": "5,000 gil",
       "Value": 2500,
+      "Weight": 0,
       "EquippedBy": [
         "WM",
         "BM",
@@ -2178,6 +2237,7 @@
       "BaseMagicDefense": 6,
       "Price": "10,000 gil",
       "Value": 5000,
+      "Weight": 0,
       "ElementalResist": [
         "Lightning"
       ],
@@ -2232,6 +2292,7 @@
       "BaseMagicDefense": 5,
       "Price": "15,000 gil",
       "Value": 7500,
+      "Weight": 1,
       "ElementalResist": [
         "Lightning"
       ],
@@ -2279,6 +2340,7 @@
       "BaseMagicDefense": 7,
       "Bonus": "Vitality +5",
       "Value": 15000,
+      "Weight": 0,
       "EquippedBy": [
         "OK",
         "Wa",
@@ -2331,6 +2393,7 @@
       "Evasion": 0.15,
       "BaseMagicDefense": 7,
       "Value": 15000,
+      "Weight": 1,
       "EquippedBy": [
         "MK",
         "Ni"
@@ -2361,6 +2424,7 @@
       "BaseMagicDefense": 10,
       "Price": "50,000 gil",
       "Value": 25000,
+      "Weight": 1,
       "EquippedBy": [
         "OK",
         "Wa",

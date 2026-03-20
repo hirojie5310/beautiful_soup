@@ -13,6 +13,7 @@
       "BaseAccuracy": 1.0,
       "Price": 7000,
       "Value": 3500,
+      "Weight": 0,
       "EquippedBy": [
         "BB",
         "Ni"
@@ -30,6 +31,7 @@
       "BasePower": 42,
       "BaseAccuracy": 1.0,
       "Value": 7000,
+      "Weight": 0,
       "EquippedBy": [
         "BB",
         "Ni"
@@ -51,6 +53,7 @@
       "Value": 9000,
       "SpellCast": "Aero",
       "Elements": "Fire, Lightning",
+      "Weight": 0,
       "EquippedBy": [
         "BB",
         "Ni"
@@ -71,6 +74,7 @@
       "BaseAccuracy": 1.0,
       "Value": 9000,
       "SpellCast": "Confuse",
+      "Weight": 0,
       "EquippedBy": [
         "BB",
         "Ni"
@@ -92,6 +96,7 @@
       "Value": 20000,
       "StatusAilment": "Poison",
       "Element": "Dark",
+      "Weight": 0,
       "EquippedBy": [
         "BB",
         "Ni"
@@ -112,6 +117,7 @@
       "BaseAccuracy": 0.7,
       "Price": 60,
       "Value": 30,
+      "Weight": 0,
       "EquippedBy": [
         "Mo",
         "Ni"
@@ -138,6 +144,7 @@
       "BaseAccuracy": 0.8,
       "Price": 500,
       "Value": 250,
+      "Weight": 0,
       "EquippedBy": [
         "Mo",
         "Ni"
@@ -164,6 +171,7 @@
       "BaseAccuracy": 0.7,
       "Price": 3000,
       "Value": 1500,
+      "Weight": 0,
       "EquippedBy": [
         "Mo",
         "Ni"
@@ -190,6 +198,7 @@
       "BaseAccuracy": 0.6,
       "Price": 400,
       "Value": 200,
+      "Weight": 0,
       "EquippedBy": [
         "WM",
         "BM",
@@ -229,6 +238,7 @@
       "Price": 3000,
       "Value": 1500,
       "Element": "Fire",
+      "Weight": 0,
       "EquippedBy": [
         "BM",
         "RM",
@@ -262,6 +272,7 @@
       "Price": 3000,
       "Value": 1500,
       "Element": "Ice",
+      "Weight": 0,
       "EquippedBy": [
         "BM",
         "RM",
@@ -295,6 +306,7 @@
       "Price": 3000,
       "Value": 1500,
       "Element": "Lightning",
+      "Weight": 0,
       "EquippedBy": [
         "BM",
         "RM",
@@ -319,6 +331,7 @@
       "Value": 15000,
       "StatusAilment": "Partial Petrification (2/3)",
       "Elements": "Air, Earth, Fire, Holy, Ice, Lightning",
+      "Weight": 0,
       "EquippedBy": [
         "Ma",
         "Su",
@@ -341,6 +354,7 @@
       "BaseAccuracy": 0.5,
       "Price": 40,
       "Value": 20,
+      "Weight": 0,
       "EquippedBy": [
         "WM",
         "RM",
@@ -371,6 +385,7 @@
       "Price": 3500,
       "Value": 1750,
       "SpellCast": "Fire",
+      "Weight": 0,
       "EquippedBy": [
         "WM",
         "RM",
@@ -405,6 +420,7 @@
       "Price": 3500,
       "Value": 1750,
       "SpellCast": "Blizzard",
+      "Weight": 0,
       "EquippedBy": [
         "WM",
         "RM",
@@ -445,6 +461,7 @@
       "Price": 3500,
       "Value": 1750,
       "SpellCast": "Thunder",
+      "Weight": 0,
       "EquippedBy": [
         "WM",
         "RM",
@@ -470,6 +487,7 @@
       "BaseAccuracy": 0.7,
       "Price": 13500,
       "Value": 6750,
+      "Weight": 0,
       "SpellCast": "Break",
       "StatusAilment": "Partial Petrification (1/3)",
       "Element": "Earth",
@@ -514,6 +532,7 @@
       "BaseAccuracy": 0.8,
       "Price": 18000,
       "Value": 9000,
+      "Weight": 0,
       "SpellCast": "Blizzaga",
       "EquippedBy": [
         "WM",
@@ -536,6 +555,7 @@
       "BaseAccuracy": 0.9,
       "Bonus": "Lightning  up, Ice  up, Fire  up",
       "Value": 32500,
+      "Weight": 0,
       "SpellCast": "Cure",
       "EquippedBy": [
         "De",
@@ -565,6 +585,7 @@
       "Value": 7000,
       "SpellCast": "Thundara",
       "Element": "Lightning",
+      "Weight": 3,
       "EquippedBy": [
         "Vi",
         "Ni"
@@ -603,6 +624,7 @@
       "BaseAccuracy": 0.6,
       "Price": 5500,
       "Value": 2750,
+      "Weight": 3,
       "Element": "Lightning",
       "EquippedBy": [
         "Vi",
@@ -622,6 +644,7 @@
       "BaseAccuracy": 0.8,
       "Price": 14000,
       "Value": 7000,
+      "Weight": 3,
       "Element": "Lightning",
       "EquippedBy": [
         "Vi",
@@ -650,6 +673,7 @@
       "Price": 8000,
       "Value": 4000,
       "Element": "Lightning",
+      "Weight": 3,
       "EquippedBy": [
         "Vi",
         "Ni"
@@ -668,6 +692,7 @@
       "BaseAccuracy": 0.8,
       "Price": 20000,
       "Value": 10000,
+      "Weight": 3,
       "EquippedBy": [
         "Vi",
         "Ni"
@@ -694,6 +719,7 @@
       "BaseAccuracy": 0.8,
       "Price": 20000,
       "Value": 10000,
+      "Weight": 3,
       "Element": "Air",
       "EquippedBy": [
         "Vi",
@@ -723,6 +749,7 @@
       "Value": 4000,
       "SpellCast": "Thundara",
       "Elements": "Air, Lightning",
+      "Weight": 1,
       "EquippedBy": [
         "Dr",
         "Ni"
@@ -761,6 +788,7 @@
       "BaseAccuracy": 0.8,
       "Price": 10000,
       "Value": 5000,
+      "Weight": 1,
       "SpellCast": "Aero",
       "Element": "Air",
       "EquippedBy": [
@@ -789,6 +817,7 @@
       "BaseAccuracy": 0.8,
       "Value": 10000,
       "Elements": "Air, Recovery",
+      "Weight": 2,
       "Draining": "This weapon restores 1/4 of the damage dealt to the wielder as HP (however, when used against undead this weapon will always miss and drain HP from the wielder instead)",
       "EquippedBy": [
         "Dr",
@@ -810,6 +839,7 @@
       "BaseAccuracy": 0.8,
       "Value": 22500,
       "Elements": "Air, Holy",
+      "Weight": 3,
       "EquippedBy": [
         "Dr",
         "Ni"
@@ -830,6 +860,7 @@
       "BaseAccuracy": 0.85,
       "Price": 20,
       "Value": 10,
+      "Weight": 0,
       "EquippedBy": [
         "OK",
         "Wa",
@@ -861,6 +892,7 @@
       "BaseAccuracy": 0.85,
       "Price": 60,
       "Value": 30,
+      "Weight": 0,
       "EquippedBy": [
         "OK",
         "Wa",
@@ -892,6 +924,7 @@
       "BaseAccuracy": 0.85,
       "Price": 500,
       "Value": 250,
+      "Weight": 0,
       "EquippedBy": [
         "OK",
         "Wa",
@@ -919,6 +952,7 @@
       "BaseAccuracy": 1.0,
       "Price": 7000,
       "Value": 3500,
+      "Weight": 0,
       "EquippedBy": [
         "Th",
         "Ni"
@@ -951,6 +985,7 @@
       "BaseAccuracy": 1.0,
       "Value": 6000,
       "Element": "Recovery",
+      "Weight": 0,
       "Draining": "This weapon restores 1/4 of the damage dealt to the wielder as HP (however, when used against undead this weapon will always miss and drain HP from the wielder instead)",
       "EquippedBy": [
         "Th",
@@ -979,6 +1014,7 @@
       "Value": 5000,
       "SpellCast": "Aero",
       "Element": "Air",
+      "Weight": 0,
       "EquippedBy": [
         "Th",
         "Ni"
@@ -999,6 +1035,7 @@
       "BaseAccuracy": 0.8,
       "Price": 100,
       "Value": 50,
+      "Weight": 0,
       "EquippedBy": [
         "OK",
         "Wa",
@@ -1040,6 +1077,7 @@
       "Price": 1000,
       "Value": 500,
       "Element": "Holy",
+      "Weight": 0,
       "EquippedBy": [
         "RM",
         "Ni"
@@ -1069,6 +1107,7 @@
       "BasePower": 5,
       "BaseAccuracy": 0.2,
       "Value": 2500,
+      "Weight": 1,
       "EquippedBy": [
         "Wa",
         "Kn",
@@ -1150,6 +1189,7 @@
       "BaseAccuracy": 0.85,
       "Price": 500,
       "Value": 250,
+      "Weight": 0,
       "EquippedBy": [
         "OK",
         "Wa",
@@ -1188,6 +1228,7 @@
       "BaseAccuracy": 0.8,
       "Price": 1500,
       "Value": 750,
+      "Weight": 0,
       "Element": "Lightning",
       "EquippedBy": [
         "Wa",
@@ -1227,6 +1268,7 @@
       "Value": 1500,
       "SpellCast": "Blizzard",
       "Element": "Ice",
+      "Weight": 1,
       "EquippedBy": [
         "Wa",
         "Kn",
@@ -1248,6 +1290,7 @@
       "BaseAccuracy": 0.75,
       "Price": 2800,
       "Value": 1400,
+      "Weight": 1,
       "EquippedBy": [
         "RM",
         "Ni"
@@ -1274,6 +1317,7 @@
       "BaseAccuracy": 0.8,
       "Price": 3000,
       "Value": 1500,
+      "Weight": 1,
       "SpellCast": "Fire",
       "Element": "Fire",
       "EquippedBy": [
@@ -1302,6 +1346,7 @@
       "BasePower": 50,
       "BaseAccuracy": 0.8,
       "Value": 2500,
+      "Weight": 1,
       "EquippedBy": [
         "Wa",
         "Kn",
@@ -1323,6 +1368,7 @@
       "BaseAccuracy": 0.8,
       "Price": 16500,
       "Value": 8250,
+      "Weight": 1,
       "Element": "Holy",
       "EquippedBy": [
         "Wa",
@@ -1351,6 +1397,7 @@
       "BaseAccuracy": 0.8,
       "Price": 16500,
       "Value": 8250,
+      "Weight": 1,
       "Element": "Recovery",
       "Draining": "This weapon restores 1/4 of the damage dealt to the wielder as HP (however, when used against undead this weapon will always miss and drain HP from the wielder instead)",
       "EquippedBy": [
@@ -1380,6 +1427,7 @@
       "BaseAccuracy": 0.8,
       "Price": 16500,
       "Value": 8250,
+      "Weight": 1,
       "SpellCast": "Protect",
       "EquippedBy": [
         "Kn",
@@ -1417,6 +1465,7 @@
       "BaseAccuracy": 0.8,
       "Value": 15000,
       "StatusAilment": "Partial Petrification (1/2)",
+      "Weight": 1,
       "Element": "Earth",
       "EquippedBy": [
         "Kn",
@@ -1437,6 +1486,7 @@
       "BasePower": 160,
       "BaseAccuracy": 0.8,
       "Value": 32500,
+      "Weight": 1,
       "EquippedBy": [
         "Kn",
         "Ni"
@@ -1457,6 +1507,7 @@
       "BaseAccuracy": 1.0,
       "Value": 32750,
       "Element": "Dark",
+      "Weight": 1,
       "EquippedBy": [
         "Kn",
         "MK",
@@ -1477,6 +1528,7 @@
       "BasePower": 200,
       "BaseAccuracy": 1.0,
       "Value": 32750,
+      "Weight": 1,
       "EquippedBy": [
         "OK"
       ],
@@ -1511,6 +1563,7 @@
       "BaseAccuracy": 1.0,
       "Price": 20000,
       "Value": 10000,
+      "Weight": 1,
       "Element": "Dark",
       "EquippedBy": [
         "MK",
@@ -1538,6 +1591,7 @@
       "BaseAccuracy": 0.9,
       "Value": 10500,
       "Element": "Dark",
+      "Weight": 1,
       "EquippedBy": [
         "MK",
         "Ni"
@@ -1570,6 +1624,7 @@
       "BaseAccuracy": 1.0,
       "Value": 11000,
       "Element": "Dark",
+      "Weight": 1,
       "EquippedBy": [
         "MK",
         "Ni"
@@ -1596,6 +1651,7 @@
       "BaseAccuracy": 0.9,
       "Value": 32500,
       "Element": "Dark",
+      "Weight": 1,
       "EquippedBy": [
         "MK",
         "Ni"
@@ -1616,6 +1672,7 @@
       "BaseAccuracy": 0.7,
       "Value": 1650,
       "Element": "Fire",
+      "Weight": 0,
       "EquippedBy": [
         "Sc",
         "Sa",
@@ -1643,6 +1700,7 @@
       "BaseAccuracy": 0.7,
       "Value": 1650,
       "Element": "Ice",
+      "Weight": 0,
       "EquippedBy": [
         "Sc",
         "Sa",
@@ -1671,6 +1729,7 @@
       "Price": 15000,
       "Value": 7500,
       "Element": "Fire",
+      "Weight": 0,
       "EquippedBy": [
         "Sc",
         "Sa",
@@ -1690,6 +1749,7 @@
       "BaseAccuracy": 0.7,
       "Value": 1650,
       "Element": "Lightning",
+      "Weight": 0,
       "EquippedBy": [
         "Sc",
         "Sa",
@@ -1717,6 +1777,7 @@
       "BaseAccuracy": 0.8,
       "Price": 15000,
       "Value": 7500,
+      "Weight": 0,
       "Element": "Lightning",
       "EquippedBy": [
         "Sc",
@@ -1738,6 +1799,7 @@
       "Price": 15000,
       "Value": 7500,
       "Element": "Ice",
+      "Weight": 0,
       "EquippedBy": [
         "Sc",
         "Sa",
@@ -1757,6 +1819,7 @@
       "BaseAccuracy": 0.7,
       "Price": 9000,
       "Value": 4500,
+      "Weight": 0,
       "LongRange": "This weapon has full accuracy when used in the back row",
       "EquippedBy": [
         "Th",
@@ -1775,6 +1838,7 @@
       "BasePower": 160,
       "BaseAccuracy": 0.9,
       "Value": 31000,
+      "Weight": 0,
       "LongRange": "This weapon has full accuracy when used in the back row",
       "EquippedBy": [
         "Kn",
@@ -1798,6 +1862,7 @@
       "Price": 65500,
       "Value": 32750,
       "LongRange": "This weapon has full accuracy when used in the back row",
+      "Weight": 0,
       "EquippedBy": [
         "Ni"
       ],
@@ -1847,6 +1912,7 @@
       "BaseAccuracy": 0.8,
       "Price": 4500,
       "Value": 2250,
+      "Weight": 0,
       "EquippedBy": [
         "Ge",
         "Ni"
@@ -1872,6 +1938,7 @@
       "BasePower": 30,
       "BaseAccuracy": 0.8,
       "Value": 2750,
+      "Weight": 0,
       "EquippedBy": [
         "Ge",
         "Ni"
@@ -1892,6 +1959,7 @@
       "BaseAccuracy": 1.0,
       "Price": 5500,
       "Value": 2750,
+      "Weight": 0,
       "EquippedBy": [
         "Ge",
         "Ni"
@@ -1920,6 +1988,7 @@
       "Value": 4000,
       "Two-Handed": "This weapon requires both hands to wield",
       "LongRange": "This weapon has full accuracy when used in the back row",
+      "Weight": 0,
       "EquippedBy": [
         "Ba",
         "Ni"
@@ -1938,6 +2007,7 @@
       "BaseAccuracy": 0.8,
       "Value": 10750,
       "Two-Handed": "This weapon requires both hands to wield",
+      "Weight": 0,
       "LongRange": "This weapon has full accuracy when used in the back row",
       "EquippedBy": [
         "Ba",
@@ -1961,6 +2031,7 @@
       "Value": 20000,
       "Two-Handed": "This weapon requires both hands to wield",
       "LongRange": "This weapon has full accuracy when used in the back row",
+      "Weight": 0,
       "EquippedBy": [
         "Ba",
         "Ni"
@@ -1986,6 +2057,7 @@
       "BasePower": 5,
       "BaseAccuracy": 0.9,
       "Value": 50,
+      "Weight": 0,
       "Two-Handed": "This weapon requires both hands to wield",
       "LongRange": "This weapon has full accuracy when used in the back row",
       "EquippedBy": [
@@ -2011,6 +2083,7 @@
       "BasePower": 8,
       "BaseAccuracy": 0.85,
       "Value": 600,
+      "Weight": 0,
       "Two-Handed": "This weapon requires both hands to wield",
       "LongRange": "This weapon has full accuracy when used in the back row",
       "EquippedBy": [
@@ -2043,6 +2116,7 @@
       "BaseAccuracy": 0.85,
       "Price": 2000,
       "Value": 1000,
+      "Weight": 1,
       "Two-Handed": "This weapon requires both hands to wield",
       "LongRange": "This weapon has full accuracy when used in the back row",
       "EquippedBy": [
@@ -2076,6 +2150,7 @@
       "BasePower": 25,
       "BaseAccuracy": 0.9,
       "Value": 1500,
+      "Weight": 1,
       "Two-Handed": "This weapon requires both hands to wield",
       "LongRange": "This weapon has full accuracy when used in the back row",
       "EquippedBy": [
@@ -2098,6 +2173,7 @@
       "BaseAccuracy": 1.0,
       "Price": 42000,
       "Value": 21000,
+      "Weight": 1,
       "Two-Handed": "This weapon requires both hands to wield",
       "LongRange": "This weapon has full accuracy when used in the back row",
       "EquippedBy": [
@@ -2117,6 +2193,7 @@
       "BasePower": 6,
       "BaseAccuracy": 0.9,
       "Value": 2,
+      "Weight": 0,
       "LongRange": "This weapon has full accuracy when used in the back row",
       "EquippedBy": [
         "OK",
@@ -2170,6 +2247,7 @@
       "BaseAccuracy": 0.85,
       "Value": 5,
       "Element": "Holy",
+      "Weight": 0,
       "LongRange": "This weapon has full accuracy when used in the back row",
       "EquippedBy": [
         "OK",
@@ -2222,6 +2300,7 @@
       "BasePower": 17,
       "BaseAccuracy": 0.85,
       "Value": 5,
+      "Weight": 0,
       "LongRange": "This weapon has full accuracy when used in the back row",
       "EquippedBy": [
         "OK",
@@ -2269,6 +2348,7 @@
       "BaseAccuracy": 0.85,
       "Price": 30,
       "Value": 15,
+      "Weight": 0,
       "Element": "Lightning",
       "LongRange": "This weapon has full accuracy when used in the back row",
       "EquippedBy": [
@@ -2313,6 +2393,7 @@
       "BaseAccuracy": 0.9,
       "Price": 30,
       "Value": 15,
+      "Weight": 0,
       "Element": "Fire",
       "LongRange": "This weapon has full accuracy when used in the back row",
       "EquippedBy": [
@@ -2357,6 +2438,7 @@
       "BaseAccuracy": 0.9,
       "Price": 30,
       "Value": 15,
+      "Weight": 0,
       "Element": "Ice",
       "LongRange": "This weapon has full accuracy when used in the back row",
       "EquippedBy": [
@@ -2403,6 +2485,7 @@
       "StatusAilment": "Petrification",
       "Element": "Earth",
       "LongRange": "This weapon has full accuracy when used in the back row",
+      "Weight": 0,
       "EquippedBy": [
         "Ra",
         "Ni"
@@ -2445,6 +2528,7 @@
       "BaseAccuracy": 1.0,
       "Price": 200,
       "Value": 100,
+      "Weight": 0,
       "LongRange": "This weapon has full accuracy when used in the back row",
       "EquippedBy": [
         "Ra",

@@ -150,4 +150,5 @@ def compute_enemy_final_stats(
         magic_def_multiplier=int(mr.get("Count") or 0),
         magic_resistance_percent=int(round((mr.get("Rate") or 0.0) * 100)),
         agility=agility,  # ★ 追加
+        weight=int(monster.get("Weight", 0) or 0),
     )

@@ -215,6 +215,7 @@ class FinalCharacterStats:
     magic_def_multiplier: int
     magic_resistance: int
     shield_count: int
+    weight: int = 0
 
     # 追加：防具による属性耐性（ElementalResist の集約）
     elemental_resists: FrozenSet[str] = field(default_factory=frozenset)
@@ -260,6 +261,7 @@ class FinalEnemyStats:
 
     # 行動順決定用の「擬似 Agility」
     agility: int
+    weight: int = 0
 
     # 一時バフ: Haste の魔法式から転写される物理加算値
     haste_power_bonus: int = 0
