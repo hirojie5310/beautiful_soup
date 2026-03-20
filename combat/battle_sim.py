@@ -41,6 +41,124 @@ from combat.magic_damage import healing_spell_kind
 from combat.progression import apply_job_sp_for_command
 
 
+def _is_turn_start_priority_action(action: Optional[PlannedAction]) -> bool:
+    if action is None:
+        return False
+    if action.kind == "defend":
+        return True
+    if action.kind != "run":
+        return False
+    return action.command in ("Flee", "Run(Flee)", "Run (Flee)")
+
+
+def _resolve_priority_action_enemy(
+    enemies: List[EnemyRuntime],
+) -> Optional[EnemyRuntime]:
+    target_idx = first_alive_enemy_index(enemies)
+    if target_idx is None:
+        return None
+    return enemies[target_idx]
+
+
+def _run_turn_start_priority_actions(
+    *,
+    party_members: List[PartyMemberRuntime],
+    enemies: List[EnemyRuntime],
+    planned_actions: List[Optional[PlannedAction]],
+    state: RuntimeState,
+    logs: List[str],
+    final_result: SideTurnResult,
+    rng: Random,
+    save: Optional[dict],
+    handled_actor_indexes: set[int],
+) -> bool:
+    """
+    NES版寄せのターン開始時優先行動を解決する。
+
+    現状は「ぼうぎょ」とシーフ系の「とんずら(Flee)」のみを対象とし、
+    毒などのターン開始時効果の後、通常の行動値計算より前に発動させる。
+    """
+    for idx, pm in enumerate(party_members):
+        if is_out_of_battle(pm.state):
+            continue
+        action = planned_actions[idx] if idx < len(planned_actions) else None
+        if not _is_turn_start_priority_action(action):
+            continue
+        priority_action = action
+        assert priority_action is not None
+
+        target_enemy = _resolve_priority_action_enemy(enemies)
+        if target_enemy is None:
+            final_result.end_reason = "enemy_defeated"
+            return True
+
+        handled_actor_indexes.add(idx)
+        logs.append(f"▶ {pm.name} の行動（{priority_action.command}）")
+
+        if priority_action.kind == "defend":
+            pm.state.temp_flags["defending"] = True
+            logs.append(f"{pm.name}は防御した！")
+            old_jl, new_jl = apply_job_sp_for_command(
+                pm,
+                "Defend",
+                weapons=state.weapons,
+                armors=state.armors,
+                save_dict=state.save,
+            )
+            if new_jl != old_jl:
+                logs.append(
+                    f"★ {pm.name} のジョブレベルが {old_jl} → {new_jl} に上がった！"
+                )
+            continue
+
+        _, char_result = run_character_turn(
+            char_name=pm.name,
+            enemy_name=target_enemy.label,
+            char_stats=pm.stats,
+            enemy_stats=target_enemy.stats,
+            enemy_json=target_enemy.json,
+            char_state=pm.state,
+            enemy_state=target_enemy.state,
+            char_attack_kind="run",
+            char_battle_command=priority_action.command,
+            char_weapon_hand="main",
+            char_spell=None,
+            char_spell_json=None,
+            char_spell_healing_type=None,
+            char_spell_name=None,
+            char_item=None,
+            logs=logs,
+            rng=rng,
+            save=save,
+            spells_by_name=None,
+            enemies=enemies,
+            target_side="enemy",
+            target_index=0,
+            party_members=party_members,
+            aoe_selected_override=None,
+        )
+
+        old_jl, new_jl = apply_job_sp_for_command(
+            pm,
+            priority_action.command or "Run",
+            weapons=state.weapons,
+            armors=state.armors,
+            save_dict=state.save,
+        )
+        if new_jl != old_jl:
+            logs.append(
+                f"★ {pm.name} のジョブレベルが {old_jl} → {new_jl} に上がった！"
+            )
+
+        if char_result is not None and char_result.end_reason != "continue":
+            final_result.end_reason = char_result.end_reason
+            final_result.escaped = char_result.escaped
+            final_result.enemy_attack_result = char_result.enemy_attack_result
+            return True
+
+    return False
+
+
 def _spell_weight_for_character_action(
     action: Optional[PlannedAction],
     spells_by_name: Optional[Dict[str, Dict[str, Any]]],
@@ -395,6 +513,20 @@ def simulate_one_round_multi_party(
             enemy_json=em.json,
         )
 
+    handled_actor_indexes: set[int] = set()
+    if _run_turn_start_priority_actions(
+        party_members=party_members,
+        enemies=enemies,
+        planned_actions=planned_actions,
+        state=state,
+        logs=logs,
+        final_result=final_result,
+        rng=rng,
+        save=save,
+        handled_actor_indexes=handled_actor_indexes,
+    ):
+        return logs, final_result, events
+
     # =====================================
     # ② 行動順リスト作成
     # =====================================
@@ -412,6 +544,8 @@ def simulate_one_round_multi_party(
 
     for i, pm in enumerate(party_members):
         if is_out_of_battle(pm.state):
+            continue
+        if i in handled_actor_indexes:
             continue
         action = planned_actions[i] if i < len(planned_actions) else None
         total_weight = (
