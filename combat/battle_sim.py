@@ -18,6 +18,7 @@ from combat.models import (
     PartyMemberRuntime,
     EnemyRuntime,
     PlannedAction,
+    PlannedEnemyAction,
     SideTurnResult,
 )
 from combat.runtime_state import RuntimeState
@@ -35,8 +36,77 @@ from combat.life_check import (
 from combat.initiative import calc_initiative, command_weight
 from combat.turn_logic import run_enemy_turn, run_character_turn
 from combat.spell_repo import spell_from_json
+from combat.spell_repo import _choose_monster_special_spell
 from combat.magic_damage import healing_spell_kind
 from combat.progression import apply_job_sp_for_command
+
+
+def _spell_weight_for_character_action(
+    action: Optional[PlannedAction],
+    spells_by_name: Optional[Dict[str, Dict[str, Any]]],
+) -> int:
+    if action is None:
+        return 0
+    if action.kind != "magic":
+        return 0
+    if not action.spell_name:
+        return 0
+    if not spells_by_name:
+        return 0
+
+    spell_json = spells_by_name.get(action.spell_name)
+    if not spell_json:
+        return 0
+
+    return int(spell_json.get("Weight", 0) or 0)
+
+
+def _spell_weight_for_enemy_action(
+    action: Optional[PlannedEnemyAction],
+    spells_by_name: Optional[Dict[str, Dict[str, Any]]],
+) -> int:
+    if action is None:
+        return 0
+    if action.kind != "special":
+        return 0
+
+    if action.spell_json is not None:
+        raw = action.spell_json.get("Weight")
+        if raw is not None:
+            return int(raw or 0)
+
+    if action.spell_name and spells_by_name:
+        base_spell = spells_by_name.get(action.spell_name)
+        if base_spell is not None:
+            return int(base_spell.get("Weight", 0) or 0)
+
+    return 0
+
+
+def _plan_enemy_action(
+    *,
+    enemy_json: Dict[str, Any],
+    state: RuntimeState,
+    rng: Random,
+) -> PlannedEnemyAction:
+    special_rate = enemy_json.get("SpecialAttackRate") or 0.0
+    specials = enemy_json.get("Special Attacks") or []
+
+    if not specials or special_rate <= 0:
+        return PlannedEnemyAction(kind="normal")
+
+    if rng.random() >= special_rate:
+        return PlannedEnemyAction(kind="normal")
+
+    spell_def = _choose_monster_special_spell(enemy_json, rng=rng)
+    if spell_def is None:
+        return PlannedEnemyAction(kind="normal")
+
+    return PlannedEnemyAction(
+        kind="special",
+        spell_name=spell_def.get("Name"),
+        spell_json=spell_def,
+    )
 
 
 def _resolve_character_targets(
@@ -329,19 +399,37 @@ def simulate_one_round_multi_party(
     # ② 行動順リスト作成
     # =====================================
     actors: List[Tuple[str, int, int]] = []  # (side, index, initiative)
+    enemy_planned_actions: list[Optional[PlannedEnemyAction]] = [None] * len(enemies)
+
+    for i, em in enumerate(enemies):
+        if is_out_of_battle(em.state):
+            continue
+        enemy_planned_actions[i] = _plan_enemy_action(
+            enemy_json=em.json,
+            state=state,
+            rng=rng,
+        )
 
     for i, pm in enumerate(party_members):
         if is_out_of_battle(pm.state):
             continue
         action = planned_actions[i] if i < len(planned_actions) else None
-        total_weight = pm.stats.weight + command_weight(action)
+        total_weight = (
+            pm.stats.weight
+            + command_weight(action)
+            + _spell_weight_for_character_action(action, state.spells)
+        )
         init = calc_initiative(pm.stats.agility, rng, weight=total_weight)
         actors.append(("char", i, init))
 
     for i, em in enumerate(enemies):
         if is_out_of_battle(em.state):
             continue
-        init = calc_initiative(em.stats.agility, rng, weight=em.stats.weight)
+        enemy_action = enemy_planned_actions[i]
+        total_weight = em.stats.weight + _spell_weight_for_enemy_action(
+            enemy_action, state.spells
+        )
+        init = calc_initiative(em.stats.agility, rng, weight=total_weight)
         actors.append(("enemy", i, init))
 
     actors.sort(key=lambda x: x[2], reverse=True)
@@ -558,6 +646,7 @@ def simulate_one_round_multi_party(
                 rng=rng,
                 party_members=party_members,
                 enemies=enemies,
+                planned_enemy_action=enemy_planned_actions[idx],
             )
 
             _append_party_diff_events(
@@ -1024,19 +1113,37 @@ def simulate_battle_multi_party(
 
         # ---------- 2) イニシアティブ計算 ----------
         actors: List[Tuple[str, int, int]] = []  # (side, index, init)
+        enemy_planned_actions: list[Optional[PlannedEnemyAction]] = [None] * len(enemies)
+
+        for i, enemy in enumerate(enemies):
+            if is_out_of_battle(enemy.state):
+                continue
+            enemy_planned_actions[i] = _plan_enemy_action(
+                enemy_json=enemy.json,
+                state=state,
+                rng=rng,
+            )
 
         for i, member in enumerate(party_members):
             if is_out_of_battle(member.state):
                 continue
             action = planned_actions[i] if i < len(planned_actions) else None
-            total_weight = member.stats.weight + command_weight(action)
+            total_weight = (
+                member.stats.weight
+                + command_weight(action)
+                + _spell_weight_for_character_action(action, state.spells)
+            )
             init = calc_initiative(member.stats.agility, rng, weight=total_weight)
             actors.append(("char", i, init))
 
         for i, enemy in enumerate(enemies):
             if is_out_of_battle(enemy.state):
                 continue
-            init = calc_initiative(enemy.stats.agility, rng, weight=enemy.stats.weight)
+            enemy_action = enemy_planned_actions[i]
+            total_weight = enemy.stats.weight + _spell_weight_for_enemy_action(
+                enemy_action, state.spells
+            )
+            init = calc_initiative(enemy.stats.agility, rng, weight=total_weight)
             actors.append(("enemy", i, init))
 
         actors.sort(key=lambda x: x[2], reverse=True)
@@ -1190,6 +1297,7 @@ def simulate_battle_multi_party(
                     rng=rng,
                     party_members=party_members,
                     enemies=enemies,
+                    planned_enemy_action=enemy_planned_actions[idx],
                 )
 
                 for line in result_enemy.logs:

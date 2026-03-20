@@ -3,10 +3,16 @@
 # セッションや planned actions を期待通り渡していることを固定
 from __future__ import annotations
 
-from types import SimpleNamespace
+from types import ModuleType, SimpleNamespace
 import sys
+from typing import cast
+
+from combat.models import EnemyRuntime, PartyMemberRuntime, PlannedAction
+from combat.runtime_state import RuntimeState
+from system.exp_system import LevelTable
 
 if "pygame" not in sys.modules:
+
     class _DummySound:
         def __init__(self, *args, **kwargs):
             pass
@@ -17,9 +23,9 @@ if "pygame" not in sys.modules:
         def play(self):
             return None
 
-    sys.modules["pygame"] = SimpleNamespace(
-        mixer=SimpleNamespace(Sound=_DummySound)
-    )
+    pygame_stub = ModuleType("pygame")
+    pygame_stub.mixer = SimpleNamespace(Sound=_DummySound)
+    sys.modules["pygame"] = pygame_stub
 
 from ui_pygame.controller import BattleController
 
@@ -41,16 +47,21 @@ def test_resolve_one_round_uses_execute_round_usecase(monkeypatch):
 
     monkeypatch.setattr("ui_pygame.controller.execute_round", _fake_execute_round)
 
-    party_members = [SimpleNamespace()]
-    enemies = [SimpleNamespace()]
-    planned_actions = [None]
-    state = SimpleNamespace(spells={"Fire": {"name": "Fire"}})
+    party_members = cast(list[PartyMemberRuntime], [SimpleNamespace()])
+    enemies = cast(list[EnemyRuntime], [SimpleNamespace()])
+    planned_actions = cast(list[PlannedAction | None], [None])
+    state = cast(
+        RuntimeState,
+        SimpleNamespace(spells={"Fire": {"name": "Fire"}}),
+    )
+    level_table = cast(LevelTable, SimpleNamespace())
 
     result = controller._resolve_one_round(
         party_members=party_members,
         enemies=enemies,
         planned_actions=planned_actions,
         state=state,
+        level_table=level_table,
         save=None,
         spells_by_name={"Firaga": {"name": "Firaga"}},
         items_by_name={},
@@ -65,6 +76,7 @@ def test_resolve_one_round_uses_execute_round_usecase(monkeypatch):
 
     session = captured["session"]
     assert session.state is state
+    assert session.level_table is level_table
     assert session.party_members is party_members
     assert session.enemies is enemies
     assert session.spells_expanded == {"Firaga": {"name": "Firaga"}}

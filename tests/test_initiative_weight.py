@@ -4,7 +4,11 @@ import random
 from combat.char_build import compute_character_final_stats
 from combat.enemy_build import compute_enemy_final_stats
 from combat.initiative import calc_initiative
-from combat.models import BaseCharacter, EquipmentSet
+from combat.models import BaseCharacter, EquipmentSet, PlannedAction, PlannedEnemyAction
+from combat.battle_sim import (
+    _spell_weight_for_character_action,
+    _spell_weight_for_enemy_action,
+)
 
 
 def test_calc_initiative_uses_agility_weight_and_random_range() -> None:
@@ -88,3 +92,43 @@ def test_compute_character_final_stats_sums_equipment_weight() -> None:
     stats = compute_character_final_stats(base, eq, weapons, armors, job_name="Warrior")
 
     assert stats.weight == 15
+
+
+def test_spell_weight_for_character_magic_action_reads_spell_json() -> None:
+    action = PlannedAction(kind="magic", command="Magic", spell_name="Fire")
+    spells = {"Fire": {"Weight": 4}}
+
+    assert _spell_weight_for_character_action(action, spells) == 4
+
+
+def test_spell_weight_for_character_non_magic_action_is_zero() -> None:
+    action = PlannedAction(kind="physical", command="Fight", spell_name="Fire")
+    spells = {"Fire": {"Weight": 4}}
+
+    assert _spell_weight_for_character_action(action, spells) == 0
+
+
+def test_spell_weight_for_enemy_special_action_reads_embedded_spell_weight() -> None:
+    action = PlannedEnemyAction(
+        kind="special",
+        spell_name="Lightning",
+        spell_json={"Name": "Lightning", "Weight": 6},
+    )
+
+    assert _spell_weight_for_enemy_action(action, {"Lightning": {"Weight": 3}}) == 6
+
+
+def test_spell_weight_for_enemy_special_action_falls_back_to_base_spell_json() -> None:
+    action = PlannedEnemyAction(
+        kind="special",
+        spell_name="Lightning",
+        spell_json={"Name": "Lightning"},
+    )
+
+    assert _spell_weight_for_enemy_action(action, {"Lightning": {"Weight": 3}}) == 3
+
+
+def test_spell_weight_for_enemy_normal_action_is_zero() -> None:
+    action = PlannedEnemyAction(kind="normal")
+
+    assert _spell_weight_for_enemy_action(action, {"Lightning": {"Weight": 3}}) == 0

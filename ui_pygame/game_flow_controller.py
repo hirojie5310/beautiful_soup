@@ -237,6 +237,7 @@ class GameFlowController:
             enemies=enemies,
             party_members=party_members,
             spells_expanded=self.spells_expanded,
+            level_table=self.level_table,
             se=battle_se,
             bgm=battle_bgm,
             normalize_battle_command=normalize_battle_command,

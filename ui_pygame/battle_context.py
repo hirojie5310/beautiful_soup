@@ -26,6 +26,7 @@ from combat.life_check import any_char_alive, any_enemy_alive
 
 from ui_pygame.audio.ui_se import BattleSE
 from ui_pygame.audio.ui_bgm import BattleBGM
+from system.exp_system import LevelTable
 
 
 @dataclass
@@ -34,6 +35,7 @@ class BattleContext:
     enemies: list[EnemyRuntime]
     party_members: list[PartyMemberRuntime]
     spells_expanded: dict
+    level_table: LevelTable
 
     # ===== SE =====
     se: BattleSE

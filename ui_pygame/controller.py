@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional, List, Dict, Any, cast
+from typing import Optional, List, Dict, Any, Sequence, cast
 from random import Random
 
 from combat.runtime_state import RuntimeState
@@ -18,18 +18,20 @@ from combat.models import (
     PlannedAction,
     EnemyRuntime,  # 例：あなたの実装に合わせる
     SideTurnResult,  # 例：あなたの実装に合わせる
+    BattleEvent,
 )
 
-from ui_pygame.ui_events import AudioEvent
+from ui_pygame.ui_events import AudioEvent, UiEvent
 from ui_pygame.battle_context import BattleContext
 from ui_pygame.app_context import BattleAppContext
+from system.exp_system import LevelTable
 
 
 @dataclass
 class ResolveResult:
     logs: List[str]
     side_result: SideTurnResult
-    events: List[Dict[str, Any]]
+    events: list[BattleEvent]
 
 
 class BattleController:
@@ -89,6 +91,7 @@ class BattleController:
                 enemies=enemies,
                 planned_actions=planned_actions,
                 state=state,
+                level_table=battle_ctx.level_table,
                 save=save,
                 spells_by_name=spells_by_name,
                 items_by_name=items_by_name,
@@ -117,6 +120,7 @@ class BattleController:
                 enemies=enemies,
                 planned_actions=planned_actions,
                 state=state,
+                level_table=battle_ctx.level_table,
                 save=save,
                 spells_by_name=spells_by_name,
                 items_by_name=items_by_name,
@@ -216,6 +220,7 @@ class BattleController:
         enemies: List[EnemyRuntime],
         planned_actions: List[Optional[PlannedAction]],
         state: RuntimeState,
+        level_table: LevelTable,
         save: Optional[dict],
         spells_by_name: Optional[Dict[str, Dict[str, Any]]],
         items_by_name: Optional[Dict[str, Dict[str, Any]]],
@@ -223,7 +228,7 @@ class BattleController:
         del save, items_by_name
         session = BattleSession(
             state=state,
-            level_table=None,
+            level_table=level_table,
             party_members=party_members,
             enemies=enemies,
             party_magic_info=None,
@@ -405,7 +410,7 @@ class BattleController:
                     if hasattr(lw, "append"):
                         lw.append(line)
 
-    def _push_events(self, ui, events: List[Dict[str, Any]]) -> None:
+    def _push_events(self, ui, events: Sequence[UiEvent]) -> None:
         if not events:
             return
         # example: Stock to ui.events / Make ui.floating_texts

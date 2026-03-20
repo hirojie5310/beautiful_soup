@@ -19,6 +19,7 @@ from combat.models import (
     FinalEnemyStats,
     BattleActorState,
     EnemyAttackResult,
+    PlannedEnemyAction,
     SpellInfo,
     OneTurnResult,
     PartyMemberRuntime,
@@ -2427,6 +2428,7 @@ def run_enemy_turn(
     rng: Optional[Random] = None,
     party_members: Optional[list[PartyMemberRuntime]] = None,
     enemies: list | None = None,
+    planned_enemy_action: Optional[PlannedEnemyAction] = None,
 ) -> OneTurnResult:
     """
     「敵の1行動フェーズ」だけを担当する関数。
@@ -2752,6 +2754,7 @@ def run_enemy_turn(
             target_is_mini_or_toad=char_is_mini_or_toad,
             return_crit=True,
             target_state=char_state,
+            planned_enemy_action=planned_enemy_action,
         )
         # enemy_attack は出た（special / physical など）
         dmg_to_char = enemy_attack.damage if enemy_attack is not None else 0
@@ -3280,6 +3283,7 @@ def enemy_attack_to_char_with_special(
     target_is_mini_or_toad: bool = False,
     return_crit: bool = False,
     target_state: Optional[BattleActorState] = None,  # ★ 追加
+    planned_enemy_action: Optional[PlannedEnemyAction] = None,
 ) -> EnemyAttackResult:
     """
     敵がキャラクターに攻撃する 1 回分の攻撃結果を返す。
@@ -3417,9 +3421,23 @@ def enemy_attack_to_char_with_special(
     # 乱数モード：この 1 回で通常 or スペシャルを実際に選択
     # --------------------------------------------------------
     else:
-        # スペシャル攻撃を行うか判定
-        if rng.random() < special_rate:
-            spell_def = _choose_monster_special_spell(monster, rng=rng)
+        planned_spell_def = None
+        use_special = False
+
+        if planned_enemy_action is not None:
+            if planned_enemy_action.kind == "special":
+                use_special = True
+                planned_spell_def = planned_enemy_action.spell_json
+            else:
+                use_special = False
+        else:
+            # 従来挙動
+            if rng.random() < special_rate:
+                use_special = True
+                planned_spell_def = _choose_monster_special_spell(monster, rng=rng)
+
+        if use_special:
+            spell_def = planned_spell_def
 
             # 何も見つからなければ通常攻撃にフォールバック
             if spell_def is None:
@@ -3536,13 +3554,27 @@ def enemy_attack_to_char_with_special(
         crit = res.is_critical
         net_hits = res.hit_count
 
+        res = _as_attack_result(
+            physical_damage_enemy_to_char(
+                enemy=enemy,
+                char=char,
+                rng=rng,
+                use_expectation=False,
+                attacker_is_blind=attacker_is_blind,
+                attacker_is_mini_or_toad=attacker_is_mini_or_toad,
+                target_is_mini_or_toad=target_is_mini_or_toad,
+                return_crit=True,
+                target_state=target_state,
+            )
+        )
+        dmg = res.damage
+        crit = res.is_critical
+        net_hits = res.hit_count
+
         return EnemyAttackResult(
-            damage=dmg_norm,
+            damage=dmg,
             attack_type="normal",
             attack_name="Physical",
             is_crit=crit,
-            element_relation="normal",
-            hit_elements=[],
-            is_reflectable_spell=False,
-            net_hits=net_hits,  # ★ここ
+            net_hits=net_hits,
         )

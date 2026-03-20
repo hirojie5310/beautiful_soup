@@ -427,6 +427,13 @@ class PlannedAction:
 
 
 @dataclass
+class PlannedEnemyAction:
+    kind: Literal["normal", "special"]
+    spell_name: Optional[str] = None
+    spell_json: Optional[Dict[str, Any]] = None
+
+
+@dataclass
 class PartyMagicInfo:
     job_name: str
     cast_code: Optional[str]
