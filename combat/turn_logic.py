@@ -538,6 +538,42 @@ def run_character_turn(
             raise ValueError("char_attack_kind='magic' のときは char_spell が必要です")
 
         heal_type = char_spell_healing_type
+        spell_name_lower = normalize_text_basic(char_spell_name or "")
+        spell_effect_text = normalize_text_basic(
+            (char_spell_json or {}).get("Effect") or ""
+        )
+        ally_status_spell = None
+        if target_side in ("ally", "self"):
+            if spell_name_lower == "toad" or (
+                "turn target into a toad" in spell_effect_text
+            ):
+                ally_status_spell = Status.TOAD
+            elif spell_name_lower == "mini" or "miniaturize" in spell_effect_text:
+                ally_status_spell = Status.MINI
+
+        if ally_status_spell is not None:
+            if char_spell_json is None:
+                raise ValueError("味方対象の Toad/Mini には char_spell_json が必要です")
+
+            spell_label = char_spell_name or ally_status_spell.name.title()
+            mp_used = use_mp_for_spell(char_state, char_spell_json)
+            lvl = int(char_spell_json.get("Level", 1))
+
+            if not mp_used:
+                logs.append(
+                    f"{char_name}は{target_name}に《{spell_label}》を唱えようとしたが MP{lvl} が足りない！"
+                )
+                return 0, None
+
+            target_state.statuses.add(ally_status_spell)
+            remain = char_state.mp_pool[lvl]
+            maxmp = char_state.max_mp_pool.get(lvl, remain)
+            suffix = f"（MP{lvl} {remain}/{maxmp}）"
+            logs.append(
+                f"{char_name}は{target_name}に《{spell_label}》を唱えた！ "
+                f"{target_name}は{ally_status_spell.name}状態になった。 {suffix}"
+            )
+            return 0, None
 
         # ------------------------
         # ① HP回復（Cure系）
@@ -1722,12 +1758,8 @@ def run_character_turn(
 
                 # 即死系
                 if "inflict ko" in effect_text:
-                    ko_acc = spell_info.get("BaseAccuracy")
-                    if ko_acc is None:
-                        ko_acc = 1.0
-                    if rng.random() < float(ko_acc):
-                        enemy_state.hp = 0
-                        logs.append(f"{enemy_name}に即死効果が発動した！")
+                    enemy_state.hp = 0
+                    logs.append(f"{enemy_name}に即死効果が発動した！")
 
                 return dmg_to_enemy, None
 
@@ -1793,46 +1825,18 @@ def run_character_turn(
             )
             return 0, None
 
-        # Shining Curtain : Reflect と同様の反射バリア
+        # Shining Curtain : NES 仕様に合わせて必中の Reflect バリア
         if item_name == "Shining Curtain":
-            acc = spell_info.get("BaseAccuracy")
-            if acc is None:
-                acc = spell_info.get("Accuracy", 1.0)
-
-            acc = float(acc)
-            if acc > 1.0:
-                acc = acc / 100.0
-
-            base_percent = acc * 100.0
-            mind = char_stats.mind
-            hit_percent = base_percent + (mind / 2.0)
-
-            if hit_percent > 100.0:
-                hit_percent = 100.0
-            if hit_percent < 0.0:
-                hit_percent = 0.0
-
-            roll = rng.random() * 100.0
-
-            if roll < hit_percent:
-                if getattr(target_state, "reflect_charges", 0) > 0:
-                    logs.append(
-                        f"{char_name}は{item_name}を使った！ "
-                        f"しかし{target_name}には既にReflectがかかっている。"
-                        f"（命中率{hit_percent:.1f}% 判定{roll:.1f}）"
-                    )
-                else:
-                    target_state.reflect_charges = 1
-                    logs.append(
-                        f"{char_name}は{item_name}を使った！ "
-                        f"{target_name}に魔法を一度だけ跳ね返すバリアを張った。"
-                        f"（命中率{hit_percent:.1f}% 判定{roll:.1f}）"
-                    )
-            else:
+            if getattr(target_state, "reflect_charges", 0) > 0:
                 logs.append(
                     f"{char_name}は{item_name}を使った！ "
-                    f"しかし何も起こらなかった…"
-                    f"（命中率{hit_percent:.1f}% 判定{roll:.1f}）"
+                    f"しかし{target_name}には既にReflectがかかっている。"
+                )
+            else:
+                target_state.reflect_charges = 1
+                logs.append(
+                    f"{char_name}は{item_name}を使った！ "
+                    f"{target_name}に魔法を一度だけ跳ね返すバリアを張った。"
                 )
 
             return 0, None

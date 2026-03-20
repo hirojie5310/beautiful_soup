@@ -234,7 +234,9 @@
       "Type": "Rod",
       "BasePower": 12,
       "BaseAccuracy": 0.7,
-      "Bonus": "Fire  up",
+      "Bonus": {
+        "Fire": "up"
+      },
       "Price": 3000,
       "Value": 1500,
       "Element": "Fire",
@@ -268,7 +270,9 @@
       "Type": "Rod",
       "BasePower": 12,
       "BaseAccuracy": 0.7,
-      "Bonus": "Ice  up",
+      "Bonus": {
+        "Ice": "up"
+      },
       "Price": 3000,
       "Value": 1500,
       "Element": "Ice",
@@ -302,7 +306,9 @@
       "Type": "Rod",
       "BasePower": 12,
       "BaseAccuracy": 0.6,
-      "Bonus": "Lightning  up",
+      "Bonus": {
+        "Lightning": "up"
+      },
       "Price": 3000,
       "Value": 1500,
       "Element": "Lightning",

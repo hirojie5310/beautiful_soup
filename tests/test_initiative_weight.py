@@ -134,9 +134,36 @@ def test_compute_character_final_stats_applies_dict_bonus_to_stats() -> None:
     assert stats.vitality == 15
     assert stats.mind == 15
     assert stats.main_power == 203
-    assert stats.main_accuracy == 105
+    assert stats.main_accuracy == 99
     assert stats.defense == 27
     assert stats.magic_resistance == 12
+
+
+def test_compute_character_final_stats_caps_physical_accuracy_at_99() -> None:
+    base = BaseCharacter(
+        level=10,
+        total_exp=0,
+        job_level=40,
+        job_skill_point=0,
+        max_hp=100,
+        strength=10,
+        agility=40,
+        vitality=10,
+        intelligence=10,
+        mind=10,
+    )
+    eq = EquipmentSet(main_hand="Onion Sword")
+    weapons = {
+        "Onion Sword": {
+            "BasePower": 10,
+            "BaseAccuracy": 1.0,
+            "Weight": 1,
+        }
+    }
+
+    stats = compute_character_final_stats(base, eq, weapons, {}, job_name="Warrior")
+
+    assert stats.main_accuracy == 99
 
 
 def test_compute_character_final_stats_applies_legacy_string_bonus_to_stats() -> None:

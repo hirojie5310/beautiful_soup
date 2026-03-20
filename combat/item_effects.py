@@ -89,19 +89,7 @@ def apply_item_effect_to_actor(
 
         mind = target_stats.mind
 
-        # ✅ 命中率 = BaseAccuracy + mind/2 を共通ヘルパに委譲
-        base_acc = spell_info.get("BaseAccuracy")
-        if base_acc is None:
-            base_acc = 1.0
-
-        hit_percent = calc_buff_hit_percent(base_acc, mind)
-
-        # 命中判定
-        if rng.random() * 100.0 >= hit_percent:
-            if logs is not None:
-                logs.append(f"{prefix} " f"しかし何も起こらなかった…")
-            return
-
+        # NES 仕様に合わせて、アイテム使用時の命中率は使用者/対象ステータスに関係なく 100% とする。
         # --- ここから成功時のバフ計算（Haste と同様）---
         L = target_stats.level
         J = target_stats.job_level
@@ -171,16 +159,7 @@ def apply_item_effect_to_actor(
         L = target_stats.level
         J = target_stats.job_level
 
-        # 命中率 = BaseAccuracy + mind/2 （0〜100 にクランプ）
-        base_acc = spell_info.get("BaseAccuracy")
-        if base_acc is None:
-            base_acc = 1.0
-        hit_percent = calc_buff_hit_percent(base_acc, mind)
-
-        if rng.random() * 100.0 >= hit_percent:
-            logs.append(f"{prefix} " f"しかし何も起こらなかった…")
-            return
-
+        # NES 仕様に合わせて、アイテム使用時の命中率は使用者/対象ステータスに関係なく 100% とする。
         # --- ここから成功時のバフ計算（白魔法 Protect と同じ式）---
         base_factor = (mind // 16) + (L // 16) + (J // 32) + 1
         base_power = float(spell_info.get("BasePower", 5))
@@ -409,25 +388,16 @@ def apply_status_item_to_enemy(
         src = normalize_text_basic(effect_text + " " + str(item_json.get("Name", "")))
         amount = partial_petrify_amount_from_name(src)
 
-        # 命中したらゲージ処理へ
-        if rng.random() < float(base_acc):
-            apply_partial_petrification(
-                target_state=enemy_state,
-                amount=amount,
-                target_name=enemy_name,
-                logs=logs,
-            )
-        else:
-            logs.append(f"{enemy_name}には一部石化が入らなかった…")
-
+        apply_partial_petrification(
+            target_state=enemy_state,
+            amount=amount,
+            target_name=enemy_name,
+            logs=logs,
+        )
         return True
 
-    # ★ ここを追加：通常の状態異常付与
-    if rng.random() < float(base_acc):
-        enemy_state.statuses.add(status_enum)
-        logs.append(f"{enemy_name}に{status_label}が効いた！")
-    else:
-        logs.append(f"{enemy_name}には{status_label}が効かなかった…")
+    enemy_state.statuses.add(status_enum)
+    logs.append(f"{enemy_name}に{status_label}が効いた！")
 
     return True
 

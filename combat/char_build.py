@@ -40,6 +40,11 @@ from utils.name_normalize import normalize_name
 from typing import Dict, List
 
 
+def _cap_physical_accuracy_for_build(hit_percent: int) -> int:
+    """通常攻撃の命中率はビルド時点で 99% を上限にする。"""
+    return max(0, min(hit_percent, 99))
+
+
 def build_party_members_from_save(
     *,
     save: dict,
@@ -695,8 +700,17 @@ def compute_character_final_stats(
     off_power = off_pow + strength // 4 if off_pow else 0
 
     # 命中率 = 武器命中% + Agi//4 + JobLv//4
-    main_accuracy = main_acc + agility // 4 + base.job_level // 4 if main_pow else 0
-    off_accuracy = off_acc + agility // 4 + base.job_level // 4 if off_pow else 0
+    # FF3 FAQ に合わせて 99% 上限はここで適用し、その後に暗闇/後列ペナルティを掛ける。
+    main_accuracy = (
+        _cap_physical_accuracy_for_build(main_acc + agility // 4 + base.job_level // 4)
+        if main_pow
+        else 0
+    )
+    off_accuracy = (
+        _cap_physical_accuracy_for_build(off_acc + agility // 4 + base.job_level // 4)
+        if off_pow
+        else 0
+    )
 
     final = FinalCharacterStats(
         level=base.level,
