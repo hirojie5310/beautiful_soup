@@ -21,6 +21,7 @@ from combat.enemy_selection import build_groups, build_location_index, pick_enem
 from combat.errors import InputValidationError
 from combat.progression import apply_victory_rewards
 from combat.input_ui import normalize_battle_command
+from combat.inventory import build_item_list, is_item_visible_in_context
 from combat.item_effects import infer_battle_item_target_side
 from combat.magic_menu import build_party_magic_info, build_party_magic_lists
 from combat.magic_damage import healing_spell_kind
@@ -163,6 +164,33 @@ def _build_session_status_snapshot(session: BattleSession) -> dict[str, Any]:
         "enemies": _build_enemy_status_snapshot(session),
     }
 
+
+
+
+def _build_battle_item_command_candidates(session: BattleSession) -> list[dict[str, Any]]:
+    state = getattr(session, "state", None)
+    items_by_name = getattr(state, "items_by_name", {}) if state is not None else {}
+    save = getattr(state, "save", {}) if state is not None else {}
+    if not isinstance(items_by_name, dict):
+        return []
+    if not isinstance(save, dict):
+        save = {}
+
+    item_list = build_item_list(items_by_name, save, in_battle=True)
+    candidates: list[dict[str, Any]] = []
+    for item_name, item_type, qty in item_list:
+        item_json = items_by_name.get(item_name, {})
+        if not is_item_visible_in_context(item_json, in_combat=True):
+            continue
+        candidates.append(
+            {
+                "name": item_name,
+                "item_type": item_type,
+                "qty": _safe_int(qty, 0),
+                "label": f"{item_name} ×{_safe_int(qty, 0)}",
+            }
+        )
+    return candidates
 
 def _build_battle_item_meta(
     items_by_name: dict[str, dict[str, Any]],
@@ -951,7 +979,7 @@ def create_app(
                 battle_session
             ),
             magic_spell_meta_by_name=_build_magic_spell_meta(battle_session),
-            item_command_candidates=sorted(battle_session.state.items_by_name.keys()),
+            item_command_candidates=_build_battle_item_command_candidates(battle_session),
             item_battle_meta_by_name=_build_battle_item_meta(
                 battle_session.state.items_by_name
             ),

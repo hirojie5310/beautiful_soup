@@ -1,6 +1,9 @@
 # tests/test_flask_round_route.py
 from __future__ import annotations
 
+import json
+import re
+
 from dataclasses import dataclass
 from typing import cast
 
@@ -21,6 +24,7 @@ class _DummyMember:
 @dataclass
 class _DummyState:
     items_by_name: dict[str, object]
+    save: dict[str, object] | None = None
 
 
 @dataclass
@@ -46,10 +50,32 @@ def _build_app(monkeypatch, *, expected_actions: int = 4):
                     items_by_name={
                         "Potion": {
                             "Name": "Potion",
+                            "ItemType": "Anywhere",
                             "SpellEffect": "Recovery",
                             "SpellInfo": {"Effect": "Restore target's HP"},
+                        },
+                        "Bomb Fragment": {
+                            "Name": "Bomb Fragment",
+                            "ItemType": "Combat",
+                            "SpellInfo": {"Effect": "Deal fire damage"},
+                        },
+                        "Gysahl Greens": {
+                            "Name": "Gysahl Greens",
+                            "ItemType": "Field",
+                        },
+                        "Eureka Key": {
+                            "Name": "Eureka Key",
+                            "ItemType": "Key Item",
+                        },
+                    },
+                    save={
+                        "inventory": {
+                            "Anywhere": {"Potion": 2},
+                            "Combat": {"Bomb Fragment": 1},
+                            "Field": {"Gysahl Greens": 4},
+                            "Key Item": {"Eureka Key": 1},
                         }
-                    }
+                    },
                 ),
                 level_table=object(),
             ),
@@ -110,6 +136,23 @@ def test_root_page_renders_html(monkeypatch):
     assert "magicSpellMetaJson" in body
     assert "itemBattleMetaJson" in body
     assert '"Potion":{"target_side":"ally"}' in body.replace(" ", "")
+
+    match = re.search(
+        r'<script id="commandCandidatesJson" type="application/json">(.*?)</script>',
+        body,
+        re.S,
+    )
+    assert match is not None
+    command_payload = json.loads(match.group(1))
+    assert command_payload["item"] == [
+        {"item_type": "Anywhere", "label": "Potion ×2", "name": "Potion", "qty": 2},
+        {
+            "item_type": "Combat",
+            "label": "Bomb Fragment ×1",
+            "name": "Bomb Fragment",
+            "qty": 1,
+        },
+    ]
 
 
 def test_menu_page_renders_html(monkeypatch):

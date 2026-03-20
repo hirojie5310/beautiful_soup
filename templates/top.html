@@ -686,22 +686,30 @@
           ? (commandCandidates.magic_by_member?.[currentMemberIndex] || [])
           : (commandCandidates.item || []);
 
-        const rows = options.length ? options : ["(候補なし)"];
-        candidatePanel.innerHTML = rows.map((name, index) => {
-          const disabled = name === "(候補なし)" ? "disabled" : "";
-          return `<button type="button" class="btn" data-candidate-index="${index}" ${disabled}>${escapeHtml(name)}</button>`;
+        const rows = options.length ? options : [{ label: "(候補なし)", disabled: true }];
+        candidatePanel.innerHTML = rows.map((entry, index) => {
+          const isMagic = type === "magic";
+          const label = isMagic
+            ? String(entry || "")
+            : String(entry?.label || entry?.name || "");
+          const itemName = isMagic ? label : String(entry?.name || "");
+          const disabled = (!label || label === "(候補なし)" || (!isMagic && !itemName)) ? "disabled" : "";
+          const dataName = !isMagic && itemName ? `data-item-name="${escapeHtml(itemName)}"` : "";
+          return `<button type="button" class="btn" data-candidate-index="${index}" ${dataName} ${disabled}>${escapeHtml(label)}</button>`;
         }).join("<div style='height:6px;'></div>");
 
         candidatePanel.querySelectorAll("button").forEach((btn) => {
           btn.addEventListener("click", () => {
             const pick = btn.textContent;
-            if (!pick || pick === "(候補なし)") return;
             if (type === "magic") {
+              if (!pick || pick === "(候補なし)") return;
               const magicAction = buildMagicActionForSpell(pick);
               if (!magicAction) return;
               selectAction(magicAction);
             } else {
-              const itemAction = buildItemActionForItem(pick);
+              const itemName = btn.dataset.itemName;
+              if (!itemName) return;
+              const itemAction = buildItemActionForItem(itemName);
               if (!itemAction) return;
               selectAction(itemAction);
             }

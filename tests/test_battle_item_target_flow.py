@@ -2,10 +2,13 @@
 from __future__ import annotations
 
 from types import ModuleType, SimpleNamespace
+from typing import Any, cast
 import sys
 
+from combat.models import PlannedAction
+
 if "pygame" not in sys.modules:
-    pygame_stub = ModuleType("pygame")
+    pygame_stub: Any = ModuleType("pygame")
     pygame_stub.K_UP = 273
     pygame_stub.K_DOWN = 274
     pygame_stub.K_BACKSPACE = 8
@@ -22,6 +25,10 @@ from ui_pygame.input_modes.item import handle_item_keydown
 from ui_pygame.state import BattleUIState
 
 
+def _make_planned_action(**kwargs: Any) -> PlannedAction:
+    return cast(PlannedAction, SimpleNamespace(**kwargs))
+
+
 def _ctx(items_by_name: dict[str, dict]) -> BattleAppContext:
     return BattleAppContext(
         config=SimpleNamespace(),
@@ -34,13 +41,13 @@ def _ctx(items_by_name: dict[str, dict]) -> BattleAppContext:
         get_job_commands=lambda member: [],
         build_magic_candidates_for_member=lambda member_idx: [],
         build_item_candidates_for_battle=lambda: [],
-        make_planned_action=lambda **kwargs: SimpleNamespace(**kwargs),
+        make_planned_action=_make_planned_action,
         find_next_unfilled_member_index=lambda ui: 0,
     )
 
 
-def _event(key: int) -> SimpleNamespace:
-    return SimpleNamespace(key=key)
+def _event(key: int) -> Any:
+    return cast(Any, SimpleNamespace(key=key))
 
 
 def test_potion_selection_goes_directly_to_ally_target() -> None:
