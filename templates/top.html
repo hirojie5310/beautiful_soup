@@ -266,12 +266,14 @@
         <div id="partyGrid" class="party-grid"></div>
       </section>
 
+      <!-- 中部: Enemy Sprites -->
       <section id="enemySpriteBoard" class="frame mid-section">
         <h2 class="panel-title">Enemy Sprites（攻撃対象をタップ）</h2>
         <div id="enemySpriteGrid" class="sprite-grid"></div>
         <div id="battleVfxLayer" class="battle-vfx-layer" aria-hidden="true"></div>
       </section>
 
+      <!-- 下部: COMMAND -->
       <section class="frame bottom-section">
         <div>
           <h2 id="bottomSectionTitle" class="panel-title">COMMAND</h2>
@@ -323,6 +325,7 @@
       "special": special_command_candidates
     }|tojson }}</script>
     <script id="magicSpellMetaJson" type="application/json">{{ magic_spell_meta_by_name|tojson }}</script>
+    <script id="itemBattleMetaJson" type="application/json">{{ item_battle_meta_by_name|tojson }}</script>
     <script id="selectedLocationGroupJson" type="application/json">{{ selected_location_group|tojson }}</script>
 
     <script>
@@ -341,6 +344,7 @@
       let initialSessionStatus = { party: [], enemies: [] };
       let commandCandidates = { battle_by_member: [], magic_by_member: [], item: [], special: [] };
       let magicSpellMetaByName = {};
+      let itemBattleMetaByName = {};
       let pendingActions = [];
       let currentMemberIndex = 0;
       let selectedEnemyIndex = 0;
@@ -354,6 +358,7 @@
       try { initialSessionStatus = JSON.parse(document.getElementById("initialSessionStatusJson").textContent || "{}"); } catch (_e) {}
       try { commandCandidates = JSON.parse(document.getElementById("commandCandidatesJson").textContent || "{}"); } catch (_e) {}
       try { magicSpellMetaByName = JSON.parse(document.getElementById("magicSpellMetaJson").textContent || "{}"); } catch (_e) {}
+      try { itemBattleMetaByName = JSON.parse(document.getElementById("itemBattleMetaJson").textContent || "{}"); } catch (_e) {}
       try { selectedLocationGroup = JSON.parse(document.getElementById("selectedLocationGroupJson").textContent || '""'); } catch (_e) {}
 
       const defaultLifecycle = "{{ default_lifecycle }}";
@@ -553,6 +558,16 @@
         return "ally";
       }
 
+      function chooseItemTargetSide() {
+        const sideRaw = window.prompt(
+          "このアイテムの対象を選んでください。\n1: 味方\n2: 敵",
+          "1",
+        );
+        if (sideRaw === null) return null;
+        if (String(sideRaw).trim() === "2") return "enemy";
+        return "ally";
+      }
+
       function buildMagicActionForSpell(spellName) {
         const meta = magicSpellMetaByName?.[spellName] || {};
         const canSelectAll = Boolean(meta?.can_select_all);
@@ -616,6 +631,46 @@
         });
       }
 
+      function buildItemActionForItem(itemName) {
+        const meta = itemBattleMetaByName?.[itemName] || {};
+        const inferredSide = typeof meta?.target_side === "string" ? meta.target_side : null;
+
+        if (inferredSide === "ally") {
+          const allyTargetIndex = chooseSingleAllyTargetIndex();
+          if (allyTargetIndex === null) return null;
+          return buildSelfAction("item", "Item", {
+            item_name: itemName,
+            target_side: "ally",
+            target_index: allyTargetIndex,
+          });
+        }
+
+        if (inferredSide === "enemy") {
+          return buildAction("item", "Item", {
+            item_name: itemName,
+            target_side: "enemy",
+          });
+        }
+
+        const targetSide = chooseItemTargetSide();
+        if (targetSide === null) return null;
+
+        if (targetSide === "ally") {
+          const allyTargetIndex = chooseSingleAllyTargetIndex();
+          if (allyTargetIndex === null) return null;
+          return buildSelfAction("item", "Item", {
+            item_name: itemName,
+            target_side: "ally",
+            target_index: allyTargetIndex,
+          });
+        }
+
+        return buildAction("item", "Item", {
+          item_name: itemName,
+          target_side: "enemy",
+        });
+      }
+
       function closeCandidateMode() {
         inCandidateMode = false;
         candidatePanel.classList.remove("open");
@@ -646,7 +701,9 @@
               if (!magicAction) return;
               selectAction(magicAction);
             } else {
-              selectAction(buildAction("item", "Item", { item_name: pick }));
+              const itemAction = buildItemActionForItem(pick);
+              if (!itemAction) return;
+              selectAction(itemAction);
             }
             closeCandidateMode();
           });

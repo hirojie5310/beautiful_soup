@@ -42,7 +42,15 @@ def _build_app(monkeypatch, *, expected_actions: int = 4):
                     _DummyMember(state=object()) for _ in range(expected_actions)
                 ],
                 enemies=[_DummyMember(state=object()) for _ in range(3)],
-                state=_DummyState(items_by_name={}),
+                state=_DummyState(
+                    items_by_name={
+                        "Potion": {
+                            "Name": "Potion",
+                            "SpellEffect": "Recovery",
+                            "SpellInfo": {"Effect": "Restore target's HP"},
+                        }
+                    }
+                ),
                 level_table=object(),
             ),
         ),
@@ -100,6 +108,8 @@ def test_root_page_renders_html(monkeypatch):
     assert '"is_jumping": false' in body
     assert '"jump_target_index": null' in body
     assert "magicSpellMetaJson" in body
+    assert "itemBattleMetaJson" in body
+    assert '"Potion":{"target_side":"ally"}' in body.replace(" ", "")
 
 
 def test_menu_page_renders_html(monkeypatch):

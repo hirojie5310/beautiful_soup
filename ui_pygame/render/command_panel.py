@@ -63,7 +63,9 @@ def draw_command_panel(
         # rect 指定時：中に合わせて visible_rows を自動調整
         # だいたい「タイトル(約40) + ヒント(約26)」を除いた残りで行数を算出
         available = max(0, rect.h - (line_h + 18) - 18)  # タイトル + 少し余白だけ
-        visible_rows = max(3, min(getattr(ui, "menu_visible_rows", 8), available // row_h))
+        visible_rows = max(
+            3, min(getattr(ui, "menu_visible_rows", 8), available // row_h)
+        )
 
     x, y, w, h = rect.x, rect.y, rect.w, rect.h
 
@@ -106,12 +108,11 @@ def draw_command_panel(
         title_str = f"COMMAND  {member.name}"
 
     # タイトルは枠内に収める（右端に余白を残す）
-    title_max_px = w - 24   # 左右padぶん
+    title_max_px = w - 24  # 左右padぶん
     title_str = _ellipsize(title_str, title_max_px)
 
     title = font.render(title_str, True, (255, 255, 255))
     screen.blit(title, (x + 12, y + 6))
-
 
     # -------------------------
     # 色付け（魔法用）
@@ -131,7 +132,7 @@ def draw_command_panel(
             return (170, 170, 255)
         if "earth" in elements or "quake" in elements:
             return (190, 150, 110)
-        if "wind" in elements or "aero" in elements:
+        if "wind" in elements or "air" in elements:
             return (150, 220, 170)
         if "dark" in elements or "shadow" in elements:
             return (190, 150, 230)
@@ -163,7 +164,7 @@ def draw_command_panel(
     pad = 12
     title_h = line_h + 12
     # hint_h = line_h + 16
-    hint_h = 0 # ヒント領域の幅
+    hint_h = 0  # ヒント領域の幅
 
     # メニュー表示の開始位置
     menu_top = y + title_h
@@ -172,7 +173,9 @@ def draw_command_panel(
 
     # メニュー領域クリップ（ここから下は枠外描画しない）
     # （上下の余白を少し残してヒント領域と干渉しにくくする）
-    menu_clip = pygame.Rect(menu_left - 6, menu_top - 6, menu_w + 12, h - title_h - hint_h - 10)
+    menu_clip = pygame.Rect(
+        menu_left - 6, menu_top - 6, menu_w + 12, h - title_h - hint_h - 10
+    )
     old_clip = screen.get_clip()
     screen.set_clip(menu_clip)
     try:
@@ -214,7 +217,7 @@ def draw_command_panel(
                 row_y = y0 + i * row_h
 
                 row_rect = pygame.Rect(menu_left - 4, row_y - 2, menu_w + 8, row_h)
-                is_cur = (actual_idx == cursor)
+                is_cur = actual_idx == cursor
 
                 if is_cur:
                     pygame.draw.rect(screen, (60, 60, 90), row_rect, border_radius=4)
@@ -228,9 +231,9 @@ def draw_command_panel(
                 if right_text_fn is not None:
                     r = None
                     try:
-                        r = right_text_fn(opt, actual_idx)   # 2引数版があればこちら
+                        r = right_text_fn(opt, actual_idx)  # 2引数版があればこちら
                     except TypeError:
-                        r = right_text_fn(opt)               # 1引数版はこちら
+                        r = right_text_fn(opt)  # 1引数版はこちら
 
                     # ★返り値が (text, disabled) なら必ず分解
                     if isinstance(r, tuple) and len(r) >= 2:
@@ -243,7 +246,7 @@ def draw_command_panel(
                     right = ""
                 else:
                     right = str(right)
-                    
+
                 # ★ 行ごとの色
                 base_col = color_fn(opt) if color_fn is not None else (230, 230, 230)
 
@@ -257,8 +260,10 @@ def draw_command_panel(
                 # ---- 右テキスト描画（★ここを1回だけ）----
                 right_w = 0
                 if right:
-                    rt_col = (130, 130, 130) if disabled else (
-                        (255, 255, 200) if is_cur else (200, 200, 220)
+                    rt_col = (
+                        (130, 130, 130)
+                        if disabled
+                        else ((255, 255, 200) if is_cur else (200, 200, 220))
                     )
                     rt = font.render(right, True, rt_col)
                     right_w = rt.get_width()
@@ -328,7 +333,7 @@ def draw_command_panel(
                 if remain is None:
                     return (f"Lv{lv}", False)
 
-                disabled = (remain <= 0)
+                disabled = remain <= 0
 
                 if maxv is None:
                     return (f"Lv{lv} {remain:02d}", disabled)
@@ -339,23 +344,27 @@ def draw_command_panel(
                 spell_names,
                 ui.selected_magic_idx,
                 color_fn=_spell_color,
-                right_text_fn=_right_magic,   # ★ actual_idx を使わない版
+                right_text_fn=_right_magic,  # ★ actual_idx を使わない版
             )
 
         elif mode == "item":
             options = [f"{n} x{q}" for (n, _, q) in ui.item_candidates]
-            draw_menu(options, ui.selected_item_idx)   # ← header消す
+            draw_menu(options, ui.selected_item_idx)  # ← header消す
 
         elif mode == "aoe_choice":
             draw_menu(ui.aoe_choice_candidates, ui.selected_aoe_idx)
 
         elif mode == "target_enemy":
-            alive_indices = [i for i, e in enumerate(enemies) if getattr(e, "hp", 0) > 0]
+            alive_indices = [
+                i for i, e in enumerate(enemies) if getattr(e, "hp", 0) > 0
+            ]
             options = [f"{i+1}. {enemies[i].name}" for i in alive_indices]
             draw_menu(options, ui.selected_target_idx)
 
         elif mode == "target_ally":
-            alive_indices = [i for i, m in enumerate(party_members) if getattr(m.state, "hp", 0) > 0]
+            alive_indices = [
+                i for i, m in enumerate(party_members) if getattr(m.state, "hp", 0) > 0
+            ]
             options = [f"{i+1}. {party_members[i].name}" for i in alive_indices]
             draw_menu(options, ui.selected_target_idx)
 

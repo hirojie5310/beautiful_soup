@@ -27,6 +27,45 @@ from utils.text_normalize import normalize_text_basic
 # ============================================================
 
 
+def infer_battle_item_target_side(item_json: Dict[str, Any]) -> str | None:
+    """
+    戦闘中のアイテムが主に向く対象を推定する。
+    - "ally": 回復・蘇生・補助
+    - "enemy": 攻撃・敵向け状態異常
+    - None: UIに対象面選択を委ねる
+    """
+    spell_info = item_json.get("SpellInfo") or {}
+    effect_text = normalize_text_basic(spell_info.get("Effect") or "")
+    spell_effect = normalize_text_basic(item_json.get("SpellEffect") or "")
+    item_name_lower = normalize_text_basic(item_json.get("Name") or "")
+
+    is_attack_item = False
+    if "deal" in effect_text and "damage" in effect_text:
+        is_attack_item = True
+    if "inflict ko" in effect_text:
+        is_attack_item = True
+    if (
+        "absorb hp" in effect_text
+        or spell_effect == "drain"
+        or "lilith's kiss" in item_name_lower
+    ):
+        is_attack_item = True
+
+    if is_attack_item:
+        return "enemy"
+
+    if (
+        "restore target's hp" in effect_text
+        or "restore target to full hp and mp" in effect_text
+        or "revive from ko" in effect_text
+        or "grant reflect" in effect_text
+        or spell_effect in {"recovery", "raise", "reflect", "haste", "protect"}
+    ):
+        return "ally"
+
+    return None
+
+
 def apply_item_effect_to_actor(
     item_json: Dict[str, Any],
     target_state: BattleActorState,

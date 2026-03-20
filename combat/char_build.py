@@ -541,7 +541,7 @@ _ELEMENTAL_MAGIC_ROD_BOOSTS: dict[str, tuple[str, ...]] = {
     "firerod": ("fire",),
     "icerod": ("ice",),
     "lightrod": ("thunder",),
-    "omnirod": ("fire", "ice", "thunder"),
+    "omnirod": ("fire", "ice", "thunder", "earth", "air", "holy"),
 }
 
 

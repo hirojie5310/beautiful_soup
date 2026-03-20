@@ -29,6 +29,7 @@ class BattleAppContext:
 
     party_members: Sequence[Any]
     enemies: Sequence[Any]
+    items_by_name: dict[str, dict[str, Any]]
 
     normalize_battle_command: Callable[[str], BattleKind]
     reset_target_flags: Callable[[BattleUIState], None]

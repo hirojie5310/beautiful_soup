@@ -334,6 +334,14 @@
       "Type": "Rod",
       "BasePower": 20,
       "BaseAccuracy": 0.8,
+      "Bonus": {
+        "Fire": "up",
+        "Ice": "up",
+        "Lightning": "up",
+        "Earth": "up",
+        "Air": "up",
+        "Holy": "up"
+      },
       "Value": 15000,
       "StatusAilment": "Partial Petrification (2/3)",
       "Elements": "Air, Earth, Fire, Holy, Ice, Lightning",

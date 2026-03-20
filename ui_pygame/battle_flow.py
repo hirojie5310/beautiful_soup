@@ -101,6 +101,7 @@ def run_one_battle(
         config=cfg,
         party_members=party_members,
         enemies=enemies,
+        items_by_name=state.items_by_name,
         normalize_battle_command=ctx.normalize_battle_command,
         reset_target_flags=ctx.reset_target_flags,
         is_out_of_battle=ctx.is_out_of_battle,

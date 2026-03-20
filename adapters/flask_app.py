@@ -21,6 +21,7 @@ from combat.enemy_selection import build_groups, build_location_index, pick_enem
 from combat.errors import InputValidationError
 from combat.progression import apply_victory_rewards
 from combat.input_ui import normalize_battle_command
+from combat.item_effects import infer_battle_item_target_side
 from combat.magic_menu import build_party_magic_info, build_party_magic_lists
 from combat.magic_damage import healing_spell_kind
 from combat.runtime_state import init_runtime_state
@@ -161,6 +162,19 @@ def _build_session_status_snapshot(session: BattleSession) -> dict[str, Any]:
         "party": _build_party_status_snapshot(session),
         "enemies": _build_enemy_status_snapshot(session),
     }
+
+
+def _build_battle_item_meta(
+    items_by_name: dict[str, dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    meta: dict[str, dict[str, Any]] = {}
+    for item_name, item_json in items_by_name.items():
+        if not isinstance(item_json, dict):
+            continue
+        meta[item_name] = {
+            "target_side": infer_battle_item_target_side(item_json),
+        }
+    return meta
 
 
 def _build_member_status_snapshot(
@@ -938,6 +952,9 @@ def create_app(
             ),
             magic_spell_meta_by_name=_build_magic_spell_meta(battle_session),
             item_command_candidates=sorted(battle_session.state.items_by_name.keys()),
+            item_battle_meta_by_name=_build_battle_item_meta(
+                battle_session.state.items_by_name
+            ),
             special_command_candidates=_build_special_command_candidates(
                 battle_session
             ),

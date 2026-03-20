@@ -11,9 +11,7 @@ from typing import Optional
 def command_weight(action: Optional[object]) -> int:
     """
     PlannedAction などからコマンド重量を引く。
-
-    現時点では明示データ未整備のため、`weight` 属性があれば使い、
-    それ以外は 0 を返す。
+    `weight` 属性があれば使い、それ以外は 0 を返す。
     """
     if action is None:
         return 0
