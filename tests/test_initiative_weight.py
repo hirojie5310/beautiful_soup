@@ -94,6 +94,86 @@ def test_compute_character_final_stats_sums_equipment_weight() -> None:
     assert stats.weight == 15
 
 
+def test_compute_character_final_stats_applies_dict_bonus_to_stats() -> None:
+    base = BaseCharacter(
+        level=10,
+        total_exp=0,
+        job_level=10,
+        job_skill_point=0,
+        max_hp=100,
+        strength=10,
+        agility=10,
+        vitality=10,
+        intelligence=10,
+        mind=10,
+    )
+    eq = EquipmentSet(main_hand="Onion Sword", body="White Robe")
+    weapons = {
+        "Onion Sword": {
+            "BasePower": 200,
+            "BaseAccuracy": 1.0,
+            "Weight": 1,
+            "Bonus": {"Strength": 5, "Agility": 5, "Vitality": 5},
+        }
+    }
+    armors = {
+        "White Robe": {
+            "Defense": 20,
+            "Evasion": 0.12,
+            "BaseMagicDefense": 14,
+            "ArmorType": "Armor",
+            "Weight": 0,
+            "Bonus": {"Mind": 5},
+        }
+    }
+
+    stats = compute_character_final_stats(base, eq, weapons, armors, job_name="Warrior")
+
+    assert stats.strength == 15
+    assert stats.agility == 15
+    assert stats.vitality == 15
+    assert stats.mind == 15
+    assert stats.main_power == 203
+    assert stats.main_accuracy == 105
+    assert stats.defense == 27
+    assert stats.magic_resistance == 12
+
+
+def test_compute_character_final_stats_applies_legacy_string_bonus_to_stats() -> None:
+    base = BaseCharacter(
+        level=10,
+        total_exp=0,
+        job_level=10,
+        job_skill_point=0,
+        max_hp=100,
+        strength=10,
+        agility=10,
+        vitality=10,
+        intelligence=10,
+        mind=10,
+    )
+    eq = EquipmentSet(off_hand="Genji Shield")
+    weapons = {}
+    armors = {
+        "Genji Shield": {
+            "Defense": 20,
+            "Evasion": 0.18,
+            "BaseMagicDefense": 35,
+            "ArmorType": "Shield",
+            "Weight": 1,
+            "Bonus": "Agility +5, Strength +5",
+        }
+    }
+
+    stats = compute_character_final_stats(base, eq, weapons, armors, job_name="Warrior")
+
+    assert stats.strength == 15
+    assert stats.agility == 15
+    assert stats.vitality == 10
+    assert stats.defense == 25
+    assert stats.evasion_percent == 21
+
+
 def test_spell_weight_for_character_magic_action_reads_spell_json() -> None:
     action = PlannedAction(kind="magic", command="Magic", spell_name="Fire")
     spells = {"Fire": {"Weight": 4}}

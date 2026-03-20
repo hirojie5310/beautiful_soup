@@ -2,8 +2,8 @@
   "party": [
     {
       "name": "Runeth",
-      "level": 40,
-      "exp": 351146,
+      "level": 41,
+      "exp": 363846,
       "job": "Sage",
       "job_level": {
         "level": 99,
@@ -73,11 +73,11 @@
     {
       "name": "Arc",
       "level": 40,
-      "exp": 332529,
+      "exp": 345229,
       "job": "Geomancer",
       "job_level": {
         "level": 14,
-        "skill_point": 0
+        "skill_point": 72
       },
       "job_levels": {
         "Dragoon": {
@@ -94,7 +94,7 @@
         },
         "Geomancer": {
           "level": 14,
-          "skill_point": 0
+          "skill_point": 72
         }
       },
       "hp": 245,
@@ -143,7 +143,7 @@
     {
       "name": "Refia",
       "level": 41,
-      "exp": 377289,
+      "exp": 389989,
       "job": "Dragoon",
       "job_level": {
         "level": 99,
@@ -209,11 +209,11 @@
     {
       "name": "Ingus",
       "level": 40,
-      "exp": 348489,
+      "exp": 361189,
       "job": "Bard",
       "job_level": {
-        "level": 21,
-        "skill_point": 28
+        "level": 22,
+        "skill_point": 12
       },
       "job_levels": {
         "Dragoon": {
@@ -229,8 +229,8 @@
           "skill_point": 68
         },
         "Bard": {
-          "level": 21,
-          "skill_point": 28
+          "level": 22,
+          "skill_point": 12
         }
       },
       "hp": 245,
@@ -277,7 +277,7 @@
       "portrait_key": "ingus"
     }
   ],
-  "gil": 396019,
+  "gil": 443519,
   "CP": 255,
   "map": {
     "map": "grassland",
@@ -294,7 +294,7 @@
     "Anywhere": {
       "Potion": 5,
       "Hi Potion": 2,
-      "Elixir": 10,
+      "Elixir": 9,
       "Antidote": 1,
       "Onion Helm": 1,
       "Lilith's Kiss": 1,
@@ -339,5 +339,8 @@
       "well_item": true
     }
   },
-  "item_stock": {}
+  "item_stock": {
+    "Elixir": 2,
+    "Onion Sword": 1
+  }
 }

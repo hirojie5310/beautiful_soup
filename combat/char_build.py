@@ -19,6 +19,7 @@
 from dataclasses import replace
 from typing import Optional, Dict, Tuple, Any, List, Callable
 import math
+import re
 
 from combat.enums import Status
 from combat.models import (
@@ -477,6 +478,86 @@ def equipment_weight(
     return int(row.get("Weight", 0) or 0)
 
 
+def item_stat_bonuses(item_data: Optional[Dict[str, Any]]) -> Dict[str, int]:
+    """装備1件の Bonus を能力値ボーナス辞書に正規化して返す。"""
+    if not item_data:
+        return {}
+
+    bonus_raw = item_data.get("Bonus")
+    if isinstance(bonus_raw, dict):
+        result: Dict[str, int] = {}
+        for key, value in bonus_raw.items():
+            try:
+                amount = int(value)
+            except (TypeError, ValueError):
+                continue
+            mapped = _bonus_stat_key(str(key))
+            if mapped is None or amount == 0:
+                continue
+            result[mapped] = result.get(mapped, 0) + amount
+        return result
+
+    if not isinstance(bonus_raw, str):
+        return {}
+
+    result: Dict[str, int] = {}
+    for part in [p.strip() for p in bonus_raw.split(",")]:
+        if not part:
+            continue
+        match = re.match(r"([A-Za-z ]+?)\s*([+-]?\d+)\s*$", part)
+        if not match:
+            continue
+        mapped = _bonus_stat_key(match.group(1))
+        if mapped is None:
+            continue
+        amount = int(match.group(2))
+        if amount == 0:
+            continue
+        result[mapped] = result.get(mapped, 0) + amount
+    return result
+
+
+def _bonus_stat_key(raw_key: str) -> Optional[str]:
+    key = raw_key.strip().lower().replace("_", "").replace(" ", "")
+    mapping = {
+        "strength": "strength",
+        "agility": "agility",
+        "vitality": "vitality",
+        "intelligence": "intelligence",
+        "intellect": "intelligence",
+        "mind": "mind",
+        "spirit": "mind",
+    }
+    return mapping.get(key)
+
+
+def equipment_stat_bonuses(
+    weapons_by_name_norm: Dict[str, Dict[str, Any]],
+    armors_by_name_norm: Dict[str, Dict[str, Any]],
+    eq: EquipmentSet,
+    *,
+    normalizer: Callable[[str], str] = normalize_name,
+) -> Dict[str, int]:
+    """装備一式のステータス Bonus を合算する。"""
+    total = {
+        "strength": 0,
+        "agility": 0,
+        "vitality": 0,
+        "intelligence": 0,
+        "mind": 0,
+    }
+
+    for name in (eq.main_hand, eq.off_hand, eq.head, eq.body, eq.arms):
+        if not name:
+            continue
+        key = normalizer(name)
+        item_data = weapons_by_name_norm.get(key) or armors_by_name_norm.get(key)
+        for stat, amount in item_stat_bonuses(item_data).items():
+            total[stat] += amount
+
+    return total
+
+
 # ============================================================
 # キャラクター最終ステータス計算
 # ============================================================
@@ -494,6 +575,13 @@ def compute_character_final_stats(
     """
     weapons_norm = build_name_index(weapons_by_name)
     armors_norm = build_name_index(armors_by_name)
+    stat_bonuses = equipment_stat_bonuses(weapons_norm, armors_norm, eq)
+
+    strength = base.strength + stat_bonuses["strength"]
+    agility = base.agility + stat_bonuses["agility"]
+    vitality = base.vitality + stat_bonuses["vitality"]
+    intelligence = base.intelligence + stat_bonuses["intelligence"]
+    mind = base.mind + stat_bonuses["mind"]
 
     """
     print("[DBG total_exp]", base.total_exp)
@@ -550,8 +638,8 @@ def compute_character_final_stats(
         # AtkMul = 1 + Lv//16 + Agi//16
         return 1 + level // 16 + agility // 16
 
-    main_mul = atk_mul(base.level, base.agility) if main_pow else 0
-    off_mul = atk_mul(base.level, base.agility) if off_pow else 0
+    main_mul = atk_mul(base.level, agility) if main_pow else 0
+    off_mul = atk_mul(base.level, agility) if off_pow else 0
 
     # --- 防御側（防具 + 盾） ---
     total_def = 0
@@ -581,49 +669,45 @@ def compute_character_final_stats(
     total_weight += equipment_weight(weapons_norm, armors_norm, eq.main_hand)
 
     # 防御力 = 防具合計 + Vit//2
-    defense = total_def + base.vitality // 2
+    defense = total_def + vitality // 2
 
     # 防御倍率：
     # 盾あり: shield_count + Lv//16 + Agi//16
     # 盾なし: Lv//32 + Agi//32
     if shield_count > 0:
-        defense_multiplier = shield_count + base.level // 16 + base.agility // 16
+        defense_multiplier = shield_count + base.level // 16 + agility // 16
     else:
-        defense_multiplier = base.level // 32 + base.agility // 32
+        defense_multiplier = base.level // 32 + agility // 32
 
     # 回避率[%] = (防具 Evasion 合計 *100) + (Agi//4)
-    evasion_percent = int(round(total_eva * 100 + (base.agility // 4)))
+    evasion_percent = int(round(total_eva * 100 + (agility // 4)))
 
     magic_defense = total_mdef
 
     # 魔防倍率 = Agi//32 + Int//32 + Mind//32
-    magic_def_multiplier = (
-        base.agility // 32 + base.intelligence // 32 + base.mind // 32
-    )
+    magic_def_multiplier = agility // 32 + intelligence // 32 + mind // 32
 
     # 魔法抵抗 = Int//2 + Mind//2
-    magic_resistance = base.intelligence // 2 + base.mind // 2
+    magic_resistance = intelligence // 2 + mind // 2
 
     # Attack Power = 武器威力 + Str//4
-    main_power = main_pow + base.strength // 4 if main_pow else 0
-    off_power = off_pow + base.strength // 4 if off_pow else 0
+    main_power = main_pow + strength // 4 if main_pow else 0
+    off_power = off_pow + strength // 4 if off_pow else 0
 
     # 命中率 = 武器命中% + Agi//4 + JobLv//4
-    main_accuracy = (
-        main_acc + base.agility // 4 + base.job_level // 4 if main_pow else 0
-    )
-    off_accuracy = off_acc + base.agility // 4 + base.job_level // 4 if off_pow else 0
+    main_accuracy = main_acc + agility // 4 + base.job_level // 4 if main_pow else 0
+    off_accuracy = off_acc + agility // 4 + base.job_level // 4 if off_pow else 0
 
     final = FinalCharacterStats(
         level=base.level,
         job_level=base.job_level,
         job_skill_point=base.job_skill_point,
         max_hp=base.max_hp,
-        strength=base.strength,
-        agility=base.agility,
-        vitality=base.vitality,
-        intelligence=base.intelligence,
-        mind=base.mind,
+        strength=strength,
+        agility=agility,
+        vitality=vitality,
+        intelligence=intelligence,
+        mind=mind,
         row=base.row,
         main_power=main_power,
         main_accuracy=main_accuracy,

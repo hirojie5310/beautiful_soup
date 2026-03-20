@@ -523,7 +523,10 @@
           "Notes": "Northwest chest",
           "Guarded By": "-"
         }
-      ]
+      ],
+      "Bonus": {
+        "Strength": 5
+      }
     },
     {
       "name": "Rune Staff",
@@ -553,7 +556,13 @@
       "Type": "Rod",
       "BasePower": 30,
       "BaseAccuracy": 0.9,
-      "Bonus": "Lightning  up, Ice  up, Fire  up",
+      "Bonus": {
+        "Lightning": "up",
+        "Ice": "up",
+        "Fire": "up",
+        "Intelligence": 5,
+        "Mind": 5
+      },
       "Value": 32500,
       "Weight": 0,
       "SpellCast": "Cure",
@@ -1428,6 +1437,9 @@
       "Price": 16500,
       "Value": 8250,
       "Weight": 1,
+      "Bonus": {
+        "Vitality": 5
+      },
       "SpellCast": "Protect",
       "EquippedBy": [
         "Kn",
@@ -1487,6 +1499,9 @@
       "BaseAccuracy": 0.8,
       "Value": 32500,
       "Weight": 1,
+      "Bonus": {
+        "Strength": 5
+      },
       "EquippedBy": [
         "Kn",
         "Ni"
@@ -1508,6 +1523,11 @@
       "Value": 32750,
       "Element": "Dark",
       "Weight": 1,
+      "Bonus": {
+        "Strength": 5,
+        "Agility": 5,
+        "Vitality": 5
+      },
       "EquippedBy": [
         "Kn",
         "MK",
@@ -1529,6 +1549,11 @@
       "BaseAccuracy": 1.0,
       "Value": 32750,
       "Weight": 1,
+      "Bonus": {
+        "Strength": 5,
+        "Agility": 5,
+        "Vitality": 5
+      },
       "EquippedBy": [
         "OK"
       ],
@@ -1652,6 +1677,10 @@
       "Value": 32500,
       "Element": "Dark",
       "Weight": 1,
+      "Bonus": {
+        "Agility": 5,
+        "Vitality": 5
+      },
       "EquippedBy": [
         "MK",
         "Ni"

@@ -24,7 +24,7 @@ if "pygame" not in sys.modules:
             return None
 
     pygame_stub = ModuleType("pygame")
-    pygame_stub.mixer = SimpleNamespace(Sound=_DummySound)
+    setattr(pygame_stub, "mixer", SimpleNamespace(Sound=_DummySound))
     sys.modules["pygame"] = pygame_stub
 
 from ui_pygame.controller import BattleController

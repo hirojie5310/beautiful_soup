@@ -35,10 +35,20 @@ def _load_named_index(
     path: Path, top_key: str, name_key: str = "name"
 ) -> Dict[str, Dict[str, Any]]:
     """共通：JSON を読み込み、top_key 配下を name_key で dict 化"""
-    with path.open(encoding="utf-8") as f:
-        raw = json.load(f)
+    raw = _load_json_file(path)
     items = raw.get(top_key, [])
     return {item[name_key]: item for item in items}
+
+
+def _load_json_file(path: Path) -> Any:
+    """JSON ファイルを読み込む。構文エラー時はパスと位置を付けて投げ直す。"""
+    try:
+        with path.open(encoding="utf-8") as f:
+            return json.load(f)
+    except json.JSONDecodeError as e:
+        raise ValueError(
+            f"JSON parse error in {path} (line {e.lineno}, column {e.colno}): {e.msg}"
+        ) from e
 
 
 def load_monsters(path: Path) -> Dict[str, Dict[str, Any]]:
@@ -68,8 +78,7 @@ def load_items(path: Path) -> Dict[str, Dict[str, Any]]:
 
 # ジョブJSONを読み込み、Jobオブジェクトの辞書を作成（データの“ロード”というより“ドメインモデルの組み立て）
 def load_jobs(path: Path) -> Dict[str, Job]:
-    with path.open(encoding="utf-8") as f:
-        data = json.load(f)  # ffiii_jobs_compact.json の中身
+    data = _load_json_file(path)  # ffiii_jobs_compact.json の中身
     jobs: Dict[str, Job] = {}
 
     for j in data["jobs"]:
@@ -101,8 +110,7 @@ def load_jobs(path: Path) -> Dict[str, Job]:
 
 
 def load_savedata(path: Path) -> dict:
-    with path.open(encoding="utf-8") as f:
-        return json.load(f)
+    return _load_json_file(path)
 
 
 def save_savedata(path: Path, save: dict) -> None:
@@ -175,8 +183,7 @@ from typing import cast
 
 def load_explicit_groups(path: str | Path) -> dict[str, ExplicitGroupDef]:
     path = Path(path)
-    with path.open(encoding="utf-8") as f:
-        raw = json.load(f)
+    raw = _load_json_file(path)
 
     if not isinstance(raw, dict):
         raise ValueError("explicit_groups.json must be an object")
