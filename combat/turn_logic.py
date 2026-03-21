@@ -1294,16 +1294,24 @@ def run_character_turn(
             def is_pure_status_spell(name: str) -> bool:
                 return any(name.endswith(ps) for ps in pure_status_spells)
 
+            raw_spell_type = normalize_text_basic(char_spell_json.get("Type") or "")
+            is_summon_spell = raw_spell_type in ("summon", "summon magic")
             is_drain_spell = False
             effect_text = normalize_text_basic(char_spell_json.get("Effect") or "")
             spell_name_raw = (
                 char_spell_json.get("Name") or char_spell_json.get("name") or ""
             )
             name_lower = normalize_text_basic(spell_name_raw)
+            pure_status_spell = is_pure_status_spell(spell_label)
             if "absorb hp" in effect_text or name_lower == "drain":
                 is_drain_spell = True
 
             is_tornado_spell = name_lower == "tornado"
+
+            if is_summon_spell and pure_status_spell:
+                logs.append(
+                    f"{char_name}は召喚魔法《{spell_label}》を呼び出した！ {suffix}"
+                )
 
             # ------------------------
             # AoE 実装（Reflect対応版 / Drainは合計ダメージ吸収）
@@ -1341,7 +1349,7 @@ def run_character_turn(
                     # --- ダメージ算出 ---
                     if is_tornado_spell:
                         dmg = 0
-                    elif is_pure_status_spell(spell_label):
+                    elif pure_status_spell:
                         dmg = 0
                     else:
                         dmg = magic_damage_char_to_enemy(
@@ -1557,7 +1565,7 @@ def run_character_turn(
                     prefix=f"{char_name}は《{spell_label}》を唱えた！ ",
                 )
                 return dmg_to_enemy, None
-            elif is_pure_status_spell(spell_label):
+            elif pure_status_spell:
                 dmg_to_enemy = 0
             else:
                 dmg_to_enemy = magic_damage_char_to_enemy(

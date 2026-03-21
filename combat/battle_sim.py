@@ -392,6 +392,21 @@ def _status_event_names(statuses: set) -> list[str]:
     return names
 
 
+def _format_character_action_header(
+    *, actor_name: str, action: PlannedAction, resolved_spell_name: Optional[str]
+) -> str:
+    command_label = action.command or action.kind.title()
+    if (
+        action.kind == "magic"
+        and isinstance(action.spell_name, str)
+        and action.spell_name
+        and resolved_spell_name
+        and resolved_spell_name != action.spell_name
+    ):
+        command_label = f"{command_label}: {resolved_spell_name}"
+    return f"▶ {actor_name} の行動（{command_label}）"
+
+
 def _append_enemy_diff_events(
     *,
     enemies: List[EnemyRuntime],
