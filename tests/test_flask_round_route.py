@@ -12,6 +12,7 @@ import pytest
 pytest.importorskip("flask")
 
 from combat.dto import BattleLifecycleDTO, ExecuteRoundOutputDTO, LIFECYCLE_READY
+from combat.enums import MagicType
 from combat.errors import DomainError, InputValidationError, InvalidLifecycleError
 from combat.usecases import BattleSession
 
@@ -152,6 +153,79 @@ def test_root_page_renders_html(monkeypatch):
             "name": "Bomb Fragment",
             "qty": 1,
         },
+    ]
+
+
+def test_root_page_embeds_formatted_magic_candidates(monkeypatch):
+    from types import SimpleNamespace
+
+    import adapters.flask_app as flask_app
+
+    session = cast(
+        BattleSession,
+        _DummySession(
+            party_members=[
+                _DummyMember(
+                    state=SimpleNamespace(
+                        mp_pool={8: 4, 7: 2, 6: 1},
+                        max_mp_pool={8: 8, 7: 7, 6: 6},
+                    )
+                )
+            ],
+            enemies=[_DummyMember(state=object()) for _ in range(3)],
+            state=_DummyState(items_by_name={}, save={}),
+            level_table=object(),
+        ),
+    )
+    session.party_magic_lists = [
+        [
+            ("Flare", MagicType.BLACK, 8),
+            ("Curaja", MagicType.WHITE, 7),
+            ("Bahamut: Mega Flare", MagicType.SUMMON, 6),
+        ]
+    ]
+
+    app = flask_app.create_app(session=session)
+
+    client = app.test_client()
+    resp = client.get("/")
+
+    assert resp.status_code == 200
+    body = resp.get_data(as_text=True)
+    match = re.search(
+        r'<script id="commandCandidatesJson" type="application/json">(.*?)</script>',
+        body,
+        re.S,
+    )
+    assert match is not None
+    command_payload = json.loads(match.group(1))
+    assert command_payload["magic_by_member"] == [
+        [
+            {
+                "label": "●LV8: Flare - 4/8",
+                "level": 8,
+                "max_uses": 8,
+                "name": "Flare",
+                "remaining_uses": 4,
+                "type": "Black Magic",
+            },
+            {
+                "label": "〇LV7: Curaja - 2/7",
+                "level": 7,
+                "max_uses": 7,
+                "name": "Curaja",
+                "remaining_uses": 2,
+                "type": "White Magic",
+            },
+            {
+                "label": "◎LV6: Bahamut: Mega Flare - 1/6",
+                "level": 6,
+                "max_uses": 6,
+                "name": "Bahamut: Mega Flare",
+                "remaining_uses": 1,
+                "type": "Summon Magic",
+            },
+        ]
     ]
 
 

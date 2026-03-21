@@ -689,21 +689,22 @@
         const rows = options.length ? options : [{ label: "(候補なし)", disabled: true }];
         candidatePanel.innerHTML = rows.map((entry, index) => {
           const isMagic = type === "magic";
-          const label = isMagic
-            ? String(entry || "")
-            : String(entry?.label || entry?.name || "");
-          const itemName = isMagic ? label : String(entry?.name || "");
-          const disabled = (!label || label === "(候補なし)" || (!isMagic && !itemName)) ? "disabled" : "";
-          const dataName = !isMagic && itemName ? `data-item-name="${escapeHtml(itemName)}"` : "";
+          const label = String(entry?.label || entry?.name || entry || "");
+          const magicName = isMagic ? String(entry?.name || "") : "";
+          const itemName = !isMagic ? String(entry?.name || "") : "";
+          const disabled = (!label || label === "(候補なし)" || (isMagic ? !magicName : !itemName)) ? "disabled" : "";
+          const dataName = isMagic
+            ? (magicName ? `data-magic-name="${escapeHtml(magicName)}"` : "")
+            : (itemName ? `data-item-name="${escapeHtml(itemName)}"` : "");
           return `<button type="button" class="btn" data-candidate-index="${index}" ${dataName} ${disabled}>${escapeHtml(label)}</button>`;
         }).join("<div style='height:6px;'></div>");
 
         candidatePanel.querySelectorAll("button").forEach((btn) => {
           btn.addEventListener("click", () => {
-            const pick = btn.textContent;
             if (type === "magic") {
-              if (!pick || pick === "(候補なし)") return;
-              const magicAction = buildMagicActionForSpell(pick);
+              const magicName = btn.dataset.magicName;
+              if (!magicName) return;
+              const magicAction = buildMagicActionForSpell(magicName);
               if (!magicAction) return;
               selectAction(magicAction);
             } else {

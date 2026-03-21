@@ -165,9 +165,9 @@ def _build_session_status_snapshot(session: BattleSession) -> dict[str, Any]:
     }
 
 
-
-
-def _build_battle_item_command_candidates(session: BattleSession) -> list[dict[str, Any]]:
+def _build_battle_item_command_candidates(
+    session: BattleSession,
+) -> list[dict[str, Any]]:
     state = getattr(session, "state", None)
     items_by_name = getattr(state, "items_by_name", {}) if state is not None else {}
     save = getattr(state, "save", {}) if state is not None else {}
@@ -191,6 +191,7 @@ def _build_battle_item_command_candidates(session: BattleSession) -> list[dict[s
             }
         )
     return candidates
+
 
 def _build_battle_item_meta(
     items_by_name: dict[str, dict[str, Any]],
@@ -634,19 +635,75 @@ def _require_str(payload: dict[str, Any], key: str) -> str:
     return value
 
 
+def _magic_type_prefix(magic_type: Any) -> str:
+    raw_label = getattr(magic_type, "value", magic_type)
+    label = str(raw_label or "").strip()
+    if label == "Black Magic":
+        return "●"
+    if label == "White Magic":
+        return "〇"
+    if label == "Summon Magic":
+        return "◎"
+    return ""
+
+
+def _format_magic_candidate_label(
+    *,
+    spell_name: str,
+    magic_type: Any,
+    level: Any,
+    remain: int,
+    max_uses: int,
+) -> str:
+    prefix = _magic_type_prefix(magic_type)
+    level_num = max(1, _safe_int(level, 1))
+    uses = f"{remain}/{max_uses}" if max_uses > 0 else f"{remain}"
+    return f"{prefix}LV{level_num}: {spell_name} - {uses}"
+
+
 def _build_magic_command_candidates_by_member(
     session: BattleSession,
-) -> list[list[str]]:
-    candidates: list[list[str]] = []
+) -> list[list[dict[str, Any]]]:
+    candidates: list[list[dict[str, Any]]] = []
     party_magic_lists = getattr(session, "party_magic_lists", [])
-    for row in party_magic_lists:
-        names: list[str] = []
+    party_members = list(getattr(session, "party_members", []))
+    for member_idx, row in enumerate(party_magic_lists):
+        member = party_members[member_idx] if member_idx < len(party_members) else None
+        state = getattr(member, "state", None)
+        mp_pool = getattr(state, "mp_pool", {}) if state is not None else {}
+        max_mp_pool = getattr(state, "max_mp_pool", {}) if state is not None else {}
+        if not isinstance(mp_pool, dict):
+            mp_pool = {}
+        if not isinstance(max_mp_pool, dict):
+            max_mp_pool = {}
+
+        names: list[dict[str, Any]] = []
         for cand in row or []:
-            if not isinstance(cand, (list, tuple)) or not cand:
+            if not isinstance(cand, (list, tuple)) or len(cand) < 3:
                 continue
             name = cand[0]
-            if isinstance(name, str) and name:
-                names.append(name)
+            if not isinstance(name, str) or not name:
+                continue
+            magic_type = cand[1]
+            level = max(1, _safe_int(cand[2], 1))
+            remain = _safe_int(mp_pool.get(level, 0), 0)
+            max_uses = _safe_int(max_mp_pool.get(level, remain), remain)
+            names.append(
+                {
+                    "name": name,
+                    "type": str(getattr(magic_type, "value", magic_type)),
+                    "level": level,
+                    "remaining_uses": remain,
+                    "max_uses": max_uses,
+                    "label": _format_magic_candidate_label(
+                        spell_name=name,
+                        magic_type=magic_type,
+                        level=level,
+                        remain=remain,
+                        max_uses=max_uses,
+                    ),
+                }
+            )
         candidates.append(names)
     return candidates
 
@@ -979,7 +1036,9 @@ def create_app(
                 battle_session
             ),
             magic_spell_meta_by_name=_build_magic_spell_meta(battle_session),
-            item_command_candidates=_build_battle_item_command_candidates(battle_session),
+            item_command_candidates=_build_battle_item_command_candidates(
+                battle_session
+            ),
             item_battle_meta_by_name=_build_battle_item_meta(
                 battle_session.state.items_by_name
             ),
