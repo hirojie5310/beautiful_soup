@@ -165,6 +165,13 @@ def _build_session_status_snapshot(session: BattleSession) -> dict[str, Any]:
     }
 
 
+def _item_type_label_prefix(item_type: Any) -> str:
+    raw = str(item_type).strip() if item_type is not None else ""
+    if not raw:
+        return "?"
+    return raw[0].upper()
+
+
 def _build_battle_item_command_candidates(
     session: BattleSession,
 ) -> list[dict[str, Any]]:
@@ -187,7 +194,7 @@ def _build_battle_item_command_candidates(
                 "name": item_name,
                 "item_type": item_type,
                 "qty": _safe_int(qty, 0),
-                "label": f"{item_name} ×{_safe_int(qty, 0)}",
+                "label": f"{_item_type_label_prefix(item_type)}: {item_name} ×{_safe_int(qty, 0)}",
             }
         )
     return candidates

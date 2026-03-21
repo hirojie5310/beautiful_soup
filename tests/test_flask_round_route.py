@@ -146,10 +146,10 @@ def test_root_page_renders_html(monkeypatch):
     assert match is not None
     command_payload = json.loads(match.group(1))
     assert command_payload["item"] == [
-        {"item_type": "Anywhere", "label": "Potion ×2", "name": "Potion", "qty": 2},
+        {"item_type": "Anywhere", "label": "A: Potion ×2", "name": "Potion", "qty": 2},
         {
             "item_type": "Combat",
-            "label": "Bomb Fragment ×1",
+            "label": "C: Bomb Fragment ×1",
             "name": "Bomb Fragment",
             "qty": 1,
         },
