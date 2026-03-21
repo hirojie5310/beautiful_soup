@@ -142,6 +142,170 @@ def get_job_name_from_party_entry(party_entry: Dict[str, Any]) -> str:
     return job_name
 
 
+def _normalize_cast_codes(raw_cast_by: Any) -> list[str]:
+    if not raw_cast_by:
+        return []
+    if isinstance(raw_cast_by, str):
+        return [part.strip() for part in raw_cast_by.split(",") if part.strip()]
+    if isinstance(raw_cast_by, list):
+        return [str(part).strip() for part in raw_cast_by if str(part).strip()]
+    return []
+
+
+def resolve_summon_spell_names_for_cast_code(
+    *,
+    spell_name: str,
+    spells_by_name: Dict[str, Dict[str, Any]],
+    cast_code: Optional[str],
+    allowed_names: Optional[Iterable[str]] = None,
+) -> list[str]:
+    """
+    固定スロットに保存されている召喚魔法の親名（例: Shiva）から、
+    そのジョブ/キャストコードで実際に使える子スペル名を返す。
+
+    - 黒/白など通常魔法はそのまま [spell_name]
+    - 召喚親なら CastBy と allowed_names を使って子へ解決
+    - Evoker のように複数候補がある場合は複数返す
+    """
+    spell_def = spells_by_name.get(spell_name)
+    if isinstance(spell_def, dict):
+        parent_name = spell_def.get("ParentSpellName")
+        if isinstance(parent_name, str) and parent_name:
+            parent_spell = spells_by_name.get(parent_name)
+            if isinstance(parent_spell, dict):
+                spell_name = parent_name
+            else:
+                return [spell_name]
+        else:
+            parent_spell = spell_def
+    else:
+        parent_spell = None
+        sibling_names = [
+            name
+            for name, raw in spells_by_name.items()
+            if isinstance(raw, dict) and raw.get("ParentSpellName") == spell_name
+        ]
+        if sibling_names:
+            resolved = []
+            for sibling_name in sibling_names:
+                sibling_def = spells_by_name.get(sibling_name) or {}
+                if not isinstance(sibling_def, dict):
+                    continue
+                if allowed_names is not None and sibling_name not in set(allowed_names):
+                    continue
+                child_cast_codes = _normalize_cast_codes(
+                    sibling_def.get("Cast By") or sibling_def.get("CastBy")
+                )
+                if cast_code and child_cast_codes and cast_code not in child_cast_codes:
+                    continue
+                resolved.append(sibling_name)
+            if resolved:
+                return resolved
+
+    if isinstance(parent_spell, dict):
+        if str(parent_spell.get("Type") or "").strip() != "Summon Magic":
+            return [spell_name]
+    else:
+        return [spell_name]
+
+    if not isinstance(parent_spell, dict):
+        return []
+
+    allowed_set = set(allowed_names) if allowed_names is not None else None
+    resolved: list[str] = []
+    for child in parent_spell.get("Spells") or []:
+        if not isinstance(child, dict):
+            continue
+        child_name = child.get("Name") or child.get("name")
+        if not isinstance(child_name, str) or not child_name:
+            continue
+        if allowed_set is not None and child_name not in allowed_set:
+            continue
+        child_cast_codes = _normalize_cast_codes(
+            child.get("Cast By") or child.get("CastBy")
+        )
+        if cast_code and child_cast_codes and cast_code not in child_cast_codes:
+            continue
+        resolved.append(child_name)
+    return resolved
+
+
+def resolve_equipped_spell_names_for_job(
+    *,
+    equipped_names: Iterable[str],
+    spells_by_name: Dict[str, Dict[str, Any]],
+    cast_code: Optional[str],
+    allowed_names: Optional[Iterable[str]] = None,
+) -> list[str]:
+    resolved: list[str] = []
+    for spell_name in equipped_names:
+        names = resolve_summon_spell_names_for_cast_code(
+            spell_name=spell_name,
+            spells_by_name=spells_by_name,
+            cast_code=cast_code,
+            allowed_names=allowed_names,
+        )
+        if names:
+            resolved.extend(names)
+            continue
+        resolved.append(spell_name)
+    return resolved
+
+
+def _magic_candidate_from_spell_name(
+    *,
+    spell_name: str,
+    spells_by_name: Dict[str, Dict[str, Any]],
+    allowed_lookup: Dict[str, MagicCandidate],
+) -> Optional[MagicCandidate]:
+    candidate = allowed_lookup.get(spell_name)
+    if candidate is not None:
+        return candidate
+
+    spell_json = spells_by_name.get(spell_name)
+    if not isinstance(spell_json, dict):
+        return None
+
+    spell_type = str(spell_json.get("Type") or "").strip()
+    if spell_type != "Summon Magic":
+        return None
+
+    level = int(spell_json.get("Level", 0) or 0)
+    return (spell_name, MagicType.SUMMON, level)
+
+
+def _build_equipped_magic_candidates(
+    *,
+    equipped_names: Iterable[str],
+    spells_by_name: Dict[str, Dict[str, Any]],
+    cast_code: Optional[str],
+    allowed_names: Optional[Iterable[str]],
+    allowed_lookup: Dict[str, MagicCandidate],
+) -> list[MagicCandidate]:
+    candidates: list[MagicCandidate] = []
+    for spell_name in equipped_names:
+        resolved_names = resolve_summon_spell_names_for_cast_code(
+            spell_name=spell_name,
+            spells_by_name=spells_by_name,
+            cast_code=cast_code,
+            allowed_names=allowed_names,
+        )
+        if len(resolved_names) <= 1:
+            candidate_name = resolved_names[0] if resolved_names else spell_name
+        else:
+            # Evoker 系の複数分岐召喚は、NES版に寄せて親名を 1 件だけ表示する。
+            candidate_name = spell_name
+
+        candidate = _magic_candidate_from_spell_name(
+            spell_name=candidate_name,
+            spells_by_name=spells_by_name,
+            allowed_lookup=allowed_lookup,
+        )
+        if candidate is not None:
+            candidates.append(candidate)
+    return candidates
+
+
 # キャラごとのジョブで使える魔法一覧生成（薄いラッパ）
 def build_party_magic_lists(state) -> List[List[MagicCandidate]]:
     return build_party_magic_lists_from_party(
@@ -196,11 +360,13 @@ def build_party_magic_lists_from_party(
             for name, magic_type, level in allowed_magic_list
         }
         out.append(
-            [
-                allowed_lookup[spell_name]
-                for spell_name in equipped_names
-                if spell_name in allowed_lookup
-            ]
+            _build_equipped_magic_candidates(
+                equipped_names=equipped_names,
+                spells_by_name=spells_by_name,
+                cast_code=cast_code,
+                allowed_names=allowed_names,
+                allowed_lookup=allowed_lookup,
+            )
         )
 
     # print(f"[DBG build_party_magic_lists_from_party]{out}")
@@ -258,11 +424,13 @@ def build_party_magic_info_from_party(
                 name: (name, magic_type, level)
                 for name, magic_type, level in allowed_magic_list
             }
-            magic_list = [
-                allowed_lookup[spell_name]
-                for spell_name in equipped_names
-                if spell_name in allowed_lookup
-            ]
+            magic_list = _build_equipped_magic_candidates(
+                equipped_names=equipped_names,
+                spells_by_name=spells_by_name,
+                cast_code=cast_code,
+                allowed_names=allowed_names,
+                allowed_lookup=allowed_lookup,
+            )
 
         out.append(
             PartyMagicInfo(
@@ -395,35 +563,29 @@ def expand_spells_for_summons(
     """
     expanded: Dict[str, Dict[str, Any]] = {}
 
-    def norm_cast(x) -> List[str]:
-        if not x:
-            return []
-        if isinstance(x, str):
-            return [c.strip() for c in x.split(",") if c.strip()]
-        if isinstance(x, list):
-            return [str(c).strip() for c in x if str(c).strip()]
-        return []
-
     for name, s in spells_by_name.items():
         raw_type = str(s.get("Type", "")).strip()
         child_list = s.get("Spells")
 
         # --- 親 Summon Magic（子配列を持つもの）だけ展開 ---
         if raw_type == "Summon Magic" and isinstance(child_list, list) and child_list:
-            parent_cast = norm_cast(s.get("CastBy"))
+            parent_cast = _normalize_cast_codes(s.get("CastBy"))
 
             for child in child_list:
                 child_name = child.get("Name") or child.get("name")
                 if not child_name:
                     continue
 
-                child_cast = norm_cast(child.get("CastBy") or child.get("Cast By"))
+                child_cast = _normalize_cast_codes(
+                    child.get("CastBy") or child.get("Cast By")
+                )
                 cast_merged = sorted(set(parent_cast + child_cast))
 
                 # 子の中身を基本そのまま使う（Power等を保持）
                 new_child = dict(child)
                 new_child["name"] = child_name  # load_spells 形式に合わせる
                 new_child["Type"] = "Summon"  # ★ここ重要
+                new_child["ParentSpellName"] = name
                 if cast_merged:
                     new_child["CastBy"] = cast_merged
 

@@ -56,7 +56,7 @@
         "LV1": [
           "Fire",
           "Blizzard",
-          null
+          "Cure"
         ],
         "LV2": [
           "Blind",
@@ -116,7 +116,7 @@
       "name": "Arc",
       "level": 40,
       "exp": 355821,
-      "job": "Geomancer",
+      "job": "Evoker",
       "job_level": {
         "level": 16,
         "skill_point": 12
@@ -135,6 +135,10 @@
           "skill_point": 68
         },
         "Geomancer": {
+          "level": 16,
+          "skill_point": 12
+        },
+        "Evoker": {
           "level": 16,
           "skill_point": 12
         }
@@ -183,42 +187,42 @@
       "portrait_key": "arc",
       "Magic": {
         "LV1": [
-          null,
+          "Chocobo",
           null,
           null
         ],
         "LV2": [
-          null,
+          "Shiva",
           null,
           null
         ],
         "LV3": [
-          null,
+          "Ramuh",
           null,
           null
         ],
         "LV4": [
-          null,
+          "Ifrit",
           null,
           null
         ],
         "LV5": [
-          null,
+          "Titan",
           null,
           null
         ],
         "LV6": [
-          null,
+          "Odin",
           null,
           null
         ],
         "LV7": [
-          null,
+          "Leviathan",
           null,
           null
         ],
         "LV8": [
-          null,
+          "Bahamut",
           null,
           null
         ]
@@ -450,7 +454,7 @@
     }
   ],
   "gil": 467237,
-  "CP": 255,
+  "CP": 227,
   "map": {
     "map": "grassland",
     "surface": "Grassland",

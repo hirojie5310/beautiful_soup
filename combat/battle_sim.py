@@ -38,7 +38,9 @@ from combat.turn_logic import run_enemy_turn, run_character_turn
 from combat.spell_repo import spell_from_json
 from combat.spell_repo import _choose_monster_special_spell
 from combat.magic_damage import healing_spell_kind
+from combat.magic_menu import resolve_summon_spell_names_for_cast_code
 from combat.progression import apply_job_sp_for_command
+from combat.constants import JOB_CAST_CODE
 
 
 def _is_turn_start_priority_action(action: Optional[PlannedAction]) -> bool:
@@ -283,9 +285,11 @@ def _resolve_character_targets(
 def _build_character_action_inputs(
     *,
     action: PlannedAction,
+    actor: Optional[PartyMemberRuntime],
     spells_by_name: Optional[Dict[str, Dict[str, Any]]],
     items_by_name: Optional[Dict[str, Dict[str, Any]]],
     logs: List[str],
+    rng: Optional[Random] = None,
 ) -> tuple[
     BattleKind,
     Optional[str],
@@ -304,6 +308,9 @@ def _build_character_action_inputs(
     char_spell_name = None
     char_item = None
 
+    if rng is None:
+        rng = Random()
+
     if action.kind in ("physical", "special", "run", "jump"):
         if action.kind == "special":
             char_attack_kind = "special"
@@ -321,6 +328,19 @@ def _build_character_action_inputs(
             char_battle_command = "Fight"
         else:
             spell_name = action.spell_name
+            cast_code = None
+            if actor is not None:
+                job_name = getattr(actor.job, "name", None)
+                if isinstance(job_name, str):
+                    cast_code = JOB_CAST_CODE.get(job_name)
+            if cast_code:
+                resolved_names = resolve_summon_spell_names_for_cast_code(
+                    spell_name=spell_name,
+                    spells_by_name=spells_by_name,
+                    cast_code=cast_code,
+                )
+                if resolved_names:
+                    spell_name = rng.choice(resolved_names)
             spell_json = spells_by_name.get(spell_name)
             if not spell_json:
                 logs.append(
@@ -658,9 +678,11 @@ def simulate_one_round_multi_party(
                 char_item,
             ) = _build_character_action_inputs(
                 action=action,
+                actor=pm,
                 spells_by_name=spells_by_name,
                 items_by_name=items_by_name,
                 logs=logs,
+                rng=rng,
             )
             char_weapon_hand: Literal["main", "off"] = "main"
 
