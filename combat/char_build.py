@@ -31,6 +31,7 @@ from combat.models import (
     PartyMemberRuntime,
     PartyEntryBuildResult,
 )
+from combat.magic_menu import load_equipped_magic_slots_from_entry
 from combat.elements import parse_elements
 from system.exp_system import LevelTable
 from utils.name_normalize import normalize_name
@@ -84,6 +85,7 @@ def build_party_members_from_save(
                 state=char_state,
                 equipment=eq,
                 equipment_logs=eq_logs,
+                magic_slots=load_equipped_magic_slots_from_entry(entry),
                 portrait_key=portrait_key,
             )
         )

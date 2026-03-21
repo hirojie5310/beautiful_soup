@@ -356,6 +356,7 @@ class PartyMemberRuntime:
 
     equipment_logs: List[str] = field(default_factory=list)
     equipment: Optional["EquipmentSet"] = None
+    magic_slots: Dict[int, List[Optional[str]]] = field(default_factory=dict)
 
     @property
     def hp(self) -> int:

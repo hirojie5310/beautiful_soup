@@ -21,6 +21,118 @@ from combat.models import (
     MagicType,
 )
 
+MAGIC_SLOT_COUNT = 3
+
+
+def _level_key(level: int) -> str:
+    return f"LV{max(1, min(8, int(level)))}"
+
+
+def _find_magic_container(data: Dict[str, Any]) -> Dict[str, Any]:
+    for key in ("magic", "Magic"):
+        value = data.get(key)
+        if isinstance(value, dict):
+            return value
+    return {}
+
+
+def load_equipped_magic_slots_from_entry(
+    party_entry: Dict[str, Any],
+) -> Dict[int, List[Optional[str]]]:
+    raw_magic = _find_magic_container(party_entry)
+    out: Dict[int, List[Optional[str]]] = {
+        lv: [None] * MAGIC_SLOT_COUNT for lv in range(1, 9)
+    }
+    for lv in range(1, 9):
+        raw_row = raw_magic.get(_level_key(lv))
+        row = out[lv]
+        if isinstance(raw_row, list):
+            for idx, spell_name in enumerate(raw_row[:MAGIC_SLOT_COUNT]):
+                if isinstance(spell_name, str) and spell_name:
+                    row[idx] = spell_name
+            continue
+        if isinstance(raw_row, dict):
+            for spell_name, slot_no in raw_row.items():
+                if not isinstance(spell_name, str) or not spell_name:
+                    continue
+                try:
+                    idx = int(slot_no) - 1
+                except (TypeError, ValueError):
+                    continue
+                if 0 <= idx < MAGIC_SLOT_COUNT:
+                    row[idx] = spell_name
+    return out
+
+
+def dump_equipped_magic_slots_to_entry(
+    party_entry: Dict[str, Any],
+    slots_by_level: Dict[int, List[Optional[str]]],
+) -> None:
+    raw_magic: Dict[str, List[Optional[str]]] = {}
+    for lv in range(1, 9):
+        row = list(slots_by_level.get(lv, [None] * MAGIC_SLOT_COUNT))[:MAGIC_SLOT_COUNT]
+        normalized_row: List[Optional[str]] = [
+            spell_name if isinstance(spell_name, str) and spell_name else None
+            for spell_name in row
+        ]
+        while len(normalized_row) < MAGIC_SLOT_COUNT:
+            normalized_row.append(None)
+        raw_magic[_level_key(lv)] = normalized_row
+    party_entry["Magic"] = raw_magic
+    party_entry.pop("magic", None)
+
+
+def load_party_inventory_magic_counts(
+    save: Dict[str, Any],
+) -> Dict[int, Dict[str, int]]:
+    inventory = save.get("inventory", {}) if isinstance(save, dict) else {}
+    raw_magic = _find_magic_container(inventory) if isinstance(inventory, dict) else {}
+    out: Dict[int, Dict[str, int]] = {lv: {} for lv in range(1, 9)}
+    for lv in range(1, 9):
+        raw_row = raw_magic.get(_level_key(lv), {})
+        if not isinstance(raw_row, dict):
+            continue
+        for spell_name, count in raw_row.items():
+            if not isinstance(spell_name, str) or not spell_name:
+                continue
+            try:
+                qty = int(count)
+            except (TypeError, ValueError):
+                continue
+            if qty > 0:
+                out[lv][spell_name] = qty
+    return out
+
+
+def build_magic_stock_by_level(
+    save: Dict[str, Any],
+    spell_meta_by_name: Dict[str, Dict[str, Any]],
+) -> Dict[str, List[str]]:
+    counts = load_party_inventory_magic_counts(save)
+    party = save.get("party", []) if isinstance(save, dict) else []
+    for entry in party:
+        if not isinstance(entry, dict):
+            continue
+        for lv, row in load_equipped_magic_slots_from_entry(entry).items():
+            for spell_name in row:
+                if isinstance(spell_name, str) and spell_name:
+                    remain = counts.get(lv, {}).get(spell_name, 0)
+                    if remain > 0:
+                        counts[lv][spell_name] = remain - 1
+
+    type_order = {"Black Magic": 0, "White Magic": 1, "Summon Magic": 2}
+    stock_by_level: Dict[str, List[str]] = {}
+    for lv in range(1, 9):
+        expanded: List[tuple[int, str]] = []
+        for spell_name, qty in counts.get(lv, {}).items():
+            magic_type = str(spell_meta_by_name.get(spell_name, {}).get("type") or "")
+            expanded.extend(
+                [(type_order.get(magic_type, 99), spell_name)] * max(0, qty)
+            )
+        expanded.sort(key=lambda row: (row[0], row[1]))
+        stock_by_level[str(lv)] = [name for _, name in expanded]
+    return stock_by_level
+
 
 # party_entry からジョブ名を取得（揺れ対策）
 def get_job_name_from_party_entry(party_entry: Dict[str, Any]) -> str:
@@ -63,12 +175,33 @@ def build_party_magic_lists_from_party(
         cast_code = job_cast_code.get(job_name)
         allowed_names = allowed_spell_names_for_job(job_data)
 
-        magic_list = build_magic_list(
+        allowed_magic_list = build_magic_list(
             spells_expanded,
             allowed_names=allowed_names,
             cast_code=cast_code,
         )
-        out.append(magic_list)
+        equipped_slots = load_equipped_magic_slots_from_entry(entry)
+        equipped_names = [
+            spell_name
+            for lv in range(1, 9)
+            for spell_name in equipped_slots[lv]
+            if isinstance(spell_name, str) and spell_name
+        ]
+        if not equipped_names:
+            out.append(allowed_magic_list)
+            continue
+
+        allowed_lookup = {
+            name: (name, magic_type, level)
+            for name, magic_type, level in allowed_magic_list
+        }
+        out.append(
+            [
+                allowed_lookup[spell_name]
+                for spell_name in equipped_names
+                if spell_name in allowed_lookup
+            ]
+        )
 
     # print(f"[DBG build_party_magic_lists_from_party]{out}")
     return out
@@ -107,11 +240,29 @@ def build_party_magic_info_from_party(
         cast_code = job_cast_code.get(job_name)
         allowed_names = allowed_spell_names_for_job(job_data)
 
-        magic_list = build_magic_list(
+        allowed_magic_list = build_magic_list(
             spells_expanded,
             allowed_names=allowed_names,
             cast_code=cast_code,
         )
+        magic_list = allowed_magic_list
+        equipped_slots = load_equipped_magic_slots_from_entry(entry)
+        equipped_names = [
+            spell_name
+            for lv in range(1, 9)
+            for spell_name in equipped_slots[lv]
+            if isinstance(spell_name, str) and spell_name
+        ]
+        if equipped_names:
+            allowed_lookup = {
+                name: (name, magic_type, level)
+                for name, magic_type, level in allowed_magic_list
+            }
+            magic_list = [
+                allowed_lookup[spell_name]
+                for spell_name in equipped_names
+                if spell_name in allowed_lookup
+            ]
 
         out.append(
             PartyMagicInfo(

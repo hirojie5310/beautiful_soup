@@ -3,7 +3,7 @@
     {
       "name": "Runeth",
       "level": 41,
-      "exp": 363846,
+      "exp": 374438,
       "job": "Sage",
       "job_level": {
         "level": 99,
@@ -52,6 +52,48 @@
         "body": "Black Robe",
         "arms": "Protect Ring"
       },
+      "Magic": {
+        "LV1": [
+          "Fire",
+          "Blizzard",
+          null
+        ],
+        "LV2": [
+          "Blind",
+          "Thunder",
+          "Shiva"
+        ],
+        "LV3": [
+          "Fira",
+          "Thundara",
+          "Cura"
+        ],
+        "LV4": [
+          "Break",
+          "Shade",
+          null
+        ],
+        "LV5": [
+          "Thundaga",
+          "Bio",
+          null
+        ],
+        "LV6": [
+          "Firaga",
+          "Warp",
+          null
+        ],
+        "LV7": [
+          "Drain",
+          "Quake",
+          "Curaja"
+        ],
+        "LV8": [
+          "Flare",
+          "Meteor",
+          "Bahamut"
+        ]
+      },
       "status_effects": {
         "Poison": true,
         "Blind": false,
@@ -73,11 +115,11 @@
     {
       "name": "Arc",
       "level": 40,
-      "exp": 345229,
+      "exp": 355821,
       "job": "Geomancer",
       "job_level": {
-        "level": 14,
-        "skill_point": 72
+        "level": 16,
+        "skill_point": 12
       },
       "job_levels": {
         "Dragoon": {
@@ -93,8 +135,8 @@
           "skill_point": 68
         },
         "Geomancer": {
-          "level": 14,
-          "skill_point": 72
+          "level": 16,
+          "skill_point": 12
         }
       },
       "hp": 245,
@@ -138,12 +180,54 @@
         "Partial Petrification (Full)": false
       },
       "image_name": "ch_Arc",
-      "portrait_key": "arc"
+      "portrait_key": "arc",
+      "Magic": {
+        "LV1": [
+          null,
+          null,
+          null
+        ],
+        "LV2": [
+          null,
+          null,
+          null
+        ],
+        "LV3": [
+          null,
+          null,
+          null
+        ],
+        "LV4": [
+          null,
+          null,
+          null
+        ],
+        "LV5": [
+          null,
+          null,
+          null
+        ],
+        "LV6": [
+          null,
+          null,
+          null
+        ],
+        "LV7": [
+          null,
+          null,
+          null
+        ],
+        "LV8": [
+          null,
+          null,
+          null
+        ]
+      }
     },
     {
       "name": "Refia",
-      "level": 41,
-      "exp": 389989,
+      "level": 42,
+      "exp": 400581,
       "job": "Dragoon",
       "job_level": {
         "level": 99,
@@ -204,16 +288,58 @@
         "Partial Petrification (Full)": false
       },
       "image_name": "ch_Refia",
-      "portrait_key": "refia"
+      "portrait_key": "refia",
+      "Magic": {
+        "LV1": [
+          null,
+          null,
+          null
+        ],
+        "LV2": [
+          null,
+          null,
+          null
+        ],
+        "LV3": [
+          null,
+          null,
+          null
+        ],
+        "LV4": [
+          null,
+          null,
+          null
+        ],
+        "LV5": [
+          null,
+          null,
+          null
+        ],
+        "LV6": [
+          null,
+          null,
+          null
+        ],
+        "LV7": [
+          null,
+          null,
+          null
+        ],
+        "LV8": [
+          null,
+          null,
+          null
+        ]
+      }
     },
     {
       "name": "Ingus",
-      "level": 40,
-      "exp": 361189,
-      "job": "Bard",
+      "level": 41,
+      "exp": 371781,
+      "job": "Thief",
       "job_level": {
-        "level": 22,
-        "skill_point": 12
+        "level": 25,
+        "skill_point": 96
       },
       "job_levels": {
         "Dragoon": {
@@ -231,6 +357,10 @@
         "Bard": {
           "level": 22,
           "skill_point": 12
+        },
+        "Thief": {
+          "level": 25,
+          "skill_point": 96
         }
       },
       "hp": 245,
@@ -252,10 +382,10 @@
       "mind": 11,
       "row": "back",
       "equipment": {
-        "main_hand": "Loki Harp",
-        "off_hand": null,
+        "main_hand": "Air Knife",
+        "off_hand": "Ice Shield",
         "head": "Ribbon",
-        "body": "Bard Vest",
+        "body": "Black Garb",
         "arms": "Protect Ring"
       },
       "status_effects": {
@@ -274,10 +404,52 @@
         "Partial Petrification (Full)": false
       },
       "image_name": "ch_Ingus",
-      "portrait_key": "ingus"
+      "portrait_key": "ingus",
+      "Magic": {
+        "LV1": [
+          null,
+          null,
+          null
+        ],
+        "LV2": [
+          null,
+          null,
+          null
+        ],
+        "LV3": [
+          null,
+          null,
+          null
+        ],
+        "LV4": [
+          null,
+          null,
+          null
+        ],
+        "LV5": [
+          null,
+          null,
+          null
+        ],
+        "LV6": [
+          null,
+          null,
+          null
+        ],
+        "LV7": [
+          null,
+          null,
+          null
+        ],
+        "LV8": [
+          null,
+          null,
+          null
+        ]
+      }
     }
   ],
-  "gil": 443519,
+  "gil": 467237,
   "CP": 255,
   "map": {
     "map": "grassland",
@@ -292,7 +464,7 @@
       "Noah's Lute": 0
     },
     "Anywhere": {
-      "Potion": 5,
+      "Potion": 9,
       "Hi Potion": 3,
       "Elixir": 9,
       "Antidote": 1
@@ -319,6 +491,80 @@
     "Equipment": {
       "Onion Helm": 1,
       "Onion Sword": 1
+    },
+    "Magic": {
+      "LV1": {
+        "Blizzard": 2,
+        "Fire": 2,
+        "Sleep": 2,
+        "Cure": 2,
+        "Poisona": 2,
+        "Sight": 2,
+        "Chocobo": 2
+      },
+      "LV2": {
+        "Blind": 2,
+        "Poison": 2,
+        "Thunder": 2,
+        "Aero": 2,
+        "Mini": 2,
+        "Toad": 2,
+        "Shiva": 2
+      },
+      "LV3": {
+        "Blizzara": 2,
+        "Fira": 2,
+        "Thundara": 2,
+        "Blindna": 2,
+        "Cura": 2,
+        "Teleport": 2,
+        "Ramuh": 2
+      },
+      "LV4": {
+        "Blizzaga": 2,
+        "Break": 2,
+        "Shade": 2,
+        "Confuse": 2,
+        "Libra": 2,
+        "Silence": 2,
+        "Ifrit": 2
+      },
+      "LV5": {
+        "Erase": 2,
+        "Raze": 2,
+        "Thundaga": 2,
+        "Curaga": 2,
+        "Protect": 2,
+        "Raise": 2,
+        "Titan": 2
+      },
+      "LV6": {
+        "Bio": 2,
+        "Firaga": 2,
+        "Warp": 2,
+        "Aeroga": 2,
+        "Haste": 2,
+        "Stona": 2,
+        "Odin": 2
+      },
+      "LV7": {
+        "Breakga": 2,
+        "Drain": 2,
+        "Quake": 2,
+        "Curaja": 2,
+        "Esuna": 2,
+        "Reflect": 2,
+        "Leviathan": 2
+      },
+      "LV8": {
+        "Death": 2,
+        "Flare": 2,
+        "Meteor": 2,
+        "Arise": 2,
+        "Holy": 2,
+        "Tornado": 2,
+        "Bahamut": 2
+      }
     }
   },
   "event_flag": {

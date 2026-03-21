@@ -23,7 +23,13 @@ from combat.progression import apply_victory_rewards
 from combat.input_ui import normalize_battle_command
 from combat.inventory import build_item_list, is_item_visible_in_context
 from combat.item_effects import infer_battle_item_target_side
-from combat.magic_menu import build_party_magic_info, build_party_magic_lists
+from combat.magic_menu import (
+    build_magic_stock_by_level,
+    build_party_magic_info,
+    build_party_magic_lists,
+    dump_equipped_magic_slots_to_entry,
+    load_equipped_magic_slots_from_entry,
+)
 from combat.magic_damage import healing_spell_kind
 from combat.runtime_state import init_runtime_state
 from combat.char_build import (
@@ -626,6 +632,35 @@ def _refresh_session_party(session: BattleSession) -> None:
 
     session.party_magic_info = build_party_magic_info(session.state)
     session.party_magic_lists = build_party_magic_lists(session.state)
+    setattr(session, "menu_magic_setup", None)
+
+
+def _persist_menu_magic_setup_to_save(
+    session: BattleSession, setup: dict[str, Any]
+) -> None:
+    save = getattr(getattr(session, "state", None), "save", None)
+    if not isinstance(save, dict):
+        return
+    party = save.get("party")
+    equipped = setup.get("equipped_by_member", [])
+    if not isinstance(party, list) or not isinstance(equipped, list):
+        return
+
+    for idx, entry in enumerate(party):
+        if not isinstance(entry, dict) or idx >= len(equipped):
+            continue
+        member_rows = equipped[idx] if isinstance(equipped[idx], dict) else {}
+        slots_by_level: dict[int, list[str | None]] = {}
+        for lv in range(1, 9):
+            raw_row = member_rows.get(str(lv)) or [None, None, None]
+            row: list[str | None] = []
+            if isinstance(raw_row, list):
+                for slot_value in raw_row[:3]:
+                    row.append(slot_value if isinstance(slot_value, str) else None)
+            while len(row) < 3:
+                row.append(None)
+            slots_by_level[lv] = row
+        dump_equipped_magic_slots_to_entry(entry, slots_by_level)
 
 
 def _require_int(payload: dict[str, Any], key: str) -> int:
@@ -746,36 +781,43 @@ def _ensure_menu_magic_setup(session: BattleSession) -> dict[str, Any]:
         return existing
 
     spell_meta = _build_magic_spell_meta(session)
-    slots_by_level: dict[str, list[tuple[int, str]]] = {
-        str(lv): [] for lv in range(1, 9)
-    }
-
-    for name, info in spell_meta.items():
-        level = _safe_int(info.get("level", 1), 1)
-        level = max(1, min(8, level))
-        magic_type = str(info.get("type") or "")
-        if "Black" in magic_type:
-            type_order = 0
-        elif "White" in magic_type:
-            type_order = 1
-        elif "Summon" in magic_type:
-            type_order = 2
-        else:
+    save = getattr(getattr(session, "state", None), "save", {})
+    stock_by_level = build_magic_stock_by_level(save, spell_meta)
+    equipped_by_member: list[dict[str, list[str | None]]] = []
+    has_equipped_magic = False
+    for entry in save.get("party", []) if isinstance(save, dict) else []:
+        if not isinstance(entry, dict):
             continue
-        slots_by_level[str(level)].append((type_order, name))
+        slots = load_equipped_magic_slots_from_entry(entry)
+        if any(spell_name for row in slots.values() for spell_name in row):
+            has_equipped_magic = True
+        equipped_by_member.append({str(lv): list(slots[lv]) for lv in range(1, 9)})
 
-    stock_by_level: dict[str, list[str]] = {}
-    for lv in range(1, 9):
-        grouped = sorted(slots_by_level[str(lv)], key=lambda row: (row[0], row[1]))
-        black = [name for typ, name in grouped if typ == 0][:3]
-        white = [name for typ, name in grouped if typ == 1][:3]
-        summon = [name for typ, name in grouped if typ == 2][:1]
-        stock_by_level[str(lv)] = black + white + summon
-
-    member_count = len(getattr(session, "party_members", []))
-    equipped_by_member = [
-        {str(lv): [None, None, None] for lv in range(1, 9)} for _ in range(member_count)
-    ]
+    if not has_equipped_magic and not any(
+        stock_by_level.get(str(lv)) for lv in range(1, 9)
+    ):
+        slots_by_level: dict[str, list[tuple[int, str]]] = {
+            str(lv): [] for lv in range(1, 9)
+        }
+        for name, info in spell_meta.items():
+            level = _safe_int(info.get("level", 1), 1)
+            level = max(1, min(8, level))
+            magic_type = str(info.get("type") or "")
+            if "Black" in magic_type:
+                type_order = 0
+            elif "White" in magic_type:
+                type_order = 1
+            elif "Summon" in magic_type:
+                type_order = 2
+            else:
+                continue
+            slots_by_level[str(level)].append((type_order, name))
+        for lv in range(1, 9):
+            grouped = sorted(slots_by_level[str(lv)], key=lambda row: (row[0], row[1]))
+            black = [name for typ, name in grouped if typ == 0][:3]
+            white = [name for typ, name in grouped if typ == 1][:3]
+            summon = [name for typ, name in grouped if typ == 2][:1]
+            stock_by_level[str(lv)] = black + white + summon
 
     setup = {
         "stock_by_level": stock_by_level,
@@ -1319,7 +1361,9 @@ def create_app(
         if spell_name in stock_row:
             stock_row.remove(spell_name)
         equipped[member_index][lv_key] = row
-        stock[lv_key] = sorted(set(stock_row))
+        stock[lv_key] = sorted(stock_row)
+        _persist_menu_magic_setup_to_save(battle_session, setup)
+        _refresh_session_party(battle_session)
 
         return (
             jsonify(
@@ -1373,7 +1417,9 @@ def create_app(
         equipped[member_index][lv_key] = row
         stock_row = stock.get(lv_key, [])
         stock_row.append(old)
-        stock[lv_key] = sorted(set(stock_row))
+        stock[lv_key] = sorted(stock_row)
+        _persist_menu_magic_setup_to_save(battle_session, setup)
+        _refresh_session_party(battle_session)
 
         return (
             jsonify(
@@ -1416,6 +1462,8 @@ def create_app(
         row_a[slot_index], row_b[slot_index] = row_b[slot_index], row_a[slot_index]
         equipped[from_member_index][lv_key] = row_a
         equipped[to_member_index][lv_key] = row_b
+        _persist_menu_magic_setup_to_save(battle_session, setup)
+        _refresh_session_party(battle_session)
 
         return (
             jsonify(
