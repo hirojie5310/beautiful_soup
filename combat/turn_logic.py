@@ -121,6 +121,72 @@ def _enemy_is_tornado_immune(enemy_def: dict[str, Any] | None) -> bool:
     return bool(enemy_def.get("Boss") or enemy_def.get("IsBoss"))
 
 
+def _format_enemy_peep_lines(enemy_name: str, enemy_json: dict[str, Any]) -> list[str]:
+    ev = enemy_json.get("ElementalVulnerability", {}) or {}
+
+    def _fmt_elems(raw: Any) -> str:
+        elems = parse_elements(raw)
+        if not elems:
+            return ""
+        return "/".join(e.title() for e in elems)
+
+    lines: list[str] = []
+    weak_s = _fmt_elems(ev.get("Weakness"))
+    absorb_s = _fmt_elems(ev.get("Absorb"))
+    resist_s = _fmt_elems(ev.get("Resistance"))
+
+    if weak_s:
+        lines.append(f"{enemy_name}は{weak_s}属性に弱い。")
+    if absorb_s:
+        lines.append(f"{enemy_name}は{absorb_s}属性を吸収する。")
+    if resist_s:
+        lines.append(f"{enemy_name}は{resist_s}属性に強い。")
+    if not lines:
+        lines.append(f"{enemy_name}の属性相性に目立った特徴はないようだ。")
+
+    return lines
+
+
+def _append_study_lines(
+    logs: list[str], enemy_name: str, enemy_state: BattleActorState
+) -> None:
+    hpmax = enemy_state.max_hp if enemy_state.max_hp is not None else enemy_state.hp
+    logs.append(f"{enemy_name}のHPは{enemy_state.hp}/{hpmax}だ。")
+
+
+def _format_character_peep_lines(
+    char_name: str, char_stats: FinalCharacterStats
+) -> list[str]:
+    def _fmt_elems(raw: Any) -> str:
+        elems = parse_elements(sorted(raw) if raw else [])
+        if not elems:
+            return ""
+        return "/".join(e.title() for e in elems)
+
+    lines: list[str] = []
+    weak_s = _fmt_elems(char_stats.elemental_weaks)
+    absorb_s = _fmt_elems(char_stats.elemental_absorbs)
+    resist_s = _fmt_elems(char_stats.elemental_resists)
+
+    if weak_s:
+        lines.append(f"{char_name}は{weak_s}属性に弱い。")
+    if absorb_s:
+        lines.append(f"{char_name}は{absorb_s}属性を吸収する。")
+    if resist_s:
+        lines.append(f"{char_name}は{resist_s}属性に強い。")
+    if not lines:
+        lines.append(f"{char_name}の属性相性に目立った特徴はないようだ。")
+
+    return lines
+
+
+def _append_character_study_lines(
+    logs: list[str], char_name: str, char_state: BattleActorState
+) -> None:
+    hpmax = char_state.max_hp if char_state.max_hp is not None else char_state.hp
+    logs.append(f"{char_name}のHPは{char_state.hp}/{hpmax}だ。")
+
+
 def _to_int(v: Any) -> int:
     try:
         return int(v)
@@ -1307,11 +1373,18 @@ def run_character_turn(
                 is_drain_spell = True
 
             is_tornado_spell = name_lower == "tornado"
+            is_libra_spell = name_lower == "libra"
 
             if is_summon_spell and pure_status_spell:
                 logs.append(
                     f"{char_name}は召喚魔法《{spell_label}》を呼び出した！ {suffix}"
                 )
+
+            if is_libra_spell:
+                logs.append(f"{char_name}は《{spell_label}》を唱えた！")
+                _append_study_lines(logs, enemy_name, enemy_state)
+                logs.extend(_format_enemy_peep_lines(enemy_name, enemy_json))
+                return 0, None
 
             # ------------------------
             # AoE 実装（Reflect対応版 / Drainは合計ダメージ吸収）
@@ -1928,41 +2001,14 @@ def run_character_turn(
         if char_battle_command == "Peep":
             handled_special = True
             logs.append(f"{char_name}の《Peep》！")
-
-            ev = enemy_json.get("ElementalVulnerability", {}) or {}
-
-            def _fmt_elems(raw) -> str:
-                elems = parse_elements(raw)
-                if not elems:
-                    return ""
-                return "/".join(e.title() for e in elems)
-
-            weak_s = _fmt_elems(ev.get("Weakness"))
-            absorb_s = _fmt_elems(ev.get("Absorb"))
-            resist_s = _fmt_elems(ev.get("Resistance"))
-
-            if weak_s:
-                logs.append(f"{enemy_name}は{weak_s}属性に弱い。")
-            if absorb_s:
-                logs.append(f"{enemy_name}は{absorb_s}属性を吸収する。")
-            if resist_s:
-                logs.append(f"{enemy_name}は{resist_s}属性に強い。")
-
-            if not (weak_s or absorb_s or resist_s):
-                logs.append(f"{enemy_name}の属性相性に目立った特徴はないようだ。")
-
+            logs.extend(_format_enemy_peep_lines(enemy_name, enemy_json))
             dmg_to_enemy = 0
 
         # Scholar: Study
         if char_battle_command == "Study":
             handled_special = True
             logs.append(f"{char_name}の《Study》！")
-
-            hpmax = (
-                enemy_state.max_hp if enemy_state.max_hp is not None else enemy_state.hp
-            )
-            logs.append(f"{enemy_name}のHPは{enemy_state.hp}/{hpmax}だ。")
-
+            _append_study_lines(logs, enemy_name, enemy_state)
             dmg_to_enemy = 0
 
         # Geomancer: Terrain
@@ -2961,7 +3007,15 @@ def run_enemy_turn(
                         dmg_to_char = 0
                         enemy_attack = None
 
-                # 3-2) Reflect（敵自身にバリア）
+                # 3-2) Libra（Study + Peep 相当）
+                elif name_lower == "libra":
+                    logs.append(f"{enemy_name}の《{spell_name}》！")
+                    _append_character_study_lines(logs, char_name, char_state)
+                    logs.extend(_format_character_peep_lines(char_name, char_stats))
+                    dmg_to_char = 0
+                    enemy_attack = None
+
+                # 3-3) Reflect（敵自身にバリア）
                 elif name_lower == "reflect":
                     apply_reflect_to_actor(
                         target_state=enemy_state,

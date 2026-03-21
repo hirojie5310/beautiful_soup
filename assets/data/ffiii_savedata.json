@@ -3,7 +3,7 @@
     {
       "name": "Runeth",
       "level": 41,
-      "exp": 375918,
+      "exp": 375922,
       "job": "Sage",
       "job_level": {
         "level": 99,
@@ -71,7 +71,7 @@
         "LV4": [
           "Break",
           "Shade",
-          null
+          "Libra"
         ],
         "LV5": [
           "Thundaga",
@@ -115,11 +115,11 @@
     {
       "name": "Arc",
       "level": 40,
-      "exp": 357301,
+      "exp": 357305,
       "job": "Evoker",
       "job_level": {
         "level": 16,
-        "skill_point": 52
+        "skill_point": 64
       },
       "job_levels": {
         "Dragoon": {
@@ -140,7 +140,7 @@
         },
         "Evoker": {
           "level": 16,
-          "skill_point": 52
+          "skill_point": 64
         }
       },
       "hp": 245,
@@ -231,7 +231,7 @@
     {
       "name": "Refia",
       "level": 42,
-      "exp": 402061,
+      "exp": 402065,
       "job": "Dragoon",
       "job_level": {
         "level": 99,
@@ -339,11 +339,11 @@
     {
       "name": "Ingus",
       "level": 41,
-      "exp": 373261,
-      "job": "Thief",
+      "exp": 373265,
+      "job": "Scholar",
       "job_level": {
         "level": 26,
-        "skill_point": 68
+        "skill_point": 80
       },
       "job_levels": {
         "Dragoon": {
@@ -364,7 +364,11 @@
         },
         "Thief": {
           "level": 26,
-          "skill_point": 68
+          "skill_point": 80
+        },
+        "Scholar": {
+          "level": 26,
+          "skill_point": 80
         }
       },
       "hp": 245,
@@ -453,8 +457,8 @@
       }
     }
   ],
-  "gil": 470207,
-  "CP": 254,
+  "gil": 470210,
+  "CP": 223,
   "map": {
     "map": "grassland",
     "surface": "Grassland",
@@ -468,7 +472,7 @@
       "Noah's Lute": 0
     },
     "Anywhere": {
-      "Potion": 10,
+      "Potion": 11,
       "Hi Potion": 3,
       "Elixir": 9,
       "Antidote": 1
