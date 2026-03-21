@@ -202,7 +202,8 @@ def test_root_page_embeds_formatted_magic_candidates(monkeypatch):
     assert command_payload["magic_by_member"] == [
         [
             {
-                "label": "●LV8: Flare - 4/8",
+                "group_label": "LV8 (4/8)",
+                "label": "●Flare",
                 "level": 8,
                 "max_uses": 8,
                 "name": "Flare",
@@ -210,7 +211,8 @@ def test_root_page_embeds_formatted_magic_candidates(monkeypatch):
                 "type": "Black Magic",
             },
             {
-                "label": "〇LV7: Curaja - 2/7",
+                "group_label": "LV7 (2/7)",
+                "label": "〇Curaja",
                 "level": 7,
                 "max_uses": 7,
                 "name": "Curaja",
@@ -218,7 +220,8 @@ def test_root_page_embeds_formatted_magic_candidates(monkeypatch):
                 "type": "White Magic",
             },
             {
-                "label": "◎LV6: Bahamut: Mega Flare - 1/6",
+                "group_label": "LV6 (1/6)",
+                "label": "◎Bahamut: Mega Flare",
                 "level": 6,
                 "max_uses": 6,
                 "name": "Bahamut: Mega Flare",

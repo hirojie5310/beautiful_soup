@@ -235,6 +235,22 @@
         display: none;
       }
       .candidate-panel.open { display: block; }
+      .candidate-group {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 10px;
+        margin-bottom: 8px;
+      }
+      .candidate-group-label {
+        color: #ddd;
+        font-weight: 700;
+      }
+      .candidate-group-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
       .log-panel {
         display: none;
         border: 1px solid rgba(255, 255, 255, 0.25);
@@ -686,18 +702,37 @@
           ? (commandCandidates.magic_by_member?.[currentMemberIndex] || [])
           : (commandCandidates.item || []);
 
-        const rows = options.length ? options : [{ label: "(候補なし)", disabled: true }];
-        candidatePanel.innerHTML = rows.map((entry, index) => {
-          const isMagic = type === "magic";
-          const label = String(entry?.label || entry?.name || entry || "");
-          const magicName = isMagic ? String(entry?.name || "") : "";
-          const itemName = !isMagic ? String(entry?.name || "") : "";
-          const disabled = (!label || label === "(候補なし)" || (isMagic ? !magicName : !itemName)) ? "disabled" : "";
-          const dataName = isMagic
-            ? (magicName ? `data-magic-name="${escapeHtml(magicName)}"` : "")
-            : (itemName ? `data-item-name="${escapeHtml(itemName)}"` : "");
-          return `<button type="button" class="btn" data-candidate-index="${index}" ${dataName} ${disabled}>${escapeHtml(label)}</button>`;
-        }).join("<div style='height:6px;'></div>");
+        if (type === "magic") {
+          const grouped = new Map();
+          options.forEach((entry, index) => {
+            const groupLabel = String(entry?.group_label || "").trim() || "その他";
+            if (!grouped.has(groupLabel)) grouped.set(groupLabel, []);
+            grouped.get(groupLabel).push({ entry, index });
+          });
+          if (!grouped.size) {
+            candidatePanel.innerHTML = '<button type="button" class="btn" disabled>(候補なし)</button>';
+          } else {
+            candidatePanel.innerHTML = Array.from(grouped.entries()).map(([groupLabel, rows]) => {
+              const buttons = rows.map(({ entry, index }) => {
+                const label = String(entry?.label || entry?.name || "");
+                const magicName = String(entry?.name || "");
+                const disabled = (!label || !magicName) ? "disabled" : "";
+                const dataName = magicName ? `data-magic-name="${escapeHtml(magicName)}"` : "";
+                return `<button type="button" class="btn" data-candidate-index="${index}" ${dataName} ${disabled}>${escapeHtml(label)}</button>`;
+              }).join(" ");
+              return `<div class="candidate-group"><div class="candidate-group-label">${escapeHtml(groupLabel)}:</div><div class="candidate-group-buttons">${buttons}</div></div>`;
+            }).join("");
+          }
+        } else {
+          const rows = options.length ? options : [{ label: "(候補なし)", disabled: true }];
+          candidatePanel.innerHTML = rows.map((entry, index) => {
+            const label = String(entry?.label || entry?.name || entry || "");
+            const itemName = String(entry?.name || "");
+            const disabled = (!label || label === "(候補なし)" || !itemName) ? "disabled" : "";
+            const dataName = itemName ? `data-item-name="${escapeHtml(itemName)}"` : "";
+            return `<button type="button" class="btn" data-candidate-index="${index}" ${dataName} ${disabled}>${escapeHtml(label)}</button>`;
+          }).join("<div style='height:6px;'></div>");
+        }
 
         candidatePanel.querySelectorAll("button").forEach((btn) => {
           btn.addEventListener("click", () => {

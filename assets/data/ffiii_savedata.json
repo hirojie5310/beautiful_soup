@@ -3,7 +3,7 @@
     {
       "name": "Runeth",
       "level": 41,
-      "exp": 374438,
+      "exp": 375918,
       "job": "Sage",
       "job_level": {
         "level": 99,
@@ -75,13 +75,13 @@
         ],
         "LV5": [
           "Thundaga",
-          "Bio",
-          null
+          "Protect",
+          "Raise"
         ],
         "LV6": [
           "Firaga",
           "Warp",
-          null
+          "Bio"
         ],
         "LV7": [
           "Drain",
@@ -115,11 +115,11 @@
     {
       "name": "Arc",
       "level": 40,
-      "exp": 355821,
+      "exp": 357301,
       "job": "Evoker",
       "job_level": {
         "level": 16,
-        "skill_point": 12
+        "skill_point": 52
       },
       "job_levels": {
         "Dragoon": {
@@ -140,7 +140,7 @@
         },
         "Evoker": {
           "level": 16,
-          "skill_point": 12
+          "skill_point": 52
         }
       },
       "hp": 245,
@@ -231,7 +231,7 @@
     {
       "name": "Refia",
       "level": 42,
-      "exp": 400581,
+      "exp": 402061,
       "job": "Dragoon",
       "job_level": {
         "level": 99,
@@ -339,11 +339,11 @@
     {
       "name": "Ingus",
       "level": 41,
-      "exp": 371781,
+      "exp": 373261,
       "job": "Thief",
       "job_level": {
-        "level": 25,
-        "skill_point": 96
+        "level": 26,
+        "skill_point": 68
       },
       "job_levels": {
         "Dragoon": {
@@ -363,8 +363,8 @@
           "skill_point": 12
         },
         "Thief": {
-          "level": 25,
-          "skill_point": 96
+          "level": 26,
+          "skill_point": 68
         }
       },
       "hp": 245,
@@ -453,8 +453,8 @@
       }
     }
   ],
-  "gil": 467237,
-  "CP": 227,
+  "gil": 470207,
+  "CP": 254,
   "map": {
     "map": "grassland",
     "surface": "Grassland",
@@ -468,7 +468,7 @@
       "Noah's Lute": 0
     },
     "Anywhere": {
-      "Potion": 9,
+      "Potion": 10,
       "Hi Potion": 3,
       "Elixir": 9,
       "Antidote": 1
@@ -490,7 +490,8 @@
       "Bacchus's Cider": 2,
       "Lilith's Kiss": 3,
       "Shining Curtain": 2,
-      "Turtle Shell": 2
+      "Turtle Shell": 2,
+      "Bomb Arm": 1
     },
     "Equipment": {
       "Onion Helm": 1,

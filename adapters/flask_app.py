@@ -689,18 +689,9 @@ def _magic_type_prefix(magic_type: Any) -> str:
     return ""
 
 
-def _format_magic_candidate_label(
-    *,
-    spell_name: str,
-    magic_type: Any,
-    level: Any,
-    remain: int,
-    max_uses: int,
-) -> str:
+def _format_magic_candidate_label(*, spell_name: str, magic_type: Any) -> str:
     prefix = _magic_type_prefix(magic_type)
-    level_num = max(1, _safe_int(level, 1))
-    uses = f"{remain}/{max_uses}" if max_uses > 0 else f"{remain}"
-    return f"{prefix}LV{level_num}: {spell_name} - {uses}"
+    return f"{prefix}{spell_name}"
 
 
 def _build_magic_command_candidates_by_member(
@@ -740,9 +731,11 @@ def _build_magic_command_candidates_by_member(
                     "label": _format_magic_candidate_label(
                         spell_name=name,
                         magic_type=magic_type,
-                        level=level,
-                        remain=remain,
-                        max_uses=max_uses,
+                    ),
+                    "group_label": (
+                        f"LV{level} ({remain}/{max_uses})"
+                        if max_uses > 0
+                        else f"LV{level} ({remain})"
                     ),
                 }
             )
