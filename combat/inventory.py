@@ -8,8 +8,42 @@
 # add_item_to_inventory	save["inventory"]にitem_nameをqty分加算するヘルパー
 # ============================================================
 
+from functools import lru_cache
+from pathlib import Path
 from typing import Dict, Any, Tuple, List
+
+from assets.data.data_loader import load_armors, load_items, load_weapons
 from utils.text_normalize import normalize_text_basic
+
+
+@lru_cache(maxsize=1)
+def _load_item_category_indexes() -> tuple[dict[str, str], set[str], set[str]]:
+    base_dir = Path(__file__).resolve().parent.parent
+    items_by_name = load_items(base_dir / "assets/data/ffiii_items.json")
+    weapons_by_name = load_weapons(base_dir / "assets/data/ffiii_weapons.json")
+    armors_by_name = load_armors(base_dir / "assets/data/ffiii_armors.json")
+
+    item_categories: dict[str, str] = {}
+    for item_name, item_json in items_by_name.items():
+        item_type = item_json.get("ItemType")
+        if isinstance(item_type, str) and item_type:
+            item_categories[item_name] = item_type
+
+    return item_categories, set(weapons_by_name), set(armors_by_name)
+
+
+def resolve_inventory_category(item_name: str) -> str:
+    """アイテム名から保存先インベントリカテゴリを解決する。"""
+    item_categories, weapon_names, armor_names = _load_item_category_indexes()
+
+    category = item_categories.get(item_name)
+    if isinstance(category, str) and category:
+        return category
+
+    if item_name in weapon_names or item_name in armor_names:
+        return "Equipment"
+
+    return "Anywhere"
 
 
 # ============================================================
@@ -180,7 +214,7 @@ def add_item_to_inventory(save: dict, item_name: str, qty: int = 1) -> str:
     """
     save["inventory"] に item_name を qty 分加算するヘルパー。
     すでにどこかのカテゴリに存在すればそこへ加算、
-    無ければ "Anywhere" カテゴリを作ってそこに入れる。
+    無ければ ItemType / 装備データから保存先カテゴリを解決して追加する。
     戻り値はアイテムを入れたカテゴリ名。
     """
     if save is None:
@@ -199,8 +233,8 @@ def add_item_to_inventory(save: dict, item_name: str, qty: int = 1) -> str:
             items[item_name] = current + qty
             return str(category)
 
-    # 見つからなければ "Anywhere" に追加
-    category = "Anywhere"
+    # 見つからなければ ItemType / 装備種別から追加先を決める
+    category = resolve_inventory_category(item_name)
     items = inv.setdefault(category, {})
     if not isinstance(items, dict):
         items = {}

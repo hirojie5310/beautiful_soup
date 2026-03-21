@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Iterable, Any, Tuple, List, Optional, Dict
 import random
 
-from combat.constants import ITEM_CATEGORY_MAP
+from combat.inventory import add_item_to_inventory
 from combat.models import PartyMemberRuntime, EquipmentSet, PlannedAction
 from combat.char_build import compute_character_final_stats
 from system.exp_system import LevelTable
@@ -437,6 +437,7 @@ def apply_victory_cp_reward(
 
 # ---------------------- Drop Item
 
+
 # 単体の敵からドロップ判定
 def roll_drops(enemy):
     """
@@ -460,7 +461,6 @@ def roll_drops(enemy):
     return obtained_items
 
 
-
 # 戦闘終了時：倒した敵全体を処理
 def process_battle_drops(defeated_monsters, item_stock):
     """
@@ -482,16 +482,12 @@ def process_battle_drops(defeated_monsters, item_stock):
 
 # item_stock → inventory に反映
 def apply_item_stock_to_inventory(save_data: dict):
-    inventory = save_data.setdefault("inventory", {})
     item_stock = save_data.get("item_stock", {})
 
     for item, count in item_stock.items():
         if count <= 0:
             continue
-
-        category = ITEM_CATEGORY_MAP.get(item, "Anywhere")
-        category_inv = inventory.setdefault(category, {})
-        category_inv[item] = category_inv.get(item, 0) + count
+        add_item_to_inventory(save_data, item, qty=count)
 
     # ★ 反映後はクリア（重要）
     save_data["item_stock"] = {}

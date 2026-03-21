@@ -293,13 +293,11 @@
     },
     "Anywhere": {
       "Potion": 5,
-      "Hi Potion": 2,
+      "Hi Potion": 3,
       "Elixir": 10,
       "Antidote": 2,
       "Onion Helm": 1,
       "Lilith's Kiss": 1,
-      "Lamia Scale": 1,
-      "Hi-Potion": 1
     },
     "Field": {
       "Magic Key": 1,

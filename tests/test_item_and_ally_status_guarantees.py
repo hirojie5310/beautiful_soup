@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 from combat.enums import Status
 from combat.item_effects import apply_item_effect_to_actor, apply_status_item_to_enemy
+from combat.progression import apply_item_stock_to_inventory
 from combat.models import (
     BattleActorState,
     FinalCharacterStats,
@@ -219,3 +220,28 @@ def test_ally_targeted_toad_is_guaranteed_to_apply_status() -> None:
     assert Status.TOAD in target_state.statuses
     assert caster_state.mp_pool[3] == 0
     assert any("TOAD状態" in line for line in logs)
+
+
+def test_apply_item_stock_to_inventory_routes_by_item_type_and_equipment() -> None:
+    save = {
+        "inventory": {
+            "Anywhere": {"Potion": 5},
+            "Combat": {"Lamia Scale": 2, "Lilith's Kiss": 2},
+            "Equipment": {"Onion Sword": 1},
+        },
+        "item_stock": {
+            "Lamia Scale": 1,
+            "Lilith's Kiss": 1,
+            "Onion Helm": 1,
+        },
+    }
+
+    apply_item_stock_to_inventory(save)
+
+    assert save["inventory"]["Combat"]["Lamia Scale"] == 3
+    assert save["inventory"]["Combat"]["Lilith's Kiss"] == 3
+    assert save["inventory"]["Equipment"]["Onion Helm"] == 1
+    assert "Lamia Scale" not in save["inventory"]["Anywhere"]
+    assert "Lilith's Kiss" not in save["inventory"]["Anywhere"]
+    assert "Onion Helm" not in save["inventory"]["Anywhere"]
+    assert save["item_stock"] == {}

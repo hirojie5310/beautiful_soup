@@ -293,13 +293,9 @@
     },
     "Anywhere": {
       "Potion": 5,
-      "Hi Potion": 2,
+      "Hi Potion": 3,
       "Elixir": 9,
-      "Antidote": 1,
-      "Onion Helm": 1,
-      "Lilith's Kiss": 1,
-      "Lamia Scale": 1,
-      "Hi-Potion": 1
+      "Antidote": 1
     },
     "Field": {
       "Magic Key": 1,
@@ -312,15 +308,16 @@
       "Black Hole": 2,
       "Black Musk": 2,
       "Devil's Sigh": 2,
-      "Lamia Scale": 2,
+      "Lamia Scale": 3,
       "Sheep Pillow": 5,
       "Tranquilizer": 5,
       "Bacchus's Cider": 2,
-      "Lilith's Kiss": 2,
+      "Lilith's Kiss": 3,
       "Shining Curtain": 2,
       "Turtle Shell": 2
     },
     "Equipment": {
+      "Onion Helm": 1,
       "Onion Sword": 1
     }
   },

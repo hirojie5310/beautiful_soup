@@ -43,7 +43,7 @@
           "DropRate": 0.047
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.012
         },
         {
@@ -107,7 +107,7 @@
           "DropRate": 0.047
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.012
         },
         {
@@ -206,7 +206,7 @@
           "DropRate": 0.047
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.012
         },
         {
@@ -1173,7 +1173,7 @@
           "DropRate": 0.047
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.012
         },
         {
@@ -1601,7 +1601,7 @@
           "DropRate": 0.047
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.012
         },
         {
@@ -2722,7 +2722,7 @@
           "DropRate": 0.012
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.001
         }
       ],
@@ -3017,7 +3017,7 @@
           "DropRate": 0.012
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.001
         }
       ],
@@ -3143,7 +3143,7 @@
           "StealRate": 0.375
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "StealRate": 0.188
         }
       ],
@@ -4140,7 +4140,7 @@
           "DropRate": 0.047
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.012
         },
         {
@@ -4737,7 +4737,7 @@
           "StealRate": 0.375
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "StealRate": 0.188
         }
       ],
@@ -4747,7 +4747,7 @@
           "DropRate": 0.023
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.012
         },
         {
@@ -4995,7 +4995,7 @@
           "StealRate": 0.375
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "StealRate": 0.188
         }
       ],
@@ -5005,7 +5005,7 @@
           "DropRate": 0.023
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.012
         },
         {
@@ -5161,7 +5161,7 @@
           "StealRate": 0.375
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "StealRate": 0.188
         }
       ],
@@ -5171,7 +5171,7 @@
           "DropRate": 0.023
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.012
         },
         {
@@ -5656,7 +5656,7 @@
           "StealRate": 0.438
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "StealRate": 0.188
         },
         {
@@ -5670,7 +5670,7 @@
       ],
       "Dropped Items": [
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.012
         },
         {
@@ -5777,7 +5777,7 @@
           "StealRate": 0.375
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "StealRate": 0.188
         }
       ],
@@ -5787,7 +5787,7 @@
           "DropRate": 0.023
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.012
         },
         {
@@ -6152,13 +6152,13 @@
       },
       "Stolen Items": [
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "StealRate": 1.0
         }
       ],
       "Dropped Items": [
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.047
         },
         {
@@ -6211,7 +6211,7 @@
           "StealRate": 0.375
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "StealRate": 0.188
         }
       ],
@@ -6221,7 +6221,7 @@
           "DropRate": 0.023
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.012
         },
         {
@@ -6293,13 +6293,13 @@
       },
       "Stolen Items": [
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "StealRate": 1.0
         }
       ],
       "Dropped Items": [
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.047
         },
         {
@@ -6811,13 +6811,13 @@
       },
       "Stolen Items": [
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "StealRate": 1.0
         }
       ],
       "Dropped Items": [
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.047
         },
         {
@@ -7048,7 +7048,7 @@
           "StealRate": 0.375
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "StealRate": 0.188
         }
       ],
@@ -7058,7 +7058,7 @@
           "DropRate": 0.023
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.012
         },
         {
@@ -7123,7 +7123,7 @@
           "StealRate": 0.375
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "StealRate": 0.188
         }
       ],
@@ -7133,7 +7133,7 @@
           "DropRate": 0.023
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.012
         },
         {
@@ -7194,7 +7194,7 @@
           "StealRate": 0.375
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "StealRate": 0.188
         }
       ],
@@ -7204,7 +7204,7 @@
           "DropRate": 0.023
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.012
         },
         {
@@ -7672,13 +7672,13 @@
       },
       "Stolen Items": [
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "StealRate": 1.0
         }
       ],
       "Dropped Items": [
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.047
         },
         {
@@ -7973,7 +7973,7 @@
           "StealRate": 0.438
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "StealRate": 0.188
         },
         {
@@ -7987,7 +7987,7 @@
       ],
       "Dropped Items": [
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.012
         },
         {
@@ -8275,13 +8275,13 @@
       },
       "Stolen Items": [
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "StealRate": 1.0
         }
       ],
       "Dropped Items": [
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.047
         },
         {
@@ -9696,13 +9696,13 @@
       },
       "Stolen Items": [
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "StealRate": 1.0
         }
       ],
       "Dropped Items": [
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.047
         },
         {
@@ -10574,13 +10574,13 @@
       },
       "Stolen Items": [
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "StealRate": 1.0
         }
       ],
       "Dropped Items": [
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.047
         },
         {
@@ -10631,7 +10631,7 @@
           "StealRate": 0.438
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "StealRate": 0.188
         },
         {
@@ -10645,7 +10645,7 @@
       ],
       "Dropped Items": [
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.012
         },
         {
@@ -10773,7 +10773,7 @@
           "StealRate": 0.375
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "StealRate": 0.188
         }
       ],
@@ -10783,7 +10783,7 @@
           "DropRate": 0.023
         },
         {
-          "Item": "Hi-Potion",
+          "Item": "Hi Potion",
           "DropRate": 0.012
         },
         {
