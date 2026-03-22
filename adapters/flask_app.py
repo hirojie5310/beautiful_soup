@@ -764,7 +764,7 @@ def _build_magic_spell_meta(session: BattleSession) -> dict[str, dict[str, Any]]
         healing_type = str(healing_spell_kind(raw) or "")
         target_mode = "enemy_only"
         if healing_type in {"hp", "status", "revive", "protect", "haste", "reflect"}:
-            target_mode = "ally_only"
+            target_mode = "any" if healing_type == "hp" else "ally_only"
         rows[name] = {
             "target": str(raw.get("Target") or ""),
             "target_norm": target_norm,

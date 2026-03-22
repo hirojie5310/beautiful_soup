@@ -41,6 +41,25 @@ from combat.logging import log_damage
 from utils.text_normalize import normalize_text_basic
 
 
+def is_undead_target(monster_json: Dict[str, Any] | None) -> bool:
+    """敵JSONがアンデッド系かを判定する。"""
+    if not isinstance(monster_json, dict):
+        return False
+    monster_type = normalize_text_basic(monster_json.get("Monster Type") or "")
+    return monster_type == "undead"
+
+
+def healing_magic_as_holy_spell(spell: SpellInfo) -> SpellInfo:
+    """回復魔法をアンデッド特効の Holy 属性攻撃として扱うための擬似 SpellInfo。"""
+    return SpellInfo(
+        power=max(0, int(getattr(spell, "power", 0))),
+        accuracy_percent=max(0, int(getattr(spell, "accuracy_percent", 0))),
+        magic_type="white",
+        elements=["holy"],
+        auto_all_target=bool(getattr(spell, "auto_all_target", False)),
+    )
+
+
 def _is_offensive_white(spell: SpellInfo) -> bool:
     """
     SpellInfo に name が無い環境でも落ちない攻撃白魔判定。

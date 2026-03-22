@@ -3,7 +3,7 @@
     {
       "name": "Runeth",
       "level": 41,
-      "exp": 375922,
+      "exp": 375964,
       "job": "Sage",
       "job_level": {
         "level": 99,
@@ -115,7 +115,7 @@
     {
       "name": "Arc",
       "level": 40,
-      "exp": 357305,
+      "exp": 357347,
       "job": "Evoker",
       "job_level": {
         "level": 16,
@@ -231,7 +231,7 @@
     {
       "name": "Refia",
       "level": 42,
-      "exp": 402065,
+      "exp": 402107,
       "job": "Dragoon",
       "job_level": {
         "level": 99,
@@ -339,11 +339,11 @@
     {
       "name": "Ingus",
       "level": 41,
-      "exp": 373265,
+      "exp": 373307,
       "job": "Thief",
       "job_level": {
         "level": 26,
-        "skill_point": 80
+        "skill_point": 92
       },
       "job_levels": {
         "Dragoon": {
@@ -364,7 +364,7 @@
         },
         "Thief": {
           "level": 26,
-          "skill_point": 80
+          "skill_point": 92
         },
         "Scholar": {
           "level": 26,
@@ -457,8 +457,8 @@
       }
     }
   ],
-  "gil": 470210,
-  "CP": 216,
+  "gil": 470318,
+  "CP": 220,
   "map": {
     "map": "grassland",
     "surface": "Grassland",
@@ -475,7 +475,7 @@
       "Potion": 11,
       "Hi Potion": 3,
       "Elixir": 9,
-      "Antidote": 1
+      "Antidote": 2
     },
     "Field": {
       "Magic Key": 1,

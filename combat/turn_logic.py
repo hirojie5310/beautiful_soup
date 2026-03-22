@@ -42,6 +42,8 @@ from combat.magic_damage import (
     _calc_base_magic_damage_per_hit,
     apply_tornado_to_state,
     magic_hit_count_char_to_enemy,
+    is_undead_target,
+    healing_magic_as_holy_spell,
 )
 from combat.status_effects import (
     _get_status_name_from_monster_spell,
@@ -185,6 +187,60 @@ def _append_character_study_lines(
 ) -> None:
     hpmax = char_state.max_hp if char_state.max_hp is not None else char_state.hp
     logs.append(f"{char_name}のHPは{char_state.hp}/{hpmax}だ。")
+
+
+def _enemy_heal_spell_cast_log(
+    logs: list[str],
+    *,
+    char_name: str,
+    spell_label: str,
+    suffix: str,
+) -> None:
+    logs.append(f"{char_name}はアンデッドに効く《{spell_label}》を唱えた！ {suffix}")
+
+
+def _apply_healing_spell_holy_damage_to_enemy(
+    *,
+    logs: list[str],
+    char_stats: FinalCharacterStats,
+    char_is_blind: bool,
+    holy_spell: SpellInfo,
+    enemy_name: str,
+    enemy_stats: FinalEnemyStats,
+    enemy_state: BattleActorState,
+    enemy_json: Dict[str, Any],
+    rng: Random,
+    split_to_targets: int = 1,
+) -> int:
+    rel, hit_elems = element_relation_and_hits_for_monster(enemy_json, ["holy"])
+    damage = magic_damage_char_to_enemy(
+        caster=char_stats,
+        spell=holy_spell,
+        enemy=enemy_stats,
+        element_relation=rel,
+        rng=rng,
+        use_expectation=False,
+        blind=char_is_blind,
+        split_to_targets=split_to_targets,
+    )
+    damage = int(max(0, damage))
+    old_hp = enemy_state.hp
+    enemy_state.hp = max(enemy_state.hp - damage, 0)
+    relation_msg = relation_comment(rel, hit_elems, perspective="attacker")
+    if damage > 0:
+        log_damage(
+            logs,
+            f"  {relation_msg + ' ' if relation_msg else ''}",
+            enemy_name,
+            damage,
+            old_hp,
+            enemy_state.hp,
+            "attacker",
+            "remain",
+        )
+    else:
+        logs.append(f"  しかし{enemy_name}には効かなかった。")
+    return damage
 
 
 def _to_int(v: Any) -> int:
@@ -672,6 +728,111 @@ def run_character_turn(
                 "one/all",
             }
             aoe_heal_selected = bool(aoe_selected_override) and can_select_aoe
+            spell_label = char_spell_name or (
+                "召喚魔法" if is_summon_heal else "回復魔法"
+            )
+            remain = char_state.mp_pool[lvl]
+            maxmp = char_state.max_mp_pool.get(lvl, remain)
+            suffix = f"（MP{lvl} {remain}/{maxmp}）"
+
+            if target_side == "enemy":
+                holy_spell = healing_magic_as_holy_spell(char_spell)
+
+                if aoe_heal_selected and enemies is not None:
+                    alive_enemies = [
+                        em for em in enemies if getattr(em.state, "hp", 0) > 0
+                    ]
+                    target_count = max(1, len(alive_enemies))
+                    total_damage = 0
+                    hit_any_undead = False
+                    cast_logged = False
+                    for em in alive_enemies:
+                        em_name = getattr(em, "label", em.name)
+                        em_state = em.state
+                        em_stats = em.stats
+                        em_json = em.json
+                        if not is_undead_target(em_json):
+                            if not cast_logged:
+                                _enemy_heal_spell_cast_log(
+                                    logs,
+                                    char_name=char_name,
+                                    spell_label=spell_label,
+                                    suffix=suffix,
+                                )
+                                cast_logged = True
+                            logs.append(
+                                f"  しかし{em_name}はアンデッドではないため効果がない。"
+                            )
+                            continue
+                        hit_any_undead = True
+                        if not cast_logged:
+                            _enemy_heal_spell_cast_log(
+                                logs,
+                                char_name=char_name,
+                                spell_label=spell_label,
+                                suffix=suffix,
+                            )
+                            cast_logged = True
+                        dmg = _apply_healing_spell_holy_damage_to_enemy(
+                            logs=logs,
+                            char_stats=char_stats,
+                            char_is_blind=char_is_blind,
+                            holy_spell=holy_spell,
+                            enemy_name=em_name,
+                            enemy_stats=em_stats,
+                            enemy_state=em_state,
+                            enemy_json=em_json,
+                            rng=rng,
+                            split_to_targets=target_count,
+                        )
+                        total_damage += dmg
+                    if not hit_any_undead:
+                        return 0, None
+                    if enemies is not None and all(
+                        getattr(e.state, "hp", 0) <= 0 for e in enemies
+                    ):
+                        return total_damage, OneTurnResult(
+                            char_state=char_state,
+                            enemy_state=enemy_state,
+                            logs=logs,
+                            enemy_attack_result=None,
+                            end_reason="enemy_defeated",
+                        )
+                    return total_damage, None
+
+                if not is_undead_target(enemy_json):
+                    logs.append(
+                        f"{char_name}は{enemy_name}に《{spell_label}》を唱えた！ しかしアンデッドではないため効果がない。 {suffix}"
+                    )
+                    return 0, None
+
+                _enemy_heal_spell_cast_log(
+                    logs,
+                    char_name=char_name,
+                    spell_label=spell_label,
+                    suffix=suffix,
+                )
+                dmg_to_enemy = _apply_healing_spell_holy_damage_to_enemy(
+                    logs=logs,
+                    char_stats=char_stats,
+                    char_is_blind=char_is_blind,
+                    holy_spell=holy_spell,
+                    enemy_name=enemy_name,
+                    enemy_stats=enemy_stats,
+                    enemy_state=enemy_state,
+                    enemy_json=enemy_json,
+                    rng=rng,
+                )
+                if enemy_state.hp <= 0:
+                    return dmg_to_enemy, OneTurnResult(
+                        char_state=char_state,
+                        enemy_state=enemy_state,
+                        logs=logs,
+                        enemy_attack_result=None,
+                        end_reason="enemy_defeated",
+                    )
+                return dmg_to_enemy, None
+
             target_count = 1
             if aoe_heal_selected and party_members is not None:
                 target_count = max(
@@ -688,14 +849,6 @@ def run_character_turn(
                 target_count=target_count,
                 spell_name=(char_spell_name or ""),
             )
-
-            spell_label = char_spell_name or (
-                "召喚魔法" if is_summon_heal else "回復魔法"
-            )
-            lvl = int(char_spell_json.get("Level", 1))
-            remain = char_state.mp_pool[lvl]
-            maxmp = char_state.max_mp_pool.get(lvl, remain)
-            suffix = f"（MP{lvl} {remain}/{maxmp}）"
 
             if aoe_heal_selected and party_members is not None:
                 alive_targets = [
