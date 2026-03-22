@@ -16,7 +16,7 @@ from ui_pygame.app_context import BattleAppContext
 
 from ui_pygame.input_modes.member import handle_member_keydown
 from ui_pygame.input_modes.command import handle_command_keydown
-from ui_pygame.input_modes.magic import handle_magic_keydown
+from ui_pygame.input_modes.magic import handle_magic_keydown, handle_magic_mousedown
 from ui_pygame.input_modes.aoe_choice import handle_aoe_choice_keydown
 from ui_pygame.input_modes.item import handle_item_keydown
 from ui_pygame.input_modes.target_side import handle_target_side_keydown
@@ -89,4 +89,47 @@ def handle_keydown(
             # 次の人の入力に入る。ここは好みでどっちでもOK：
             # - すぐコマンド一覧を出したいなら "command"
             # - まずメンバー行にカーソルを当てたいなら "member"
+            ui.input_mode = "command"
+
+
+def handle_mousedown(
+    ui: BattleUIState, event: pygame.event.Event, ctx: BattleAppContext
+) -> None:
+    if ui.phase != "input":
+        return
+
+    committed = False
+
+    if ui.input_mode == "magic":
+        committed = handle_magic_mousedown(event=event, ui=ui, ctx=ctx)
+
+    if committed:
+        if ui.se_confirm is not None:
+            ui.se_confirm.play()
+
+        ctx.on_committed(ui)
+
+        if ctx.all_actions_committed(ui):
+            ui.phase = "resolve"
+            ui.input_mode = "resolve"
+            return
+
+        n = len(ctx.party_members)
+        start = ui.selected_member_idx
+
+        next_idx = None
+        for step in range(1, n + 1):
+            i = (start + step) % n
+            pm = ctx.party_members[i]
+
+            if ctx.is_out_of_battle(pm.state):
+                continue
+
+            if ui.planned_actions[i] is None:
+                next_idx = i
+                break
+
+        if next_idx is not None:
+            ui.selected_member_idx = next_idx
+            ui.command_candidates = ctx.get_job_commands(ctx.party_members[next_idx])
             ui.input_mode = "command"

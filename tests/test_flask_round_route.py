@@ -265,6 +265,20 @@ def test_menu_sub_pages_render(monkeypatch):
         assert marker in body
 
 
+def test_menu_magic_page_includes_click_to_confirm_handlers(monkeypatch):
+    app = _build_app(monkeypatch)
+    client = app.test_client()
+
+    resp = client.get("/menu/magic")
+
+    assert resp.status_code == 200
+    body = resp.get_data(as_text=True)
+    assert "async function clickSlotSelection(nextLv, nextSlot)" in body
+    assert "await clickSlotSelection(slotEl.dataset.lv, slotEl.dataset.slot);" in body
+    assert "await clickStockSelection(stockEl.dataset.stock);" in body
+    assert "await clickTargetSelection(targetEl.dataset.target);" in body
+
+
 def test_post_round_accepts_shorter_planned_actions_with_padding(monkeypatch):
     app = _build_app(monkeypatch, expected_actions=4)
     client = app.test_client()

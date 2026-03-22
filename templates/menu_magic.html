@@ -211,6 +211,28 @@
         render();
       }
 
+      async function clickSlotSelection(nextLv, nextSlot) {
+        lvIdx = Math.max(1, Math.min(8, Number(nextLv || lvIdx)));
+        slotSel = Math.max(0, Math.min(2, Number(nextSlot || 0)));
+        phase = "slot";
+        render();
+        await decide();
+      }
+
+      async function clickStockSelection(nextStock) {
+        stockSel = Math.max(0, Number(nextStock || 0));
+        phase = "stock";
+        render();
+        await decide();
+      }
+
+      async function clickTargetSelection(nextTarget) {
+        targetSel = Math.max(0, Number(nextTarget || 0));
+        phase = "target";
+        render();
+        await decide();
+      }
+
       document.getElementById("prevBtn").addEventListener("click", () => moveMember(-1));
       document.getElementById("nextBtn").addEventListener("click", () => moveMember(1));
       document.getElementById("backBtn").addEventListener("click", () => {
@@ -227,20 +249,29 @@
         render();
       });
 
-      magicGrid.addEventListener("click", (event) => {
+      magicGrid.addEventListener("click", async (event) => {
         const lvEl = event.target.closest("[data-lv]");
         const slotEl = event.target.closest("[data-slot]");
+        if (slotEl) {
+          await clickSlotSelection(slotEl.dataset.lv, slotEl.dataset.slot);
+          return;
+        }
         if (lvEl) lvIdx = Math.max(1, Math.min(8, Number(lvEl.dataset.lv || lvIdx)));
-        if (slotEl) slotSel = Math.max(0, Math.min(2, Number(slotEl.dataset.slot || 0)));
         phase = "slot";
         render();
       });
 
-      stockPane.addEventListener("click", (event) => {
+      stockPane.addEventListener("click", async (event) => {
         const stockEl = event.target.closest("[data-stock]");
-        if (stockEl) { stockSel = Math.max(0, Number(stockEl.dataset.stock || 0)); phase = "stock"; }
+        if (stockEl) {
+          await clickStockSelection(stockEl.dataset.stock);
+          return;
+        }
         const targetEl = event.target.closest("[data-target]");
-        if (targetEl) { targetSel = Math.max(0, Number(targetEl.dataset.target || 0)); phase = "target"; }
+        if (targetEl) {
+          await clickTargetSelection(targetEl.dataset.target);
+          return;
+        }
         render();
       });
 

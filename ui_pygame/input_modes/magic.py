@@ -13,31 +13,14 @@ def _play_se(se) -> None:
         se.play()
 
 
-def handle_magic_keydown(
+def _confirm_selected_magic(
     *,
-    event: pygame.event.Event,
     ui: BattleUIState,
     ctx: BattleAppContext,
 ) -> bool:
     if not ui.magic_candidates:
         ui.logs.append("[入力] 使用可能な魔法がありません")
         ui.input_mode = "command"
-        return False
-
-    if event.key == pygame.K_UP:
-        ui.selected_magic_idx = (ui.selected_magic_idx - 1) % len(ui.magic_candidates)
-        return False
-
-    if event.key == pygame.K_DOWN:
-        ui.selected_magic_idx = (ui.selected_magic_idx + 1) % len(ui.magic_candidates)
-        return False
-
-    if event.key == pygame.K_BACKSPACE:
-        ui.input_mode = "command"
-        ui.selected_target_all = False
-        return False
-
-    if event.key not in (pygame.K_RETURN, pygame.K_KP_ENTER):
         return False
 
     # -------------------------
@@ -136,7 +119,7 @@ def handle_magic_keydown(
         )
 
         ui.input_mode = "member"
-        return True  # ★ committed=True → input_handler が ctx.on_committed を呼ぶ
+        return True
 
     if target_raw == "one/all enemies":
         ui.input_mode = "aoe_choice"
@@ -147,4 +130,51 @@ def handle_magic_keydown(
     ui.selected_target_side_idx = 0
     ui.input_mode = "target_side"
     ui.logs.append(f"[入力] 対象(敵/味方/自分)選択: {spell_name}")
+    return False
+
+
+def handle_magic_keydown(
+    *,
+    event: pygame.event.Event,
+    ui: BattleUIState,
+    ctx: BattleAppContext,
+) -> bool:
+    if not ui.magic_candidates:
+        ui.logs.append("[入力] 使用可能な魔法がありません")
+        ui.input_mode = "command"
+        return False
+
+    if event.key == pygame.K_UP:
+        ui.selected_magic_idx = (ui.selected_magic_idx - 1) % len(ui.magic_candidates)
+        return False
+
+    if event.key == pygame.K_DOWN:
+        ui.selected_magic_idx = (ui.selected_magic_idx + 1) % len(ui.magic_candidates)
+        return False
+
+    if event.key == pygame.K_BACKSPACE:
+        ui.input_mode = "command"
+        ui.selected_target_all = False
+        return False
+
+    if event.key not in (pygame.K_RETURN, pygame.K_KP_ENTER):
+        return False
+
+    return _confirm_selected_magic(ui=ui, ctx=ctx)
+
+
+def handle_magic_mousedown(
+    *,
+    event: pygame.event.Event,
+    ui: BattleUIState,
+    ctx: BattleAppContext,
+) -> bool:
+    if event.button != 1 or not ui.magic_candidates:
+        return False
+
+    for actual_idx, row_rect in getattr(ui, "menu_option_rects", []):
+        if row_rect.collidepoint(event.pos):
+            ui.selected_magic_idx = actual_idx
+            return _confirm_selected_magic(ui=ui, ctx=ctx)
+
     return False

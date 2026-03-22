@@ -3,7 +3,7 @@
     {
       "name": "Runeth",
       "level": 41,
-      "exp": 375964,
+      "exp": 375986,
       "job": "Sage",
       "job_level": {
         "level": 99,
@@ -115,7 +115,7 @@
     {
       "name": "Arc",
       "level": 40,
-      "exp": 357347,
+      "exp": 357369,
       "job": "Evoker",
       "job_level": {
         "level": 16,
@@ -231,7 +231,7 @@
     {
       "name": "Refia",
       "level": 42,
-      "exp": 402107,
+      "exp": 402129,
       "job": "Dragoon",
       "job_level": {
         "level": 99,
@@ -339,11 +339,11 @@
     {
       "name": "Ingus",
       "level": 41,
-      "exp": 373307,
-      "job": "Thief",
+      "exp": 373329,
+      "job": "Scholar",
       "job_level": {
-        "level": 26,
-        "skill_point": 92
+        "level": 27,
+        "skill_point": 4
       },
       "job_levels": {
         "Dragoon": {
@@ -363,8 +363,8 @@
           "skill_point": 12
         },
         "Thief": {
-          "level": 26,
-          "skill_point": 92
+          "level": 27,
+          "skill_point": 4
         },
         "Scholar": {
           "level": 26,
@@ -390,10 +390,10 @@
       "mind": 11,
       "row": "back",
       "equipment": {
-        "main_hand": "Air Knife",
-        "off_hand": "Ice Shield",
+        "main_hand": "Tome Of Ice",
+        "off_hand": "Tome Of Light",
         "head": "Ribbon",
-        "body": "Black Garb",
+        "body": "Scholar Robe",
         "arms": "Protect Ring"
       },
       "status_effects": {
@@ -415,22 +415,22 @@
       "portrait_key": "ingus",
       "Magic": {
         "LV1": [
-          null,
-          null,
-          null
+          "Cure",
+          "Poisona",
+          "Sight"
         ],
         "LV2": [
-          null,
-          null,
-          null
+          "Mini",
+          "Toad",
+          "Aero"
         ],
         "LV3": [
-          null,
-          null,
-          null
+          "Cura",
+          "Teleport",
+          "Blindna"
         ],
         "LV4": [
-          null,
+          "Confuse",
           null,
           null
         ],
@@ -457,8 +457,8 @@
       }
     }
   ],
-  "gil": 470318,
-  "CP": 220,
+  "gil": 470376,
+  "CP": 215,
   "map": {
     "map": "grassland",
     "surface": "Grassland",

@@ -94,6 +94,7 @@ class BattleUIState:
     # state for scroll
     menu_scroll: int = 0  # scroll position
     menu_visible_rows: int = 8  # column number for display
+    menu_option_rects: List[Tuple[int, pygame.Rect]] = field(default_factory=list)
 
     spells_by_name: dict = field(default_factory=dict)  # spell_name -> spell_json
 

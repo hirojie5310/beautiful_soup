@@ -91,6 +91,7 @@ def draw_command_panel(
         return (t + suffix) if t else suffix
 
     mode = ui.input_mode
+    ui.menu_option_rects = []
     MODE_LABEL = {
         "command": "",
         "magic": "MAGIC",
@@ -217,6 +218,7 @@ def draw_command_panel(
                 row_y = y0 + i * row_h
 
                 row_rect = pygame.Rect(menu_left - 4, row_y - 2, menu_w + 8, row_h)
+                ui.menu_option_rects.append((actual_idx, row_rect.copy()))
                 is_cur = actual_idx == cursor
 
                 if is_cur:

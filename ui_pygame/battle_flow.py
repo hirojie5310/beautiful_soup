@@ -11,7 +11,7 @@ from ui_pygame.assets_py.status_icon_cashe import StatusIconCache
 from ui_pygame.controller import BattleController
 from ui_pygame.state import BattleUIState
 from ui_pygame.app_context import BattleAppContext  # UI専用 ctx
-from ui_pygame.input_handler import handle_keydown
+from ui_pygame.input_handler import handle_keydown, handle_mousedown
 from ui_pygame.render.floating_texts import (
     draw_floating_texts,
     draw_attack_effects,
@@ -127,6 +127,8 @@ def run_one_battle(
 
             if ui.phase == "input" and event.type == pygame.KEYDOWN:
                 handle_keydown(ui, event, ui_ctx)
+            if ui.phase == "input" and event.type == pygame.MOUSEBUTTONDOWN:
+                handle_mousedown(ui, event, ui_ctx)
 
             if event.type == pygame.MOUSEWHEEL:
                 ui.scroll += event.y
