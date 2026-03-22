@@ -3,12 +3,21 @@
 # execute_round_dto 呼び出し、JSONレスポンス返却までを接続
 from __future__ import annotations
 
+import io
+import json
 import os
 from pathlib import Path
 from random import Random
 from typing import Any, Sequence
 
-from flask import Flask, jsonify, render_template, request, send_from_directory
+from flask import (
+    Flask,
+    jsonify,
+    render_template,
+    request,
+    send_file,
+    send_from_directory,
+)
 
 from adapters.flask_error_handlers import register_flask_error_handlers
 from assets.data.data_loader import load_explicit_groups
@@ -1761,12 +1770,34 @@ def create_app(
             200,
         )
 
+    @app.get("/menu/save/download")
+    def get_menu_save_download():
+        payload = json.dumps(
+            battle_session.state.save, ensure_ascii=False, indent=2
+        ).encode("utf-8")
+        return send_file(
+            io.BytesIO(payload),
+            mimetype="application/json",
+            as_attachment=True,
+            download_name="ffiii_savedata.json",
+        )
+
     @app.post("/menu/save")
     def post_menu_save():
         save_savedata(
             Path("assets/data/ffiii_savedata.json"), battle_session.state.save
         )
-        return jsonify({"ok": True, "message": "セーブしました"}), 200
+        return (
+            jsonify(
+                {
+                    "ok": True,
+                    "message": "セーブしました",
+                    "download_url": "/menu/save/download",
+                    "filename": "ffiii_savedata.json",
+                }
+            ),
+            200,
+        )
 
     return app
 

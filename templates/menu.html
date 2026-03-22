@@ -255,12 +255,29 @@
         render();
       }
 
+      function triggerSaveDownload(downloadUrl, filename) {
+        if (!downloadUrl) return;
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        if (filename) link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
+
       async function saveGame() {
         const resp = await fetch("/menu/save", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+        let body = null;
+        try {
+          body = await resp.json();
+        } catch (error) {
+          body = null;
+        }
         if (resp.ok) {
-          menuMessage.textContent = "セーブしました。";
+          triggerSaveDownload(body?.download_url, body?.filename);
+          menuMessage.textContent = "セーブしました。JSONをダウンロードしました。";
         } else {
-          menuMessage.textContent = "セーブに失敗しました。";
+          menuMessage.textContent = body?.message || "セーブに失敗しました。";
         }
       }
 
