@@ -165,7 +165,7 @@
           <h1 class="member-title" id="memberTitle">-</h1>
           <div class="cp" id="cpText">CP 0/255</div>
         </div>
-        <p class="hint">←→: キャラ切替 / ↑↓: ジョブ選択 / Enter: 決定 / Esc・Backspace: もどる</p>
+        <p class="hint">←→: キャラ切替 / ↑↓: ジョブ選択 / Enter・クリック: 決定 / Esc・Backspace: もどる</p>
 
         <div class="content">
           <section class="jobs-pane">
@@ -293,24 +293,20 @@
           jobMessage.textContent = "CP がたりません。";
           jobMessage.className = "message ng";
         } else {
-          jobMessage.textContent = "Enter でジョブを変更できます。";
+          jobMessage.textContent = "Enter または選択中ジョブのクリックで変更できます。";
           jobMessage.className = "message ok";
         }
 
         jobsGrid.querySelectorAll(".job-item").forEach((el) => {
-          el.addEventListener("click", () => {
+          el.addEventListener("click", async () => {
             const i = Number(el.getAttribute("data-job-index") || 0);
-            if (Number.isFinite(i)) {
-              jobSelIdx = i;
-              render();
-            }
-          });
-          el.addEventListener("dblclick", async () => {
-            const i = Number(el.getAttribute("data-job-index") || 0);
-            if (Number.isFinite(i)) {
-              jobSelIdx = i;
+            if (!Number.isFinite(i)) return;
+            if (jobSelIdx === i) {
               await commitChange();
+              return;
             }
+            jobSelIdx = i;
+            render();
           });
         });
       }

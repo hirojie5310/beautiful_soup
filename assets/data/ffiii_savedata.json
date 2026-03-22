@@ -162,10 +162,10 @@
       "mind": 11,
       "row": "back",
       "equipment": {
-        "main_hand": "Rune Bell",
-        "off_hand": "Rune Bell",
+        "main_hand": "Ice Rod",
+        "off_hand": "Light Rod",
         "head": "Ribbon",
-        "body": "Gaia Vest",
+        "body": "Black Robe",
         "arms": "Protect Ring"
       },
       "status_effects": {
@@ -340,7 +340,7 @@
       "name": "Ingus",
       "level": 41,
       "exp": 373265,
-      "job": "Scholar",
+      "job": "Thief",
       "job_level": {
         "level": 26,
         "skill_point": 80
@@ -458,7 +458,7 @@
     }
   ],
   "gil": 470210,
-  "CP": 223,
+  "CP": 216,
   "map": {
     "map": "grassland",
     "surface": "Grassland",
