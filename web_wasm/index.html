@@ -1,0 +1,36 @@
+# web_wasm/index.html
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Battle Wasm Runner</title>
+    <style>
+      body { font-family: sans-serif; margin: 24px; line-height: 1.5; }
+      button { margin-right: 8px; }
+      pre { padding: 12px; background: #111; color: #eee; overflow: auto; }
+      .row { margin-bottom: 16px; }
+    </style>
+  </head>
+  <body>
+    <h1>Battle Wasm Runner</h1>
+    <p>Pyodide 上で <code>combat.wasm_api.WasmBattleEngine</code> を起動する最小サンプルです。</p>
+
+    <div class="row">
+      <button id="bootBtn" type="button">1. Boot Wasm Engine</button>
+      <button id="roundBtn" type="button" disabled>2. Execute Empty Round</button>
+    </div>
+
+    <div class="row">
+      <strong>Initial Payload</strong>
+      <pre id="initialPayload">(not loaded)</pre>
+    </div>
+
+    <div class="row">
+      <strong>Round Result</strong>
+      <pre id="roundResult">(not executed)</pre>
+    </div>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

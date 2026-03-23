@@ -69,20 +69,19 @@ def _mouse_event(pos: tuple[int, int]) -> Any:
 
 
 def test_magic_click_selects_row_and_moves_to_target_side() -> None:
-    ui = BattleUIState(
-        input_mode="magic",
-        magic_candidates=[("Fire", 1, 1), ("Cure", 1, 1)],
-        selected_magic_idx=0,
-        planned_actions=[None],
-        logs=[],
-        spells_by_name={"Cure": {"Target": "ally"}},
-        menu_option_rects=cast(
-            Any,
-            [
-                (0, pygame.Rect(0, 0, 120, 20)),
-                (1, pygame.Rect(0, 20, 120, 20)),
-            ],
-        ),
+    ui = BattleUIState()
+    ui.input_mode = "magic"
+    ui.magic_candidates = [("Fire", 1, 1), ("Cure", 1, 1)]
+    ui.selected_magic_idx = 0
+    ui.planned_actions = [None]
+    ui.logs = []
+    ui.spells_by_name = {"Cure": {"Target": "ally"}}
+    ui.menu_option_rects = cast(
+        Any,
+        [
+            (0, pygame.Rect(0, 0, 120, 20)),
+            (1, pygame.Rect(0, 20, 120, 20)),
+        ],
     )
     ctx = _ctx()
 
