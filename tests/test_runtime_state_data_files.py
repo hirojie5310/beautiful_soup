@@ -29,3 +29,4 @@ def test_init_runtime_state_reads_bonus_equipment_data() -> None:
         "Vitality": 5,
     }
     assert state.armors["White Robe"]["Bonus"] == {"Mind": 5}
+    assert state.base_dir == BASE_DIR

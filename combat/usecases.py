@@ -29,7 +29,7 @@ from combat.models import (
     PlannedAction,
     SideTurnResult,
 )
-from combat.runtime_state import RuntimeState
+from combat.runtime_state import RuntimeState, resolve_data_path
 from system.exp_system import LevelTable
 
 
@@ -59,7 +59,9 @@ def build_battle_session(
 ) -> BattleSession:
     """UIに依存しない戦闘セッションの初期化ユースケース。"""
 
-    level_table = LevelTable(level_exp_csv_path)
+    level_table = LevelTable(
+        str(resolve_data_path(level_exp_csv_path, base_dir=state.base_dir))
+    )
 
     party_magic_info = build_party_magic_info(state)
     party_magic_lists = build_party_magic_lists(state)
