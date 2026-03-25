@@ -38,6 +38,20 @@
       }
       .title { margin: 0 0 8px; color: var(--accent); font-size: 0.95rem; }
       .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+      .selector-row {
+        margin-top: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+      select {
+        border-radius: 6px;
+        border: 1px solid rgba(255,255,255,0.5);
+        background: #0b1229;
+        color: var(--text);
+        padding: 6px 8px;
+      }
       .btn {
         border: 1px solid rgba(255,255,255,0.7);
         border-radius: 8px;
@@ -103,6 +117,13 @@
           <button id="bootBtn" class="btn" type="button">1. Boot Wasm Engine</button>
           <button id="nextRoundBtn" class="btn" type="button" disabled>2. 4人分を送信してラウンド実行</button>
           <span id="battlePhase" class="status">未起動</span>
+        </div>
+        <div class="selector-row">
+          <label for="locationGroupSelect">LocationGroup</label>
+          <select id="locationGroupSelect"></select>
+          <label for="locationSelect">location</label>
+          <select id="locationSelect"></select>
+          <button id="locationApplyBtn" class="btn" type="button">敵編成を更新</button>
         </div>
       </section>
 

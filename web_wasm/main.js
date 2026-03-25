@@ -10,6 +10,9 @@ const statusLine = document.getElementById("statusLine");
 const logView = document.getElementById("logView");
 const plannedActionsView = document.getElementById("plannedActionsView");
 const rewardPanel = document.getElementById("rewardPanel");
+const locationGroupSelect = document.getElementById("locationGroupSelect");
+const locationSelect = document.getElementById("locationSelect");
+const locationApplyBtn = document.getElementById("locationApplyBtn");
 
 let pyodide = null;
 let sessionStatus = { party: [], enemies: [] };
@@ -18,6 +21,7 @@ let currentMemberIndex = 0;
 let selectedEnemyIndex = 0;
 let lifecycleState = "ready_for_actions";
 let battleFinished = false;
+let locationGroups = [];
 
 const COMMAND_DEFS = [
   { kind: "physical", command: "Fight", label: "たたかう", targetSide: "enemy" },
@@ -43,6 +47,40 @@ with zipfile.ZipFile("/tmp/python_bundle.zip", "r") as bundle:
 if "/" not in sys.path:
     sys.path.insert(0, "/")
 `);
+}
+
+function renderLocationSelectors() {
+  if (!locationGroupSelect || !locationSelect) return;
+
+  const selectedGroupName = locationGroupSelect.value;
+  locationGroupSelect.innerHTML = "";
+  locationGroups.forEach((group) => {
+    const option = document.createElement("option");
+    option.value = group.group_name;
+    option.textContent = group.group_name;
+    if (group.group_name === selectedGroupName) {
+      option.selected = true;
+    }
+    locationGroupSelect.appendChild(option);
+  });
+
+  const currentGroup = locationGroups.find((g) => g.group_name === locationGroupSelect.value)
+    || locationGroups[0];
+  const locations = Array.isArray(currentGroup?.locations) ? currentGroup.locations : [];
+  const selectedLocation = locationSelect.value;
+  locationSelect.innerHTML = "";
+  locations.forEach((loc) => {
+    const option = document.createElement("option");
+    option.value = loc;
+    option.textContent = loc;
+    if (loc === selectedLocation) {
+      option.selected = true;
+    }
+    locationSelect.appendChild(option);
+  });
+  if (locations.length && !locationSelect.value) {
+    locationSelect.value = locations[0];
+  }
 }
 
 function selectedEnemySafeIndex() {
@@ -203,20 +241,97 @@ async function bootEngine() {
   await pyodide.loadPackage("typing-extensions");
   await preparePythonBundle(pyodide);
   await pyodide.runPythonAsync(`
+import json
 from combat.wasm_api import WasmBattleEngine
+from combat.runtime_state import init_runtime_state
+from assets.data.data_loader import load_explicit_groups
+from combat.enemy_selection import build_groups, build_location_index, pick_enemy_names
 
-engine = WasmBattleEngine.create_default(seed=7)
+state = init_runtime_state()
+
+location_entries = build_location_index(state.monsters)
+explicit_groups = {}
+try:
+    explicit_groups = load_explicit_groups("assets/data/explicit_groups.json")
+except OSError:
+    explicit_groups = {}
+location_groups = build_groups(
+    location_entries,
+    explicit_groups=explicit_groups,
+)
+groups_payload = []
+location_to_entry = {}
+for group in location_groups:
+    locations = []
+    for child in group.children:
+        locations.append(str(child.location))
+        location_to_entry[str(child.location)] = child
+    groups_payload.append({
+        "group_name": str(group.group_name),
+        "locations": locations,
+    })
+
+default_group = groups_payload[0]["group_name"] if groups_payload else ""
+default_location = (
+    groups_payload[0]["locations"][0]
+    if groups_payload and groups_payload[0]["locations"]
+    else ""
+)
+
+engine = None
+
+def get_location_selection_json():
+    payload = {
+        "groups": groups_payload,
+        "selected_group": default_group,
+        "selected_location": default_location,
+    }
+    return json.dumps(payload, ensure_ascii=False)
+
+def boot_engine_for_location(location_group, location, seed=7):
+    global engine
+    selected_group = str(location_group or "")
+    selected_location = str(location or "")
+    entry = location_to_entry.get(selected_location)
+    if entry is None:
+        enemy_names = sorted(state.monsters.keys())[:3]
+    else:
+        enemy_names = pick_enemy_names(entry, state.monsters, k_min=2, k_max=6)
+    engine = WasmBattleEngine.create_default(
+        enemy_names=enemy_names,
+        seed=seed,
+        selected_location_group=selected_group,
+        selected_location=selected_location,
+    )
+    return json.dumps(engine.build_initial_payload(), ensure_ascii=False)
 
 def get_initial_payload_json():
-    import json
     return json.dumps(engine.build_initial_payload(), ensure_ascii=False)
 
 def run_battle_round_wasm(js_input_json):
     return engine.execute_round_json(js_input_json)
 `);
 
-  const getInitialPayloadJson = pyodide.globals.get("get_initial_payload_json");
-  const initialPayload = JSON.parse(getInitialPayloadJson());
+  const getSelectionJson = pyodide.globals.get("get_location_selection_json");
+  const selectionPayload = JSON.parse(getSelectionJson());
+  locationGroups = Array.isArray(selectionPayload?.groups) ? selectionPayload.groups : [];
+  renderLocationSelectors();
+  if (selectionPayload?.selected_group) {
+    locationGroupSelect.value = selectionPayload.selected_group;
+    renderLocationSelectors();
+  }
+  if (selectionPayload?.selected_location) {
+    locationSelect.value = selectionPayload.selected_location;
+  }
+
+  const bootForLocation = pyodide.globals.get("boot_engine_for_location");
+  const initialPayload = JSON.parse(
+    bootForLocation(
+      locationGroupSelect.value || "",
+      locationSelect.value || "",
+      7,
+    ),
+  );
   sessionStatus = initialPayload?.session_status ?? { party: [], enemies: [] };
   lifecycleState = "ready_for_actions";
   battleFinished = false;
@@ -282,5 +397,39 @@ nextRoundBtn.addEventListener("click", () => {
     logView.textContent = String(error);
   });
 });
+
+if (locationGroupSelect) {
+  locationGroupSelect.addEventListener("change", () => {
+    renderLocationSelectors();
+  });
+}
+
+if (locationApplyBtn) {
+  locationApplyBtn.addEventListener("click", () => {
+    if (!pyodide) {
+      statusLine.textContent = "先に Boot Wasm Engine を実行してください。";
+      return;
+    }
+    const bootForLocation = pyodide.globals.get("boot_engine_for_location");
+    const payload = JSON.parse(
+      bootForLocation(
+        locationGroupSelect.value || "",
+        locationSelect.value || "",
+        7,
+      ),
+    );
+    sessionStatus = payload?.session_status ?? { party: [], enemies: [] };
+    lifecycleState = "ready_for_actions";
+    battleFinished = false;
+    pendingActions = [];
+    currentMemberIndex = 0;
+    selectedEnemyIndex = 0;
+    battlePhase.textContent = "敵編成を更新しました。コマンド入力を開始してください。";
+    logView.textContent = "(not executed)";
+    rewardPanel.classList.remove("open");
+    rewardPanel.textContent = "";
+    rerenderAll();
+  });
+}
 
 rerenderAll();

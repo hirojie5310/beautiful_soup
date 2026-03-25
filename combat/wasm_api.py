@@ -6,12 +6,14 @@ from dataclasses import dataclass
 from random import Random
 from typing import Any, Optional, Sequence
 
+from assets.data.data_loader import load_explicit_groups
 from combat.constants import STATUS_ICON_KEY_BY_ENUM
 from combat.dto import (
     ExecuteRoundInputDTO,
     parse_execute_round_input_dict,
     to_json_ready_dict,
 )
+from combat.enemy_selection import build_groups, build_location_index, pick_enemy_names
 from combat.errors import InputValidationError
 from combat.progression import apply_victory_rewards
 from combat.usecases import BattleSession, build_battle_session, execute_round_dto
@@ -198,6 +200,61 @@ def _member_export(member: Any) -> dict[str, Any]:
     }
 
 
+def build_location_selection_context(state: Any) -> dict[str, Any]:
+    location_entries = build_location_index(state.monsters)
+    location_groups = build_groups(
+        location_entries,
+        explicit_groups=load_explicit_groups("assets/data/explicit_groups.json"),
+    )
+    groups_payload: list[dict[str, Any]] = []
+    location_to_entry: dict[str, Any] = {}
+    for group in location_groups:
+        locations: list[str] = []
+        for child in group.children:
+            locations.append(str(child.location))
+            location_to_entry[str(child.location)] = child
+        groups_payload.append(
+            {
+                "group_name": str(group.group_name),
+                "locations": locations,
+            }
+        )
+
+    selected_group = groups_payload[0]["group_name"] if groups_payload else ""
+    selected_location = (
+        groups_payload[0]["locations"][0]
+        if groups_payload and groups_payload[0]["locations"]
+        else ""
+    )
+
+    return {
+        "groups": groups_payload,
+        "selected_group": selected_group,
+        "selected_location": selected_location,
+        "location_to_entry": location_to_entry,
+    }
+
+
+def pick_enemy_names_for_location(state: Any, location: str) -> list[str]:
+    selection = build_location_selection_context(state)
+    location_to_entry = selection["location_to_entry"]
+    entry = location_to_entry.get(location)
+    if entry is None:
+        return sorted(state.monsters.keys())[:3]
+    return pick_enemy_names(entry, state.monsters, k_min=2, k_max=6)
+
+
+def _build_random_enemy_selection(state: Any) -> tuple[list[str], str, str]:
+    selection = build_location_selection_context(state)
+    selected_group = selection["selected_group"]
+    selected_location = selection["selected_location"]
+    if not selected_location:
+        return sorted(state.monsters.keys())[:3], selected_group, selected_location
+
+    selected_enemy_names = pick_enemy_names_for_location(state, selected_location)
+    return selected_enemy_names, selected_group, selected_location
+
+
 def build_wasm_bootstrap_python() -> str:
     return (
         "from combat.wasm_api import WasmBattleEngine\n"
@@ -221,19 +278,35 @@ class WasmBattleEngine:
         *,
         enemy_names: Optional[Sequence[str]] = None,
         seed: Optional[int] = None,
-        selected_location_group: str = "",
-        selected_location: str = "",
+        selected_location_group: str | None = None,
+        selected_location: str | None = None,
     ) -> "WasmBattleEngine":
         state = init_runtime_state()
-        selected_enemy_names = (
-            list(enemy_names) if enemy_names else sorted(state.monsters.keys())[:3]
-        )
+        if enemy_names:
+            selected_enemy_names = list(enemy_names)
+            selected_group = selected_location_group or ""
+            selected_loc = selected_location or ""
+        else:
+            (
+                selected_enemy_names,
+                auto_group,
+                auto_location,
+            ) = _build_random_enemy_selection(state)
+            selected_group = (
+                selected_location_group
+                if selected_location_group is not None
+                else auto_group
+            )
+            selected_loc = (
+                selected_location if selected_location is not None else auto_location
+            )
+
         session = build_battle_session(state=state, enemy_names=selected_enemy_names)
         return cls(
             session=session,
             rng=Random(seed),
-            selected_location_group=selected_location_group,
-            selected_location=selected_location,
+            selected_location_group=selected_group,
+            selected_location=selected_loc,
             battle_start_progress=_build_party_progress_snapshot(session),
         )
 
