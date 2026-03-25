@@ -49,6 +49,16 @@ if "/" not in sys.path:
 `);
 }
 
+async function prepareExplicitGroups(instance) {
+  const response = await fetch("../assets/data/explicit_groups.json");
+  if (!response.ok) {
+    instance.FS.writeFile("/tmp/explicit_groups.json", new Uint8Array());
+    return;
+  }
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  instance.FS.writeFile("/tmp/explicit_groups.json", bytes);
+}
+
 function renderLocationSelectors() {
   if (!locationGroupSelect || !locationSelect) return;
 
@@ -240,6 +250,7 @@ async function bootEngine() {
   pyodide = await loadPyodide();
   await pyodide.loadPackage("typing-extensions");
   await preparePythonBundle(pyodide);
+  await prepareExplicitGroups(pyodide);
   await pyodide.runPythonAsync(`
 import json
 from combat.wasm_api import WasmBattleEngine
@@ -252,8 +263,8 @@ state = init_runtime_state()
 location_entries = build_location_index(state.monsters)
 explicit_groups = {}
 try:
-    explicit_groups = load_explicit_groups("assets/data/explicit_groups.json")
-except OSError:
+    explicit_groups = load_explicit_groups("/tmp/explicit_groups.json")
+except (OSError, ValueError):
     explicit_groups = {}
 location_groups = build_groups(
     location_entries,

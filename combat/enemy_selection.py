@@ -97,14 +97,17 @@ def build_groups(
 
         used.update(loc.location for loc in childs)
 
-    # ② 残りは自動グループ
+    # ② 残りは自動グループ（同名グループを集約）
+    auto_group_children: dict[str, list[LocationMonsters]] = defaultdict(list)
     for loc in locations:
         if loc.location in used:
             continue
-
         group_name, _ = split_location_name(loc.location)
-        groups.append(make_group(group_name, [loc]))
+        auto_group_children[group_name].append(loc)
         used.add(loc.location)
+
+    for group_name, children in auto_group_children.items():
+        groups.append(make_group(group_name, children))
 
     # order 順で最終ソート（重要）
     groups.sort(key=lambda g: g.order)
