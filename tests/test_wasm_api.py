@@ -74,6 +74,10 @@ def test_build_session_status_snapshot_serializes_status_icons() -> None:
 
     assert snapshot["party"][0]["status_icons"] == ["blind"]
     assert snapshot["enemies"]
+    assert "magic_command_candidates_by_member" in snapshot
+    assert "item_command_candidates" in snapshot
+    assert "magic_spell_meta" in snapshot
+    assert "item_meta" in snapshot
 
 
 def test_wasm_engine_initial_payload_exposes_flat_party_members() -> None:
@@ -82,6 +86,10 @@ def test_wasm_engine_initial_payload_exposes_flat_party_members() -> None:
     payload = engine.build_initial_payload()
 
     assert payload["session_status"]["party"]
+    assert payload["session_status"]["command_candidates_by_member"]
+    assert payload["session_status"]["command_candidates_by_member"][0]
+    assert isinstance(payload["session_status"]["item_command_candidates"], list)
+    assert isinstance(payload["session_status"]["magic_spell_meta"], dict)
     assert payload["party_members"][0]["equipment"]["main_hand"] is not None
     assert "strength" in payload["party_members"][0]
 

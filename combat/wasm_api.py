@@ -15,6 +15,10 @@ from combat.dto import (
 )
 from combat.enemy_selection import build_groups, build_location_index, pick_enemy_names
 from combat.errors import InputValidationError
+from combat.input_ui import normalize_battle_command
+from combat.inventory import build_item_list, is_item_visible_in_context
+from combat.item_effects import infer_battle_item_target_side
+from combat.magic_damage import healing_spell_kind
 from combat.progression import apply_victory_rewards
 from combat.usecases import BattleSession, build_battle_session, execute_round_dto
 from combat.models import EquipmentSet
@@ -101,10 +105,189 @@ def _build_enemy_status_snapshot(session: BattleSession) -> list[dict[str, Any]]
     return snapshots
 
 
+def _build_battle_commands_by_member(
+    session: BattleSession,
+) -> list[list[dict[str, str]]]:
+    candidates: list[list[dict[str, str]]] = []
+    for member in session.party_members:
+        member_candidates: list[dict[str, str]] = []
+        job_raw = getattr(getattr(member, "job", None), "raw", {})
+        if isinstance(job_raw, dict):
+            for i in range(1, 5):
+                command_row = job_raw.get(f"BattleCommand{i}")
+                if not isinstance(command_row, dict):
+                    continue
+                command = command_row.get("Command")
+                if not isinstance(command, str) or not command.strip():
+                    continue
+                command_name = command.strip()
+                member_candidates.append(
+                    {
+                        "command": command_name,
+                        "kind": normalize_battle_command(command_name),
+                    }
+                )
+
+        if not member_candidates:
+            fallback = ["Fight", "Defend", "Item", "Run"]
+            member_candidates = [
+                {"command": cmd, "kind": normalize_battle_command(cmd)}
+                for cmd in fallback
+            ]
+        candidates.append(member_candidates)
+    return candidates
+
+
+def _item_type_label_prefix(item_type: Any) -> str:
+    raw = str(item_type).strip() if item_type is not None else ""
+    if not raw:
+        return "?"
+    return raw[0].upper()
+
+
+def _build_battle_item_command_candidates(
+    session: BattleSession,
+) -> list[dict[str, Any]]:
+    state = getattr(session, "state", None)
+    items_by_name = getattr(state, "items_by_name", {}) if state is not None else {}
+    save = getattr(state, "save", {}) if state is not None else {}
+    if not isinstance(items_by_name, dict):
+        return []
+    if not isinstance(save, dict):
+        save = {}
+
+    item_list = build_item_list(items_by_name, save, in_battle=True)
+    candidates: list[dict[str, Any]] = []
+    for item_name, item_type, qty in item_list:
+        item_json = items_by_name.get(item_name, {})
+        if not is_item_visible_in_context(item_json, in_combat=True):
+            continue
+        candidates.append(
+            {
+                "name": item_name,
+                "item_type": item_type,
+                "qty": _safe_int(qty, 0),
+                "label": f"{_item_type_label_prefix(item_type)}: {item_name} ×{_safe_int(qty, 0)}",
+            }
+        )
+    return candidates
+
+
+def _build_battle_item_meta(
+    items_by_name: dict[str, dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    meta: dict[str, dict[str, Any]] = {}
+    for item_name, item_json in items_by_name.items():
+        if not isinstance(item_json, dict):
+            continue
+        meta[item_name] = {
+            "target_side": infer_battle_item_target_side(item_json),
+        }
+    return meta
+
+
+def _magic_type_prefix(magic_type: Any) -> str:
+    raw_label = getattr(magic_type, "value", magic_type)
+    label = str(raw_label or "").strip()
+    if label == "Black Magic":
+        return "●"
+    if label == "White Magic":
+        return "〇"
+    if label == "Summon Magic":
+        return "◎"
+    return ""
+
+
+def _build_magic_command_candidates_by_member(
+    session: BattleSession,
+) -> list[list[dict[str, Any]]]:
+    candidates: list[list[dict[str, Any]]] = []
+    party_magic_lists = getattr(session, "party_magic_lists", [])
+    party_members = list(getattr(session, "party_members", []))
+    for member_idx, row in enumerate(party_magic_lists):
+        member = party_members[member_idx] if member_idx < len(party_members) else None
+        state = getattr(member, "state", None)
+        mp_pool = getattr(state, "mp_pool", {}) if state is not None else {}
+        max_mp_pool = getattr(state, "max_mp_pool", {}) if state is not None else {}
+        if not isinstance(mp_pool, dict):
+            mp_pool = {}
+        if not isinstance(max_mp_pool, dict):
+            max_mp_pool = {}
+
+        names: list[dict[str, Any]] = []
+        for cand in row or []:
+            if not isinstance(cand, (list, tuple)) or len(cand) < 3:
+                continue
+            name = cand[0]
+            if not isinstance(name, str) or not name:
+                continue
+            magic_type = cand[1]
+            level = max(1, _safe_int(cand[2], 1))
+            remain = _safe_int(mp_pool.get(level, 0), 0)
+            max_uses = _safe_int(max_mp_pool.get(level, remain), remain)
+            names.append(
+                {
+                    "name": name,
+                    "type": str(getattr(magic_type, "value", magic_type)),
+                    "level": level,
+                    "remaining_uses": remain,
+                    "max_uses": max_uses,
+                    "label": f"{_magic_type_prefix(magic_type)}{name}",
+                    "group_label": (
+                        f"LV{level} ({remain}/{max_uses})"
+                        if max_uses > 0
+                        else f"LV{level} ({remain})"
+                    ),
+                }
+            )
+        candidates.append(names)
+    return candidates
+
+
+def _build_magic_spell_meta(session: BattleSession) -> dict[str, dict[str, Any]]:
+    rows: dict[str, dict[str, Any]] = {}
+    for name, raw in getattr(session, "spells_expanded", {}).items():
+        if not isinstance(name, str) or not name:
+            continue
+        if not isinstance(raw, dict):
+            continue
+        target_norm = str(raw.get("Target") or "").strip().lower()
+        can_select_all = target_norm in {
+            "one/all enemies",
+            "one/all allies",
+            "one/all",
+        }
+        healing_type = str(healing_spell_kind(raw) or "")
+        target_mode = "enemy_only"
+        if healing_type in {"hp", "status", "revive", "protect", "haste", "reflect"}:
+            target_mode = "any" if healing_type == "hp" else "ally_only"
+        rows[name] = {
+            "target": str(raw.get("Target") or ""),
+            "target_norm": target_norm,
+            "can_select_all": can_select_all,
+            "healing_type": healing_type,
+            "target_mode": target_mode,
+            "type": str(raw.get("Type") or ""),
+            "level": _safe_int(raw.get("Level", 1), 1),
+        }
+    return rows
+
+
 def build_session_status_snapshot(session: BattleSession) -> dict[str, Any]:
+    state = getattr(session, "state", None)
+    items_by_name = getattr(state, "items_by_name", {}) if state is not None else {}
+    if not isinstance(items_by_name, dict):
+        items_by_name = {}
     return {
         "party": _build_party_status_snapshot(session),
         "enemies": _build_enemy_status_snapshot(session),
+        "command_candidates_by_member": _build_battle_commands_by_member(session),
+        "magic_command_candidates_by_member": _build_magic_command_candidates_by_member(
+            session
+        ),
+        "magic_spell_meta": _build_magic_spell_meta(session),
+        "item_command_candidates": _build_battle_item_command_candidates(session),
+        "item_meta": _build_battle_item_meta(items_by_name),
     }
 
 

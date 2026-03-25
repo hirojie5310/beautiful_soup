@@ -22,13 +22,18 @@ let selectedEnemyIndex = 0;
 let lifecycleState = "ready_for_actions";
 let battleFinished = false;
 let locationGroups = [];
+let inputMode = "command";
+let pendingActionDraft = null;
 
-const COMMAND_DEFS = [
-  { kind: "physical", command: "Fight", label: "たたかう", targetSide: "enemy" },
-  { kind: "defend", command: "Defend", label: "ぼうぎょ", targetSide: "self" },
-  { kind: "run", command: "Flee", label: "にげる", targetSide: "self" },
-  { kind: "special", command: "Cheer", label: "おうえん", targetSide: "ally" },
-];
+const COMMAND_LABELS = {
+  Fight: "たたかう",
+  Defend: "ぼうぎょ",
+  Run: "にげる",
+  Flee: "にげる",
+  Item: "アイテム",
+  Magic: "まほう",
+  Cheer: "おうえん",
+};
 
 async function preparePythonBundle(instance) {
   const response = await fetch("./python_bundle.zip");
@@ -128,6 +133,57 @@ function buildActionFromCommand(def) {
   };
 }
 
+function targetSideForCommand(def) {
+  if (def?.kind === "defend" || def?.kind === "run") {
+    return "self";
+  }
+  if (def?.kind === "item" || def?.kind === "magic") {
+    return "enemy";
+  }
+  if (def?.command === "Cheer") {
+    return "ally";
+  }
+  return "enemy";
+}
+
+function commandLabel(command) {
+  const key = String(command || "").trim();
+  return COMMAND_LABELS[key] || key || "(unknown)";
+}
+
+function enterCommandMode() {
+  inputMode = "command";
+  pendingActionDraft = null;
+}
+
+function currentMemberCommandDefs() {
+  const all = Array.isArray(sessionStatus?.command_candidates_by_member)
+    ? sessionStatus.command_candidates_by_member
+    : [];
+  const rows = Array.isArray(all[currentMemberIndex]) ? all[currentMemberIndex] : [];
+  if (rows.length) return rows;
+  return [
+    { kind: "physical", command: "Fight" },
+    { kind: "defend", command: "Defend" },
+    { kind: "item", command: "Item" },
+    { kind: "run", command: "Run" },
+  ];
+}
+
+function currentMemberMagicCandidates() {
+  const all = Array.isArray(sessionStatus?.magic_command_candidates_by_member)
+    ? sessionStatus.magic_command_candidates_by_member
+    : [];
+  const rows = Array.isArray(all[currentMemberIndex]) ? all[currentMemberIndex] : [];
+  return rows;
+}
+
+function currentItemCandidates() {
+  return Array.isArray(sessionStatus?.item_command_candidates)
+    ? sessionStatus.item_command_candidates
+    : [];
+}
+
 function renderParty() {
   const party = Array.isArray(sessionStatus.party) ? sessionStatus.party : [];
   partyGrid.innerHTML = "";
@@ -167,14 +223,131 @@ function renderEnemies() {
 
 function renderCommandButtons() {
   commandGrid.innerHTML = "";
-  COMMAND_DEFS.forEach((def) => {
+  if (inputMode === "pick_magic") {
+    const backBtn = document.createElement("button");
+    backBtn.className = "btn";
+    backBtn.type = "button";
+    backBtn.textContent = "← コマンドにもどる";
+    backBtn.addEventListener("click", () => {
+      enterCommandMode();
+      rerenderAll();
+    });
+    commandGrid.appendChild(backBtn);
+
+    currentMemberMagicCandidates().forEach((cand) => {
+      const button = document.createElement("button");
+      button.className = "btn";
+      button.type = "button";
+      button.disabled = !pyodide || battleFinished;
+      button.textContent = `${cand?.label || cand?.name || "(magic)"} ${cand?.group_label || ""}`.trim();
+      button.addEventListener("click", () => chooseMagic(cand));
+      commandGrid.appendChild(button);
+    });
+    return;
+  }
+
+  if (inputMode === "pick_item") {
+    const backBtn = document.createElement("button");
+    backBtn.className = "btn";
+    backBtn.type = "button";
+    backBtn.textContent = "← コマンドにもどる";
+    backBtn.addEventListener("click", () => {
+      enterCommandMode();
+      rerenderAll();
+    });
+    commandGrid.appendChild(backBtn);
+
+    currentItemCandidates().forEach((cand) => {
+      const button = document.createElement("button");
+      button.className = "btn";
+      button.type = "button";
+      button.disabled = !pyodide || battleFinished;
+      button.textContent = String(cand?.label || cand?.name || "(item)");
+      button.addEventListener("click", () => chooseItem(cand));
+      commandGrid.appendChild(button);
+    });
+    return;
+  }
+
+  if (inputMode === "pick_side") {
+    const backBtn = document.createElement("button");
+    backBtn.className = "btn";
+    backBtn.type = "button";
+    backBtn.textContent = "← えらびなおす";
+    backBtn.addEventListener("click", () => {
+      inputMode = pendingActionDraft?.kind === "magic" ? "pick_magic" : "pick_item";
+      pendingActionDraft = null;
+      rerenderAll();
+    });
+    commandGrid.appendChild(backBtn);
+
+    ["enemy", "ally"].forEach((side) => {
+      const button = document.createElement("button");
+      button.className = "btn";
+      button.type = "button";
+      button.textContent = side === "enemy" ? "敵を対象にする" : "味方を対象にする";
+      button.addEventListener("click", () => {
+        pendingActionDraft = { ...(pendingActionDraft || {}), target_side: side };
+        inputMode = "pick_target";
+        rerenderAll();
+      });
+      commandGrid.appendChild(button);
+    });
+    return;
+  }
+
+  if (inputMode === "pick_target") {
+    const backBtn = document.createElement("button");
+    backBtn.className = "btn";
+    backBtn.type = "button";
+    backBtn.textContent = "← えらびなおす";
+    backBtn.addEventListener("click", () => {
+      if (pendingActionDraft?.target_side === "ally" || pendingActionDraft?.target_side === "enemy") {
+        inputMode = "pick_side";
+      } else {
+        enterCommandMode();
+      }
+      rerenderAll();
+    });
+    commandGrid.appendChild(backBtn);
+
+    const side = pendingActionDraft?.target_side || "enemy";
+    if (side === "ally") {
+      const party = Array.isArray(sessionStatus.party) ? sessionStatus.party : [];
+      party.forEach((member, idx) => {
+        const button = document.createElement("button");
+        button.className = "btn";
+        button.type = "button";
+        button.textContent = `味方: ${member?.name || `Member ${idx + 1}`}`;
+        button.addEventListener("click", () => finalizeDraftAction(idx));
+        commandGrid.appendChild(button);
+      });
+      return;
+    }
+    const enemies = Array.isArray(sessionStatus.enemies) ? sessionStatus.enemies : [];
+    enemies.forEach((enemy, idx) => {
+      const button = document.createElement("button");
+      button.className = "btn";
+      button.type = "button";
+      button.textContent = `敵: ${enemy?.name || `Enemy ${idx + 1}`}`;
+      button.addEventListener("click", () => finalizeDraftAction(idx));
+      commandGrid.appendChild(button);
+    });
+    return;
+  }
+
+  currentMemberCommandDefs().forEach((def) => {
     const button = document.createElement("button");
     button.className = "btn";
     button.type = "button";
-    button.textContent = def.label;
+    button.textContent = commandLabel(def?.command);
     button.disabled = !pyodide || battleFinished;
     button.addEventListener("click", () => {
-      chooseCommand(def);
+      chooseCommand({
+        kind: String(def?.kind || "physical"),
+        command: String(def?.command || "Fight"),
+        targetSide: targetSideForCommand(def),
+      });
     });
     commandGrid.appendChild(button);
   });
@@ -197,6 +370,23 @@ function renderStatus() {
   const target = enemies[selectedEnemySafeIndex()];
   if (!actor) {
     statusLine.textContent = "操作可能なメンバーがいません。";
+    return;
+  }
+  if (inputMode === "pick_magic") {
+    statusLine.textContent = `行動入力: ${actor.name} / 魔法を選択してください`;
+    return;
+  }
+  if (inputMode === "pick_item") {
+    statusLine.textContent = `行動入力: ${actor.name} / アイテムを選択してください`;
+    return;
+  }
+  if (inputMode === "pick_side") {
+    statusLine.textContent = `行動入力: ${actor.name} / 対象サイドを選択してください`;
+    return;
+  }
+  if (inputMode === "pick_target") {
+    const sideLabel = pendingActionDraft?.target_side === "ally" ? "味方" : "敵";
+    statusLine.textContent = `行動入力: ${actor.name} / ${sideLabel}対象を選択してください`;
     return;
   }
   statusLine.textContent = `行動入力: ${actor.name} / 対象: ${target?.name ?? "(なし)"} / 入力済み ${pendingActions.length}/${party.length}`;
@@ -230,9 +420,24 @@ function chooseCommand(def) {
   if (battleFinished) return;
   const party = Array.isArray(sessionStatus.party) ? sessionStatus.party : [];
   if (!party.length) return;
-  const action = buildActionFromCommand(def);
+  if (def.kind === "magic") {
+    inputMode = "pick_magic";
+    rerenderAll();
+    return;
+  }
+  if (def.kind === "item") {
+    inputMode = "pick_item";
+    rerenderAll();
+    return;
+  }
+  appendPendingAction(buildActionFromCommand(def));
+}
+
+function appendPendingAction(action) {
+  const party = Array.isArray(sessionStatus.party) ? sessionStatus.party : [];
   pendingActions.push(action);
   currentMemberIndex = Math.min(pendingActions.length, Math.max(0, party.length - 1));
+  enterCommandMode();
   if (pendingActions.length >= party.length) {
     nextRoundBtn.disabled = false;
     battlePhase.textContent = "全員入力済み。ラウンド実行できます。";
@@ -241,6 +446,78 @@ function chooseCommand(def) {
     battlePhase.textContent = `${pendingActions.length}/${party.length} 入力済み`;
   }
   rerenderAll();
+}
+
+function chooseMagic(cand) {
+  const spellName = String(cand?.name || "");
+  if (!spellName) return;
+  const spellMeta = sessionStatus?.magic_spell_meta?.[spellName] || {};
+  const mode = String(spellMeta?.target_mode || "enemy_only");
+  if (mode === "ally_only") {
+    pendingActionDraft = {
+      kind: "magic",
+      command: "Magic",
+      spell_name: spellName,
+      target_side: "ally",
+    };
+    inputMode = "pick_target";
+    rerenderAll();
+    return;
+  }
+  if (mode === "any") {
+    pendingActionDraft = {
+      kind: "magic",
+      command: "Magic",
+      spell_name: spellName,
+    };
+    inputMode = "pick_side";
+    rerenderAll();
+    return;
+  }
+  pendingActionDraft = {
+    kind: "magic",
+    command: "Magic",
+    spell_name: spellName,
+    target_side: "enemy",
+  };
+  inputMode = "pick_target";
+  rerenderAll();
+}
+
+function chooseItem(cand) {
+  const itemName = String(cand?.name || "");
+  if (!itemName) return;
+  const targetSide = sessionStatus?.item_meta?.[itemName]?.target_side;
+  pendingActionDraft = {
+    kind: "item",
+    command: "Item",
+    item_name: itemName,
+  };
+  if (targetSide === "ally" || targetSide === "enemy") {
+    pendingActionDraft.target_side = targetSide;
+    inputMode = "pick_target";
+  } else {
+    inputMode = "pick_side";
+  }
+  rerenderAll();
+}
+
+function finalizeDraftAction(targetIndex) {
+  if (!pendingActionDraft) return;
+  const action = {
+    kind: pendingActionDraft.kind || "physical",
+    command: pendingActionDraft.command || "Fight",
+    target_side: pendingActionDraft.target_side || "enemy",
+    target_index: Number(targetIndex || 0),
+    target_all: false,
+  };
+  if (pendingActionDraft.spell_name) {
+    action.spell_name = pendingActionDraft.spell_name;
+  }
+  if (pendingActionDraft.item_name) {
+    action.item_name = pendingActionDraft.item_name;
+  }
+  appendPendingAction(action);
 }
 
 async function bootEngine() {
@@ -349,6 +626,7 @@ def run_battle_round_wasm(js_input_json):
   pendingActions = [];
   currentMemberIndex = 0;
   selectedEnemyIndex = 0;
+  enterCommandMode();
 
   battlePhase.textContent = "起動完了。コマンド入力を開始してください。";
   nextRoundBtn.disabled = true;
@@ -389,6 +667,7 @@ async function executeRound() {
   pendingActions = [];
   currentMemberIndex = 0;
   selectedEnemyIndex = 0;
+  enterCommandMode();
   battlePhase.textContent = battleFinished
     ? `戦闘終了: ${result?.end_reason ?? "finished"}`
     : "次ターンの入力を開始してください。";
@@ -435,6 +714,7 @@ if (locationApplyBtn) {
     pendingActions = [];
     currentMemberIndex = 0;
     selectedEnemyIndex = 0;
+    enterCommandMode();
     battlePhase.textContent = "敵編成を更新しました。コマンド入力を開始してください。";
     logView.textContent = "(not executed)";
     rewardPanel.classList.remove("open");
