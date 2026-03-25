@@ -1,4 +1,3 @@
-# web_wasm/index.html
 <!doctype html>
 <html lang="ja">
   <head>
@@ -6,30 +5,131 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Battle Wasm Runner</title>
     <style>
-      body { font-family: sans-serif; margin: 24px; line-height: 1.5; }
-      button { margin-right: 8px; }
-      pre { padding: 12px; background: #111; color: #eee; overflow: auto; }
-      .row { margin-bottom: 16px; }
+      :root {
+        --bg: #050817;
+        --panel: #101838;
+        --panel-2: #0b1229;
+        --text: #eef2ff;
+        --muted: #acb6d7;
+        --accent: #ffe588;
+        --ok: #89f0ac;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: radial-gradient(circle at 20% 0%, #1c2b7a 0%, transparent 45%), var(--bg);
+        color: var(--text);
+        font-family: "BIZ UDPGothic", "Yu Gothic UI", sans-serif;
+      }
+      .layout {
+        width: min(860px, 100vw);
+        margin: 0 auto;
+        min-height: 100vh;
+        padding: 10px;
+        display: grid;
+        gap: 10px;
+        grid-template-rows: auto auto auto 1fr;
+      }
+      .frame {
+        border: 2px solid rgba(255,255,255,0.45);
+        border-radius: 10px;
+        background: rgba(16, 24, 56, 0.95);
+        padding: 10px;
+      }
+      .title { margin: 0 0 8px; color: var(--accent); font-size: 0.95rem; }
+      .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+      .btn {
+        border: 1px solid rgba(255,255,255,0.7);
+        border-radius: 8px;
+        color: var(--text);
+        background: linear-gradient(180deg, #4459bf, #20317e);
+        padding: 8px 10px;
+        cursor: pointer;
+      }
+      .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+      .status { color: var(--muted); font-size: 0.9rem; }
+
+      .party-grid, .enemy-grid {
+        display: grid;
+        gap: 8px;
+      }
+      .party-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .enemy-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+      .card {
+        border: 1px solid rgba(255,255,255,0.35);
+        border-radius: 8px;
+        padding: 8px;
+        background: rgba(0,0,0,0.25);
+      }
+      .card.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(255,229,136,0.35) inset; }
+      .card.target { cursor: pointer; }
+      .card.selected { border-color: var(--accent); }
+      .name { font-weight: 700; font-size: 0.86rem; }
+      .hp { font-size: 0.78rem; color: var(--ok); }
+
+      .command-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      pre {
+        margin: 0;
+        border: 1px solid rgba(255,255,255,0.28);
+        border-radius: 8px;
+        background: var(--panel-2);
+        max-height: 300px;
+        overflow: auto;
+        white-space: pre-wrap;
+        padding: 8px;
+        line-height: 1.45;
+      }
+      .reward {
+        border: 1px solid rgba(255,229,136,0.5);
+        background: rgba(255,229,136,0.09);
+        border-radius: 8px;
+        padding: 8px;
+        display: none;
+      }
+      .reward.open { display: block; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
     </style>
   </head>
   <body>
-    <h1>Battle Wasm Runner</h1>
-    <p>Pyodide 上で <code>combat.wasm_api.WasmBattleEngine</code> を起動する最小サンプルです。</p>
+    <main class="layout">
+      <section class="frame">
+        <h1 class="title">Battle Wasm Runner</h1>
+        <div class="toolbar">
+          <button id="bootBtn" class="btn" type="button">1. Boot Wasm Engine</button>
+          <button id="nextRoundBtn" class="btn" type="button" disabled>2. 4人分を送信してラウンド実行</button>
+          <span id="battlePhase" class="status">未起動</span>
+        </div>
+      </section>
 
-    <div class="row">
-      <button id="bootBtn" type="button">1. Boot Wasm Engine</button>
-      <button id="roundBtn" type="button" disabled>2. Execute Empty Round</button>
-    </div>
+      <section class="frame">
+        <h2 class="title">PARTY</h2>
+        <div id="partyGrid" class="party-grid"></div>
+      </section>
 
-    <div class="row">
-      <strong>Initial Payload</strong>
-      <pre id="initialPayload">(not loaded)</pre>
-    </div>
+      <section class="frame">
+        <h2 class="title">ENEMY（対象を選択）</h2>
+        <div id="enemyGrid" class="enemy-grid"></div>
+      </section>
 
-    <div class="row">
-      <strong>Round Result</strong>
-      <pre id="roundResult">(not executed)</pre>
-    </div>
+      <section class="frame">
+        <h2 class="title">COMMAND</h2>
+        <div id="statusLine" class="status">Boot待ちです。</div>
+        <div id="commandGrid" class="command-grid"></div>
+
+        <h3 class="title" style="margin-top:10px;">Planned Actions</h3>
+        <pre id="plannedActionsView" class="mono">(none)</pre>
+
+        <h3 class="title" style="margin-top:10px;">Battle Logs</h3>
+        <pre id="logView">(not executed)</pre>
+
+        <div id="rewardPanel" class="reward" style="margin-top:10px;"></div>
+      </section>
+    </main>
 
     <script type="module" src="./main.js"></script>
   </body>
