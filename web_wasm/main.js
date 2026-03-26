@@ -1,7 +1,5 @@
 import { loadPyodide } from "https://cdn.jsdelivr.net/pyodide/v0.28.3/full/pyodide.mjs";
 
-const bootBtn = document.getElementById("bootBtn");
-const nextRoundBtn = document.getElementById("nextRoundBtn");
 const battlePhase = document.getElementById("battlePhase");
 const partyGrid = document.getElementById("partyGrid");
 const enemyGrid = document.getElementById("enemyGrid");
@@ -436,6 +434,7 @@ function renderEnemies() {
 
 function renderCommandButtons() {
   commandGrid.innerHTML = "";
+  commandGrid.classList.toggle("command-mode", inputMode === "command");
   if (inputMode === "pick_magic") {
     const backBtn = document.createElement("button");
     backBtn.className = "btn";
@@ -626,7 +625,6 @@ function rerenderAll() {
   renderCommandButtons();
   renderPlannedActions();
   renderStatus();
-  nextRoundBtn.disabled = !pyodide || battleFinished || pendingActions.length === 0;
 }
 
 function chooseCommand(def) {
@@ -652,10 +650,14 @@ function appendPendingAction(action) {
   currentMemberIndex = Math.min(pendingActions.length, Math.max(0, party.length - 1));
   enterCommandMode();
   if (pendingActions.length >= party.length) {
-    nextRoundBtn.disabled = false;
-    battlePhase.textContent = "全員入力済み。ラウンド実行できます。";
+    battlePhase.textContent = "全員入力済み。ラウンド実行中...";
+    rerenderAll();
+    executeRound().catch((error) => {
+      logView.textContent = String(error);
+      battlePhase.textContent = `ラウンド実行失敗: ${String(error)}`;
+    });
+    return;
   } else {
-    nextRoundBtn.disabled = true;
     battlePhase.textContent = `${pendingActions.length}/${party.length} 入力済み`;
   }
   rerenderAll();
@@ -734,7 +736,6 @@ function finalizeDraftAction(targetIndex) {
 }
 
 async function bootEngine() {
-  bootBtn.disabled = true;
   battlePhase.textContent = "Pyodide 起動中...";
 
   pyodide = await loadPyodide();
@@ -845,7 +846,6 @@ def run_battle_round_wasm(js_input_json):
   enterCommandMode();
 
   battlePhase.textContent = "起動完了。コマンド入力を開始してください。";
-  nextRoundBtn.disabled = true;
   logView.textContent = "(not executed)";
   rewardPanel.classList.remove("open");
   rewardPanel.textContent = "";
@@ -861,7 +861,6 @@ async function executeRound() {
     return;
   }
 
-  nextRoundBtn.disabled = true;
   battlePhase.textContent = "ラウンド解決中...";
   const payload = {
     planned_actions: pendingActions,
@@ -894,19 +893,6 @@ async function executeRound() {
   rerenderAll();
 }
 
-bootBtn.addEventListener("click", () => {
-  bootEngine().catch((error) => {
-    battlePhase.textContent = `Boot失敗: ${String(error)}`;
-    bootBtn.disabled = false;
-  });
-});
-
-nextRoundBtn.addEventListener("click", () => {
-  executeRound().catch((error) => {
-    logView.textContent = String(error);
-  });
-});
-
 if (locationGroupSelect) {
   locationGroupSelect.addEventListener("change", () => {
     renderLocationSelectors();
@@ -916,7 +902,7 @@ if (locationGroupSelect) {
 if (locationApplyBtn) {
   locationApplyBtn.addEventListener("click", () => {
     if (!pyodide) {
-      statusLine.textContent = "先に Boot Wasm Engine を実行してください。";
+      statusLine.textContent = "エンジン起動中です。完了後に再実行してください。";
       return;
     }
     const bootForLocation = pyodide.globals.get("boot_engine_for_location");
@@ -946,3 +932,7 @@ if (locationApplyBtn) {
 }
 
 rerenderAll();
+bootEngine().catch((error) => {
+  battlePhase.textContent = `起動失敗: ${String(error)}`;
+  statusLine.textContent = "エンジン起動に失敗しました。ページを再読み込みしてください。";
+});

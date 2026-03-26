@@ -195,6 +195,9 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 8px;
       }
+      .command-grid.command-mode {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
 
       pre {
         margin: 0;
@@ -223,9 +226,7 @@
       <section class="frame">
         <h1 class="title">Battle Wasm Runner</h1>
         <div class="toolbar">
-          <button id="bootBtn" class="btn" type="button">1. Boot Wasm Engine</button>
-          <button id="nextRoundBtn" class="btn" type="button" disabled>2. 4人分を送信してラウンド実行</button>
-          <span id="battlePhase" class="status">未起動</span>
+          <span id="battlePhase" class="status">起動中...</span>
         </div>
         <div class="selector-row">
           <label for="locationGroupSelect">LocationGroup</label>
@@ -248,7 +249,7 @@
 
       <section class="frame">
         <h2 class="title">COMMAND</h2>
-        <div id="statusLine" class="status">Boot待ちです。</div>
+        <div id="statusLine" class="status">エンジン起動中です...</div>
         <div id="commandGrid" class="command-grid"></div>
 
         <h3 class="title" style="margin-top:10px;">Planned Actions</h3>
