@@ -35,6 +35,16 @@ class WasmRequestHandler(SimpleHTTPRequestHandler):
                 self.send_error(404, "File not found")
                 return
             self.path = f"/assets/images/enemy_sprites/{file_name}"
+        elif request_path.startswith("/web_wasm/maps/"):
+            file_name = Path(request_path).name
+            if not file_name:
+                self.send_error(404, "File not found")
+                return
+            image_path = REPO_ROOT / "assets" / "images" / "maps" / file_name
+            if not image_path.is_file():
+                self.send_error(404, "File not found")
+                return
+            self.path = f"/assets/images/maps/{file_name}"
         super().do_GET()
 
 

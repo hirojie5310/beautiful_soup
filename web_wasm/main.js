@@ -13,6 +13,7 @@ const rewardPanel = document.getElementById("rewardPanel");
 const locationGroupSelect = document.getElementById("locationGroupSelect");
 const locationSelect = document.getElementById("locationSelect");
 const locationApplyBtn = document.getElementById("locationApplyBtn");
+const enemyFrame = document.getElementById("enemyFrame");
 
 let pyodide = null;
 let sessionStatus = { party: [], enemies: [] };
@@ -24,6 +25,8 @@ let battleFinished = false;
 let locationGroups = [];
 let inputMode = "command";
 let pendingActionDraft = null;
+let currentSelectedLocationGroup = "";
+const locationMapImageCache = {};
 
 const COMMAND_LABELS = {
   Fight: "たたかう",
@@ -102,6 +105,68 @@ function selectedEnemySafeIndex() {
   const enemies = Array.isArray(sessionStatus.enemies) ? sessionStatus.enemies : [];
   if (!enemies.length) return 0;
   return Math.min(selectedEnemyIndex, enemies.length - 1);
+}
+
+function locationGroupToMapKey(name) {
+  return String(name || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_");
+}
+
+function resolveLocationMapImageCandidates(locationGroupName) {
+  const key = locationGroupToMapKey(locationGroupName);
+  if (!key) return [];
+  return [
+    `/web_wasm/maps/${key}.jpg`,
+    `/web_wasm/maps/${key}.jpeg`,
+    `/web_wasm/maps/${key}.png`,
+    `../assets/images/maps/${key}.jpg`,
+    `../assets/images/maps/${key}.jpeg`,
+    `../assets/images/maps/${key}.png`,
+  ];
+}
+
+function resolveLocationMapImageUrl(locationGroupName, onResolved) {
+  const key = locationGroupToMapKey(locationGroupName);
+  if (!key) return "";
+
+  const cached = locationMapImageCache[key];
+  if (typeof cached === "string") {
+    return cached;
+  }
+  if (cached === "__loading__") {
+    return "";
+  }
+
+  const candidates = resolveLocationMapImageCandidates(locationGroupName);
+  if (!candidates.length) {
+    locationMapImageCache[key] = "";
+    return "";
+  }
+
+  locationMapImageCache[key] = "__loading__";
+
+  const tryLoad = (index) => {
+    if (index >= candidates.length) {
+      locationMapImageCache[key] = "";
+      if (typeof onResolved === "function") onResolved("");
+      return;
+    }
+    const image = new Image();
+    const url = candidates[index];
+    image.addEventListener("load", () => {
+      locationMapImageCache[key] = url;
+      if (typeof onResolved === "function") onResolved(url);
+    });
+    image.addEventListener("error", () => {
+      tryLoad(index + 1);
+    });
+    image.src = url;
+  };
+
+  tryLoad(0);
+  return "";
 }
 
 function buildActionFromCommand(def) {
@@ -305,6 +370,16 @@ function renderParty() {
 
 function renderEnemies() {
   const enemies = Array.isArray(sessionStatus.enemies) ? sessionStatus.enemies : [];
+  const mapImageUrl = resolveLocationMapImageUrl(currentSelectedLocationGroup, () => {
+    renderEnemies();
+  });
+  if (enemyFrame) {
+    if (mapImageUrl) {
+      enemyFrame.style.backgroundImage = `linear-gradient(rgba(8,14,34,0.68), rgba(8,14,34,0.68)), url("${mapImageUrl}")`;
+    } else {
+      enemyFrame.style.backgroundImage = "none";
+    }
+  }
   enemyGrid.innerHTML = "";
   enemies.forEach((enemy, idx) => {
     const card = document.createElement("article");
@@ -758,6 +833,9 @@ def run_battle_round_wasm(js_input_json):
       7,
     ),
   );
+  currentSelectedLocationGroup = String(
+    initialPayload?.selected_location_group || locationGroupSelect.value || "",
+  );
   sessionStatus = initialPayload?.session_status ?? { party: [], enemies: [] };
   lifecycleState = "ready_for_actions";
   battleFinished = false;
@@ -793,6 +871,9 @@ async function executeRound() {
   const result = JSON.parse(resultJson);
 
   sessionStatus = result?.session_status ?? sessionStatus;
+  currentSelectedLocationGroup = String(
+    result?.selected_location_group || currentSelectedLocationGroup || "",
+  );
   lifecycleState = result?.lifecycle?.after === "ready_for_next_round"
     ? "ready_for_actions"
     : (result?.lifecycle?.after ?? "ready_for_actions");
@@ -845,6 +926,9 @@ if (locationApplyBtn) {
         locationSelect.value || "",
         7,
       ),
+    );
+    currentSelectedLocationGroup = String(
+      payload?.selected_location_group || locationGroupSelect.value || "",
     );
     sessionStatus = payload?.session_status ?? { party: [], enemies: [] };
     lifecycleState = "ready_for_actions";

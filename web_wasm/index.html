@@ -36,6 +36,11 @@
         background: rgba(16, 24, 56, 0.95);
         padding: 10px;
       }
+      #enemyFrame {
+        background-size: cover;
+        background-position: center center;
+        background-repeat: no-repeat;
+      }
       .title { margin: 0 0 8px; color: var(--accent); font-size: 0.95rem; }
       .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
       .selector-row {
@@ -135,6 +140,9 @@
         overflow: hidden;
         min-height: 112px;
         isolation: isolate;
+        background-size: cover;
+        background-position: center center;
+        background-repeat: no-repeat;
       }
       .enemy-card::before {
         content: "";
@@ -233,7 +241,7 @@
         <div id="partyGrid" class="party-grid"></div>
       </section>
 
-      <section class="frame">
+      <section id="enemyFrame" class="frame">
         <h2 class="title">ENEMY（対象を選択）</h2>
         <div id="enemyGrid" class="enemy-grid"></div>
       </section>
