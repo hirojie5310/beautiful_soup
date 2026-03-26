@@ -197,6 +197,29 @@ function resolveFaceImageCandidates(member, memberIndex = -1) {
   return paths.filter((value, index, arr) => value && arr.indexOf(value) === index);
 }
 
+function normalizeSpriteKey(raw) {
+  return String(raw || "")
+    .trim()
+    .replace(/\.(png|jpg|jpeg|webp)$/i, "")
+    .replace(/\s+/g, "_");
+}
+
+function resolveEnemyImageCandidates(enemy) {
+  const spriteKey = normalizeSpriteKey(enemy?.sprite_id);
+  if (!spriteKey) return [];
+  const safeKey = encodeURIComponent(spriteKey);
+  const exts = ["png", "webp", "jpg", "jpeg"];
+  const paths = [];
+  exts.forEach((ext) => {
+    paths.push(`/web_wasm/enemy_sprites/${safeKey}.${ext}`);
+    paths.push(`./enemy_sprites/${safeKey}.${ext}`);
+    paths.push(`../assets/images/enemy_sprites/${safeKey}.${ext}`);
+    paths.push(new URL(`../assets/images/enemy_sprites/${safeKey}.${ext}`, import.meta.url).href);
+    paths.push(`/assets/images/enemy_sprites/${safeKey}.${ext}`);
+  });
+  return paths.filter((value, index, arr) => value && arr.indexOf(value) === index);
+}
+
 function enterCommandMode() {
   inputMode = "command";
   pendingActionDraft = null;
@@ -286,11 +309,46 @@ function renderEnemies() {
   enemies.forEach((enemy, idx) => {
     const card = document.createElement("article");
     const selectedClass = idx === selectedEnemySafeIndex() ? " selected" : "";
-    card.className = `card target${selectedClass}`;
-    card.innerHTML = `
+    card.className = `card target enemy-card${selectedClass}`;
+
+    const spriteFallback = document.createElement("div");
+    spriteFallback.className = "enemy-sprite-fallback";
+    spriteFallback.textContent = "NO SPRITE";
+    const spriteImageCandidates = resolveEnemyImageCandidates(enemy);
+    if (spriteImageCandidates.length) {
+      const spriteImage = document.createElement("img");
+      spriteImage.className = "enemy-sprite";
+      spriteImage.alt = "";
+      spriteImage.loading = "eager";
+      spriteImage.decoding = "async";
+      let imageIndex = 0;
+      spriteImage.addEventListener("load", () => {
+        spriteFallback.remove();
+      });
+      spriteImage.src = spriteImageCandidates[imageIndex];
+      spriteImage.addEventListener("error", () => {
+        imageIndex += 1;
+        if (imageIndex < spriteImageCandidates.length) {
+          spriteImage.src = spriteImageCandidates[imageIndex];
+          return;
+        }
+        spriteImage.remove();
+        if (!card.contains(spriteFallback)) {
+          card.insertBefore(spriteFallback, card.firstChild);
+        }
+      });
+      card.appendChild(spriteImage);
+    } else {
+      card.appendChild(spriteFallback);
+    }
+
+    const content = document.createElement("div");
+    content.className = "enemy-card-content";
+    content.innerHTML = `
       <div class="name">${enemy?.name ?? `Enemy ${idx + 1}`}</div>
       <div class="hp">HP ${Number(enemy?.hp ?? 0)} / ${Number(enemy?.max_hp ?? 0)}</div>
     `;
+    card.appendChild(content);
     card.addEventListener("click", () => {
       if (battleFinished) return;
       selectedEnemyIndex = idx;
