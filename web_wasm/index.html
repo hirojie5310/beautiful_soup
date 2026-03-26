@@ -77,19 +77,35 @@
       }
       .party-card {
         display: flex;
-        align-items: center;
+        align-items: flex-end;
         gap: 8px;
+        position: relative;
+        overflow: hidden;
+        min-height: 118px;
+        isolation: isolate;
+      }
+      .party-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(180deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.58)),
+          linear-gradient(0deg, rgba(8, 14, 34, 0.5), rgba(8, 14, 34, 0.5));
+        z-index: 1;
       }
       .party-face {
-        width: 56px;
-        height: 56px;
-        border-radius: 6px;
-        border: 1px solid rgba(255, 255, 255, 0.35);
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 7px;
+        border: none;
         flex-shrink: 0;
         object-fit: cover;
-        object-position: top center;
-        opacity: 1;
-        filter: saturate(1.05) brightness(1.08);
+        object-position: center 22%;
+        opacity: 0.95;
+        z-index: 0;
+        filter: saturate(1.08) brightness(1.06);
       }
       .party-face-fallback {
         width: 56px;
@@ -105,16 +121,20 @@
         padding: 4px;
         flex-shrink: 0;
         background: rgba(255, 255, 255, 0.06);
+        position: relative;
+        z-index: 2;
       }
       .party-card-content {
         min-width: 0;
+        position: relative;
+        z-index: 2;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
       }
       .card.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(255,229,136,0.35) inset; }
       .card.target { cursor: pointer; }
       .card.selected { border-color: var(--accent); }
       .name { font-weight: 700; font-size: 0.86rem; }
       .hp { font-size: 0.78rem; color: var(--ok); }
-
       .command-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));

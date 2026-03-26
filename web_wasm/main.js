@@ -237,7 +237,6 @@ function renderParty() {
     const card = document.createElement("article");
     const activeClass = idx === currentMemberIndex && !battleFinished ? " active" : "";
     card.className = `card party-card${activeClass}`;
-    card.style.minHeight = "96px";
     const faceFallback = document.createElement("div");
     faceFallback.className = "party-face-fallback";
     faceFallback.textContent = "NO PORTRAIT";
