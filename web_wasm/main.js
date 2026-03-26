@@ -151,27 +151,50 @@ function commandLabel(command) {
   return COMMAND_LABELS[key] || key || "(unknown)";
 }
 
-function resolveFaceImageCandidates(member) {
-  const portraitKey = String(member?.portrait_key || "").trim().toLowerCase();
-  const nameKey = String(member?.name || "").trim().toLowerCase().replace(/\s+/g, "_");
-  const imageNameKey = String(member?.image_name || "")
+function normalizeFaceKey(raw) {
+  return String(raw || "")
     .trim()
     .toLowerCase()
-    .replace(/^ch_/, "");
-  const keys = [portraitKey, imageNameKey, nameKey].filter(
-    (value, index, arr) => value && arr.indexOf(value) === index,
-  );
+    .replace(/^ch_/, "")
+    .replace(/\.(png|jpg|jpeg|webp)$/i, "")
+    .replace(/\s+/g, "_")
+    .replace(/-/g, "_");
+}
+
+function resolveFaceImageCandidates(member, memberIndex = -1) {
+  const portraitKey = normalizeFaceKey(member?.portrait_key);
+  const nameKey = normalizeFaceKey(member?.name);
+  const imageNameKey = normalizeFaceKey(member?.image_name);
+  const fixedPartyOrderFallback = ["runeth", "arc", "refia", "ingus"];
+  const slotKey = fixedPartyOrderFallback[memberIndex] || "";
+  const aliasMap = {
+    luneth: "runeth",
+  };
+  const rawKeys = [portraitKey, imageNameKey, nameKey, slotKey];
+  const keys = rawKeys
+    .map((key) => aliasMap[key] || key)
+    .filter((value, index, arr) => value && arr.indexOf(value) === index);
   if (!keys.length) return [];
   const paths = [];
+  const exts = ["png", "webp", "jpg", "jpeg"];
   keys.forEach((key) => {
-    const safeKey = encodeURIComponent(key);
-    paths.push(`/web_wasm/faces/${safeKey}.png`);
-    paths.push(`./faces/${safeKey}.png`);
-    paths.push(`/assets/images/faces/${safeKey}.png`);
-    paths.push(`../assets/images/faces/${safeKey}.png`);
-    paths.push(`assets/images/faces/${safeKey}.png`);
+    const variants = [key, key.charAt(0).toUpperCase() + key.slice(1)];
+    variants.forEach((variantKey) => {
+      const safeKey = encodeURIComponent(variantKey);
+      exts.forEach((ext) => {
+        paths.push(`/web_wasm/faces/${safeKey}.${ext}`);
+        paths.push(`./faces/${safeKey}.${ext}`);
+        paths.push(`../assets/images/faces/${safeKey}.${ext}`);
+        paths.push(new URL(`../assets/images/faces/${safeKey}.${ext}`, import.meta.url).href);
+        paths.push(`/assets/images/faces/${safeKey}.${ext}`);
+
+        paths.push(`../assets/images/motions/${safeKey}.${ext}`);
+        paths.push(new URL(`../assets/images/motions/${safeKey}.${ext}`, import.meta.url).href);
+        paths.push(`/assets/images/motions/${safeKey}.${ext}`);
+      });
+    });
   });
-  return paths.filter((value, index, arr) => arr.indexOf(value) === index);
+  return paths.filter((value, index, arr) => value && arr.indexOf(value) === index);
 }
 
 function enterCommandMode() {
@@ -214,27 +237,20 @@ function renderParty() {
     const card = document.createElement("article");
     const activeClass = idx === currentMemberIndex && !battleFinished ? " active" : "";
     card.className = `card party-card${activeClass}`;
-    card.style.position = "relative";
-    card.style.overflow = "hidden";
     card.style.minHeight = "96px";
-    const faceImageCandidates = resolveFaceImageCandidates(member);
+    const faceFallback = document.createElement("div");
+    faceFallback.className = "party-face-fallback";
+    faceFallback.textContent = "NO PORTRAIT";
+    const faceImageCandidates = resolveFaceImageCandidates(member, idx);
     if (faceImageCandidates.length) {
       const faceImage = document.createElement("img");
       faceImage.className = "party-face";
       faceImage.alt = "";
       faceImage.loading = "eager";
       faceImage.decoding = "async";
-      faceImage.style.position = "absolute";
-      faceImage.style.inset = "0";
-      faceImage.style.width = "100%";
-      faceImage.style.height = "100%";
-      faceImage.style.objectFit = "cover";
-      faceImage.style.objectPosition = "center";
-      faceImage.style.opacity = "0.8";
-      faceImage.style.pointerEvents = "none";
       let imageIndex = 0;
       faceImage.addEventListener("load", () => {
-        card.classList.add("has-face");
+        faceFallback.remove();
       });
       faceImage.src = faceImageCandidates[imageIndex];
       faceImage.addEventListener("error", () => {
@@ -243,24 +259,18 @@ function renderParty() {
           faceImage.src = faceImageCandidates[imageIndex];
           return;
         }
-        card.classList.remove("has-face");
         faceImage.remove();
+        if (!card.contains(faceFallback)) {
+          card.insertBefore(faceFallback, card.firstChild);
+        }
       });
       card.appendChild(faceImage);
-
-      const overlay = document.createElement("div");
-      overlay.className = "party-face-overlay";
-      overlay.style.position = "absolute";
-      overlay.style.inset = "0";
-      overlay.style.background = "linear-gradient(rgba(0,0,0,0.15), rgba(0,0,0,0.48))";
-      overlay.style.pointerEvents = "none";
-      card.appendChild(overlay);
+    } else {
+      card.appendChild(faceFallback);
     }
 
     const content = document.createElement("div");
     content.className = "party-card-content";
-    content.style.position = "relative";
-    content.style.zIndex = "1";
     content.innerHTML = `
       <div class="name">${member?.name ?? `Member ${idx + 1}`}</div>
       <div class="hp">HP ${Number(member?.hp ?? 0)} / ${Number(member?.max_hp ?? 0)}</div>

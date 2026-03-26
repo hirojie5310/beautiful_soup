@@ -76,31 +76,38 @@
         background: rgba(0,0,0,0.25);
       }
       .party-card {
-        position: relative;
-        overflow: hidden;
+        display: flex;
+        align-items: center;
+        gap: 8px;
       }
       .party-face {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
+        width: 56px;
+        height: 56px;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        flex-shrink: 0;
         object-fit: cover;
-        object-position: center;
-        opacity: 0.8;
-        pointer-events: none;
+        object-position: top center;
+        opacity: 1;
+        filter: saturate(1.05) brightness(1.08);
       }
-      .party-card.has-face {
-        background: rgba(0, 0, 0, 0.12);
-      }
-      .party-face-overlay {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(rgba(0,0,0,0.15), rgba(0,0,0,0.48));
-        pointer-events: none;
+      .party-face-fallback {
+        width: 56px;
+        height: 56px;
+        border-radius: 6px;
+        border: 1px dashed rgba(255, 255, 255, 0.5);
+        color: rgba(255, 255, 255, 0.88);
+        font-size: 0.55rem;
+        line-height: 1.1;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        padding: 4px;
+        flex-shrink: 0;
+        background: rgba(255, 255, 255, 0.06);
       }
       .party-card-content {
-        position: relative;
-        z-index: 1;
+        min-width: 0;
       }
       .card.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(255,229,136,0.35) inset; }
       .card.target { cursor: pointer; }
