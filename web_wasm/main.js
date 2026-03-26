@@ -151,6 +151,29 @@ function commandLabel(command) {
   return COMMAND_LABELS[key] || key || "(unknown)";
 }
 
+function resolveFaceImageCandidates(member) {
+  const portraitKey = String(member?.portrait_key || "").trim().toLowerCase();
+  const nameKey = String(member?.name || "").trim().toLowerCase().replace(/\s+/g, "_");
+  const imageNameKey = String(member?.image_name || "")
+    .trim()
+    .toLowerCase()
+    .replace(/^ch_/, "");
+  const keys = [portraitKey, imageNameKey, nameKey].filter(
+    (value, index, arr) => value && arr.indexOf(value) === index,
+  );
+  if (!keys.length) return [];
+  const paths = [];
+  keys.forEach((key) => {
+    const safeKey = encodeURIComponent(key);
+    paths.push(`/web_wasm/faces/${safeKey}.png`);
+    paths.push(`./faces/${safeKey}.png`);
+    paths.push(`/assets/images/faces/${safeKey}.png`);
+    paths.push(`../assets/images/faces/${safeKey}.png`);
+    paths.push(`assets/images/faces/${safeKey}.png`);
+  });
+  return paths.filter((value, index, arr) => arr.indexOf(value) === index);
+}
+
 function enterCommandMode() {
   inputMode = "command";
   pendingActionDraft = null;
@@ -190,12 +213,60 @@ function renderParty() {
   party.forEach((member, idx) => {
     const card = document.createElement("article");
     const activeClass = idx === currentMemberIndex && !battleFinished ? " active" : "";
-    card.className = `card${activeClass}`;
-    card.innerHTML = `
+    card.className = `card party-card${activeClass}`;
+    card.style.position = "relative";
+    card.style.overflow = "hidden";
+    card.style.minHeight = "96px";
+    const faceImageCandidates = resolveFaceImageCandidates(member);
+    if (faceImageCandidates.length) {
+      const faceImage = document.createElement("img");
+      faceImage.className = "party-face";
+      faceImage.alt = "";
+      faceImage.loading = "eager";
+      faceImage.decoding = "async";
+      faceImage.style.position = "absolute";
+      faceImage.style.inset = "0";
+      faceImage.style.width = "100%";
+      faceImage.style.height = "100%";
+      faceImage.style.objectFit = "cover";
+      faceImage.style.objectPosition = "center";
+      faceImage.style.opacity = "0.8";
+      faceImage.style.pointerEvents = "none";
+      let imageIndex = 0;
+      faceImage.addEventListener("load", () => {
+        card.classList.add("has-face");
+      });
+      faceImage.src = faceImageCandidates[imageIndex];
+      faceImage.addEventListener("error", () => {
+        imageIndex += 1;
+        if (imageIndex < faceImageCandidates.length) {
+          faceImage.src = faceImageCandidates[imageIndex];
+          return;
+        }
+        card.classList.remove("has-face");
+        faceImage.remove();
+      });
+      card.appendChild(faceImage);
+
+      const overlay = document.createElement("div");
+      overlay.className = "party-face-overlay";
+      overlay.style.position = "absolute";
+      overlay.style.inset = "0";
+      overlay.style.background = "linear-gradient(rgba(0,0,0,0.15), rgba(0,0,0,0.48))";
+      overlay.style.pointerEvents = "none";
+      card.appendChild(overlay);
+    }
+
+    const content = document.createElement("div");
+    content.className = "party-card-content";
+    content.style.position = "relative";
+    content.style.zIndex = "1";
+    content.innerHTML = `
       <div class="name">${member?.name ?? `Member ${idx + 1}`}</div>
       <div class="hp">HP ${Number(member?.hp ?? 0)} / ${Number(member?.max_hp ?? 0)}</div>
       <div class="status">Lv ${Number(member?.level ?? 0)}</div>
     `;
+    card.appendChild(content);
     partyGrid.appendChild(card);
   });
 }
