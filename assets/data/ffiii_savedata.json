@@ -146,14 +146,14 @@
       "hp": 245,
       "max_hp": 260,
       "mp": {
-        "L1MP": 9,
-        "L2MP": 4,
-        "L3MP": 3,
-        "L4MP": 3,
-        "L5MP": 3,
-        "L6MP": 2,
-        "L7MP": 1,
-        "L8MP": 1
+        "L1MP": 10,
+        "L2MP": 10,
+        "L3MP": 9,
+        "L4MP": 7,
+        "L5MP": 5,
+        "L6MP": 5,
+        "L7MP": 4,
+        "L8MP": 4
       },
       "strength": 22,
       "agility": 17,

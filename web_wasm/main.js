@@ -102,7 +102,13 @@ function renderLocationSelectors() {
 function selectedEnemySafeIndex() {
   const enemies = Array.isArray(sessionStatus.enemies) ? sessionStatus.enemies : [];
   if (!enemies.length) return 0;
-  return Math.min(selectedEnemyIndex, enemies.length - 1);
+  const aliveIndices = enemies
+    .map((enemy, idx) => ({ enemy, idx }))
+    .filter(({ enemy }) => !isOutOfBattleEnemy(enemy))
+    .map(({ idx }) => idx);
+  if (!aliveIndices.length) return 0;
+  if (aliveIndices.includes(selectedEnemyIndex)) return selectedEnemyIndex;
+  return aliveIndices[0];
 }
 
 function locationGroupToMapKey(name) {
@@ -295,7 +301,25 @@ function isOutOfBattleMember(member) {
   if (hp <= 0) return true;
   const icons = Array.isArray(member.status_icons) ? member.status_icons : [];
   const normalized = icons.map((icon) => String(icon || "").toLowerCase());
-  return normalized.includes("ko") || normalized.includes("petrify");
+  return (
+    normalized.includes("ko")
+    || normalized.includes("petrify")
+    || normalized.includes("petrification")
+  );
+}
+
+function isOutOfBattleEnemy(enemy) {
+  if (!enemy || typeof enemy !== "object") return true;
+  if (enemy.out_of_battle === true) return true;
+  const hp = Number(enemy.hp ?? 0);
+  if (hp <= 0) return true;
+  const icons = Array.isArray(enemy.status_icons) ? enemy.status_icons : [];
+  const normalized = icons.map((icon) => String(icon || "").toLowerCase());
+  return (
+    normalized.includes("ko")
+    || normalized.includes("petrify")
+    || normalized.includes("petrification")
+  );
 }
 
 function actionableMemberIndices() {
@@ -491,6 +515,7 @@ function renderEnemies() {
     card.appendChild(content);
     card.addEventListener("click", () => {
       if (battleFinished) return;
+      if (isOutOfBattleEnemy(enemy)) return;
       selectedEnemyIndex = idx;
       renderEnemies();
       renderStatus();
@@ -621,6 +646,7 @@ function renderCommandButtons() {
     }
     const enemies = Array.isArray(sessionStatus.enemies) ? sessionStatus.enemies : [];
     enemies.forEach((enemy, idx) => {
+      if (isOutOfBattleEnemy(enemy)) return;
       const button = document.createElement("button");
       button.className = "btn";
       button.type = "button";
