@@ -251,6 +251,45 @@ def test_enemy_aoe_reflect_redirects_to_another_enemy_member():
     assert any("Vulcan" in line and "跳ね返した" in line for line in logs)
 
 
+def test_enemy_aoe_reflect_ko_does_not_report_enemy_defeated_if_enemy_side_still_alive():
+    char_stats = _make_char_stats()
+    char_state = BattleActorState(hp=2000, max_hp=2188, reflect_charges=1)
+    caster_enemy_state = BattleActorState(hp=500, max_hp=500)
+    ko_enemy_state = BattleActorState(hp=10, max_hp=10)
+    alive_enemy_state = BattleActorState(hp=260, max_hp=260)
+    logs: list[str] = []
+
+    enemy_down = enemy_cast_aoe_damage_spell_to_party(
+        spell_json={
+            "Name": "Snow Storm",
+            "Accuracy": 100,
+            "Power": 46,
+            "Multiplier": 1,
+            "Reflectable": "Yes",
+            "Element": "Ice",
+        },
+        enemy_name="Dracrocotta",
+        party_members=[
+            SimpleNamespace(name="Runeth", stats=char_stats, state=char_state)
+        ],
+        enemies=[
+            SimpleNamespace(
+                name="Dracrocotta", label="Dracrocotta", state=caster_enemy_state
+            ),
+            SimpleNamespace(name="Skeleton", label="Skeleton", state=ko_enemy_state),
+            SimpleNamespace(name="Vulcan", label="Vulcan", state=alive_enemy_state),
+        ],
+        rng=Random(0),
+        logs=logs,
+        caster_state=caster_enemy_state,
+        caster_max_hp=500,
+    )
+
+    assert ko_enemy_state.hp == 0
+    assert alive_enemy_state.hp == 260
+    assert enemy_down is False
+
+
 def test_character_spell_reflect_redirects_to_a_party_member():
     caster_stats = _make_char_stats()
     ally_stats = _make_char_stats()

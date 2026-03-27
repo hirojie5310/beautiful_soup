@@ -8,6 +8,7 @@ from random import Random
 from typing import Any, Optional, Sequence, cast
 
 from combat.battle_sim import simulate_one_round_multi_party
+from combat.life_check import any_enemy_alive
 from combat.char_build import build_party_members_from_save
 from combat.dto import (
     ExecuteRoundInputDTO,
@@ -142,15 +143,18 @@ def execute_round_dto(
         planned_actions=planned_actions,
         rng=rng,
     )
+    end_reason = result.round_result.end_reason
+    if end_reason == "enemy_defeated" and any_enemy_alive(session.enemies):
+        end_reason = "continue"
 
     return ExecuteRoundOutputDTO(
         logs=result.logs,
-        end_reason=result.round_result.end_reason,
+        end_reason=end_reason,
         escaped=result.round_result.escaped,
         enemy_was_physically_hit=result.round_result.enemy_was_physically_hit,
         events=result.event,
         lifecycle=derive_round_lifecycle(
             current_state=request.lifecycle_state,
-            end_reason=result.round_result.end_reason,
+            end_reason=end_reason,
         ),
     )

@@ -788,16 +788,6 @@ def run_character_turn(
                         total_damage += dmg
                     if not hit_any_undead:
                         return 0, None
-                    if enemies is not None and all(
-                        getattr(e.state, "hp", 0) <= 0 for e in enemies
-                    ):
-                        return total_damage, OneTurnResult(
-                            char_state=char_state,
-                            enemy_state=enemy_state,
-                            logs=logs,
-                            enemy_attack_result=None,
-                            end_reason="enemy_defeated",
-                        )
                     return total_damage, None
 
                 if not is_undead_target(enemy_json):
@@ -823,14 +813,9 @@ def run_character_turn(
                     enemy_json=enemy_json,
                     rng=rng,
                 )
-                if enemy_state.hp <= 0:
-                    return dmg_to_enemy, OneTurnResult(
-                        char_state=char_state,
-                        enemy_state=enemy_state,
-                        logs=logs,
-                        enemy_attack_result=None,
-                        end_reason="enemy_defeated",
-                    )
+                # 回復魔法の「敵対象（アンデッド特効）」では、
+                # ここで enemy_defeated を返さず、ラウンド制御側の全滅判定に委譲する。
+                # （誤経路で enemy_defeated が立つ事象の最終防止）
                 return dmg_to_enemy, None
 
             target_count = 1

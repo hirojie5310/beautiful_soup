@@ -47,7 +47,7 @@ def enemy_cast_aoe_damage_spell_to_party(
     この関数が「計算」と「適用（HP反映・ログ）」まで完結させる。
 
     Returns:
-        bool: Reflect 反射などで「敵（術者）が倒れた」なら True
+        bool: Reflect 反射などの結果「敵側が全滅」したら True
     """
     if rng is None:
         rng = random
@@ -171,8 +171,20 @@ def enemy_cast_aoe_damage_spell_to_party(
                 True,
             )
 
-            # ★ 反射で敵が倒れたら即終了（呼び出し側に通知）
+            # ★ 反射で敵側が全滅したら終了（呼び出し側に通知）
             if reflect_target_state.hp <= 0:
+                enemies_defeated = False
+                if enemies is not None:
+                    enemies_defeated = all(
+                        getattr(getattr(em, "state", None), "hp", 0) <= 0
+                        for em in enemies
+                    )
+                else:
+                    enemies_defeated = caster_state.hp <= 0
+
+                if not enemies_defeated:
+                    continue
+
                 # KOステータス管理しているならここで付けてもOK（任意）
                 # reflect_target_state.statuses.add(Status.KO)
                 # ★ まとめログはここで出しておくと情報が欠けない

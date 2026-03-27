@@ -768,6 +768,12 @@ def simulate_one_round_multi_party(
                 break
 
             if char_result is not None and char_result.end_reason != "continue":
+                if (
+                    char_result.end_reason == "enemy_defeated"
+                    and not all_enemies_defeated(enemies)
+                ):
+                    # 敵側が実際には全滅していない場合、誤判定を無視して続行する
+                    continue
                 final_result.end_reason = char_result.end_reason
                 final_result.escaped = char_result.escaped
                 final_result.enemy_attack_result = char_result.enemy_attack_result
@@ -839,6 +845,12 @@ def simulate_one_round_multi_party(
                 break
 
             if enemy_result.end_reason != "continue":
+                if (
+                    enemy_result.end_reason == "enemy_defeated"
+                    and not all_enemies_defeated(enemies)
+                ):
+                    # 敵側が実際には全滅していない場合、誤判定を無視して続行する
+                    continue
                 final_result.end_reason = enemy_result.end_reason
                 final_result.escaped = enemy_result.escaped
                 final_result.enemy_attack_result = enemy_result.enemy_attack_result
