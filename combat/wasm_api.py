@@ -18,6 +18,7 @@ from combat.errors import InputValidationError
 from combat.input_ui import normalize_battle_command
 from combat.inventory import build_item_list, is_item_visible_in_context
 from combat.item_effects import infer_battle_item_target_side
+from combat.life_check import is_out_of_battle
 from combat.magic_damage import healing_spell_kind
 from combat.progression import apply_victory_rewards
 from combat.usecases import BattleSession, build_battle_session, execute_round_dto
@@ -77,6 +78,9 @@ def _build_party_status_snapshot(session: BattleSession) -> list[dict[str, Any]]
                 "level": _safe_int(getattr(member, "level", 0), 0),
                 "portrait_key": getattr(member, "portrait_key", None),
                 "status_icons": sorted(set(status_icons)),
+                "out_of_battle": bool(
+                    is_out_of_battle(state) if state is not None else True
+                ),
                 "is_jumping": bool(getattr(state, "is_jumping", False)),
                 "jump_target_index": getattr(state, "jump_target_index", None),
             }

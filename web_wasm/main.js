@@ -288,6 +288,73 @@ function enterCommandMode() {
   pendingActionDraft = null;
 }
 
+function isOutOfBattleMember(member) {
+  if (!member || typeof member !== "object") return true;
+  if (member.out_of_battle === true) return true;
+  const hp = Number(member.hp ?? 0);
+  if (hp <= 0) return true;
+  const icons = Array.isArray(member.status_icons) ? member.status_icons : [];
+  const normalized = icons.map((icon) => String(icon || "").toLowerCase());
+  return normalized.includes("ko") || normalized.includes("petrify");
+}
+
+function actionableMemberIndices() {
+  const party = Array.isArray(sessionStatus.party) ? sessionStatus.party : [];
+  const rows = [];
+  party.forEach((member, idx) => {
+    if (!isOutOfBattleMember(member)) rows.push(idx);
+  });
+  return rows;
+}
+
+function requiredActionCount() {
+  return actionableMemberIndices().length;
+}
+
+function committedActionCount() {
+  const actionable = new Set(actionableMemberIndices());
+  let count = 0;
+  pendingActions.forEach((action, idx) => {
+    if (!actionable.has(idx)) return;
+    if (action) count += 1;
+  });
+  return count;
+}
+
+function resetPendingActionsForParty() {
+  const party = Array.isArray(sessionStatus.party) ? sessionStatus.party : [];
+  pendingActions = Array(party.length).fill(null);
+}
+
+function firstActionableMemberIndex() {
+  const actionable = actionableMemberIndices();
+  return actionable.length ? actionable[0] : 0;
+}
+
+function findNextPendingMemberIndex(startIdx) {
+  const actionable = actionableMemberIndices();
+  if (!actionable.length) return null;
+  const total = actionable.length;
+  const rawStartPos = actionable.indexOf(startIdx);
+  const startPos = rawStartPos >= 0 ? rawStartPos : 0;
+  for (let step = 1; step <= total; step += 1) {
+    const idx = actionable[(startPos + step) % total];
+    if (!pendingActions[idx]) return idx;
+  }
+  return null;
+}
+
+function syncCurrentMemberToActionable() {
+  const party = Array.isArray(sessionStatus.party) ? sessionStatus.party : [];
+  if (!party.length) {
+    currentMemberIndex = 0;
+    return;
+  }
+  if (isOutOfBattleMember(party[currentMemberIndex])) {
+    currentMemberIndex = firstActionableMemberIndex();
+  }
+}
+
 function currentMemberCommandDefs() {
   const all = Array.isArray(sessionStatus?.command_candidates_by_member)
     ? sessionStatus.command_candidates_by_member
@@ -617,7 +684,9 @@ function renderStatus() {
     statusLine.textContent = `行動入力: ${actor.name} / ${sideLabel}対象を選択してください`;
     return;
   }
-  statusLine.textContent = `行動入力: ${actor.name} / 対象: ${target?.name ?? "(なし)"} / 入力済み ${pendingActions.length}/${party.length}`;
+  const committed = committedActionCount();
+  const required = requiredActionCount();
+  statusLine.textContent = `行動入力: ${actor.name} / 対象: ${target?.name ?? "(なし)"} / 入力済み ${committed}/${required}`;
 }
 
 function maybeShowRewards(payload) {
@@ -647,6 +716,11 @@ function chooseCommand(def) {
   if (battleFinished) return;
   const party = Array.isArray(sessionStatus.party) ? sessionStatus.party : [];
   if (!party.length) return;
+  syncCurrentMemberToActionable();
+  if (!party[currentMemberIndex] || isOutOfBattleMember(party[currentMemberIndex])) {
+    statusLine.textContent = "行動可能なメンバーがいません。";
+    return;
+  }
   if (def.kind === "magic") {
     inputMode = "pick_magic";
     rerenderAll();
@@ -662,10 +736,14 @@ function chooseCommand(def) {
 
 function appendPendingAction(action) {
   const party = Array.isArray(sessionStatus.party) ? sessionStatus.party : [];
-  pendingActions.push(action);
-  currentMemberIndex = Math.min(pendingActions.length, Math.max(0, party.length - 1));
+  if (!party.length) return;
+  if (pendingActions.length !== party.length) {
+    resetPendingActionsForParty();
+  }
+  pendingActions[currentMemberIndex] = action;
   enterCommandMode();
-  if (pendingActions.length >= party.length) {
+  const nextIndex = findNextPendingMemberIndex(currentMemberIndex);
+  if (nextIndex === null) {
     battlePhase.textContent = "全員入力済み。ラウンド実行中...";
     rerenderAll();
     executeRound().catch((error) => {
@@ -674,7 +752,8 @@ function appendPendingAction(action) {
     });
     return;
   } else {
-    battlePhase.textContent = `${pendingActions.length}/${party.length} 入力済み`;
+    currentMemberIndex = nextIndex;
+    battlePhase.textContent = `${committedActionCount()}/${requiredActionCount()} 入力済み`;
   }
   rerenderAll();
 }
@@ -864,8 +943,8 @@ def run_battle_round_wasm(js_input_json):
   sessionStatus = initialPayload?.session_status ?? { party: [], enemies: [] };
   lifecycleState = "ready_for_actions";
   battleFinished = false;
-  pendingActions = [];
-  currentMemberIndex = 0;
+  resetPendingActionsForParty();
+  currentMemberIndex = firstActionableMemberIndex();
   selectedEnemyIndex = 0;
   enterCommandMode();
 
@@ -879,9 +958,10 @@ def run_battle_round_wasm(js_input_json):
 async function executeRound() {
   if (!pyodide || battleFinished) return;
   const runRound = pyodide.globals.get("run_battle_round_wasm");
-  const party = Array.isArray(sessionStatus.party) ? sessionStatus.party : [];
-  if (pendingActions.length < party.length) {
-    statusLine.textContent = `まだ ${party.length - pendingActions.length} 人分の入力が必要です。`;
+  const required = requiredActionCount();
+  const committed = committedActionCount();
+  if (committed < required) {
+    statusLine.textContent = `まだ ${required - committed} 人分の入力が必要です。`;
     return;
   }
 
@@ -906,8 +986,8 @@ async function executeRound() {
   logView.textContent = logs.length ? logs.join("\n") : "(no logs)";
   maybeShowRewards(result);
 
-  pendingActions = [];
-  currentMemberIndex = 0;
+  resetPendingActionsForParty();
+  currentMemberIndex = firstActionableMemberIndex();
   selectedEnemyIndex = 0;
   enterCommandMode();
   battlePhase.textContent = battleFinished
@@ -943,8 +1023,8 @@ if (locationApplyBtn) {
     sessionStatus = payload?.session_status ?? { party: [], enemies: [] };
     lifecycleState = "ready_for_actions";
     battleFinished = false;
-    pendingActions = [];
-    currentMemberIndex = 0;
+    resetPendingActionsForParty();
+    currentMemberIndex = firstActionableMemberIndex();
     selectedEnemyIndex = 0;
     enterCommandMode();
     battlePhase.textContent = "敵編成を更新しました。コマンド入力を開始してください。";

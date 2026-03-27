@@ -80,6 +80,18 @@ def test_build_session_status_snapshot_serializes_status_icons() -> None:
     assert "item_meta" in snapshot
 
 
+def test_build_session_status_snapshot_marks_out_of_battle_members() -> None:
+    engine = WasmBattleEngine.create_default(seed=11)
+    engine.session.party_members[0].state.hp = 0
+    engine.session.party_members[0].state.statuses = {Status.KO}
+
+    snapshot = build_session_status_snapshot(engine.session)
+
+    assert snapshot["party"][0]["out_of_battle"] is True
+    if len(snapshot["party"]) > 1:
+        assert snapshot["party"][1]["out_of_battle"] is False
+
+
 def test_wasm_engine_initial_payload_exposes_flat_party_members() -> None:
     engine = WasmBattleEngine.create_default(seed=3)
 
