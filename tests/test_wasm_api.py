@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from typing import Any, cast
 
 from combat.enums import Status
 from combat.runtime_state import init_runtime_state
@@ -78,6 +79,18 @@ def test_build_session_status_snapshot_serializes_status_icons() -> None:
     assert "item_command_candidates" in snapshot
     assert "magic_spell_meta" in snapshot
     assert "item_meta" in snapshot
+
+
+def test_build_session_status_snapshot_serializes_enemy_status_icons_from_string() -> (
+    None
+):
+    engine = WasmBattleEngine.create_default(seed=13)
+    enemy_state = cast(Any, engine.session.enemies[0].state)
+    setattr(enemy_state, "statuses", {"Status.SLEEP"})
+
+    snapshot = build_session_status_snapshot(engine.session)
+
+    assert snapshot["enemies"][0]["status_icons"] == ["sleep"]
 
 
 def test_build_session_status_snapshot_marks_out_of_battle_members() -> None:

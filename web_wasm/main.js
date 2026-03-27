@@ -289,6 +289,17 @@ function resolveEnemyImageCandidates(enemy) {
   return paths.filter((value, index, arr) => value && arr.indexOf(value) === index);
 }
 
+function resolveStatusIconCandidates(iconKey) {
+  const key = String(iconKey || "").trim().toLowerCase();
+  if (!key) return [];
+  const safeKey = encodeURIComponent(key);
+  return [
+    `../assets/images/status_icons/${safeKey}.png`,
+    new URL(`../assets/images/status_icons/${safeKey}.png`, import.meta.url).href,
+    `/assets/images/status_icons/${safeKey}.png`,
+  ];
+}
+
 function enterCommandMode() {
   inputMode = "command";
   pendingActionDraft = null;
@@ -447,11 +458,52 @@ function renderParty() {
 
     const content = document.createElement("div");
     content.className = "party-card-content";
-    content.innerHTML = `
-      <div class="name">${member?.name ?? `Member ${idx + 1}`}</div>
-      <div class="hp">HP ${Number(member?.hp ?? 0)} / ${Number(member?.max_hp ?? 0)}</div>
-      <div class="status">Lv ${Number(member?.level ?? 0)}</div>
-    `;
+    const nameRow = document.createElement("div");
+    nameRow.className = "name";
+    nameRow.textContent = String(member?.name ?? `Member ${idx + 1}`);
+    content.appendChild(nameRow);
+
+    const memberStatusIcons = Array.isArray(member?.status_icons) ? member.status_icons : [];
+    if (memberStatusIcons.length) {
+      const iconRow = document.createElement("div");
+      iconRow.className = "status-icon-row";
+      memberStatusIcons.forEach((iconKey) => {
+        const icon = document.createElement("img");
+        icon.className = "status-icon";
+        icon.alt = String(iconKey || "");
+        icon.loading = "lazy";
+        icon.decoding = "async";
+        const candidates = resolveStatusIconCandidates(iconKey);
+        let iconIndex = 0;
+        const tryNextIcon = () => {
+          iconIndex += 1;
+          if (iconIndex >= candidates.length) {
+            icon.remove();
+            return;
+          }
+          icon.src = candidates[iconIndex];
+        };
+        icon.addEventListener("error", tryNextIcon);
+        if (candidates.length) {
+          icon.src = candidates[iconIndex];
+          iconRow.appendChild(icon);
+        }
+      });
+      if (iconRow.childElementCount > 0) {
+        content.appendChild(iconRow);
+      }
+    }
+
+    const hpRow = document.createElement("div");
+    hpRow.className = "hp";
+    hpRow.textContent = `HP ${Number(member?.hp ?? 0)} / ${Number(member?.max_hp ?? 0)}`;
+    content.appendChild(hpRow);
+
+    const levelRow = document.createElement("div");
+    levelRow.className = "status";
+    levelRow.textContent = `Lv ${Number(member?.level ?? 0)}`;
+    content.appendChild(levelRow);
+
     card.appendChild(content);
     partyGrid.appendChild(card);
   });
@@ -512,6 +564,36 @@ function renderEnemies() {
       <div class="name">${enemy?.name ?? `Enemy ${idx + 1}`}</div>
       <div class="hp">HP ${Number(enemy?.hp ?? 0)} / ${Number(enemy?.max_hp ?? 0)}</div>
     `;
+    const enemyStatusIcons = Array.isArray(enemy?.status_icons) ? enemy.status_icons : [];
+    if (enemyStatusIcons.length) {
+      const iconRow = document.createElement("div");
+      iconRow.className = "status-icon-row";
+      enemyStatusIcons.forEach((iconKey) => {
+        const icon = document.createElement("img");
+        icon.className = "status-icon";
+        icon.alt = String(iconKey || "");
+        icon.loading = "lazy";
+        icon.decoding = "async";
+        const candidates = resolveStatusIconCandidates(iconKey);
+        let iconIndex = 0;
+        const tryNextIcon = () => {
+          iconIndex += 1;
+          if (iconIndex >= candidates.length) {
+            icon.remove();
+            return;
+          }
+          icon.src = candidates[iconIndex];
+        };
+        icon.addEventListener("error", tryNextIcon);
+        if (candidates.length) {
+          icon.src = candidates[iconIndex];
+          iconRow.appendChild(icon);
+        }
+      });
+      if (iconRow.childElementCount > 0) {
+        content.appendChild(iconRow);
+      }
+    }
     card.appendChild(content);
     card.addEventListener("click", () => {
       if (battleFinished) return;

@@ -7,7 +7,7 @@ from random import Random
 from typing import Any, Optional, Sequence
 
 from assets.data.data_loader import load_explicit_groups
-from combat.constants import STATUS_ICON_KEY_BY_ENUM
+from combat.constants import STATUS_ENUM_BY_KEY, STATUS_ICON_KEY_BY_ENUM
 from combat.dto import (
     ExecuteRoundInputDTO,
     parse_execute_round_input_dict,
@@ -54,6 +54,31 @@ def _normalize_planned_actions_length(
     )
 
 
+def _status_icon_keys(statuses: Any) -> list[str]:
+    keys: list[str] = []
+    if not isinstance(statuses, (set, list, tuple)):
+        return keys
+
+    for st in statuses:
+        icon_key = STATUS_ICON_KEY_BY_ENUM.get(st)
+        if icon_key:
+            keys.append(str(icon_key))
+            continue
+
+        raw = str(st).strip().lower()
+        if raw.startswith("status."):
+            raw = raw.split(".", 1)[1]
+        raw = raw.replace("_", " ")
+        st_enum = STATUS_ENUM_BY_KEY.get(raw)
+        if st_enum is None:
+            continue
+        fallback_key = STATUS_ICON_KEY_BY_ENUM.get(st_enum)
+        if fallback_key:
+            keys.append(str(fallback_key))
+
+    return sorted(set(keys))
+
+
 def _build_party_status_snapshot(session: BattleSession) -> list[dict[str, Any]]:
     snapshots: list[dict[str, Any]] = []
     for idx, member in enumerate(session.party_members):
@@ -62,12 +87,7 @@ def _build_party_status_snapshot(session: BattleSession) -> list[dict[str, Any]]
         max_hp_raw = getattr(state, "max_hp", None)
         max_hp = _safe_int(max_hp_raw, hp) if max_hp_raw is not None else hp
         statuses = getattr(state, "statuses", set())
-        status_icons: list[str] = []
-        if isinstance(statuses, (set, list, tuple)):
-            for st in statuses:
-                icon_key = STATUS_ICON_KEY_BY_ENUM.get(st)
-                if icon_key:
-                    status_icons.append(str(icon_key))
+        status_icons = _status_icon_keys(statuses)
 
         snapshots.append(
             {
@@ -77,7 +97,7 @@ def _build_party_status_snapshot(session: BattleSession) -> list[dict[str, Any]]
                 "max_hp": max_hp,
                 "level": _safe_int(getattr(member, "level", 0), 0),
                 "portrait_key": getattr(member, "portrait_key", None),
-                "status_icons": sorted(set(status_icons)),
+                "status_icons": status_icons,
                 "out_of_battle": bool(
                     is_out_of_battle(state) if state is not None else True
                 ),
@@ -96,12 +116,7 @@ def _build_enemy_status_snapshot(session: BattleSession) -> list[dict[str, Any]]
         max_hp_raw = getattr(state, "max_hp", None)
         max_hp = _safe_int(max_hp_raw, hp) if max_hp_raw is not None else hp
         statuses = getattr(state, "statuses", set())
-        status_icons: list[str] = []
-        if isinstance(statuses, (set, list, tuple)):
-            for st in statuses:
-                icon_key = STATUS_ICON_KEY_BY_ENUM.get(st)
-                if icon_key:
-                    status_icons.append(str(icon_key))
+        status_icons = _status_icon_keys(statuses)
         snapshots.append(
             {
                 "index": idx,
@@ -111,7 +126,7 @@ def _build_enemy_status_snapshot(session: BattleSession) -> list[dict[str, Any]]
                 "sprite_id": getattr(enemy, "sprite_id", None),
                 "hp": hp,
                 "max_hp": max_hp,
-                "status_icons": sorted(set(status_icons)),
+                "status_icons": status_icons,
                 "out_of_battle": bool(
                     is_out_of_battle(state) if state is not None else True
                 ),
