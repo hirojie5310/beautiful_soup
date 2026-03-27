@@ -524,6 +524,22 @@ function renderCommandButtons() {
     commandGrid.appendChild(backBtn);
 
     const side = pendingActionDraft?.target_side || "enemy";
+    const targetNorm = String(pendingActionDraft?.target_norm || "");
+    const canSelectAll = Boolean(pendingActionDraft?.can_select_all);
+    const canSelectAllForSide =
+      canSelectAll && (
+        targetNorm === "one/all" ||
+        (side === "enemy" && targetNorm === "one/all enemies") ||
+        (side === "ally" && targetNorm === "one/all allies")
+      );
+    if (canSelectAllForSide) {
+      const allButton = document.createElement("button");
+      allButton.className = "btn";
+      allButton.type = "button";
+      allButton.textContent = side === "ally" ? "味方全体" : "敵全体";
+      allButton.addEventListener("click", () => finalizeDraftAction(0, { targetAll: true }));
+      commandGrid.appendChild(allButton);
+    }
     if (side === "ally") {
       const party = Array.isArray(sessionStatus.party) ? sessionStatus.party : [];
       party.forEach((member, idx) => {
@@ -668,12 +684,16 @@ function chooseMagic(cand) {
   if (!spellName) return;
   const spellMeta = sessionStatus?.magic_spell_meta?.[spellName] || {};
   const mode = String(spellMeta?.target_mode || "enemy_only");
-  if (mode === "ally_only") {
+  const targetNorm = String(spellMeta?.target_norm || "");
+  const canSelectAll = Boolean(spellMeta?.can_select_all);
+ if (mode === "ally_only") {
     pendingActionDraft = {
       kind: "magic",
       command: "Magic",
       spell_name: spellName,
       target_side: "ally",
+      can_select_all: canSelectAll,
+      target_norm: targetNorm,
     };
     inputMode = "pick_target";
     rerenderAll();
@@ -684,6 +704,8 @@ function chooseMagic(cand) {
       kind: "magic",
       command: "Magic",
       spell_name: spellName,
+      can_select_all: canSelectAll,
+      target_norm: targetNorm,
     };
     inputMode = "pick_side";
     rerenderAll();
@@ -694,6 +716,8 @@ function chooseMagic(cand) {
     command: "Magic",
     spell_name: spellName,
     target_side: "enemy",
+    can_select_all: canSelectAll,
+    target_norm: targetNorm,
   };
   inputMode = "pick_target";
   rerenderAll();
@@ -717,14 +741,14 @@ function chooseItem(cand) {
   rerenderAll();
 }
 
-function finalizeDraftAction(targetIndex) {
+function finalizeDraftAction(targetIndex, options = {}) {
   if (!pendingActionDraft) return;
   const action = {
     kind: pendingActionDraft.kind || "physical",
     command: pendingActionDraft.command || "Fight",
     target_side: pendingActionDraft.target_side || "enemy",
     target_index: Number(targetIndex || 0),
-    target_all: false,
+    target_all: Boolean(options?.targetAll),
   };
   if (pendingActionDraft.spell_name) {
     action.spell_name = pendingActionDraft.spell_name;
