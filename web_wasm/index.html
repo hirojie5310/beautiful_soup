@@ -210,6 +210,26 @@
       .command-grid.command-mode {
         grid-template-columns: repeat(4, minmax(0, 1fr));
       }
+      .magic-group-header {
+        padding: 2px 6px 2px 2px;
+        color: var(--accent);
+        font-size: 0.84rem;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .magic-group-row {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .magic-group-spells {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+      }
 
       pre {
         margin: 0;

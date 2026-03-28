@@ -620,14 +620,58 @@ function renderCommandButtons() {
     });
     commandGrid.appendChild(backBtn);
 
-    currentMemberMagicCandidates().forEach((cand) => {
-      const button = document.createElement("button");
-      button.className = "btn";
-      button.type = "button";
-      button.disabled = !pyodide || battleFinished;
-      button.textContent = `${cand?.label || cand?.name || "(magic)"} ${cand?.group_label || ""}`.trim();
-      button.addEventListener("click", () => chooseMagic(cand));
-      commandGrid.appendChild(button);
+    const candidates = currentMemberMagicCandidates();
+    const groupedCandidates = [];
+    let currentGroup = null;
+    candidates.forEach((cand) => {
+      const groupLabel = String(cand?.group_label || "").trim();
+      if (!groupLabel) {
+        groupedCandidates.push({ header: "", spells: [cand] });
+        currentGroup = null;
+        return;
+      }
+      if (!currentGroup || currentGroup.header !== groupLabel) {
+        currentGroup = { header: groupLabel, spells: [] };
+        groupedCandidates.push(currentGroup);
+      }
+      currentGroup.spells.push(cand);
+    });
+
+    groupedCandidates.forEach((group) => {
+      if (!group.header) {
+        group.spells.forEach((cand) => {
+          const button = document.createElement("button");
+          button.className = "btn";
+          button.type = "button";
+          button.disabled = !pyodide || battleFinished;
+          button.textContent = String(cand?.label || cand?.name || "(magic)");
+          button.addEventListener("click", () => chooseMagic(cand));
+          commandGrid.appendChild(button);
+        });
+        return;
+      }
+
+      const row = document.createElement("div");
+      row.className = "magic-group-row";
+
+      const header = document.createElement("div");
+      header.className = "magic-group-header";
+      header.textContent = group.header;
+      row.appendChild(header);
+
+      const spells = document.createElement("div");
+      spells.className = "magic-group-spells";
+      group.spells.forEach((cand) => {
+        const button = document.createElement("button");
+        button.className = "btn";
+        button.type = "button";
+        button.disabled = !pyodide || battleFinished;
+        button.textContent = String(cand?.label || cand?.name || "(magic)");
+        button.addEventListener("click", () => chooseMagic(cand));
+        spells.appendChild(button);
+      });
+      row.appendChild(spells);
+      commandGrid.appendChild(row);
     });
     return;
   }
