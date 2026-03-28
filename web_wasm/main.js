@@ -337,7 +337,9 @@ function actionableMemberIndices() {
   const party = Array.isArray(sessionStatus.party) ? sessionStatus.party : [];
   const rows = [];
   party.forEach((member, idx) => {
-    if (!isOutOfBattleMember(member)) rows.push(idx);
+    if (isOutOfBattleMember(member)) return;
+    if (member?.is_jumping) return;
+    rows.push(idx);
   });
   return rows;
 }
