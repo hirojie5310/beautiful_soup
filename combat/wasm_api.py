@@ -21,7 +21,7 @@ from combat.inventory import build_item_list, is_item_visible_in_context
 from combat.item_effects import infer_battle_item_target_side
 from combat.life_check import is_out_of_battle
 from combat.magic_damage import healing_spell_kind
-from combat.progression import apply_victory_rewards
+from combat.progression import apply_item_stock_to_inventory, apply_victory_rewards
 from combat.usecases import BattleSession, build_battle_session, execute_round_dto
 from combat.models import EquipmentSet
 from combat.runtime_state import init_runtime_state, resolve_data_path
@@ -666,6 +666,7 @@ class WasmBattleEngine:
                 rewards=rewards,
             )
             response_payload["victory_rewards"] = rewards
+            apply_item_stock_to_inventory(self.session.state.save)
 
         response_payload["session_status"] = build_session_status_snapshot(self.session)
         response_payload["selected_location_group"] = self.selected_location_group

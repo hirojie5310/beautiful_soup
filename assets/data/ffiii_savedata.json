@@ -1,4 +1,5 @@
-{   "party": [
+{
+  "party": [
     {
       "name": "Runeth",
       "level": 41,
@@ -26,8 +27,8 @@
           "skill_point": 0
         }
       },
-      "hp": null,
-      "max_hp": null,
+      "hp": 2279,
+      "max_hp": 2279,
       "mp": {
         "L1MP": 45,
         "L2MP": 38,
@@ -38,11 +39,11 @@
         "L7MP": 8,
         "L8MP": 4
       },
-      "strength": null,
-      "agility": null,
-      "vitality": null,
-      "intelligence": null,
-      "mind": null,
+      "strength": 29,
+      "agility": 43,
+      "vitality": 40,
+      "intelligence": 56,
+      "mind": 56,
       "row": "back",
       "equipment": {
         "main_hand": "Omnirod",
@@ -114,7 +115,7 @@
     {
       "name": "Arc",
       "level": 45,
-      "exp": 407369,
+      "exp": 514177,
       "job": "Evoker",
       "job_level": {
         "level": 16,
@@ -142,8 +143,8 @@
           "skill_point": 64
         }
       },
-      "hp": 2045,
-      "max_hp": 2260,
+      "hp": 1583,
+      "max_hp": 1583,
       "mp": {
         "L1MP": 10,
         "L2MP": 10,
@@ -154,11 +155,11 @@
         "L7MP": 4,
         "L8MP": 4
       },
-      "strength": 22,
-      "agility": 17,
-      "vitality": 18,
-      "intelligence": 10,
-      "mind": 11,
+      "strength": 40,
+      "agility": 28,
+      "vitality": 14,
+      "intelligence": 42,
+      "mind": 42,
       "row": "back",
       "equipment": {
         "main_hand": "Ice Rod",
@@ -251,7 +252,7 @@
         }
       },
       "hp": 245,
-      "max_hp": 260,
+      "max_hp": 1887,
       "mp": {
         "L1MP": 9,
         "L2MP": 4,
@@ -262,11 +263,11 @@
         "L7MP": 1,
         "L8MP": 1
       },
-      "strength": 22,
-      "agility": 17,
-      "vitality": 18,
-      "intelligence": 10,
-      "mind": 11,
+      "strength": 43,
+      "agility": 47,
+      "vitality": 27,
+      "intelligence": 13,
+      "mind": 27,
       "row": "front",
       "equipment": {
         "main_hand": "Holy Lance",
@@ -371,7 +372,7 @@
         }
       },
       "hp": 245,
-      "max_hp": 260,
+      "max_hp": 1079,
       "mp": {
         "L1MP": 9,
         "L2MP": 4,
@@ -382,11 +383,11 @@
         "L7MP": 1,
         "L8MP": 1
       },
-      "strength": 22,
-      "agility": 17,
-      "vitality": 18,
-      "intelligence": 10,
-      "mind": 11,
+      "strength": 37,
+      "agility": 37,
+      "vitality": 7,
+      "intelligence": 49,
+      "mind": 17,
       "row": "back",
       "equipment": {
         "main_hand": "Tome Of Ice",
@@ -590,5 +591,8 @@
     "village": {
       "well_item": true
     }
+  },
+  "item_stock": {
+    "Potion": 1
   }
 }

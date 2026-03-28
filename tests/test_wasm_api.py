@@ -116,6 +116,69 @@ def test_wasm_engine_persists_save_when_battle_finishes(monkeypatch) -> None:
     assert saved_calls[0][1] is engine.session.state.save
 
 
+def test_wasm_engine_applies_drop_item_stock_to_inventory_on_victory(
+    monkeypatch,
+) -> None:
+    engine = WasmBattleEngine.create_default(seed=29)
+    calls: list[dict[str, Any]] = []
+
+    def _fake_execute_round_dto(*, session, request, rng):
+        return type(
+            "Output",
+            (),
+            {
+                "logs": ["Victory!"],
+                "end_reason": "enemy_defeated",
+                "escaped": False,
+                "enemy_was_physically_hit": True,
+                "events": [],
+                "lifecycle": type(
+                    "Lifecycle",
+                    (),
+                    {
+                        "before": "resolving_round",
+                        "after": "battle_finished",
+                        "battle_finished": True,
+                    },
+                )(),
+            },
+        )()
+
+    def _fake_apply_victory_rewards(*, party_members, enemies, state, level_table):
+        state.save["item_stock"] = {"Potion": 1}
+        return {
+            "gained_exp": 10,
+            "gained_gil": 10,
+            "gained_cp": 1,
+            "dropped_item": ["Potion"],
+            "levelups": [],
+        }
+
+    def _fake_apply_item_stock_to_inventory(save_data: dict[str, Any]) -> None:
+        calls.append(save_data)
+
+    monkeypatch.setattr("combat.wasm_api.execute_round_dto", _fake_execute_round_dto)
+    monkeypatch.setattr(
+        "combat.wasm_api.apply_victory_rewards", _fake_apply_victory_rewards
+    )
+    monkeypatch.setattr(
+        "combat.wasm_api.apply_item_stock_to_inventory",
+        _fake_apply_item_stock_to_inventory,
+    )
+
+    payload = json.loads(
+        engine.execute_round_json(
+            json.dumps(
+                {"planned_actions": [], "lifecycle_state": "ready_for_actions"},
+                ensure_ascii=False,
+            )
+        )
+    )
+
+    assert payload["victory_rewards"]["dropped_item"] == ["Potion"]
+    assert calls == [engine.session.state.save]
+
+
 def test_build_session_status_snapshot_serializes_status_icons() -> None:
     engine = WasmBattleEngine.create_default(seed=1)
     engine.session.party_members[0].state.statuses = {Status.BLIND}
