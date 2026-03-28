@@ -85,11 +85,28 @@ def _build_party_status_snapshot(session: BattleSession) -> list[dict[str, Any]]
     snapshots: list[dict[str, Any]] = []
     for idx, member in enumerate(session.party_members):
         state = getattr(member, "state", None)
+        base = getattr(member, "base", None)
+        stats = getattr(member, "stats", None)
         hp = _safe_int(getattr(state, "hp", 0), 0)
         max_hp_raw = getattr(state, "max_hp", None)
         max_hp = _safe_int(max_hp_raw, hp) if max_hp_raw is not None else hp
+        mp_pool = getattr(state, "mp_pool", {}) if state is not None else {}
+        max_mp_pool = getattr(state, "max_mp_pool", {}) if state is not None else {}
+        if not isinstance(mp_pool, dict):
+            mp_pool = {}
+        if not isinstance(max_mp_pool, dict):
+            max_mp_pool = {}
+        mp_levels = {
+            str(level): {
+                "current": _safe_int(mp_pool.get(level, 0), 0),
+                "max": _safe_int(max_mp_pool.get(level, 0), 0),
+            }
+            for level in range(1, 9)
+        }
         statuses = getattr(state, "statuses", set())
         status_icons = _status_icon_keys(statuses)
+        row_raw = str(getattr(stats, "row", getattr(base, "row", "front"))).lower()
+        row_label = "back" if row_raw == "back" else "front"
 
         snapshots.append(
             {
@@ -98,6 +115,9 @@ def _build_party_status_snapshot(session: BattleSession) -> list[dict[str, Any]]
                 "hp": hp,
                 "max_hp": max_hp,
                 "level": _safe_int(getattr(member, "level", 0), 0),
+                "job": str(getattr(getattr(member, "job", None), "name", "Unknown")),
+                "row": row_label,
+                "mp_levels": mp_levels,
                 "portrait_key": getattr(member, "portrait_key", None),
                 "status_icons": status_icons,
                 "out_of_battle": bool(
@@ -368,6 +388,9 @@ def build_session_status_snapshot(session: BattleSession) -> dict[str, Any]:
     items_by_name = getattr(state, "items_by_name", {}) if state is not None else {}
     if not isinstance(items_by_name, dict):
         items_by_name = {}
+    save = getattr(state, "save", {}) if state is not None else {}
+    if not isinstance(save, dict):
+        save = {}
     return {
         "party": _build_party_status_snapshot(session),
         "enemies": _build_enemy_status_snapshot(session),
@@ -378,6 +401,11 @@ def build_session_status_snapshot(session: BattleSession) -> dict[str, Any]:
         "magic_spell_meta": _build_magic_spell_meta(session),
         "item_command_candidates": _build_battle_item_command_candidates(session),
         "item_meta": _build_battle_item_meta(items_by_name),
+        "resources": {
+            "gil": _safe_int(save.get("gil", 0), 0),
+            "cp": _safe_int(save.get("CP", 0), 0),
+            "cp_max": 255,
+        },
     }
 
 

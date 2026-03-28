@@ -13,6 +13,7 @@ const rewardPanel = document.getElementById("rewardPanel");
 const locationGroupSelect = document.getElementById("locationGroupSelect");
 const locationSelect = document.getElementById("locationSelect");
 const locationApplyBtn = document.getElementById("locationApplyBtn");
+const menuBtn = document.getElementById("menuBtn");
 const loadSaveBtn = document.getElementById("loadSaveBtn");
 const loadSaveInput = document.getElementById("loadSaveInput");
 const downloadSaveBtn = document.getElementById("downloadSaveBtn");
@@ -34,6 +35,7 @@ let activeLogPlaybackId = 0;
 let loadedSaveData = null;
 
 const LOCAL_SAVE_STORAGE_KEY = "ff3_wasm_savedata_v1";
+const LOCAL_MENU_STORAGE_KEY = "ff3_wasm_menu_state_v1";
 
 const COMMAND_LABELS = {
   Fight: "たたかう",
@@ -911,6 +913,48 @@ function restoreSaveEnvelopeFromStorage() {
   }
 }
 
+function buildMenuViewState() {
+  const party = Array.isArray(sessionStatus?.party)
+    ? sessionStatus.party.map((member) => ({
+      name: String(member?.name || ""),
+      portrait_key: member?.portrait_key ?? null,
+      image_name: member?.image_name ?? null,
+      job: String(member?.job || "Unknown"),
+      level: Number(member?.level ?? 0),
+      row: String(member?.row || "front"),
+      hp: Number(member?.hp ?? 0),
+      max_hp: Number(member?.max_hp ?? 0),
+      mp_levels: member?.mp_levels && typeof member.mp_levels === "object"
+        ? member.mp_levels
+        : {},
+    }))
+    : [];
+  const resources = sessionStatus?.resources && typeof sessionStatus.resources === "object"
+    ? sessionStatus.resources
+    : {};
+  return {
+    version: 1,
+    updated_at: new Date().toISOString(),
+    party,
+    resources: {
+      cp: Number(resources?.cp ?? 0),
+      cp_max: Number(resources?.cp_max ?? 255),
+      gil: Number(resources?.gil ?? 0),
+    },
+  };
+}
+
+function syncMenuViewStateToStorage() {
+  try {
+    localStorage.setItem(
+      LOCAL_MENU_STORAGE_KEY,
+      JSON.stringify(buildMenuViewState()),
+    );
+  } catch (_error) {
+    // ignore storage write failure in wasm runner.
+  }
+}
+
 function persistSaveEnvelopeToStorage(envelope) {
   if (!envelope) return false;
   try {
@@ -1065,6 +1109,7 @@ function rerenderAll() {
   renderCommandButtons();
   renderPlannedActions();
   renderStatus();
+  syncMenuViewStateToStorage();
 }
 
 function chooseCommand(def) {
@@ -1483,6 +1528,13 @@ if (locationApplyBtn) {
     rewardPanel.classList.remove("open");
     rewardPanel.textContent = "";
     rerenderAll();
+  });
+}
+
+if (menuBtn) {
+  menuBtn.addEventListener("click", () => {
+    syncMenuViewStateToStorage();
+    window.location.href = "./menu.html";
   });
 }
 

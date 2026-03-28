@@ -179,6 +179,75 @@ def test_wasm_engine_applies_drop_item_stock_to_inventory_on_victory(
     assert calls == [engine.session.state.save]
 
 
+def test_wasm_engine_battle_end_save_includes_progress_fields_after_victory(
+    monkeypatch,
+) -> None:
+    engine = WasmBattleEngine.create_default(seed=41)
+    saved_calls: list[dict[str, Any]] = []
+
+    def _fake_execute_round_dto(*, session, request, rng):
+        return type(
+            "Output",
+            (),
+            {
+                "logs": ["Victory!"],
+                "end_reason": "enemy_defeated",
+                "escaped": False,
+                "enemy_was_physically_hit": True,
+                "events": [],
+                "lifecycle": type(
+                    "Lifecycle",
+                    (),
+                    {
+                        "before": "resolving_round",
+                        "after": "battle_finished",
+                        "battle_finished": True,
+                    },
+                )(),
+            },
+        )()
+
+    def _fake_apply_victory_rewards(*, party_members, enemies, state, level_table):
+        del party_members, enemies, level_table
+        state.save["party"][0]["exp"] = 43210
+        state.save["party"][0]["job_level"] = {"level": 12, "skill_point": 34}
+        state.save["gil"] = 9876
+        state.save["CP"] = 654
+        state.save["inventory"] = {"Anywhere": {"Potion": 7}}
+        return {
+            "gained_exp": 999,
+            "gained_gil": 10,
+            "gained_cp": 1,
+            "dropped_item": [],
+            "levelups": [],
+        }
+
+    def _fake_save_savedata(path: str | os.PathLike[str], save: dict[str, object]):
+        del path
+        saved_calls.append(json.loads(json.dumps(save)))
+
+    monkeypatch.setattr("combat.wasm_api.execute_round_dto", _fake_execute_round_dto)
+    monkeypatch.setattr(
+        "combat.wasm_api.apply_victory_rewards", _fake_apply_victory_rewards
+    )
+    monkeypatch.setattr("combat.wasm_api.save_savedata", _fake_save_savedata)
+
+    engine.execute_round_json(
+        json.dumps(
+            {"planned_actions": [], "lifecycle_state": "ready_for_actions"},
+            ensure_ascii=False,
+        )
+    )
+
+    assert saved_calls
+    assert saved_calls[0]["party"][0]["exp"] == 43210
+    assert saved_calls[0]["party"][0]["job_level"]["level"] == 12
+    assert saved_calls[0]["party"][0]["job_level"]["skill_point"] == 34
+    assert saved_calls[0]["gil"] == 9876
+    assert saved_calls[0]["CP"] == 654
+    assert saved_calls[0]["inventory"]["Anywhere"]["Potion"] >= 7
+
+
 def test_build_session_status_snapshot_serializes_status_icons() -> None:
     engine = WasmBattleEngine.create_default(seed=1)
     engine.session.party_members[0].state.statuses = {Status.BLIND}
@@ -215,6 +284,21 @@ def test_build_session_status_snapshot_marks_out_of_battle_members() -> None:
     assert snapshot["party"][0]["out_of_battle"] is True
     if len(snapshot["party"]) > 1:
         assert snapshot["party"][1]["out_of_battle"] is False
+
+
+def test_build_session_status_snapshot_includes_menu_fields() -> None:
+    engine = WasmBattleEngine.create_default(seed=17)
+
+    snapshot = build_session_status_snapshot(engine.session)
+
+    first = snapshot["party"][0]
+    assert first["job"] != ""
+    assert first["row"] in {"front", "back"}
+    assert isinstance(first["mp_levels"], dict)
+    assert first["mp_levels"]["1"]["current"] >= 0
+    assert first["mp_levels"]["8"]["max"] >= 0
+    assert snapshot["resources"]["cp_max"] == 255
+    assert snapshot["resources"]["gil"] >= 0
 
 
 def test_wasm_engine_initial_payload_exposes_flat_party_members() -> None:
