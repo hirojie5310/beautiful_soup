@@ -1212,6 +1212,7 @@ def boot_engine_for_location(location_group, location, seed=7):
         selected_location_group=selected_group,
         selected_location=selected_location,
     )
+    engine.full_recover_party_payload()
     return json.dumps(engine.build_initial_payload(), ensure_ascii=False)
 
 def get_initial_payload_json():
@@ -1238,20 +1239,7 @@ def full_recover_party_json():
     locationSelect.value = selectionPayload.selected_location;
   }
 
-  const bootForLocation = pyodide.globals.get("boot_engine_for_location");
-  const initialPayload = JSON.parse(
-    bootForLocation(
-      locationGroupSelect.value || "",
-      locationSelect.value || "",
-      7,
-    ),
-  );
-  currentSelectedLocationGroup = String(
-    initialPayload?.selected_location_group || locationGroupSelect.value || "",
-  );
-  sessionStatus = initialPayload?.session_status ?? { party: [], enemies: [] };
-  lifecycleState = "ready_for_actions";
-  battleFinished = false;
+  bootLocationAndSyncSession();
   resetPendingActionsForParty();
   currentMemberIndex = firstActionableMemberIndex();
   selectedEnemyIndex = 0;
@@ -1263,6 +1251,37 @@ def full_recover_party_json():
   rewardPanel.classList.remove("open");
   rewardPanel.textContent = "";
   rerenderAll();
+}
+
+function applyFullRecoverParty() {
+  if (!pyodide) return;
+  const fullRecover = pyodide.globals.get("full_recover_party_json");
+  if (!fullRecover) return;
+  const payload = JSON.parse(fullRecover());
+  const nextStatus = payload?.session_status;
+  if (nextStatus && typeof nextStatus === "object") {
+    sessionStatus = nextStatus;
+  }
+}
+
+function bootLocationAndSyncSession() {
+  if (!pyodide) return null;
+  const bootForLocation = pyodide.globals.get("boot_engine_for_location");
+  const payload = JSON.parse(
+    bootForLocation(
+      locationGroupSelect.value || "",
+      locationSelect.value || "",
+      7,
+    ),
+  );
+  currentSelectedLocationGroup = String(
+    payload?.selected_location_group || locationGroupSelect.value || "",
+  );
+  sessionStatus = payload?.session_status ?? { party: [], enemies: [] };
+  lifecycleState = "ready_for_actions";
+  battleFinished = false;
+  applyFullRecoverParty();
+  return payload;
 }
 
 async function executeRound() {
@@ -1320,20 +1339,7 @@ if (locationApplyBtn) {
       statusLine.textContent = "エンジン起動中です。完了後に再実行してください。";
       return;
     }
-    const bootForLocation = pyodide.globals.get("boot_engine_for_location");
-    const payload = JSON.parse(
-      bootForLocation(
-        locationGroupSelect.value || "",
-        locationSelect.value || "",
-        7,
-      ),
-    );
-    currentSelectedLocationGroup = String(
-      payload?.selected_location_group || locationGroupSelect.value || "",
-    );
-    sessionStatus = payload?.session_status ?? { party: [], enemies: [] };
-    lifecycleState = "ready_for_actions";
-    battleFinished = false;
+    bootLocationAndSyncSession();
     resetPendingActionsForParty();
     currentMemberIndex = firstActionableMemberIndex();
     selectedEnemyIndex = 0;
@@ -1353,12 +1359,7 @@ if (partyRecoverBtn) {
       statusLine.textContent = "エンジン起動中です。完了後に再実行してください。";
       return;
     }
-    const fullRecover = pyodide.globals.get("full_recover_party_json");
-    const payload = JSON.parse(fullRecover());
-    const nextStatus = payload?.session_status;
-    if (nextStatus && typeof nextStatus === "object") {
-      sessionStatus = nextStatus;
-    }
+    applyFullRecoverParty();
     enterCommandMode();
     rerenderAll();
     statusLine.textContent = "パーティーを全回復しました。";

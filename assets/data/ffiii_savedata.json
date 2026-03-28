@@ -27,8 +27,8 @@
           "skill_point": 0
         }
       },
-      "hp": 2188,
-      "max_hp": 260,
+      "hp": null,
+      "max_hp": null,
       "mp": {
         "L1MP": 45,
         "L2MP": 38,
@@ -39,11 +39,11 @@
         "L7MP": 8,
         "L8MP": 4
       },
-      "strength": 22,
-      "agility": 17,
-      "vitality": 18,
-      "intelligence": 10,
-      "mind": 11,
+      "strength": null,
+      "agility": null,
+      "vitality": null,
+      "intelligence": null,
+      "mind": null,
       "row": "back",
       "equipment": {
         "main_hand": "Omnirod",
@@ -109,7 +109,7 @@
         "Partial Petrification (1/2)": false,
         "Partial Petrification (Full)": false
       },
-      "image_name": "ch_Runeth",
+      "image_name": "",
       "portrait_key": "runeth"
     },
     {
@@ -183,7 +183,7 @@
         "Partial Petrification (1/2)": false,
         "Partial Petrification (Full)": false
       },
-      "image_name": "ch_Arc",
+      "image_name": "",
       "portrait_key": "arc",
       "Magic": {
         "LV1": [
@@ -291,7 +291,7 @@
         "Partial Petrification (1/2)": false,
         "Partial Petrification (Full)": false
       },
-      "image_name": "ch_Refia",
+      "image_name": "",
       "portrait_key": "refia",
       "Magic": {
         "LV1": [
@@ -411,7 +411,7 @@
         "Partial Petrification (1/2)": false,
         "Partial Petrification (Full)": false
       },
-      "image_name": "ch_Ingus",
+      "image_name": "",
       "portrait_key": "ingus",
       "Magic": {
         "LV1": [
@@ -475,7 +475,8 @@
       "Potion": 11,
       "Hi Potion": 3,
       "Elixir": 9,
-      "Antidote": 2
+      "Antidote": 2,
+      "Phoenix Down": 5
     },
     "Field": {
       "Magic Key": 1,
@@ -494,7 +495,7 @@
       "Bacchus's Cider": 2,
       "Lilith's Kiss": 3,
       "Shining Curtain": 2,
-      "Turtle Shell": 2,
+      "Turtle Shell": 5,
       "Bomb Arm": 1
     },
     "Equipment": {
