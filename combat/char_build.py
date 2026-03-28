@@ -116,8 +116,11 @@ def character_from_party_entry(
     jobs_by_name: Dict[str, Job],
     level_table: LevelTable,
 ) -> PartyEntryBuildResult:
-
+    source_entry = entry
     entry = normalize_party_entry(entry, level_table)
+    if isinstance(source_entry, dict):
+        source_entry["level"] = entry.get("level", source_entry.get("level"))
+        source_entry["exp"] = entry.get("exp", source_entry.get("exp"))
 
     # total_exp から現在レベルを決める
     st = level_table.status_from_total_exp(entry["exp"])
@@ -166,17 +169,33 @@ def character_from_party_entry(
     job_lv = max(1, job_lv)
     job_sp = max(0, min(99, job_sp))
 
+    def _optional_int(value: Any) -> int | None:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            raw = value.strip()
+            if not raw:
+                return None
+            try:
+                return int(raw)
+            except ValueError:
+                return None
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return None
+
     base = BaseCharacter(
         level=st.level,
         total_exp=st.total_exp,
         job_level=job_lv,
         job_skill_point=job_sp,
-        max_hp=entry["max_hp"],
-        strength=entry["strength"],
-        agility=entry["agility"],
-        vitality=entry["vitality"],
-        intelligence=entry["intelligence"],
-        mind=entry["mind"],
+        max_hp=_optional_int(entry.get("max_hp")) or 0,
+        strength=_optional_int(entry.get("strength")) or 0,
+        agility=_optional_int(entry.get("agility")) or 0,
+        vitality=_optional_int(entry.get("vitality")) or 0,
+        intelligence=_optional_int(entry.get("intelligence")) or 0,
+        mind=_optional_int(entry.get("mind")) or 0,
         row=entry.get("row", "front"),
     )
 
@@ -200,6 +219,17 @@ def character_from_party_entry(
     base.vitality = interp_stats["Vit"]
     base.intelligence = interp_stats["Int"]
     base.mind = interp_stats["Mnd"]
+    # savedata 側にも計算済み値を反映（空欄/旧データを正規化）
+    entry["strength"] = base.strength
+    entry["agility"] = base.agility
+    entry["vitality"] = base.vitality
+    entry["intelligence"] = base.intelligence
+    entry["mind"] = base.mind
+    source_entry["strength"] = base.strength
+    source_entry["agility"] = base.agility
+    source_entry["vitality"] = base.vitality
+    source_entry["intelligence"] = base.intelligence
+    source_entry["mind"] = base.mind
 
     # ★最大HPの期待値をジョブのVitテーブルから取得
     expected_hp = expected_max_hp_from_vit_table(
@@ -209,13 +239,20 @@ def character_from_party_entry(
         rand_expect=1.25,
     )
     base.max_hp = expected_hp
+    entry["max_hp"] = expected_hp
+    source_entry["max_hp"] = expected_hp
     max_hP = expected_hp
 
     # ★最大MPを補完取得（L1MP〜L8MPのdict）
     max_mp = interpolate_mp(job_stats_levels, base.level)
 
+    saved_hp = _optional_int(entry.get("hp"))
+    current_hp = max_hP if saved_hp is None else max(0, min(saved_hp, max_hP))
+    entry["hp"] = current_hp
+    source_entry["hp"] = current_hp
+
     state = BattleActorState(
-        hp=max_hP,
+        hp=current_hp,
         max_hp=max_hP,
         statuses=statuses_from_status_effects(entry.get("status_effects", {})),
     )
@@ -979,8 +1016,24 @@ def normalize_party_entry(entry: dict, level_table: LevelTable) -> dict:
     # entry を破壊的に変更したくなければ copy() する
     e = dict(entry)
 
-    lv = int(e.get("level", 1))
-    exp = int(e.get("exp", 0))
+    def _to_int(value: Any, default: int) -> int:
+        if value is None:
+            return default
+        if isinstance(value, str):
+            raw = value.strip()
+            if not raw:
+                return default
+            try:
+                return int(raw)
+            except ValueError:
+                return default
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return default
+
+    lv = _to_int(e.get("level", 1), 1)
+    exp = _to_int(e.get("exp", 0), 0)
 
     e["level"] = lv
     e["exp"] = level_table.clamp_exp_to_level_lower(lv, exp)
