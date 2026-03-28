@@ -704,7 +704,13 @@ function renderCommandButtons() {
       canSelectAll && (
         targetNorm === "one/all" ||
         (side === "enemy" && targetNorm === "one/all enemies") ||
-        (side === "ally" && targetNorm === "one/all allies")
+        (side === "ally" && targetNorm === "one/all allies") ||
+        (
+          pendingActionDraft?.kind === "magic" &&
+          pendingActionDraft?.target_mode === "any" &&
+          side === "ally" &&
+          targetNorm === "one/all enemies"
+        )
       );
     if (canSelectAllForSide) {
       const allButton = document.createElement("button");
@@ -873,7 +879,29 @@ function chooseMagic(cand) {
   const mode = String(spellMeta?.target_mode || "enemy_only");
   const targetNorm = String(spellMeta?.target_norm || "");
   const canSelectAll = Boolean(spellMeta?.can_select_all);
- if (mode === "ally_only") {
+  if (targetNorm === "all enemies") {
+    appendPendingAction({
+      kind: "magic",
+      command: "Magic",
+      spell_name: spellName,
+      target_side: "enemy",
+      target_index: 0,
+      target_all: true,
+    });
+    return;
+  }
+  if (targetNorm === "all allies") {
+    appendPendingAction({
+      kind: "magic",
+      command: "Magic",
+      spell_name: spellName,
+      target_side: "ally",
+      target_index: currentMemberIndex,
+      target_all: true,
+    });
+    return;
+  }
+  if (mode === "ally_only") {
     pendingActionDraft = {
       kind: "magic",
       command: "Magic",
@@ -893,6 +921,7 @@ function chooseMagic(cand) {
       spell_name: spellName,
       can_select_all: canSelectAll,
       target_norm: targetNorm,
+      target_mode: mode,
     };
     inputMode = "pick_side";
     rerenderAll();

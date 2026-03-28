@@ -844,7 +844,13 @@ def run_character_turn(
                 alive_targets = [
                     pm for pm in party_members if getattr(pm.state, "hp", 0) > 0
                 ]
-                per_target_heal = int(max(0, heal) / target_count)
+                # Target が "All Allies" の魔法（例: Ifrit: Healing Light）は
+                # 自動全体対象でも等分しない。
+                per_target_heal = (
+                    max(0, heal)
+                    if force_all_allies
+                    else int(max(0, heal) / target_count)
+                )
                 total_actual = 0
                 details: list[str] = []
                 for pm in alive_targets:
