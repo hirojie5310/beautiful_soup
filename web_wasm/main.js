@@ -3,6 +3,8 @@ import { loadPyodide } from "https://cdn.jsdelivr.net/pyodide/v0.28.3/full/pyodi
 const battlePhase = document.getElementById("battlePhase");
 const partyGrid = document.getElementById("partyGrid");
 const enemyGrid = document.getElementById("enemyGrid");
+const commandFrame = document.getElementById("commandFrame");
+const battleLogFrame = document.getElementById("battleLogFrame");
 const commandGrid = document.getElementById("commandGrid");
 const statusLine = document.getElementById("statusLine");
 const logView = document.getElementById("logView");
@@ -25,6 +27,7 @@ let inputMode = "command";
 let pendingActionDraft = null;
 let currentSelectedLocationGroup = "";
 const locationMapImageCache = {};
+let activeLogPlaybackId = 0;
 
 const COMMAND_LABELS = {
   Fight: "たたかう",
@@ -864,6 +867,95 @@ function maybeShowRewards(payload) {
   rewardPanel.textContent = "";
 }
 
+function setCommandLogLayout({ showCommand }) {
+  if (commandFrame) {
+    commandFrame.style.display = showCommand ? "" : "none";
+  }
+  if (battleLogFrame) {
+    battleLogFrame.style.display = showCommand ? "none" : "";
+  }
+}
+
+function buildLogBlocks(logs) {
+  const lines = Array.isArray(logs) ? logs : [];
+  const blocks = [];
+  let current = [];
+  let type = "action";
+  const flush = () => {
+    if (!current.length) return;
+    blocks.push({ type, lines: current });
+    current = [];
+  };
+  lines.forEach((lineRaw) => {
+    const line = String(lineRaw ?? "");
+    if (line.startsWith("▶ ") || line.startsWith("◆ ")) {
+      flush();
+      type = "action";
+      current.push(line);
+      return;
+    }
+    if (line.startsWith("=== Battle Rewards ===")) {
+      flush();
+      type = "reward";
+      current.push(line);
+      return;
+    }
+    current.push(line);
+  });
+  flush();
+  return blocks;
+}
+
+async function playBattleLogBlocks(logs, payload) {
+  const playbackId = ++activeLogPlaybackId;
+  const blocks = buildLogBlocks(logs);
+  logView.textContent = "";
+  rewardPanel.classList.remove("open");
+  rewardPanel.textContent = "";
+
+  if (!blocks.length) {
+    logView.textContent = "(no logs)";
+    return;
+  }
+
+  for (let i = 0; i < blocks.length; i += 1) {
+    if (playbackId !== activeLogPlaybackId) return;
+    const block = blocks[i];
+    logView.textContent = block.lines.join("\n");
+    if (block.type === "reward") {
+      maybeShowRewards(payload);
+    } else {
+      rewardPanel.classList.remove("open");
+      rewardPanel.textContent = "";
+    }
+    if (i < blocks.length - 1) {
+      await waitForBattleLogClick(playbackId);
+    }
+  }
+}
+
+function waitForBattleLogClick(playbackId) {
+  return new Promise((resolve) => {
+    if (!battleLogFrame) {
+      resolve();
+      return;
+    }
+    battleLogFrame.classList.add("is-clickable-next");
+    const onClick = () => {
+      if (playbackId !== activeLogPlaybackId) {
+        battleLogFrame.classList.remove("is-clickable-next");
+        battleLogFrame.removeEventListener("click", onClick);
+        resolve();
+        return;
+      }
+      battleLogFrame.classList.remove("is-clickable-next");
+      battleLogFrame.removeEventListener("click", onClick);
+      resolve();
+    };
+    battleLogFrame.addEventListener("click", onClick);
+  });
+}
+
 function rerenderAll() {
   renderParty();
   renderEnemies();
@@ -908,6 +1000,7 @@ function appendPendingAction(action) {
     rerenderAll();
     executeRound().catch((error) => {
       logView.textContent = String(error);
+      setCommandLogLayout({ showCommand: true });
       battlePhase.textContent = `ラウンド実行失敗: ${String(error)}`;
     });
     return;
@@ -1133,6 +1226,7 @@ def run_battle_round_wasm(js_input_json):
 
   battlePhase.textContent = "起動完了。コマンド入力を開始してください。";
   logView.textContent = "(not executed)";
+  setCommandLogLayout({ showCommand: true });
   rewardPanel.classList.remove("open");
   rewardPanel.textContent = "";
   rerenderAll();
@@ -1149,6 +1243,7 @@ async function executeRound() {
   }
 
   battlePhase.textContent = "ラウンド解決中...";
+  setCommandLogLayout({ showCommand: false });
   const payload = {
     planned_actions: pendingActions,
     lifecycle_state: lifecycleState,
@@ -1166,13 +1261,13 @@ async function executeRound() {
   battleFinished = Boolean(result?.lifecycle?.battle_finished);
 
   const logs = Array.isArray(result?.logs) ? result.logs : [];
-  logView.textContent = logs.length ? logs.join("\n") : "(no logs)";
-  maybeShowRewards(result);
+  await playBattleLogBlocks(logs, result);
 
   resetPendingActionsForParty();
   currentMemberIndex = firstActionableMemberIndex();
   selectedEnemyIndex = 0;
   enterCommandMode();
+  setCommandLogLayout({ showCommand: true });
   battlePhase.textContent = battleFinished
     ? `戦闘終了: ${result?.end_reason ?? "finished"}`
     : "次ターンの入力を開始してください。";
@@ -1212,6 +1307,7 @@ if (locationApplyBtn) {
     enterCommandMode();
     battlePhase.textContent = "敵編成を更新しました。コマンド入力を開始してください。";
     logView.textContent = "(not executed)";
+    setCommandLogLayout({ showCommand: true });
     rewardPanel.classList.remove("open");
     rewardPanel.textContent = "";
     rerenderAll();

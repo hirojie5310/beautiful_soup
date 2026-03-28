@@ -279,14 +279,16 @@
         <div id="enemyGrid" class="enemy-grid"></div>
       </section>
 
-      <section class="frame">
+      <section id="commandFrame" class="frame">
         <h2 class="title">COMMAND</h2>
         <div id="statusLine" class="status">エンジン起動中です...</div>
         <div id="commandGrid" class="command-grid"></div>
 
         <h3 class="title" style="margin-top:10px;">Planned Actions</h3>
         <pre id="plannedActionsView" class="mono">(none)</pre>
+      </section>
 
+      <section id="battleLogFrame" class="frame" style="display:none;">
         <h3 class="title" style="margin-top:10px;">Battle Logs</h3>
         <pre id="logView">(not executed)</pre>
 
