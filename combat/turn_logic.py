@@ -717,8 +717,11 @@ def run_character_turn(
 
             spell_type = normalize_text_basic(char_spell_json.get("Type") or "")
             spell_name_lower = normalize_text_basic(char_spell_name or "")
+            is_ifrit_healing_light = spell_name_lower == "ifrit: healing light"
             is_summon_heal = (
-                spell_type.startswith("summon") or "healing light" in spell_name_lower
+                spell_type.startswith("summon")
+                or "healing light" in spell_name_lower
+                or is_ifrit_healing_light
             )
 
             target_raw = normalize_text_basic(char_spell_json.get("Target") or "")
@@ -735,7 +738,9 @@ def run_character_turn(
             maxmp = char_state.max_mp_pool.get(lvl, remain)
             suffix = f"（MP{lvl} {remain}/{maxmp}）"
 
-            if target_side == "enemy":
+            force_all_allies = is_ifrit_healing_light or target_raw == "all allies"
+
+            if target_side == "enemy" and not force_all_allies:
                 holy_spell = healing_magic_as_holy_spell(char_spell)
 
                 if aoe_heal_selected and enemies is not None:
@@ -819,7 +824,7 @@ def run_character_turn(
                 return dmg_to_enemy, None
 
             target_count = 1
-            if aoe_heal_selected and party_members is not None:
+            if (aoe_heal_selected or force_all_allies) and party_members is not None:
                 target_count = max(
                     1,
                     len([pm for pm in party_members if getattr(pm.state, "hp", 0) > 0]),
@@ -835,7 +840,7 @@ def run_character_turn(
                 spell_name=(char_spell_name or ""),
             )
 
-            if aoe_heal_selected and party_members is not None:
+            if (aoe_heal_selected or force_all_allies) and party_members is not None:
                 alive_targets = [
                     pm for pm in party_members if getattr(pm.state, "hp", 0) > 0
                 ]
@@ -1104,6 +1109,8 @@ def run_character_turn(
                 raise ValueError("Haste には char_spell_json が必要です")
 
             spell_label = char_spell_name or "Haste"
+            spell_name_lower = normalize_text_basic(spell_label)
+            is_bahamut_aura = spell_name_lower == "bahamut: aura"
             mp_used = use_mp_for_spell(char_state, char_spell_json)
             lvl = int(char_spell_json.get("Level", 1))
 
@@ -1114,15 +1121,19 @@ def run_character_turn(
                 dmg_to_enemy = 0
                 return dmg_to_enemy, None
 
-            mind = char_stats.mind
-            L = char_stats.level
-            J = char_stats.job_level
-
-            acc = char_spell_json.get("BaseAccuracy")
-            if acc is None:
-                acc = char_spell_json.get("Accuracy", 1.0)
-
-            hit_percent = calc_buff_hit_percent(acc, mind)
+            if is_bahamut_aura:
+                base_acc = float(char_spell_json.get("Accuracy") or 0.0)
+                if base_acc <= 1.0:
+                    base_acc *= 100.0
+                hit_percent = min(
+                    100.0, max(0.0, base_acc + (char_stats.intelligence / 2.0))
+                )
+            else:
+                mind = char_stats.mind
+                acc = char_spell_json.get("BaseAccuracy")
+                if acc is None:
+                    acc = char_spell_json.get("Accuracy", 1.0)
+                hit_percent = calc_buff_hit_percent(acc, mind)
 
             if rng.random() * 100.0 >= hit_percent:
                 remain = char_state.mp_pool[lvl]
@@ -1135,47 +1146,87 @@ def run_character_turn(
                 dmg_to_enemy = 0
                 return dmg_to_enemy, None
 
-            base_factor = (mind // 16) + (L // 16) + (J // 32) + 1
-            base_power = float(char_spell_json.get("BasePower", 5))
-            magic_defense, magic_def_multiplier, magic_resistance_percent = (
-                buff_target_magic_parameters(
-                    target_magic_defense=target_stats.magic_defense,
-                    target_magic_def_multiplier=target_stats.magic_def_multiplier,
-                    target_magic_resistance_percent=target_stats.magic_resistance,
-                    target_is_friendly=True,
+            if is_bahamut_aura:
+                aura_targets: list[tuple[Any, Any]] = []
+                if party_members is not None:
+                    aura_targets = [
+                        (pm.state, pm.stats)
+                        for pm in party_members
+                        if not is_out_of_battle(pm.state)
+                    ]
+                if not aura_targets:
+                    aura_targets = [(target_state, target_stats)]
+
+                applied_count = 0
+                for _, ally_stats in aura_targets:
+                    before_power = getattr(ally_stats, "haste_power_bonus", 0)
+                    before_mul = getattr(ally_stats, "haste_multiplier_bonus", 0)
+
+                    # NES版の Aura を近似:
+                    # - 命中+8/手 を「攻撃回数+8」で近似
+                    # - 攻撃力+50% を「現在攻撃力ベースの加算」で近似
+                    base_attack = max(1, int(getattr(ally_stats, "attack_power", 0)))
+                    gain_power = max(1, int(round(base_attack * 0.5)))
+                    gain_mul = 8
+
+                    ally_stats.haste_power_bonus = min(255, before_power + gain_power)
+                    ally_stats.haste_multiplier_bonus = min(16, before_mul + gain_mul)
+                    applied_count += 1
+
+                remain = char_state.mp_pool[lvl]
+                maxmp = char_state.max_mp_pool.get(lvl, remain)
+                suffix = f"（MP{lvl} {remain}/{maxmp}）"
+                logs.append(
+                    f"{char_name}は召喚魔法《{spell_label}》を呼び出した！ "
+                    f"オーラが味方全員を包み、攻撃力と攻撃回数が上がった"
+                    f"（対象 {applied_count} 人）。 {suffix}"
                 )
-            )
+                return 0, None
+            else:
+                mind = char_stats.mind
+                L = char_stats.level
+                J = char_stats.job_level
+                base_factor = (mind // 16) + (L // 16) + (J // 32) + 1
+                base_power = float(char_spell_json.get("BasePower", 5))
+                magic_defense, magic_def_multiplier, magic_resistance_percent = (
+                    buff_target_magic_parameters(
+                        target_magic_defense=target_stats.magic_defense,
+                        target_magic_def_multiplier=target_stats.magic_def_multiplier,
+                        target_magic_resistance_percent=target_stats.magic_resistance,
+                        target_is_friendly=True,
+                    )
+                )
 
-            (
-                old_power_bonus,
-                new_power_bonus,
-                old_mul_bonus,
-                new_mul_bonus,
-                add_power,
-                add_mul,
-            ) = apply_haste_buff(
-                target_stats,
-                base_power=base_power,
-                base_factor=base_factor,
-                rng=rng,
-                target_magic_defense=magic_defense,
-                target_magic_def_multiplier=magic_def_multiplier,
-                target_magic_resistance_percent=magic_resistance_percent,
-            )
+                (
+                    old_power_bonus,
+                    new_power_bonus,
+                    old_mul_bonus,
+                    new_mul_bonus,
+                    add_power,
+                    add_mul,
+                ) = apply_haste_buff(
+                    target_stats,
+                    base_power=base_power,
+                    base_factor=base_factor,
+                    rng=rng,
+                    target_magic_defense=magic_defense,
+                    target_magic_def_multiplier=magic_def_multiplier,
+                    target_magic_resistance_percent=magic_resistance_percent,
+                )
 
-            remain = char_state.mp_pool[lvl]
-            maxmp = char_state.max_mp_pool.get(lvl, remain)
-            suffix = f"（MP{lvl} {remain}/{maxmp}）"
+                remain = char_state.mp_pool[lvl]
+                maxmp = char_state.max_mp_pool.get(lvl, remain)
+                suffix = f"（MP{lvl} {remain}/{maxmp}）"
 
-            logs.append(
-                f"{char_name}は{target_name}に《{spell_label}》を唱えた！ "
-                f"物理加算値 {old_power_bonus}→{new_power_bonus}"
-                f"、攻撃回数加算 {old_mul_bonus}→{new_mul_bonus}"
-                f"（今回 +{add_power}, +{add_mul}）に上がった。 {suffix}"
-            )
+                logs.append(
+                    f"{char_name}は{target_name}に《{spell_label}》を唱えた！ "
+                    f"物理加算値 {old_power_bonus}→{new_power_bonus}"
+                    f"、攻撃回数加算 {old_mul_bonus}→{new_mul_bonus}"
+                    f"（今回 +{add_power}, +{add_mul}）に上がった。 {suffix}"
+                )
 
-            dmg_to_enemy = 0
-            return dmg_to_enemy, None
+                dmg_to_enemy = 0
+                return dmg_to_enemy, None
 
         # ------------------------
         # ⑤.5 Reflect / Odin: Protective Light

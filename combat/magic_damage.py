@@ -131,7 +131,13 @@ def healing_spell_kind(spell_json: Dict[str, Any]) -> str | None:
         return "protect"
 
     # ヘイスト（Haste）
-    if "enhance accuracy and attack multiplier" in effect or name == "haste":
+    # 召喚「Bahamut: Aura」は実態として味方全体バフ（攻撃力/攻撃回数強化）なので
+    # Haste 系として扱う。
+    if (
+        "enhance accuracy and attack multiplier" in effect
+        or name == "haste"
+        or "bahamut: aura" in name
+    ):
         return "haste"
 
     # Reflect（Wall）
