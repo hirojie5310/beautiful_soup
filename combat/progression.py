@@ -94,14 +94,15 @@ def apply_victory_exp_rewards(
     total_exp = compute_exp_reward(enemies)
     alive_members = [m for m in party_members if getattr(m.state, "hp", 0) > 0]
 
-    per_member = split_exp_evenly_no_remainder(total_exp, len(alive_members))
-    if per_member == 0:
+    per_member, remainder = split_exp_evenly(total_exp, len(alive_members))
+    if per_member == 0 and remainder == 0:
         return []  # 公平のため今回は加算なし
 
     levelups: list[tuple[str, int, int]] = []
-    for m in alive_members:
+    for idx, m in enumerate(alive_members):
+        gained_exp = per_member + (1 if idx < remainder else 0)
         old_lv, new_lv = apply_battle_exp_and_refresh(
-            m, per_member, level_table, weapons, armors
+            m, gained_exp, level_table, weapons, armors
         )
         if new_lv != old_lv:
             levelups.append((m.name, old_lv, new_lv))
