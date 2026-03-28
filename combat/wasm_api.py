@@ -3,10 +3,11 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from pathlib import Path
 from random import Random
 from typing import Any, Optional, Sequence
 
-from assets.data.data_loader import load_explicit_groups
+from assets.data.data_loader import load_explicit_groups, save_savedata
 from combat.constants import STATUS_ENUM_BY_KEY, STATUS_ICON_KEY_BY_ENUM
 from combat.dto import (
     ExecuteRoundInputDTO,
@@ -23,7 +24,7 @@ from combat.magic_damage import healing_spell_kind
 from combat.progression import apply_victory_rewards
 from combat.usecases import BattleSession, build_battle_session, execute_round_dto
 from combat.models import EquipmentSet
-from combat.runtime_state import init_runtime_state
+from combat.runtime_state import init_runtime_state, resolve_data_path
 from utils.text_normalize import normalize_text_basic
 
 
@@ -592,6 +593,22 @@ class WasmBattleEngine:
             ],
         }
 
+    def persist_runtime_save(self) -> None:
+        state = getattr(self.session, "state", None)
+        if state is None:
+            return
+        save = getattr(state, "save", None)
+        if not isinstance(save, dict):
+            return
+        base_dir = getattr(state, "base_dir", Path("."))
+        if not isinstance(base_dir, Path):
+            base_dir = Path(base_dir)
+        save_path = resolve_data_path(
+            "assets/data/ffiii_savedata.json",
+            base_dir=base_dir,
+        )
+        save_savedata(save_path, save)
+
     def execute_round_payload(self, payload: dict[str, Any]) -> dict[str, Any]:
         request_dto = parse_execute_round_input_dict(payload)
         request_dto = _normalize_planned_actions_length(
@@ -631,6 +648,7 @@ class WasmBattleEngine:
         response_payload["selected_location"] = self.selected_location
 
         if output_dto.lifecycle.battle_finished:
+            self.persist_runtime_save()
             self.battle_start_progress = _build_party_progress_snapshot(self.session)
 
         return response_payload

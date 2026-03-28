@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import json
+import os
+from pathlib import Path
 from typing import Any, cast
 
 from combat.enums import Status
@@ -66,6 +68,52 @@ def test_wasm_engine_round_json_returns_browser_ready_payload(monkeypatch) -> No
     assert payload["session_status"]["enemies"][0]["hp"] == 0
     assert payload["selected_location_group"] != ""
     assert payload["selected_location"] != ""
+
+
+def test_wasm_engine_persists_save_when_battle_finishes(monkeypatch) -> None:
+    engine = WasmBattleEngine.create_default(seed=19)
+    saved_calls: list[tuple[str | os.PathLike[str], dict[str, object]]] = []
+
+    def _fake_execute_round_dto(*, session, request, rng):
+        return type(
+            "Output",
+            (),
+            {
+                "logs": ["Battle ended."],
+                "end_reason": "char_defeated",
+                "escaped": False,
+                "enemy_was_physically_hit": False,
+                "events": [],
+                "lifecycle": type(
+                    "Lifecycle",
+                    (),
+                    {
+                        "before": "resolving_round",
+                        "after": "battle_finished",
+                        "battle_finished": True,
+                    },
+                )(),
+            },
+        )()
+
+    def _fake_save_savedata(path: str | os.PathLike[str], save: dict[str, object]):
+        saved_calls.append((path, save))
+
+    monkeypatch.setattr("combat.wasm_api.execute_round_dto", _fake_execute_round_dto)
+    monkeypatch.setattr("combat.wasm_api.save_savedata", _fake_save_savedata)
+
+    engine.execute_round_json(
+        json.dumps(
+            {"planned_actions": [], "lifecycle_state": "ready_for_actions"},
+            ensure_ascii=False,
+        )
+    )
+
+    assert len(saved_calls) == 1
+    assert (
+        Path(saved_calls[0][0]).as_posix().endswith("assets/data/ffiii_savedata.json")
+    )
+    assert saved_calls[0][1] is engine.session.state.save
 
 
 def test_build_session_status_snapshot_serializes_status_icons() -> None:
