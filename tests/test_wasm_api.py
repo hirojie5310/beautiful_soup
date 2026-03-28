@@ -8,6 +8,7 @@ from combat.enums import Status
 from combat.runtime_state import init_runtime_state
 from combat.wasm_api import (
     WasmBattleEngine,
+    _build_magic_spell_meta,
     build_location_selection_context,
     build_session_status_snapshot,
     pick_enemy_names_for_location,
@@ -137,3 +138,52 @@ def test_pick_enemy_names_for_location_returns_combatants() -> None:
 
     assert names
     assert all(isinstance(name, str) and name for name in names)
+
+
+def test_wasm_magic_meta_includes_parent_summon_with_uniform_child_target() -> None:
+    dummy_session = cast(
+        Any,
+        type(
+            "Session",
+            (),
+            {
+                "spells_expanded": {
+                    "Leviathan: Demon Eye": {
+                        "Name": "Leviathan: Demon Eye",
+                        "Type": "Summon",
+                        "Target": "All Enemies",
+                        "Level": 7,
+                    }
+                },
+                "state": type(
+                    "State",
+                    (),
+                    {
+                        "spells": {
+                            "Leviathan": {
+                                "Name": "Leviathan",
+                                "Type": "Summon Magic",
+                                "Target": "One Enemy",
+                                "Level": 7,
+                                "Spells": [
+                                    {
+                                        "Name": "Leviathan: Demon Eye",
+                                        "Target": "All Enemies",
+                                    },
+                                    {
+                                        "Name": "Leviathan: Cyclone",
+                                        "Target": "All Enemies",
+                                    },
+                                ],
+                            }
+                        }
+                    },
+                )(),
+            },
+        )(),
+    )
+
+    meta = _build_magic_spell_meta(dummy_session)
+
+    assert meta["Leviathan"]["target_norm"] == "all enemies"
+    assert meta["Leviathan"]["can_select_all"] is False

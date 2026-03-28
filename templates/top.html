@@ -587,12 +587,20 @@
       function buildMagicActionForSpell(spellName) {
         const meta = magicSpellMetaByName?.[spellName] || {};
         const canSelectAll = Boolean(meta?.can_select_all);
+        const autoAllTarget = Boolean(meta?.auto_all_target);
         const healingType = String(meta?.healing_type || "");
         const targetMode = String(meta?.target_mode || "");
         const isAllyOnlyMagic = targetMode === "ally_only";
         const isNonAttackMagic = isAllyOnlyMagic || ["hp", "status", "revive", "protect", "haste", "reflect"].includes(healingType);
 
         if (!isNonAttackMagic) {
+          if (autoAllTarget) {
+            return buildAction("magic", "Magic", {
+              spell_name: spellName,
+              target_side: "enemy",
+              target_all: true,
+            });
+          }
           let useAll = false;
           if (canSelectAll) {
             useAll = window.confirm("この魔法を敵全体に使いますか？\nOK: 全体 / Cancel: 単体");

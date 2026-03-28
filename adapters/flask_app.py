@@ -761,6 +761,7 @@ def _build_magic_spell_meta(session: BattleSession) -> dict[str, dict[str, Any]]
             continue
         target_norm = normalize_text_basic(raw.get("Target") or "")
         can_select_all = target_norm in {"one/all enemies", "one/all allies", "one/all"}
+        auto_all_target = target_norm in {"all enemies", "all allies"}
         healing_type = str(healing_spell_kind(raw) or "")
         target_mode = "enemy_only"
         if healing_type in {"hp", "status", "revive", "protect", "haste", "reflect"}:
@@ -769,6 +770,7 @@ def _build_magic_spell_meta(session: BattleSession) -> dict[str, dict[str, Any]]
             "target": str(raw.get("Target") or ""),
             "target_norm": target_norm,
             "can_select_all": can_select_all,
+            "auto_all_target": auto_all_target,
             "healing_type": healing_type,
             "target_mode": target_mode,
             "type": str(raw.get("Type") or ""),

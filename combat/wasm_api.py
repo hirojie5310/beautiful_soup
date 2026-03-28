@@ -24,6 +24,7 @@ from combat.progression import apply_victory_rewards
 from combat.usecases import BattleSession, build_battle_session, execute_round_dto
 from combat.models import EquipmentSet
 from combat.runtime_state import init_runtime_state
+from utils.text_normalize import normalize_text_basic
 
 
 def _safe_int(value: Any, default: int = 0) -> int:
@@ -300,6 +301,64 @@ def _build_magic_spell_meta(session: BattleSession) -> dict[str, dict[str, Any]]
             "type": str(raw.get("Type") or ""),
             "level": _safe_int(raw.get("Level", 1), 1),
         }
+
+    # Evoker では親召喚名（例: Leviathan）がメニューに表示されるため、
+    # spells_expanded に親がない場合でも、元の spells 定義から最低限の対象情報を補完する。
+    state = getattr(session, "state", None)
+    raw_spells = getattr(state, "spells", {}) if state is not None else {}
+    if isinstance(raw_spells, dict):
+        for parent_name, parent_raw in raw_spells.items():
+            if not isinstance(parent_name, str) or not parent_name:
+                continue
+            if parent_name in rows:
+                continue
+            if not isinstance(parent_raw, dict):
+                continue
+            if normalize_text_basic(parent_raw.get("Type") or "") != "summon magic":
+                continue
+
+            child_rows = parent_raw.get("Spells")
+            if not isinstance(child_rows, list) or not child_rows:
+                continue
+            child_targets = [
+                normalize_text_basic(
+                    child.get("Target") if isinstance(child, dict) else ""
+                )
+                for child in child_rows
+            ]
+            child_targets = [target for target in child_targets if target]
+
+            target_norm = normalize_text_basic(parent_raw.get("Target") or "")
+            if child_targets and len(set(child_targets)) == 1:
+                target_norm = child_targets[0]
+
+            can_select_all = target_norm in {
+                "one/all enemies",
+                "one/all allies",
+                "one/all",
+            }
+            healing_type = str(healing_spell_kind(parent_raw) or "")
+            target_mode = "enemy_only"
+            if target_norm == "all allies":
+                target_mode = "ally_only"
+            if healing_type in {
+                "hp",
+                "status",
+                "revive",
+                "protect",
+                "haste",
+                "reflect",
+            }:
+                target_mode = "any" if healing_type == "hp" else "ally_only"
+            rows[parent_name] = {
+                "target": str(parent_raw.get("Target") or ""),
+                "target_norm": target_norm,
+                "can_select_all": can_select_all,
+                "healing_type": healing_type,
+                "target_mode": target_mode,
+                "type": str(parent_raw.get("Type") or ""),
+                "level": _safe_int(parent_raw.get("Level", 1), 1),
+            }
     return rows
 
 

@@ -29,6 +29,13 @@ class _DummySession:
                 "Effect": "Restore target's HP",
                 "Target": "One/All Allies",
             },
+            "Leviathan: Demon Eye": {
+                "Name": "Leviathan: Demon Eye",
+                "Type": "Summon",
+                "Level": 7,
+                "Effect": "Deal wind damage and inflict Blind",
+                "Target": "All Enemies",
+            },
         }
 
 
@@ -51,3 +58,11 @@ def test_build_magic_spell_meta_marks_hp_heal_as_any_target() -> None:
 
     assert meta["Cure"]["healing_type"] == "hp"
     assert meta["Cure"]["target_mode"] == "any"
+
+
+def test_build_magic_spell_meta_marks_all_enemies_as_auto_all_target() -> None:
+    meta = _build_magic_spell_meta(cast(BattleSession, _DummySession()))
+
+    assert meta["Leviathan: Demon Eye"]["target_norm"] == "all enemies"
+    assert meta["Leviathan: Demon Eye"]["auto_all_target"] is True
+    assert meta["Leviathan: Demon Eye"]["can_select_all"] is False
