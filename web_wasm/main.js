@@ -13,6 +13,7 @@ const rewardPanel = document.getElementById("rewardPanel");
 const locationGroupSelect = document.getElementById("locationGroupSelect");
 const locationSelect = document.getElementById("locationSelect");
 const locationApplyBtn = document.getElementById("locationApplyBtn");
+const partyRecoverBtn = document.getElementById("partyRecoverBtn");
 const enemyFrame = document.getElementById("enemyFrame");
 
 let pyodide = null;
@@ -853,7 +854,7 @@ function renderStatus() {
 }
 
 function maybeShowRewards(payload) {
-  if (payload?.end_reason === "enemy_defeated" && payload?.victory_rewards) {
+  if (payload?.victory_rewards) {
     const rewards = payload.victory_rewards;
     rewardPanel.classList.add("open");
     rewardPanel.innerHTML = `
@@ -906,9 +907,36 @@ function buildLogBlocks(logs) {
   return blocks;
 }
 
+function buildRewardLogBlock(payload) {
+  if (!payload?.victory_rewards) {
+    return null;
+  }
+  const rewards = payload.victory_rewards;
+  const drops = Array.isArray(rewards?.dropped_item) && rewards.dropped_item.length
+    ? rewards.dropped_item.join(", ")
+    : "(none)";
+  return {
+    type: "reward",
+    lines: [
+      "=== Battle Rewards ===",
+      `EXP +${Number(rewards?.gained_exp ?? 0)}`,
+      `Gil +${Number(rewards?.gained_gil ?? 0)}`,
+      `CP +${Number(rewards?.gained_cp ?? 0)}`,
+      `Drop: ${drops}`,
+    ],
+  };
+}
+
 async function playBattleLogBlocks(logs, payload) {
   const playbackId = ++activeLogPlaybackId;
   const blocks = buildLogBlocks(logs);
+  const hasRewardBlock = blocks.some((block) => block.type === "reward");
+  if (!hasRewardBlock) {
+    const rewardBlock = buildRewardLogBlock(payload);
+    if (rewardBlock) {
+      blocks.push(rewardBlock);
+    }
+  }
   logView.textContent = "";
   rewardPanel.classList.remove("open");
   rewardPanel.textContent = "";
@@ -1191,6 +1219,11 @@ def get_initial_payload_json():
 
 def run_battle_round_wasm(js_input_json):
     return engine.execute_round_json(js_input_json)
+
+def full_recover_party_json():
+    if engine is None:
+        return json.dumps({"session_status": None}, ensure_ascii=False)
+    return json.dumps(engine.full_recover_party_payload(), ensure_ascii=False)
 `);
 
   const getSelectionJson = pyodide.globals.get("get_location_selection_json");
@@ -1267,7 +1300,7 @@ async function executeRound() {
   currentMemberIndex = firstActionableMemberIndex();
   selectedEnemyIndex = 0;
   enterCommandMode();
-  setCommandLogLayout({ showCommand: true });
+  setCommandLogLayout({ showCommand: !battleFinished });
   battlePhase.textContent = battleFinished
     ? `戦闘終了: ${result?.end_reason ?? "finished"}`
     : "次ターンの入力を開始してください。";
@@ -1311,6 +1344,24 @@ if (locationApplyBtn) {
     rewardPanel.classList.remove("open");
     rewardPanel.textContent = "";
     rerenderAll();
+  });
+}
+
+if (partyRecoverBtn) {
+  partyRecoverBtn.addEventListener("click", () => {
+    if (!pyodide) {
+      statusLine.textContent = "エンジン起動中です。完了後に再実行してください。";
+      return;
+    }
+    const fullRecover = pyodide.globals.get("full_recover_party_json");
+    const payload = JSON.parse(fullRecover());
+    const nextStatus = payload?.session_status;
+    if (nextStatus && typeof nextStatus === "object") {
+      sessionStatus = nextStatus;
+    }
+    enterCommandMode();
+    rerenderAll();
+    statusLine.textContent = "パーティーを全回復しました。";
   });
 }
 

@@ -609,6 +609,30 @@ class WasmBattleEngine:
         )
         save_savedata(save_path, save)
 
+    def full_recover_party_payload(self) -> dict[str, Any]:
+        for member in self.session.party_members:
+            state = getattr(member, "state", None)
+            if state is None:
+                continue
+
+            max_hp_raw = getattr(state, "max_hp", None)
+            if max_hp_raw is not None:
+                state.hp = _safe_int(max_hp_raw, _safe_int(getattr(state, "hp", 0), 0))
+
+            mp_pool = getattr(state, "mp_pool", None)
+            max_mp_pool = getattr(state, "max_mp_pool", None)
+            if isinstance(mp_pool, dict) and isinstance(max_mp_pool, dict):
+                for level, max_uses in max_mp_pool.items():
+                    mp_pool[level] = _safe_int(
+                        max_uses, _safe_int(mp_pool.get(level, 0), 0)
+                    )
+
+        return {
+            "selected_location_group": self.selected_location_group,
+            "selected_location": self.selected_location,
+            "session_status": build_session_status_snapshot(self.session),
+        }
+
     def execute_round_payload(self, payload: dict[str, Any]) -> dict[str, Any]:
         request_dto = parse_execute_round_input_dict(payload)
         request_dto = _normalize_planned_actions_length(
