@@ -110,7 +110,16 @@ def load_jobs(path: Path) -> Dict[str, Job]:
 
 
 def load_savedata(path: Path) -> dict:
-    return _load_json_file(path)
+    raw = _load_json_file(path)
+    if not isinstance(raw, dict):
+        raise ValueError("savedata JSON must be an object")
+
+    # v1 envelope 形式（{"version":1, "save": {...}}）と
+    # 従来の生 savedata 形式（{"party":[...], ...}）の両方を受け入れる。
+    inner_save = raw.get("save")
+    if isinstance(inner_save, dict):
+        return inner_save
+    return raw
 
 
 def save_savedata(path: Path, save: dict) -> None:
