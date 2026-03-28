@@ -13,7 +13,9 @@ const rewardPanel = document.getElementById("rewardPanel");
 const locationGroupSelect = document.getElementById("locationGroupSelect");
 const locationSelect = document.getElementById("locationSelect");
 const locationApplyBtn = document.getElementById("locationApplyBtn");
-const partyRecoverBtn = document.getElementById("partyRecoverBtn");
+const loadSaveBtn = document.getElementById("loadSaveBtn");
+const loadSaveInput = document.getElementById("loadSaveInput");
+const downloadSaveBtn = document.getElementById("downloadSaveBtn");
 const enemyFrame = document.getElementById("enemyFrame");
 
 let pyodide = null;
@@ -29,6 +31,9 @@ let pendingActionDraft = null;
 let currentSelectedLocationGroup = "";
 const locationMapImageCache = {};
 let activeLogPlaybackId = 0;
+let loadedSaveData = null;
+
+const LOCAL_SAVE_STORAGE_KEY = "ff3_wasm_savedata_v1";
 
 const COMMAND_LABELS = {
   Fight: "たたかう",
@@ -868,6 +873,76 @@ function maybeShowRewards(payload) {
   rewardPanel.textContent = "";
 }
 
+function makeSaveEnvelope(saveObj, options = {}) {
+  return {
+    version: 1,
+    saved_at: new Date().toISOString(),
+    selected_location_group: String(options?.selectedLocationGroup || currentSelectedLocationGroup || ""),
+    selected_location: String(options?.selectedLocation || locationSelect?.value || ""),
+    save: saveObj,
+  };
+}
+
+function parseSaveEnvelope(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  if (raw?.version === 1 && raw?.save && typeof raw.save === "object") {
+    return {
+      version: 1,
+      saved_at: String(raw.saved_at || ""),
+      selected_location_group: String(raw.selected_location_group || ""),
+      selected_location: String(raw.selected_location || ""),
+      save: raw.save,
+    };
+  }
+  if (raw?.party && Array.isArray(raw.party)) {
+    return makeSaveEnvelope(raw);
+  }
+  return null;
+}
+
+function restoreSaveEnvelopeFromStorage() {
+  try {
+    const text = localStorage.getItem(LOCAL_SAVE_STORAGE_KEY);
+    if (!text) return null;
+    const parsed = JSON.parse(text);
+    return parseSaveEnvelope(parsed);
+  } catch (_error) {
+    return null;
+  }
+}
+
+function persistSaveEnvelopeToStorage(envelope) {
+  if (!envelope) return false;
+  try {
+    localStorage.setItem(LOCAL_SAVE_STORAGE_KEY, JSON.stringify(envelope));
+    return true;
+  } catch (_error) {
+    return false;
+  }
+}
+
+function downloadSaveEnvelope(envelope) {
+  if (!envelope) return false;
+  const payload = JSON.stringify(envelope, null, 2);
+  const blob = new Blob([payload], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  anchor.href = url;
+  anchor.download = `ffiii_savedata_${stamp}.json`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+  return true;
+}
+
+function setSaveButtonsEnabled(enabled) {
+  if (downloadSaveBtn) {
+    downloadSaveBtn.disabled = !enabled;
+  }
+}
+
 function setCommandLogLayout({ showCommand }) {
   if (commandFrame) {
     commandFrame.style.display = showCommand ? "" : "none";
@@ -1225,6 +1300,23 @@ def full_recover_party_json():
     if engine is None:
         return json.dumps({"session_status": None}, ensure_ascii=False)
     return json.dumps(engine.full_recover_party_payload(), ensure_ascii=False)
+
+def boot_engine_for_location_with_save_json(location_group, location, save_json, seed=7):
+    global state
+    parsed = json.loads(save_json)
+    if not isinstance(parsed, dict):
+        raise ValueError("save_json must be JSON object")
+    state.save = parsed
+    return boot_engine_for_location(location_group, location, seed=seed)
+
+def export_runtime_save_json():
+    if engine is None:
+        return ""
+    runtime_state = getattr(engine.session, "state", None)
+    save = getattr(runtime_state, "save", None)
+    if not isinstance(save, dict):
+        return ""
+    return json.dumps(save, ensure_ascii=False)
 `);
 
   const getSelectionJson = pyodide.globals.get("get_location_selection_json");
@@ -1239,6 +1331,18 @@ def full_recover_party_json():
     locationSelect.value = selectionPayload.selected_location;
   }
 
+  const storedEnvelope = restoreSaveEnvelopeFromStorage();
+  if (storedEnvelope?.save) {
+    loadedSaveData = storedEnvelope.save;
+    if (storedEnvelope.selected_location_group) {
+      locationGroupSelect.value = storedEnvelope.selected_location_group;
+      renderLocationSelectors();
+    }
+    if (storedEnvelope.selected_location) {
+      locationSelect.value = storedEnvelope.selected_location;
+    }
+  }
+
   bootLocationAndSyncSession();
   resetPendingActionsForParty();
   currentMemberIndex = firstActionableMemberIndex();
@@ -1250,6 +1354,7 @@ def full_recover_party_json():
   setCommandLogLayout({ showCommand: true });
   rewardPanel.classList.remove("open");
   rewardPanel.textContent = "";
+  setSaveButtonsEnabled(Boolean(storedEnvelope?.save));
   rerenderAll();
 }
 
@@ -1267,13 +1372,20 @@ function applyFullRecoverParty() {
 function bootLocationAndSyncSession() {
   if (!pyodide) return null;
   const bootForLocation = pyodide.globals.get("boot_engine_for_location");
-  const payload = JSON.parse(
-    bootForLocation(
+  const bootWithSave = pyodide.globals.get("boot_engine_for_location_with_save_json");
+  const payload = JSON.parse(loadedSaveData
+    ? bootWithSave(
+      locationGroupSelect.value || "",
+      locationSelect.value || "",
+      JSON.stringify(loadedSaveData),
+      7,
+    )
+    : bootForLocation(
       locationGroupSelect.value || "",
       locationSelect.value || "",
       7,
-    ),
-  );
+    ));
+  loadedSaveData = null;
   currentSelectedLocationGroup = String(
     payload?.selected_location_group || locationGroupSelect.value || "",
   );
@@ -1323,6 +1435,27 @@ async function executeRound() {
   battlePhase.textContent = battleFinished
     ? `戦闘終了: ${result?.end_reason ?? "finished"}`
     : "次ターンの入力を開始してください。";
+  if (battleFinished) {
+    const exportSaveJson = pyodide.globals.get("export_runtime_save_json");
+    const saveJson = exportSaveJson ? String(exportSaveJson() || "") : "";
+    if (saveJson) {
+      try {
+        const saveObj = JSON.parse(saveJson);
+        const envelope = makeSaveEnvelope(saveObj, {
+          selectedLocationGroup: result?.selected_location_group,
+          selectedLocation: result?.selected_location,
+        });
+        if (persistSaveEnvelopeToStorage(envelope)) {
+          statusLine.textContent = "戦闘終了データをブラウザに保存しました。";
+          setSaveButtonsEnabled(true);
+        } else {
+          statusLine.textContent = "ブラウザ保存に失敗しました。";
+        }
+      } catch (_error) {
+        statusLine.textContent = "保存データの生成に失敗しました。";
+      }
+    }
+  }
 
   rerenderAll();
 }
@@ -1353,16 +1486,66 @@ if (locationApplyBtn) {
   });
 }
 
-if (partyRecoverBtn) {
-  partyRecoverBtn.addEventListener("click", () => {
-    if (!pyodide) {
-      statusLine.textContent = "エンジン起動中です。完了後に再実行してください。";
+if (loadSaveBtn) {
+  loadSaveBtn.addEventListener("click", () => {
+    if (!loadSaveInput) return;
+    loadSaveInput.value = "";
+    loadSaveInput.click();
+  });
+}
+
+if (loadSaveInput) {
+  loadSaveInput.addEventListener("change", async (event) => {
+    const file = event?.target?.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const envelope = parseSaveEnvelope(parsed);
+      if (!envelope?.save) {
+        statusLine.textContent = "ロード失敗: セーブデータ形式が不正です。";
+        return;
+      }
+      loadedSaveData = envelope.save;
+      if (envelope.selected_location_group) {
+        locationGroupSelect.value = envelope.selected_location_group;
+        renderLocationSelectors();
+      }
+      if (envelope.selected_location) {
+        locationSelect.value = envelope.selected_location;
+      }
+      if (persistSaveEnvelopeToStorage(envelope)) {
+        setSaveButtonsEnabled(true);
+      }
+      bootLocationAndSyncSession();
+      resetPendingActionsForParty();
+      currentMemberIndex = firstActionableMemberIndex();
+      selectedEnemyIndex = 0;
+      enterCommandMode();
+      battlePhase.textContent = "セーブデータをロードしました。";
+      logView.textContent = "(not executed)";
+      setCommandLogLayout({ showCommand: true });
+      rewardPanel.classList.remove("open");
+      rewardPanel.textContent = "";
+      rerenderAll();
+    } catch (_error) {
+      statusLine.textContent = "ロード失敗: JSON を読み込めませんでした。";
+    }
+  });
+}
+
+if (downloadSaveBtn) {
+  downloadSaveBtn.addEventListener("click", () => {
+    const envelope = restoreSaveEnvelopeFromStorage();
+    if (!envelope) {
+      statusLine.textContent = "保存できるセーブデータがありません。";
       return;
     }
-    applyFullRecoverParty();
-    enterCommandMode();
-    rerenderAll();
-    statusLine.textContent = "パーティーを全回復しました。";
+    if (downloadSaveEnvelope(envelope)) {
+      statusLine.textContent = "セーブデータをローカルに保存しました。";
+    } else {
+      statusLine.textContent = "セーブデータの保存に失敗しました。";
+    }
   });
 }
 

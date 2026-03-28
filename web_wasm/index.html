@@ -266,7 +266,8 @@
           <label for="locationSelect">location</label>
           <select id="locationSelect"></select>
           <button id="locationApplyBtn" class="btn" type="button">敵編成を更新</button>
-          <button id="partyRecoverBtn" class="btn" type="button">全回復</button>
+          <button id="loadSaveBtn" class="btn" type="button">ロード</button>
+          <input id="loadSaveInput" type="file" accept="application/json,.json" style="display:none;" />
         </div>
       </section>
 
@@ -290,7 +291,10 @@
       </section>
 
       <section id="battleLogFrame" class="frame" style="display:none;">
-        <h3 class="title" style="margin-top:10px;">Battle Logs</h3>
+        <div class="toolbar" style="justify-content:space-between; margin-top:10px;">
+          <h3 class="title" style="margin:0;">Battle Logs</h3>
+          <button id="downloadSaveBtn" class="btn" type="button">保存</button>
+        </div>
         <pre id="logView">(not executed)</pre>
 
         <div id="rewardPanel" class="reward" style="margin-top:10px;"></div>
