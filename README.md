@@ -15,6 +15,17 @@ Wrote Wasm bundle: D:\Python\beautiful_soup\web_wasm\python_bundle.zip
 (base) PS D:\Python\beautiful_soup> python wasm_app.py
 Wasm static server: http://127.0.0.1:8000/web_wasm/
 
+## 継続して情報を保持するための方針（wasm_app.py 起点の画面横断）
+
+単一の状態オブジェクトを source of truth にする
+ff3_wasm_menu_state_v1 に全画面共通で使うデータを保持し、各画面は「自分の担当フィールドだけ更新」し、未知フィールドは必ず温存（merge）してください。今回の修正はこの原則に合わせています。.
+
+部分更新時に overwrite しない
+localStorage.setItem 前に既存 state を展開し、差分だけ上書きする（{ ...existing, changedField: ... }）運用に統一すると、今回のような画面間データ消失を防げます。.
+
+保存エンベロープにも menu_state を同梱
+セーブファイルに menu_state を含めることで、ロード復元時に UI 側の詳細状態（魔法セット候補など）も戻せます。.
+
 
 ## Render deployment
 - `requirements.txt` is placed at the repository root (`beautiful_soup/requirements.txt`).

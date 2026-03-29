@@ -883,6 +883,9 @@ function makeSaveEnvelope(saveObj, options = {}) {
     selected_location_group: String(options?.selectedLocationGroup || currentSelectedLocationGroup || ""),
     selected_location: String(options?.selectedLocation || locationSelect?.value || ""),
     save: saveObj,
+    menu_state: options?.menuState && typeof options.menuState === "object"
+      ? options.menuState
+      : null,
   };
 }
 
@@ -895,6 +898,9 @@ function parseSaveEnvelope(raw) {
       selected_location_group: String(raw.selected_location_group || ""),
       selected_location: String(raw.selected_location || ""),
       save: raw.save,
+      menu_state: raw?.menu_state && typeof raw.menu_state === "object"
+        ? raw.menu_state
+        : null,
     };
   }
   if (raw?.party && Array.isArray(raw.party)) {
@@ -914,7 +920,19 @@ function restoreSaveEnvelopeFromStorage() {
   }
 }
 
+function parseMenuStateFromStorage() {
+  try {
+    const text = localStorage.getItem(LOCAL_MENU_STORAGE_KEY);
+    if (!text) return {};
+    const parsed = JSON.parse(text);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (_error) {
+    return {};
+  }
+}
+
 function buildMenuViewState() {
+  const storedMenuState = parseMenuStateFromStorage();
   const menuState = latestMenuState && typeof latestMenuState === "object" ? latestMenuState : {};
   const equipmentByMember = Array.isArray(menuState?.equipment_by_member)
     ? menuState.equipment_by_member
@@ -978,6 +996,8 @@ function buildMenuViewState() {
     ? sessionStatus.magic_spell_meta
     : {};
   return {
+    ...storedMenuState,
+    ...menuState,
     version: 1,
     updated_at: new Date().toISOString(),
     party,
@@ -1027,6 +1047,7 @@ function parseMenuStateCandidate(raw) {
     : {};
   const resources = raw?.resources && typeof raw.resources === "object" ? raw.resources : {};
   return {
+    ...raw,
     jobs,
     job_candidates_by_member: candidates,
     equip_candidates_by_member: equipCandidates,
@@ -1054,6 +1075,15 @@ function refreshMenuStateFromPyodide() {
   } catch (_error) {
     return null;
   }
+}
+
+function getCurrentMenuStateForPersistence() {
+  const fromStorage = parseMenuStateFromStorage();
+  const fromRuntime = latestMenuState && typeof latestMenuState === "object" ? latestMenuState : {};
+  return {
+    ...fromStorage,
+    ...fromRuntime,
+  };
 }
 
 function persistSaveEnvelopeToStorage(envelope) {
@@ -1932,6 +1962,7 @@ async function executeRound() {
         const envelope = makeSaveEnvelope(saveObj, {
           selectedLocationGroup: result?.selected_location_group,
           selectedLocation: result?.selected_location,
+          menuState: getCurrentMenuStateForPersistence(),
         });
         if (persistSaveEnvelopeToStorage(envelope)) {
           statusLine.textContent = "戦闘終了データをブラウザに保存しました。";
@@ -2013,6 +2044,10 @@ if (loadSaveInput) {
       }
       if (persistSaveEnvelopeToStorage(envelope)) {
         setSaveButtonsEnabled(true);
+      }
+      if (envelope?.menu_state && typeof envelope.menu_state === "object") {
+        latestMenuState = parseMenuStateCandidate(envelope.menu_state) || latestMenuState;
+        syncMenuViewStateToStorage();
       }
       bootLocationAndSyncSession();
       resetPendingActionsForParty();

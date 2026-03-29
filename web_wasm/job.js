@@ -22,6 +22,7 @@ function parseState() {
     const text = localStorage.getItem(LOCAL_MENU_STORAGE_KEY);
     const parsed = text ? JSON.parse(text) : {};
     return {
+      raw: parsed,
       party: Array.isArray(parsed?.party) ? parsed.party : [],
       resources: parsed?.resources && typeof parsed.resources === "object"
         ? parsed.resources
@@ -33,6 +34,7 @@ function parseState() {
     };
   } catch (_error) {
     return {
+      raw: {},
       party: [],
       resources: { cp: 0, cp_max: 255 },
       jobs: [],
@@ -231,6 +233,7 @@ function applyJobChange() {
     }),
   };
   if (!persistMenuState({
+    ...(state.raw && typeof state.raw === "object" ? state.raw : {}),
     ...nextState,
     job_candidates_by_member: nextState.jobCandidatesByMember,
   })) {
