@@ -103,10 +103,75 @@ def _build_party_status_snapshot(session: BattleSession) -> list[dict[str, Any]]
             }
             for level in range(1, 9)
         }
+        mp_text = "/".join(
+            f"{_safe_int(mp_pool.get(level, 0), 0):2d}" for level in range(1, 9)
+        )
         statuses = getattr(state, "statuses", set())
         status_icons = _status_icon_keys(statuses)
+        status_line = ",".join(str(st) for st in statuses) if statuses else "-"
         row_raw = str(getattr(stats, "row", getattr(base, "row", "front"))).lower()
         row_label = "back" if row_raw == "back" else "front"
+
+        eq = getattr(member, "equipment", None) or EquipmentSet()
+
+        def _is_weapon(name: str | None) -> bool:
+            weapons = getattr(getattr(session, "state", None), "weapons", {})
+            return (
+                isinstance(name, str) and isinstance(weapons, dict) and name in weapons
+            )
+
+        powers: list[int] = []
+        accs: list[int] = []
+        if _is_weapon(getattr(eq, "main_hand", None)):
+            powers.append(
+                _safe_int(getattr(stats, "main_power", getattr(stats, "attack", 0)), 0)
+            )
+            accs.append(
+                _safe_int(
+                    getattr(stats, "main_accuracy", getattr(stats, "hit_rate", 0)), 0
+                )
+            )
+        if _is_weapon(getattr(eq, "off_hand", None)):
+            powers.append(
+                _safe_int(getattr(stats, "off_power", getattr(stats, "attack", 0)), 0)
+            )
+            accs.append(
+                _safe_int(
+                    getattr(stats, "off_accuracy", getattr(stats, "hit_rate", 0)), 0
+                )
+            )
+        if not powers:
+            powers = [
+                _safe_int(getattr(stats, "main_power", getattr(stats, "attack", 0)), 0)
+            ]
+            accs = [
+                _safe_int(
+                    getattr(stats, "main_accuracy", getattr(stats, "hit_rate", 0)), 0
+                )
+            ]
+
+        atk_value = int(round(sum(powers) / len(powers)))
+        acc_value = int(round(sum(accs) / len(accs)))
+
+        atk_times = 0
+        if _is_weapon(getattr(eq, "main_hand", None)):
+            atk_times += _safe_int(getattr(stats, "main_atk_multiplier", 0), 0)
+        if _is_weapon(getattr(eq, "off_hand", None)):
+            atk_times += _safe_int(getattr(stats, "off_atk_multiplier", 0), 0)
+        if atk_times == 0:
+            atk_times = _safe_int(getattr(stats, "main_atk_multiplier", 0), 0)
+
+        exp_to_next = 0
+        level_table = getattr(session, "level_table", None)
+        if level_table is not None and base is not None:
+            try:
+                ls = level_table.status_from_level_and_exp(
+                    _safe_int(getattr(base, "level", getattr(member, "level", 1)), 1),
+                    _safe_int(getattr(base, "total_exp", 0), 0),
+                )
+                exp_to_next = _safe_int(getattr(ls, "exp_to_next", 0), 0)
+            except Exception:
+                exp_to_next = 0
 
         snapshots.append(
             {
@@ -120,6 +185,37 @@ def _build_party_status_snapshot(session: BattleSession) -> list[dict[str, Any]]
                 "mp_levels": mp_levels,
                 "portrait_key": getattr(member, "portrait_key", None),
                 "status_icons": status_icons,
+                "status": {
+                    "level": _safe_int(
+                        getattr(base, "level", getattr(member, "level", 0)), 0
+                    ),
+                    "job_level": _safe_int(getattr(base, "job_level", 0), 0),
+                    "exp": _safe_int(getattr(base, "total_exp", 0), 0),
+                    "exp_to_next": exp_to_next,
+                    "hp": hp,
+                    "max_hp": max_hp,
+                    "mp_text": mp_text,
+                    "strength": _safe_int(getattr(stats, "strength", 0), 0),
+                    "agility": _safe_int(getattr(stats, "agility", 0), 0),
+                    "vitality": _safe_int(getattr(stats, "vitality", 0), 0),
+                    "intelligence": _safe_int(getattr(stats, "intelligence", 0), 0),
+                    "mind": _safe_int(getattr(stats, "mind", 0), 0),
+                    "atk_value": atk_value,
+                    "atk_times": atk_times,
+                    "acc_value": acc_value,
+                    "defense": _safe_int(getattr(stats, "defense", 0), 0),
+                    "def_times": _safe_int(getattr(stats, "defense_multiplier", 0), 0),
+                    "evasion_percent": _safe_int(
+                        getattr(stats, "evasion_percent", 0), 0
+                    ),
+                    "magic_defense": _safe_int(getattr(stats, "magic_defense", 0), 0),
+                    "magic_resistance": _safe_int(
+                        getattr(stats, "magic_resistance", 0), 0
+                    ),
+                    "row_label": "BACK" if row_label == "back" else "FRONT",
+                    "status_line": status_line,
+                    "status_icons": status_icons,
+                },
                 "out_of_battle": bool(
                     is_out_of_battle(state) if state is not None else True
                 ),

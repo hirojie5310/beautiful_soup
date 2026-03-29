@@ -927,6 +927,12 @@ function buildMenuViewState() {
       mp_levels: member?.mp_levels && typeof member.mp_levels === "object"
         ? member.mp_levels
         : {},
+      status: member?.status && typeof member.status === "object"
+        ? member.status
+        : {},
+      status_icons: Array.isArray(member?.status_icons)
+        ? member.status_icons
+        : [],
     }))
     : [];
   const resources = sessionStatus?.resources && typeof sessionStatus.resources === "object"

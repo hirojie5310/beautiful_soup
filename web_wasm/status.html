@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>STATUS</title>
+    <style>
+      :root {
+        --bg: #050817;
+        --panel: rgba(16, 24, 56, 0.96);
+        --text: #eef2ff;
+        --muted: #acb6d7;
+        --accent: #ffe588;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: radial-gradient(circle at 20% 0%, #1c2b7a 0%, transparent 45%), var(--bg);
+        color: var(--text);
+        font-family: "BIZ UDPGothic", "Yu Gothic UI", sans-serif;
+      }
+      .layout {
+        width: min(480px, 100vw);
+        margin: 0 auto;
+        padding: 10px;
+        display: grid;
+        gap: 10px;
+        align-content: start;
+      }
+      .frame {
+        border: 2px solid rgba(255,255,255,0.45);
+        border-radius: 10px;
+        background: var(--panel);
+        padding: 10px;
+        height: fit-content;
+      }
+      .title {
+        margin: 0;
+        font-size: 1.1rem;
+        color: var(--accent);
+      }
+      .top {
+        display: grid;
+        grid-template-columns: 98px 1fr;
+        gap: 10px;
+      }
+      .portrait, .portrait-fallback {
+        width: 98px;
+        height: 98px;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.35);
+        background: rgba(255,255,255,0.08);
+      }
+      .portrait { object-fit: cover; object-position: center 20%; }
+      .portrait-fallback {
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+        font-size: 0.65rem;
+      }
+      .name-row { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+      .name { font-size: 1.5rem; font-weight: 700; }
+      .lv { font-size: 1.1rem; }
+      .status-icons { margin-top: 6px; min-height: 30px; display: flex; gap: 6px; flex-wrap: wrap; }
+      .status-icon { width: 24px; height: 24px; }
+      .rows { margin-top: 8px; display: grid; gap: 4px; }
+      .row { display: grid; grid-template-columns: 140px 24px 1fr; font-size: 0.95rem; align-items: baseline; }
+      .dot { color: var(--muted); text-align: center; }
+      .footer {
+        display: grid;
+        grid-template-columns: 1fr 1.5fr 1fr;
+        gap: 8px;
+      }
+      .btn {
+        border: 1px solid rgba(255,255,255,0.7);
+        border-radius: 8px;
+        color: var(--text);
+        background: linear-gradient(180deg, #4459bf, #20317e);
+        padding: 10px;
+        cursor: pointer;
+      }
+      .muted { color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <main class="layout">
+      <section class="frame"><h1 class="title">ステータス</h1></section>
+      <section class="frame">
+        <div class="top">
+          <div id="portraitWrap"></div>
+          <div>
+            <div class="name-row">
+              <div id="memberName" class="name">-</div>
+              <div id="memberLv" class="lv">LV 0</div>
+            </div>
+            <div id="statusIcons" class="status-icons"></div>
+          </div>
+        </div>
+        <div id="statusRows" class="rows"></div>
+      </section>
+      <section class="frame footer">
+        <button id="leftBtn" class="btn" type="button">◀</button>
+        <button id="backBtn" class="btn" type="button">BACK</button>
+        <button id="rightBtn" class="btn" type="button">▶</button>
+      </section>
+      <section class="muted">←/→ でキャラクター切替、Enter/Esc で戻る</section>
+    </main>
+    <script type="module" src="./status.js"></script>
+  </body>
+</html>

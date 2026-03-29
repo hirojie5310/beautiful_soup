@@ -132,6 +132,13 @@ function renderButtons() {
     button.className = "btn";
     button.type = "button";
     button.textContent = label;
+    button.addEventListener("click", () => {
+      if (label === "ステータス") {
+        window.location.href = "./status.html";
+        return;
+      }
+      window.alert(`${label} は現在準備中です。`);
+    });
     menuButtons.appendChild(button);
   });
 }
