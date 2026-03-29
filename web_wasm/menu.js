@@ -133,6 +133,10 @@ function renderButtons() {
     button.type = "button";
     button.textContent = label;
     button.addEventListener("click", () => {
+      if (label === "そうび") {
+        window.location.href = "./equip.html";
+        return;
+      }
       if (label === "ステータス") {
         window.location.href = "./status.html";
         return;

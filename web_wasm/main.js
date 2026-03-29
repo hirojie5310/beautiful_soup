@@ -915,8 +915,12 @@ function restoreSaveEnvelopeFromStorage() {
 }
 
 function buildMenuViewState() {
+  const menuState = latestMenuState && typeof latestMenuState === "object" ? latestMenuState : {};
+  const equipmentByMember = Array.isArray(menuState?.equipment_by_member)
+    ? menuState.equipment_by_member
+    : [];
   const party = Array.isArray(sessionStatus?.party)
-    ? sessionStatus.party.map((member) => ({
+    ? sessionStatus.party.map((member, index) => ({
       name: String(member?.name || ""),
       portrait_key: member?.portrait_key ?? null,
       image_name: member?.image_name ?? null,
@@ -934,12 +938,16 @@ function buildMenuViewState() {
       status_icons: Array.isArray(member?.status_icons)
         ? member.status_icons
         : [],
+      equipment: member?.equipment && typeof member.equipment === "object"
+        ? member.equipment
+        : (equipmentByMember[index] && typeof equipmentByMember[index] === "object"
+          ? equipmentByMember[index]
+          : {}),
     }))
     : [];
   const resources = sessionStatus?.resources && typeof sessionStatus.resources === "object"
     ? sessionStatus.resources
     : {};
-  const menuState = latestMenuState && typeof latestMenuState === "object" ? latestMenuState : {};
   const jobs = Array.isArray(menuState?.jobs)
     ? menuState.jobs.filter((jobName) => typeof jobName === "string" && jobName)
     : [];
@@ -957,12 +965,16 @@ function buildMenuViewState() {
           .filter((row) => row.job_name)
         : [])
     : [];
+  const equipCandidatesByMember = Array.isArray(menuState?.equip_candidates_by_member)
+    ? menuState.equip_candidates_by_member
+    : [];
   return {
     version: 1,
     updated_at: new Date().toISOString(),
     party,
     jobs,
     job_candidates_by_member: jobCandidatesByMember,
+    equip_candidates_by_member: equipCandidatesByMember,
     resources: {
       cp: Number(resources?.cp ?? 0),
       cp_max: Number(resources?.cp_max ?? 255),
@@ -986,10 +998,18 @@ function parseMenuStateCandidate(raw) {
   if (!raw || typeof raw !== "object") return null;
   const jobs = Array.isArray(raw?.jobs) ? raw.jobs : [];
   const candidates = Array.isArray(raw?.job_candidates_by_member) ? raw.job_candidates_by_member : [];
+  const equipCandidates = Array.isArray(raw?.equip_candidates_by_member)
+    ? raw.equip_candidates_by_member
+    : [];
+  const equipmentByMember = Array.isArray(raw?.equipment_by_member)
+    ? raw.equipment_by_member
+    : [];
   const resources = raw?.resources && typeof raw.resources === "object" ? raw.resources : {};
   return {
     jobs,
     job_candidates_by_member: candidates,
+    equip_candidates_by_member: equipCandidates,
+    equipment_by_member: equipmentByMember,
     resources: {
       cp: Number(resources?.cp ?? 0),
       cp_max: Number(resources?.cp_max ?? 255),
@@ -1416,6 +1436,148 @@ def _saved_job_level(save_entry, job_name):
     except (TypeError, ValueError):
         return 1
 
+def _safe_int(value, default=0):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return int(default)
+
+def _canon_job_code(text):
+    t = str(text or "").strip()
+    if not t:
+        return ""
+    return t.replace(" ", "").replace("_", "").replace("-", "").lower()
+
+JOB_NAME_TO_CODE = {
+    "Onion Knight": "OK",
+    "Warrior": "Wa",
+    "Monk": "Mo",
+    "White Mage": "WM",
+    "Black Mage": "BM",
+    "Red Mage": "RM",
+    "Ranger": "Ra",
+    "Knight": "Kn",
+    "Thief": "Th",
+    "Scholar": "Sc",
+    "Geomancer": "Ge",
+    "Dragoon": "Dr",
+    "Viking": "Vi",
+    "Black Belt": "BB",
+    "Evoker": "Ev",
+    "Bard": "Ba",
+    "Magus": "Ma",
+    "Devout": "De",
+    "Summoner": "Su",
+    "Sage": "Sa",
+    "Ninja": "Ni",
+    "Mystic Knight": "MK",
+}
+
+def _actor_job_code(member):
+    slug = str(getattr(getattr(member, "job", None), "slug", "") or "").strip()
+    if slug and len(slug) <= 3:
+        return slug
+    job_name = str(getattr(getattr(member, "job", None), "name", "") or "").strip()
+    if job_name in JOB_NAME_TO_CODE:
+        return JOB_NAME_TO_CODE[job_name]
+    return job_name
+
+def _item_allowed_for_member(member, item_raw):
+    equipped_by = item_raw.get("EquippedBy") if isinstance(item_raw, dict) else None
+    if not isinstance(equipped_by, list) or not equipped_by:
+        return True
+    allow = {_canon_job_code(code) for code in equipped_by}
+    current_job = _canon_job_code(_actor_job_code(member))
+    return current_job in allow if current_job else True
+
+def _is_two_handed_weapon(item_raw):
+    if not isinstance(item_raw, dict):
+        return False
+    if "Two-Handed" in item_raw:
+        return True
+    hands = item_raw.get("Hands")
+    if isinstance(hands, int):
+        return hands >= 2
+    if isinstance(hands, str) and hands.isdigit():
+        return int(hands) >= 2
+    return bool(item_raw.get("TwoHanded"))
+
+def _build_equip_candidates_by_member(session):
+    state = getattr(session, "state", None)
+    weapons = getattr(state, "weapons", {}) if state is not None else {}
+    armors = getattr(state, "armors", {}) if state is not None else {}
+    if not isinstance(weapons, dict):
+        weapons = {}
+    if not isinstance(armors, dict):
+        armors = {}
+
+    out = []
+    slot_to_armor_type = {"head": "Helm", "body": "Armor", "arms": "Gloves"}
+
+    for member in getattr(session, "party_members", []):
+        by_slot = {}
+        for slot in ("main_hand", "off_hand"):
+            rows = [{"kind": "none", "name": None}]
+            for name, raw in weapons.items():
+                if not isinstance(name, str) or not isinstance(raw, dict):
+                    continue
+                if not _item_allowed_for_member(member, raw):
+                    continue
+                if slot == "off_hand" and _is_two_handed_weapon(raw):
+                    continue
+                rows.append({
+                    "kind": "weapon",
+                    "name": name,
+                    "atk": _safe_int(raw.get("BasePower", raw.get("AttackPower", 0)), 0),
+                    "acc": _safe_int(
+                        round(float(raw.get("BaseAccuracy", raw.get("HitRate", 0)) or 0) * 100)
+                        if raw.get("BaseAccuracy", None) is not None else raw.get("HitRate", 0),
+                        0,
+                    ),
+                })
+            if slot == "off_hand":
+                for name, raw in armors.items():
+                    if not isinstance(name, str) or not isinstance(raw, dict):
+                        continue
+                    if str(raw.get("ArmorType", "")) != "Shield":
+                        continue
+                    if not _item_allowed_for_member(member, raw):
+                        continue
+                    rows.append({
+                        "kind": "armor",
+                        "name": name,
+                        "def": _safe_int(raw.get("Defense", 0), 0),
+                        "eva": _safe_int(
+                            round(float(raw.get("Evasion", raw.get("EvasionPenalty", 0)) or 0) * 100)
+                            if raw.get("Evasion", None) is not None else raw.get("EvasionPenalty", 0),
+                            0,
+                        ),
+                    })
+            by_slot[slot] = rows
+
+        for slot, armor_type in slot_to_armor_type.items():
+            rows = [{"kind": "none", "name": None}]
+            for name, raw in armors.items():
+                if not isinstance(name, str) or not isinstance(raw, dict):
+                    continue
+                if str(raw.get("ArmorType", "")) != armor_type:
+                    continue
+                if not _item_allowed_for_member(member, raw):
+                    continue
+                rows.append({
+                    "kind": "armor",
+                    "name": name,
+                    "def": _safe_int(raw.get("Defense", 0), 0),
+                    "eva": _safe_int(
+                        round(float(raw.get("Evasion", raw.get("EvasionPenalty", 0)) or 0) * 100)
+                        if raw.get("Evasion", None) is not None else raw.get("EvasionPenalty", 0),
+                        0,
+                    ),
+                })
+            by_slot[slot] = rows
+        out.append(by_slot)
+    return out
+
 def get_menu_state_json():
     if engine is None:
         return json.dumps({}, ensure_ascii=False)
@@ -1428,6 +1590,7 @@ def get_menu_state_json():
     ])
     save_party = save.get("party", []) if isinstance(save, dict) else []
     by_member = []
+    equip_by_member = []
     for idx, member in enumerate(engine.session.party_members):
         from_job = str(getattr(getattr(member, "job", None), "name", ""))
         save_entry = save_party[idx] if isinstance(save_party, list) and idx < len(save_party) else {}
@@ -1453,11 +1616,33 @@ def get_menu_state_json():
                 "is_current": bool(job_name == from_job),
             })
         by_member.append(rows)
+        eq = getattr(member, "equipment", None)
+        if eq is None and isinstance(save_entry, dict):
+            eq = save_entry.get("equipment")
+        if isinstance(eq, dict):
+            eq_dict = eq
+        else:
+            eq_dict = {
+                "main_hand": getattr(eq, "main_hand", None),
+                "off_hand": getattr(eq, "off_hand", None),
+                "head": getattr(eq, "head", None),
+                "body": getattr(eq, "body", None),
+                "arms": getattr(eq, "arms", None),
+            }
+        equip_by_member.append({
+            "main_hand": eq_dict.get("main_hand"),
+            "off_hand": eq_dict.get("off_hand"),
+            "head": eq_dict.get("head"),
+            "body": eq_dict.get("body"),
+            "arms": eq_dict.get("arms"),
+        })
     cp = int(save.get("CP", 0)) if isinstance(save, dict) else 0
     gil = int(save.get("gil", 0)) if isinstance(save, dict) else 0
     payload = {
         "jobs": job_names,
         "job_candidates_by_member": by_member,
+        "equip_candidates_by_member": _build_equip_candidates_by_member(engine.session),
+        "equipment_by_member": equip_by_member,
         "resources": {"cp": cp, "cp_max": 255, "gil": gil},
     }
     return json.dumps(payload, ensure_ascii=False)
@@ -1662,6 +1847,7 @@ if (locationApplyBtn) {
 
 if (menuBtn) {
   menuBtn.addEventListener("click", () => {
+    refreshMenuStateFromPyodide();
     syncMenuViewStateToStorage();
     window.location.href = "./menu.html";
   });

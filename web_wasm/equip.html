@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>そうび</title>
+    <style>
+      :root {
+        --bg: #050817;
+        --panel: rgba(16, 24, 56, 0.96);
+        --text: #eef2ff;
+        --muted: #acb6d7;
+        --accent: #ffe588;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: radial-gradient(circle at 20% 0%, #1c2b7a 0%, transparent 45%), var(--bg);
+        color: var(--text);
+        font-family: "BIZ UDPGothic", "Yu Gothic UI", sans-serif;
+      }
+      .layout {
+        width: min(440px, 100vw);
+        min-height: 100vh;
+        margin: 0 auto;
+        padding: 10px;
+        display: grid;
+        gap: 10px;
+        align-content: start;
+      }
+      .frame {
+        border: 2px solid rgba(255,255,255,0.45);
+        border-radius: 10px;
+        background: var(--panel);
+        padding: 10px;
+      }
+      .mode-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+      }
+      .btn {
+        border: 1px solid rgba(255,255,255,0.7);
+        border-radius: 8px;
+        color: var(--text);
+        background: linear-gradient(180deg, #4459bf, #20317e);
+        padding: 8px 10px;
+        cursor: pointer;
+        font-size: 0.95rem;
+      }
+      .btn.active {
+        color: var(--accent);
+        box-shadow: inset 0 0 0 2px rgba(255,229,136,0.5);
+      }
+      .summary { display: flex; justify-content: space-between; gap: 8px; font-size: 1rem; font-weight: 700; }
+      .equip-grid {
+        margin-top: 8px;
+        border-top: 1px solid rgba(255,255,255,0.35);
+        padding-top: 8px;
+        display: grid;
+        gap: 4px;
+      }
+      .equip-row {
+        display: grid;
+        grid-template-columns: 74px 1fr;
+        gap: 8px;
+        align-items: baseline;
+      }
+      .slot { color: var(--muted); }
+      .item.selected::before { content: "▶ "; color: var(--accent); }
+      .candidate-title { color: var(--accent); margin-bottom: 8px; font-weight: 700; }
+      .candidate-list { display: grid; gap: 4px; max-height: 34vh; overflow: auto; }
+      .candidate {
+        border: 1px solid rgba(255,255,255,0.3);
+        border-radius: 6px;
+        background: rgba(0,0,0,0.2);
+        padding: 7px;
+        cursor: pointer;
+        text-align: left;
+        color: var(--text);
+      }
+      .candidate .meta { color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
+      .footer {
+        display: grid;
+        grid-template-columns: 1fr 1.6fr 1fr;
+        gap: 8px;
+      }
+      .hint { color: var(--muted); font-size: 0.85rem; margin-top: 6px; }
+    </style>
+  </head>
+  <body>
+    <main class="layout">
+      <section class="frame mode-row" id="modeRow"></section>
+
+      <section class="frame">
+        <div class="summary">
+          <div id="memberText">-</div>
+          <div><span id="atkText">こうげき 0</span> <span id="defText">ぼうぎょ 0</span></div>
+        </div>
+        <div id="equipGrid" class="equip-grid"></div>
+      </section>
+
+      <section class="frame">
+        <div id="candidateTitle" class="candidate-title">そうび</div>
+        <div id="candidateList" class="candidate-list"></div>
+      </section>
+      <section class="frame">
+        <div id="messageLine" class="hint">候補を選ぶと装備が確定します。</div>
+      </section>
+
+      <section class="frame footer">
+        <button id="leftBtn" class="btn" type="button">◀</button>
+        <button id="backBtn" class="btn" type="button">BACK</button>
+        <button id="rightBtn" class="btn" type="button">▶</button>
+      </section>
+      <section class="hint">モードをタップして切替 / 装備行をタップして候補表示 / ←→でキャラ切替</section>
+    </main>
+
+    <script type="module" src="./equip.js"></script>
+  </body>
+</html>
