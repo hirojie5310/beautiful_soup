@@ -1,6 +1,6 @@
 # web_wasm/bootstrap_runtime.py
 import json
-from typing import Callable, cast
+from typing import Callable, SupportsIndex, SupportsInt, cast
 
 from combat.wasm_api import WasmBattleEngine
 from combat.runtime_state import init_runtime_state
@@ -114,16 +114,21 @@ def _saved_job_level(save_entry, job_name):
         raw = row.get("level", 1)
     else:
         raw = row
-    try:
-        return max(1, int(raw))
-    except (TypeError, ValueError):
-        return 1
+    return max(1, _safe_int(raw, 1))
 
 
 def _safe_int(value: object, default: int = 0) -> int:
+    candidate: SupportsInt | SupportsIndex | str | bytes | bytearray
+    if isinstance(value, (str, bytes, bytearray)):
+        candidate = value
+    elif isinstance(value, (SupportsInt, SupportsIndex)):
+        candidate = value
+    else:
+        return default
+
     try:
-        return int(value)
-    except (TypeError, ValueError):
+        return int(candidate)
+    except (TypeError, ValueError, OverflowError):
         return default
 
 
@@ -325,7 +330,7 @@ def _load_equipped_magic_slots_from_entry(party_entry):
     if isinstance(party_entry, dict):
         for key in ("Magic", "magic"):
             if isinstance(party_entry.get(key), dict):
-                raw_magic = party_entry.get(key)
+                raw_magic = cast(dict[str, object], party_entry.get(key))
                 break
     out = {lv: [None, None, None] for lv in range(1, 9)}
     for lv in range(1, 9):
@@ -346,7 +351,7 @@ def _build_magic_stock_by_level(save, spell_meta):
     if isinstance(inventory, dict):
         for key in ("Magic", "magic"):
             if isinstance(inventory.get(key), dict):
-                inv_magic = inventory.get(key)
+                inv_magic = cast(dict[str, object], inventory.get(key))
                 break
     counts = {lv: {} for lv in range(1, 9)}
     for lv in range(1, 9):
