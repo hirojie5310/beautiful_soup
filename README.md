@@ -2,6 +2,20 @@ conda activate game-env
 pip install -r requirements.txt
 python app\_pygame.py
 
+## Wasm (Web Assembly) 版のビルド方法
+    "combat",
+    "assets/data",
+    "system",
+    "utils",
+フォルダ内のファイルは scripts/build_wasm_bundle.py によりZIP圧縮するため、変更があればターミナルに以下のコマンドを入力
+(base) PS D:\Python\beautiful_soup> cd scripts
+(base) PS D:\Python\beautiful_soup\scripts> python build_wasm_bundle.py
+Wrote Wasm bundle: D:\Python\beautiful_soup\web_wasm\python_bundle.zip
+(base) PS D:\Python\beautiful_soup\scripts> cd ..    
+(base) PS D:\Python\beautiful_soup> python wasm_app.py
+Wasm static server: http://127.0.0.1:8000/web_wasm/
+
+
 ## Render deployment
 - `requirements.txt` is placed at the repository root (`beautiful_soup/requirements.txt`).
 - This repository includes `render.yaml` with:

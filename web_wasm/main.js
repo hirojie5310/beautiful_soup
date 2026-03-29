@@ -968,6 +968,15 @@ function buildMenuViewState() {
   const equipCandidatesByMember = Array.isArray(menuState?.equip_candidates_by_member)
     ? menuState.equip_candidates_by_member
     : [];
+  const magicSetup = menuState?.magic_setup && typeof menuState.magic_setup === "object"
+    ? menuState.magic_setup
+    : { stock_by_level: {}, equipped_by_member: [] };
+  const magicCandidatesByMember = Array.isArray(sessionStatus?.magic_command_candidates_by_member)
+    ? sessionStatus.magic_command_candidates_by_member
+    : [];
+  const magicSpellMetaByName = sessionStatus?.magic_spell_meta && typeof sessionStatus.magic_spell_meta === "object"
+    ? sessionStatus.magic_spell_meta
+    : {};
   return {
     version: 1,
     updated_at: new Date().toISOString(),
@@ -975,6 +984,9 @@ function buildMenuViewState() {
     jobs,
     job_candidates_by_member: jobCandidatesByMember,
     equip_candidates_by_member: equipCandidatesByMember,
+    magic_setup: magicSetup,
+    magic_candidates_by_member: magicCandidatesByMember,
+    magic_spell_meta_by_name: magicSpellMetaByName,
     resources: {
       cp: Number(resources?.cp ?? 0),
       cp_max: Number(resources?.cp_max ?? 255),
@@ -1001,15 +1013,27 @@ function parseMenuStateCandidate(raw) {
   const equipCandidates = Array.isArray(raw?.equip_candidates_by_member)
     ? raw.equip_candidates_by_member
     : [];
+  const magicSetup = raw?.magic_setup && typeof raw.magic_setup === "object"
+    ? raw.magic_setup
+    : { stock_by_level: {}, equipped_by_member: [] };
   const equipmentByMember = Array.isArray(raw?.equipment_by_member)
     ? raw.equipment_by_member
     : [];
+  const magicCandidatesByMember = Array.isArray(raw?.magic_candidates_by_member)
+    ? raw.magic_candidates_by_member
+    : [];
+  const magicSpellMetaByName = raw?.magic_spell_meta_by_name && typeof raw.magic_spell_meta_by_name === "object"
+    ? raw.magic_spell_meta_by_name
+    : {};
   const resources = raw?.resources && typeof raw.resources === "object" ? raw.resources : {};
   return {
     jobs,
     job_candidates_by_member: candidates,
     equip_candidates_by_member: equipCandidates,
+    magic_setup: magicSetup,
     equipment_by_member: equipmentByMember,
+    magic_candidates_by_member: magicCandidatesByMember,
+    magic_spell_meta_by_name: magicSpellMetaByName,
     resources: {
       cp: Number(resources?.cp ?? 0),
       cp_max: Number(resources?.cp_max ?? 255),
@@ -1578,6 +1602,111 @@ def _build_equip_candidates_by_member(session):
         out.append(by_slot)
     return out
 
+def _build_magic_spell_meta(session):
+    rows = {}
+    for name, raw in getattr(session, "spells_expanded", {}).items():
+        if not isinstance(name, str) or not name:
+            continue
+        if not isinstance(raw, dict):
+            continue
+        rows[name] = {
+            "type": str(raw.get("Type") or ""),
+            "level": _safe_int(raw.get("Level", 1), 1),
+        }
+    return rows
+
+def _load_equipped_magic_slots_from_entry(party_entry):
+    raw_magic = {}
+    if isinstance(party_entry, dict):
+        for key in ("Magic", "magic"):
+            if isinstance(party_entry.get(key), dict):
+                raw_magic = party_entry.get(key)
+                break
+    out = {lv: [None, None, None] for lv in range(1, 9)}
+    for lv in range(1, 9):
+        raw_row = raw_magic.get(f"LV{lv}")
+        if isinstance(raw_row, list):
+            row = []
+            for name in raw_row[:3]:
+                row.append(name if isinstance(name, str) and name else None)
+            while len(row) < 3:
+                row.append(None)
+            out[lv] = row
+    return out
+
+def _build_magic_stock_by_level(save, spell_meta):
+    inventory = save.get("inventory", {}) if isinstance(save, dict) else {}
+    inv_magic = {}
+    if isinstance(inventory, dict):
+        for key in ("Magic", "magic"):
+            if isinstance(inventory.get(key), dict):
+                inv_magic = inventory.get(key)
+                break
+    counts = {lv: {} for lv in range(1, 9)}
+    for lv in range(1, 9):
+        row = inv_magic.get(f"LV{lv}", {})
+        if not isinstance(row, dict):
+            continue
+        for spell_name, qty in row.items():
+            if isinstance(spell_name, str) and spell_name:
+                counts[lv][spell_name] = max(0, _safe_int(qty, 0))
+    for entry in save.get("party", []) if isinstance(save, dict) else []:
+        if not isinstance(entry, dict):
+            continue
+        slots = _load_equipped_magic_slots_from_entry(entry)
+        for lv in range(1, 9):
+            for name in slots[lv]:
+                if not isinstance(name, str) or not name:
+                    continue
+                remain = _safe_int(counts.get(lv, {}).get(name, 0), 0)
+                if remain > 0:
+                    counts[lv][name] = remain - 1
+    type_order = {"Black Magic": 0, "White Magic": 1, "Summon Magic": 2}
+    stock = {}
+    for lv in range(1, 9):
+        expanded = []
+        for spell_name, qty in counts.get(lv, {}).items():
+            mtype = str(spell_meta.get(spell_name, {}).get("type") or "")
+            expanded.extend([(type_order.get(mtype, 99), spell_name)] * max(0, _safe_int(qty, 0)))
+        expanded.sort(key=lambda row: (row[0], row[1]))
+        stock[str(lv)] = [name for _, name in expanded]
+    return stock
+
+def _ensure_menu_magic_setup(session):
+    save = getattr(getattr(session, "state", None), "save", {})
+    spell_meta = _build_magic_spell_meta(session)
+    stock_by_level = _build_magic_stock_by_level(save, spell_meta)
+    equipped_by_member = []
+    has_equipped_magic = False
+    for entry in save.get("party", []) if isinstance(save, dict) else []:
+        if not isinstance(entry, dict):
+            continue
+        slots = _load_equipped_magic_slots_from_entry(entry)
+        if any(name for lv in range(1, 9) for name in slots[lv]):
+            has_equipped_magic = True
+        equipped_by_member.append({str(lv): list(slots[lv]) for lv in range(1, 9)})
+    if not has_equipped_magic and not any(stock_by_level.get(str(lv)) for lv in range(1, 9)):
+        slots_by_level = {str(lv): [] for lv in range(1, 9)}
+        for name, info in spell_meta.items():
+            level = max(1, min(8, _safe_int(info.get("level", 1), 1)))
+            magic_type = str(info.get("type") or "")
+            if "Black" in magic_type:
+                type_order = 0
+            elif "White" in magic_type:
+                type_order = 1
+            elif "Summon" in magic_type:
+                type_order = 2
+            else:
+                continue
+            slots_by_level[str(level)].append((type_order, name))
+        for lv in range(1, 9):
+            grouped = sorted(slots_by_level[str(lv)], key=lambda row: (row[0], row[1]))
+            black = [name for typ, name in grouped if typ == 0][:3]
+            white = [name for typ, name in grouped if typ == 1][:3]
+            summon = [name for typ, name in grouped if typ == 2][:1]
+            stock_by_level[str(lv)] = black + white + summon
+    return {"stock_by_level": stock_by_level, "equipped_by_member": equipped_by_member}
+
 def get_menu_state_json():
     if engine is None:
         return json.dumps({}, ensure_ascii=False)
@@ -1643,6 +1772,7 @@ def get_menu_state_json():
         "job_candidates_by_member": by_member,
         "equip_candidates_by_member": _build_equip_candidates_by_member(engine.session),
         "equipment_by_member": equip_by_member,
+        "magic_setup": _ensure_menu_magic_setup(engine.session),
         "resources": {"cp": cp, "cp_max": 255, "gil": gil},
     }
     return json.dumps(payload, ensure_ascii=False)

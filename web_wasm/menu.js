@@ -137,6 +137,10 @@ function renderButtons() {
         window.location.href = "./equip.html";
         return;
       }
+      if (label === "まほう") {
+        window.location.href = "./magic.html";
+        return;
+      }
       if (label === "ステータス") {
         window.location.href = "./status.html";
         return;
