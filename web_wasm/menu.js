@@ -137,6 +137,10 @@ function renderButtons() {
         window.location.href = "./status.html";
         return;
       }
+      if (label === "ジョブ") {
+        window.location.href = "./job.html";
+        return;
+      }
       window.alert(`${label} は現在準備中です。`);
     });
     menuButtons.appendChild(button);

@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>JOB</title>
+    <style>
+      :root {
+        --bg: #050817;
+        --panel: rgba(16, 24, 56, 0.96);
+        --text: #eef2ff;
+        --muted: #acb6d7;
+        --accent: #ffe588;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: radial-gradient(circle at 20% 0%, #1c2b7a 0%, transparent 45%), var(--bg);
+        color: var(--text);
+        font-family: "BIZ UDPGothic", "Yu Gothic UI", sans-serif;
+      }
+      .layout {
+        width: min(520px, 100vw);
+        margin: 0 auto;
+        min-height: 100vh;
+        padding: 10px;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        gap: 10px;
+      }
+      .frame {
+        border: 2px solid rgba(255,255,255,0.45);
+        border-radius: 10px;
+        background: var(--panel);
+        padding: 10px;
+      }
+      .title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .title {
+        margin: 0;
+        color: var(--accent);
+        font-size: 1.1rem;
+      }
+      .member-line {
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .member-line .muted {
+        font-size: 0.95rem;
+        font-weight: 400;
+      }
+      .sep {
+        border-top: 1px solid rgba(255, 255, 255, 0.35);
+        margin: 8px 0;
+      }
+      .job-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .job-card {
+        border: 1px solid rgba(255,255,255,0.35);
+        border-radius: 8px;
+        background: rgba(0,0,0,0.2);
+        padding: 8px;
+        min-height: 84px;
+      }
+      .job-card.current {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px rgba(255, 229, 136, 0.45) inset;
+      }
+      .job-card.selected {
+        box-shadow: 0 0 0 2px rgba(137, 240, 172, 0.6) inset;
+      }
+      .job-name {
+        font-size: 0.9rem;
+        font-weight: 700;
+        margin-bottom: 4px;
+        word-break: break-word;
+      }
+      .job-meta {
+        color: var(--muted);
+        font-size: 0.84rem;
+        line-height: 1.4;
+      }
+      .empty {
+        border: 1px dashed rgba(255,255,255,0.4);
+        border-radius: 8px;
+        padding: 10px;
+        color: var(--muted);
+      }
+      .footer {
+        display: grid;
+        grid-template-columns: 1fr 1.5fr 1fr;
+        gap: 8px;
+      }
+      .btn {
+        border: 1px solid rgba(255,255,255,0.7);
+        border-radius: 8px;
+        color: var(--text);
+        background: linear-gradient(180deg, #4459bf, #20317e);
+        padding: 10px 8px;
+        min-height: 56px;
+        cursor: pointer;
+      }
+      .hint {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .action-row {
+        margin-top: 10px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .selected-job {
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="layout">
+      <section class="frame title-row">
+        <h1 class="title">ジョブ</h1>
+      </section>
+
+      <section class="frame">
+        <div id="memberLine" class="member-line">-</div>
+        <div class="sep"></div>
+        <div id="jobGrid" class="job-grid"></div>
+        <div class="action-row">
+          <div id="selectedJobLine" class="selected-job">選択中: -</div>
+          <button id="changeJobBtn" class="btn" type="button">ジョブチェンジ決定</button>
+        </div>
+      </section>
+
+      <section class="frame">
+        <div class="footer">
+          <button id="leftBtn" class="btn" type="button">◀</button>
+          <button id="backBtn" class="btn" type="button">BACK</button>
+          <button id="rightBtn" class="btn" type="button">▶</button>
+        </div>
+        <p class="hint">←/→ でキャラクター切替、Esc/Enter で戻る</p>
+      </section>
+    </main>
+
+    <script type="module" src="./job.js"></script>
+  </body>
+</html>

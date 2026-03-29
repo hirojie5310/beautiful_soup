@@ -30,6 +30,7 @@ let locationGroups = [];
 let inputMode = "command";
 let pendingActionDraft = null;
 let currentSelectedLocationGroup = "";
+let latestMenuState = null;
 const locationMapImageCache = {};
 let activeLogPlaybackId = 0;
 let loadedSaveData = null;
@@ -938,10 +939,30 @@ function buildMenuViewState() {
   const resources = sessionStatus?.resources && typeof sessionStatus.resources === "object"
     ? sessionStatus.resources
     : {};
+  const menuState = latestMenuState && typeof latestMenuState === "object" ? latestMenuState : {};
+  const jobs = Array.isArray(menuState?.jobs)
+    ? menuState.jobs.filter((jobName) => typeof jobName === "string" && jobName)
+    : [];
+  const jobCandidatesByMember = Array.isArray(menuState?.job_candidates_by_member)
+    ? menuState.job_candidates_by_member
+      .map((rows) => Array.isArray(rows)
+        ? rows
+          .filter((row) => row && typeof row === "object")
+          .map((row) => ({
+            job_name: String(row?.job_name || ""),
+            cp_cost: Number(row?.cp_cost ?? 0),
+            saved_job_level: Number(row?.saved_job_level ?? 1),
+            is_current: Boolean(row?.is_current),
+          }))
+          .filter((row) => row.job_name)
+        : [])
+    : [];
   return {
     version: 1,
     updated_at: new Date().toISOString(),
     party,
+    jobs,
+    job_candidates_by_member: jobCandidatesByMember,
     resources: {
       cp: Number(resources?.cp ?? 0),
       cp_max: Number(resources?.cp_max ?? 255),
@@ -958,6 +979,36 @@ function syncMenuViewStateToStorage() {
     );
   } catch (_error) {
     // ignore storage write failure in wasm runner.
+  }
+}
+
+function parseMenuStateCandidate(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const jobs = Array.isArray(raw?.jobs) ? raw.jobs : [];
+  const candidates = Array.isArray(raw?.job_candidates_by_member) ? raw.job_candidates_by_member : [];
+  const resources = raw?.resources && typeof raw.resources === "object" ? raw.resources : {};
+  return {
+    jobs,
+    job_candidates_by_member: candidates,
+    resources: {
+      cp: Number(resources?.cp ?? 0),
+      cp_max: Number(resources?.cp_max ?? 255),
+      gil: Number(resources?.gil ?? 0),
+    },
+  };
+}
+
+function refreshMenuStateFromPyodide() {
+  if (!pyodide) return null;
+  const getter = pyodide.globals.get("get_menu_state_json");
+  if (!getter) return null;
+  try {
+    const raw = JSON.parse(String(getter() || "{}"));
+    const next = parseMenuStateCandidate(raw);
+    if (next) latestMenuState = next;
+    return next;
+  } catch (_error) {
+    return null;
   }
 }
 
@@ -1281,6 +1332,7 @@ from combat.wasm_api import WasmBattleEngine
 from combat.runtime_state import init_runtime_state
 from assets.data.data_loader import load_explicit_groups
 from combat.enemy_selection import build_groups, build_location_index, pick_enemy_names
+from system.cp_system import compute_job_change_cp_cost, load_job_attribution
 
 state = init_runtime_state()
 
@@ -1314,6 +1366,10 @@ default_location = (
 )
 
 engine = None
+try:
+    job_attr = load_job_attribution("/assets/data/job_attribution.csv")
+except Exception:
+    job_attr = {}
 
 def get_location_selection_json():
     payload = {
@@ -1343,6 +1399,68 @@ def boot_engine_for_location(location_group, location, seed=7):
 
 def get_initial_payload_json():
     return json.dumps(engine.build_initial_payload(), ensure_ascii=False)
+
+def _saved_job_level(save_entry, job_name):
+    if not isinstance(save_entry, dict):
+        return 1
+    job_levels = save_entry.get("job_levels")
+    if not isinstance(job_levels, dict):
+        return 1
+    row = job_levels.get(job_name)
+    if isinstance(row, dict):
+        raw = row.get("level", 1)
+    else:
+        raw = row
+    try:
+        return max(1, int(raw))
+    except (TypeError, ValueError):
+        return 1
+
+def get_menu_state_json():
+    if engine is None:
+        return json.dumps({}, ensure_ascii=False)
+    runtime_state = getattr(engine.session, "state", None)
+    save = getattr(runtime_state, "save", {})
+    jobs_by_name = getattr(runtime_state, "jobs_by_name", {})
+    job_names = sorted([
+        name for name in (jobs_by_name.keys() if isinstance(jobs_by_name, dict) else [])
+        if isinstance(name, str) and name
+    ])
+    save_party = save.get("party", []) if isinstance(save, dict) else []
+    by_member = []
+    for idx, member in enumerate(engine.session.party_members):
+        from_job = str(getattr(getattr(member, "job", None), "name", ""))
+        save_entry = save_party[idx] if isinstance(save_party, list) and idx < len(save_party) else {}
+        rows = []
+        for job_name in job_names:
+            to_level = _saved_job_level(save_entry, job_name)
+            cp_cost = 0
+            if (
+                isinstance(job_attr, dict)
+                and from_job in job_attr
+                and job_name in job_attr
+            ):
+                cp_cost = int(compute_job_change_cp_cost(
+                    from_job=from_job,
+                    to_job=job_name,
+                    to_job_level=to_level,
+                    job_attr=job_attr,
+                ))
+            rows.append({
+                "job_name": job_name,
+                "cp_cost": int(cp_cost),
+                "saved_job_level": int(to_level),
+                "is_current": bool(job_name == from_job),
+            })
+        by_member.append(rows)
+    cp = int(save.get("CP", 0)) if isinstance(save, dict) else 0
+    gil = int(save.get("gil", 0)) if isinstance(save, dict) else 0
+    payload = {
+        "jobs": job_names,
+        "job_candidates_by_member": by_member,
+        "resources": {"cp": cp, "cp_max": 255, "gil": gil},
+    }
+    return json.dumps(payload, ensure_ascii=False)
 
 def run_battle_round_wasm(js_input_json):
     return engine.execute_round_json(js_input_json)
@@ -1418,6 +1536,7 @@ function applyFullRecoverParty() {
   if (nextStatus && typeof nextStatus === "object") {
     sessionStatus = nextStatus;
   }
+  refreshMenuStateFromPyodide();
 }
 
 function bootLocationAndSyncSession() {
@@ -1441,9 +1560,11 @@ function bootLocationAndSyncSession() {
     payload?.selected_location_group || locationGroupSelect.value || "",
   );
   sessionStatus = payload?.session_status ?? { party: [], enemies: [] };
+  latestMenuState = parseMenuStateCandidate(payload?.menu_state) || latestMenuState;
   lifecycleState = "ready_for_actions";
   battleFinished = false;
   applyFullRecoverParty();
+  refreshMenuStateFromPyodide();
   return payload;
 }
 
@@ -1467,6 +1588,7 @@ async function executeRound() {
   const result = JSON.parse(resultJson);
 
   sessionStatus = result?.session_status ?? sessionStatus;
+  latestMenuState = parseMenuStateCandidate(result?.menu_state) || latestMenuState;
   currentSelectedLocationGroup = String(
     result?.selected_location_group || currentSelectedLocationGroup || "",
   );
@@ -1508,6 +1630,7 @@ async function executeRound() {
     }
   }
 
+  refreshMenuStateFromPyodide();
   rerenderAll();
 }
 
