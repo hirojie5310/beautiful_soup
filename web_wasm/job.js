@@ -135,7 +135,11 @@ function renderJobs(rows, fallbackJobs, currentRow) {
 
     const meta = document.createElement("div");
     meta.className = "job-meta";
-    meta.innerHTML = `Lv ${asNum(row?.saved_job_level, 1)}<br>CP ${asNum(row?.cp_cost, 0)}`;
+    const lv = document.createElement("span");
+    lv.textContent = `Lv ${asNum(row?.saved_job_level, 1)}`;
+    const cp = document.createElement("span");
+    cp.textContent = `CP ${asNum(row?.cp_cost, 0)}`;
+    meta.append(lv, cp);
 
     card.append(title, meta);
     card.addEventListener("click", () => {
