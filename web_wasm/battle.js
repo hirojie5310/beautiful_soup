@@ -55,7 +55,12 @@ function readBattleStartSelectionFromSession() {
   return null;
 }
 
-let currentBattleSelection = readBattleStartSelectionFromSession() || {
+const sessionBattleStartSelection = readBattleStartSelectionFromSession();
+const hasSessionBattleStartSelection = Boolean(
+  sessionBattleStartSelection?.selected_location_group || sessionBattleStartSelection?.selected_location,
+);
+
+let currentBattleSelection = sessionBattleStartSelection || {
   selected_location_group: "",
   selected_location: "",
 };
@@ -1435,10 +1440,10 @@ async function bootEngine() {
   const storedEnvelope = restoreSaveEnvelopeFromStorage();
   if (storedEnvelope?.save) {
     loadedSaveData = storedEnvelope.save;
-    if (storedEnvelope.selected_location_group) {
+    if (!hasSessionBattleStartSelection && storedEnvelope.selected_location_group) {
       currentBattleSelection.selected_location_group = String(storedEnvelope.selected_location_group);
     }
-    if (storedEnvelope.selected_location) {
+    if (!hasSessionBattleStartSelection && storedEnvelope.selected_location) {
       currentBattleSelection.selected_location = String(storedEnvelope.selected_location);
     }
   }
