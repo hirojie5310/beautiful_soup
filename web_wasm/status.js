@@ -29,7 +29,24 @@ function resolveFaceImageCandidates(member) {
     .map((key) => aliasMap[key] || key)
     .filter((value, i, arr) => value && arr.indexOf(value) === i);
   const exts = ["png", "webp", "jpg", "jpeg"];
-  return keys.flatMap((key) => exts.map((ext) => `/web_wasm/faces/${encodeURIComponent(key)}.${ext}`));
+  return keys.flatMap((key) => {
+    const safeKey = encodeURIComponent(key);
+    return exts.flatMap((ext) => [
+      `/web_wasm/faces/${safeKey}.${ext}`,
+      `../assets/images/faces/${safeKey}.${ext}`,
+      `/assets/images/faces/${safeKey}.${ext}`,
+    ]);
+  });
+}
+
+function resolveStatusIconCandidates(iconKey) {
+  const safeKey = encodeURIComponent(String(iconKey || ""));
+  if (!safeKey) return [];
+  return [
+    `/assets/status-icons/${safeKey}.png`,
+    `/assets/images/status_icons/${safeKey}.png`,
+    `../assets/images/status_icons/${safeKey}.png`,
+  ];
 }
 
 function parseState() {
@@ -86,9 +103,28 @@ function renderStatusIcons(st) {
     statusIcons.textContent = st?.status_line || "-";
     return;
   }
-  statusIcons.innerHTML = iconKeys
-    .map((key) => `<img class="status-icon" src="/assets/images/status_icons/${encodeURIComponent(key)}.png" alt="${key}" />`)
-    .join("");
+  statusIcons.innerHTML = "";
+  iconKeys.forEach((iconKey) => {
+    const candidates = resolveStatusIconCandidates(iconKey);
+    if (!candidates.length) return;
+    const img = document.createElement("img");
+    img.className = "status-icon";
+    img.alt = iconKey;
+    let i = 0;
+    img.addEventListener("error", () => {
+      i += 1;
+      if (i < candidates.length) {
+        img.src = candidates[i];
+        return;
+      }
+      img.remove();
+    });
+    img.src = candidates[i];
+    statusIcons.appendChild(img);
+  });
+  if (!statusIcons.childElementCount) {
+    statusIcons.textContent = st?.status_line || "-";
+  }
 }
 
 function render() {
