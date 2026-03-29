@@ -133,6 +133,10 @@ function renderButtons() {
     button.type = "button";
     button.textContent = label;
     button.addEventListener("click", () => {
+      if (label === "アイテム") {
+        window.location.href = "./item.html";
+        return;
+      }
       if (label === "そうび") {
         window.location.href = "./equip.html";
         return;
