@@ -4,7 +4,9 @@ const partyList = document.getElementById("partyList");
 const menuButtons = document.getElementById("menuButtons");
 const resourceRow = document.getElementById("resourceRow");
 const backBtn = document.getElementById("backBtn");
+const modeHint = document.getElementById("modeHint");
 const MENU_LABELS = ["アイテム", "まほう", "そうび", "ステータス", "ならびかえ", "ジョブ", "セーブ"];
+let isRowSwapMode = false;
 
 function normalizeFaceKey(raw) {
   return String(raw || "")
@@ -55,6 +57,35 @@ function parseMenuState() {
   }
 }
 
+function persistMenuState(nextState) {
+  localStorage.setItem(LOCAL_MENU_STORAGE_KEY, JSON.stringify(nextState));
+}
+
+function normalizeRow(rowValue) {
+  return String(rowValue || "").toLowerCase() === "back" ? "back" : "front";
+}
+
+function toggleMemberRow(member) {
+  const current = normalizeRow(member?.row);
+  return current === "front" ? "back" : "front";
+}
+
+function updateModeHint() {
+  if (!modeHint) return;
+  if (isRowSwapMode) {
+    modeHint.textContent = "ならびかえモード: キャラクターをクリックで front/back を切り替え";
+    modeHint.classList.add("active");
+    return;
+  }
+  modeHint.textContent = "";
+  modeHint.classList.remove("active");
+}
+
+function disableRowSwapMode() {
+  isRowSwapMode = false;
+  updateModeHint();
+}
+
 function levelMpText(member) {
   const mpLevels = member?.mp_levels && typeof member.mp_levels === "object" ? member.mp_levels : {};
   const chunks = [];
@@ -76,9 +107,30 @@ function renderParty(party) {
     return;
   }
 
-  party.forEach((member) => {
+  party.forEach((member, index) => {
     const card = document.createElement("article");
     card.className = "member-card";
+    if (isRowSwapMode) {
+      card.classList.add("row-mode");
+      card.tabIndex = 0;
+      card.setAttribute("role", "button");
+      card.setAttribute("aria-label", `${String(member?.name || "Unknown")}のrowを切り替え`);
+      const handleToggle = () => {
+        const nextParty = state.party.map((entry, entryIndex) => {
+          if (entryIndex !== index) return entry;
+          return { ...entry, row: toggleMemberRow(entry) };
+        });
+        state.party = nextParty;
+        persistMenuState(state);
+        renderParty(state.party);
+      };
+      card.addEventListener("click", handleToggle);
+      card.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        handleToggle();
+      });
+    }
 
     const fallback = document.createElement("div");
     fallback.className = "portrait-fallback";
@@ -133,6 +185,14 @@ function renderButtons() {
     button.type = "button";
     button.textContent = label;
     button.addEventListener("click", () => {
+      if (label === "ならびかえ") {
+        isRowSwapMode = !isRowSwapMode;
+        updateModeHint();
+        renderParty(state.party);
+        return;
+      }
+      disableRowSwapMode();
+      renderParty(state.party);
       if (label === "アイテム") {
         window.location.href = "./item.html";
         return;
@@ -176,6 +236,7 @@ if (backBtn) {
 }
 
 const state = parseMenuState();
+updateModeHint();
 renderParty(state.party);
 renderButtons();
 renderResources(state.resources);

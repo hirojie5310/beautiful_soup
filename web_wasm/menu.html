@@ -94,6 +94,23 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 8px;
       }
+      .mode-hint {
+        margin-top: 8px;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+      .mode-hint.active {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .member-card.row-mode {
+        cursor: pointer;
+      }
+      .member-card.row-mode:hover,
+      .member-card.row-mode:focus-visible {
+        outline: 2px solid rgba(255, 229, 136, 0.85);
+        outline-offset: 1px;
+      }
       .resource-row {
         display: grid;
         gap: 4px;
@@ -124,6 +141,7 @@
 
       <section class="frame">
         <div id="menuButtons" class="menu-buttons"></div>
+        <div id="modeHint" class="mode-hint" aria-live="polite"></div>
       </section>
 
       <section class="frame">

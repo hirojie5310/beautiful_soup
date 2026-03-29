@@ -251,7 +251,8 @@ function renderItemRows() {
     button.type = "button";
     button.className = `item-row${selectedItemName === row.name ? " sel" : ""}`;
     const equipmentSuffix = isEquipmentLabelItem(row.name) ? " <span class='eq-tag'>[Equipment]</span>" : "";
-    button.innerHTML = `<div>${row.name}${equipmentSuffix} <span class="desc">[${itemTypeForRow(row)}]</span></div><div>×${row.count}</div>`;
+    const typeSuffix = isEquipmentLabelItem(row.name) ? "" : ` <span class="desc">[${itemTypeForRow(row)}]</span>`;
+    button.innerHTML = `<div>${row.name}${equipmentSuffix}${typeSuffix}</div><div>×${row.count}</div>`;
     button.addEventListener("click", () => {
       selectedItemName = row.name;
       if (modeKey === "sort") sortAscending = !sortAscending;
