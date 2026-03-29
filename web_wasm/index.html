@@ -3,16 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Battle Wasm Runner</title>
+    <title>Battle Wasm Runner - Location Select</title>
     <style>
       :root {
         --bg: #050817;
         --panel: #101838;
-        --panel-2: #0b1229;
         --text: #eef2ff;
         --muted: #acb6d7;
         --accent: #ffe588;
-        --ok: #89f0ac;
       }
       * { box-sizing: border-box; }
       body {
@@ -22,31 +20,25 @@
         font-family: "BIZ UDPGothic", "Yu Gothic UI", sans-serif;
       }
       .layout {
-        width: min(860px, 100vw);
+        width: min(760px, 100vw);
         margin: 0 auto;
         min-height: 100vh;
         padding: 10px;
         display: grid;
-        gap: 10px;
-        grid-template-rows: auto auto auto 1fr;
+        place-items: center;
       }
       .frame {
+        width: 100%;
         border: 2px solid rgba(255,255,255,0.45);
         border-radius: 10px;
         background: rgba(16, 24, 56, 0.95);
-        padding: 10px;
+        padding: 16px;
       }
-      #enemyFrame {
-        background-size: cover;
-        background-position: center center;
-        background-repeat: no-repeat;
-      }
-      .title { margin: 0 0 8px; color: var(--accent); font-size: 0.95rem; }
-      .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+      .title { margin: 0 0 12px; color: var(--accent); font-size: 1rem; }
+      .status { color: var(--muted); font-size: 0.9rem; margin-bottom: 12px; }
       .selector-row {
-        margin-top: 8px;
-        display: flex;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: 140px 1fr;
         gap: 8px;
         align-items: center;
       }
@@ -55,253 +47,45 @@
         border: 1px solid rgba(255,255,255,0.5);
         background: #0b1229;
         color: var(--text);
-        padding: 6px 8px;
+        padding: 8px;
+      }
+      .buttons {
+        margin-top: 16px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
       }
       .btn {
         border: 1px solid rgba(255,255,255,0.7);
         border-radius: 8px;
         color: var(--text);
         background: linear-gradient(180deg, #4459bf, #20317e);
-        padding: 8px 10px;
+        padding: 8px 12px;
         cursor: pointer;
       }
       .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-      .status { color: var(--muted); font-size: 0.9rem; }
-
-      .party-grid, .enemy-grid {
-        display: grid;
-        gap: 8px;
-      }
-      .party-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-      .enemy-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
-      .card {
-        border: 1px solid rgba(255,255,255,0.35);
-        border-radius: 8px;
-        padding: 8px;
-        background: rgba(0,0,0,0.25);
-      }
-      .party-card {
-        display: flex;
-        align-items: flex-end;
-        gap: 8px;
-        position: relative;
-        overflow: hidden;
-        min-height: 118px;
-        isolation: isolate;
-      }
-      .party-card::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background:
-          linear-gradient(180deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.58)),
-          linear-gradient(0deg, rgba(8, 14, 34, 0.5), rgba(8, 14, 34, 0.5));
-        z-index: 1;
-      }
-      .party-face {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        border-radius: 7px;
-        border: none;
-        flex-shrink: 0;
-        object-fit: cover;
-        object-position: center 22%;
-        opacity: 0.95;
-        z-index: 0;
-        filter: saturate(1.08) brightness(1.06);
-      }
-      .party-face-fallback {
-        width: 56px;
-        height: 56px;
-        border-radius: 6px;
-        border: 1px dashed rgba(255, 255, 255, 0.5);
-        color: rgba(255, 255, 255, 0.88);
-        font-size: 0.55rem;
-        line-height: 1.1;
-        display: grid;
-        place-items: center;
-        text-align: center;
-        padding: 4px;
-        flex-shrink: 0;
-        background: rgba(255, 255, 255, 0.06);
-        position: relative;
-        z-index: 2;
-      }
-      .party-card-content {
-        min-width: 0;
-        position: relative;
-        z-index: 2;
-        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
-      }
-      .enemy-card {
-        position: relative;
-        overflow: hidden;
-        min-height: 112px;
-        isolation: isolate;
-        background-size: cover;
-        background-position: center center;
-        background-repeat: no-repeat;
-      }
-      .enemy-card::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background:
-          linear-gradient(180deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.52)),
-          linear-gradient(0deg, rgba(8, 14, 34, 0.45), rgba(8, 14, 34, 0.45));
-        z-index: 1;
-      }
-      .enemy-sprite {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-        object-position: center;
-        opacity: 0.94;
-        z-index: 0;
-        filter: saturate(1.08) brightness(1.03);
-      }
-      .enemy-sprite-fallback {
-        width: 64px;
-        height: 64px;
-        border-radius: 6px;
-        border: 1px dashed rgba(255, 255, 255, 0.5);
-        color: rgba(255, 255, 255, 0.88);
-        font-size: 0.55rem;
-        line-height: 1.1;
-        display: grid;
-        place-items: center;
-        text-align: center;
-        padding: 4px;
-        background: rgba(255, 255, 255, 0.06);
-        position: relative;
-        z-index: 2;
-      }
-      .enemy-card-content {
-        position: relative;
-        z-index: 2;
-        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.82);
-      }
-      .status-icon-row {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        margin-top: 4px;
-        flex-wrap: wrap;
-      }
-      .status-icon {
-        width: 16px;
-        height: 16px;
-        image-rendering: pixelated;
-      }
-      .card.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(255,229,136,0.35) inset; }
-      .card.target { cursor: pointer; }
-      .card.selected { border-color: var(--accent); }
-      .name { font-weight: 700; font-size: 0.86rem; }
-      .hp { font-size: 0.78rem; color: var(--ok); }
-      .command-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
-      }
-      .command-grid.command-mode {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-      }
-      .magic-group-header {
-        padding: 2px 6px 2px 2px;
-        color: var(--accent);
-        font-size: 0.84rem;
-        font-weight: 700;
-        white-space: nowrap;
-      }
-      .magic-group-row {
-        grid-column: 1 / -1;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .magic-group-spells {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-      }
-
-      pre {
-        margin: 0;
-        border: 1px solid rgba(255,255,255,0.28);
-        border-radius: 8px;
-        background: var(--panel-2);
-        max-height: 300px;
-        overflow: auto;
-        white-space: pre-wrap;
-        padding: 8px;
-        line-height: 1.45;
-      }
-      .reward {
-        border: 1px solid rgba(255,229,136,0.5);
-        background: rgba(255,229,136,0.09);
-        border-radius: 8px;
-        padding: 8px;
-        display: none;
-      }
-      .reward.open { display: block; }
-      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
     </style>
   </head>
   <body>
     <main class="layout">
       <section class="frame">
-        <h1 class="title">Battle Wasm Runner</h1>
-        <div class="toolbar">
-          <span id="battlePhase" class="status">起動中...</span>
-        </div>
+        <h1 class="title">Battle Wasm Runner / Location選択</h1>
+        <div id="statusLine" class="status">起動中...</div>
+
         <div class="selector-row">
           <label for="locationGroupSelect">LocationGroup</label>
           <select id="locationGroupSelect"></select>
-          <label for="locationSelect">location</label>
+          <label for="locationSelect">Location</label>
           <select id="locationSelect"></select>
-          <button id="locationApplyBtn" class="btn" type="button">敵編成を更新</button>
+        </div>
+
+        <div class="buttons">
+          <button id="startBattleBtn" class="btn" type="button" disabled>戦闘開始</button>
           <button id="menuBtn" class="btn" type="button">メニュー</button>
-          <button id="loadSaveBtn" class="btn" type="button">ロード</button>
-          <input id="loadSaveInput" type="file" accept="application/json,.json" style="display:none;" />
         </div>
-      </section>
-
-      <section class="frame">
-        <h2 class="title">PARTY</h2>
-        <div id="partyGrid" class="party-grid"></div>
-      </section>
-
-      <section id="enemyFrame" class="frame">
-        <h2 class="title">ENEMY（対象を選択）</h2>
-        <div id="enemyGrid" class="enemy-grid"></div>
-      </section>
-
-      <section id="commandFrame" class="frame">
-        <h2 class="title">COMMAND</h2>
-        <div id="statusLine" class="status">エンジン起動中です...</div>
-        <div id="commandGrid" class="command-grid"></div>
-
-        <h3 class="title" style="margin-top:10px;">Planned Actions</h3>
-        <pre id="plannedActionsView" class="mono">(none)</pre>
-      </section>
-
-      <section id="battleLogFrame" class="frame" style="display:none;">
-        <div class="toolbar" style="justify-content:space-between; margin-top:10px;">
-          <h3 class="title" style="margin:0;">Battle Logs</h3>
-          <button id="downloadSaveBtn" class="btn" type="button">保存</button>
-        </div>
-        <pre id="logView">(not executed)</pre>
-
-        <div id="rewardPanel" class="reward" style="margin-top:10px;"></div>
       </section>
     </main>
 
-    <script type="module" src="./main.js"></script>
+    <script type="module" src="./location.js"></script>
   </body>
 </html>
