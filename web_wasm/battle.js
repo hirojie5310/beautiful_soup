@@ -10,6 +10,7 @@ const statusLine = document.getElementById("statusLine");
 const logView = document.getElementById("logView");
 const plannedActionsView = document.getElementById("plannedActionsView");
 const rewardPanel = document.getElementById("rewardPanel");
+const locationBtn = document.getElementById("locationBtn");
 const menuBtn = document.getElementById("menuBtn");
 const loadSaveBtn = document.getElementById("loadSaveBtn");
 const loadSaveInput = document.getElementById("loadSaveInput");
@@ -1590,6 +1591,14 @@ if (menuBtn) {
     refreshMenuStateFromPyodide();
     syncMenuViewStateToStorage();
     window.location.href = "./menu.html";
+  });
+}
+
+if (locationBtn) {
+  locationBtn.addEventListener("click", () => {
+    refreshMenuStateFromPyodide();
+    syncMenuViewStateToStorage();
+    window.location.href = "./index.html";
   });
 }
 
