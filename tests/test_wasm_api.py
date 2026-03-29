@@ -17,6 +17,24 @@ from combat.wasm_api import (
 )
 
 
+def test_create_from_state_reflects_updated_party_magic_slots() -> None:
+    state = init_runtime_state()
+    save_copy = json.loads(json.dumps(state.save))
+    save_copy["party"][0]["Magic"]["LV7"] = ["Drain", "Esuna", "Curaja"]
+    state.save = save_copy
+
+    engine = WasmBattleEngine.create_from_state(
+        state=state,
+        enemy_names=["Goblin", "Goblin", "Goblin"],
+        seed=5,
+        selected_location_group="Mythril Mines",
+        selected_location="Mythril Mines B1",
+    )
+
+    assert engine.session.state.save["party"][0]["Magic"]["LV7"][1] == "Esuna"
+    assert engine.session.party_members[0].magic_slots[7][1] == "Esuna"
+
+
 def test_wasm_engine_round_json_returns_browser_ready_payload(monkeypatch) -> None:
     engine = WasmBattleEngine.create_default(seed=7)
 

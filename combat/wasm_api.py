@@ -24,7 +24,7 @@ from combat.magic_damage import healing_spell_kind
 from combat.progression import apply_item_stock_to_inventory, apply_victory_rewards
 from combat.usecases import BattleSession, build_battle_session, execute_round_dto
 from combat.models import EquipmentSet
-from combat.runtime_state import init_runtime_state, resolve_data_path
+from combat.runtime_state import RuntimeState, init_runtime_state, resolve_data_path
 from utils.text_normalize import normalize_text_basic
 
 
@@ -670,15 +670,15 @@ class WasmBattleEngine:
     battle_start_progress: dict[str, dict[str, Any]] | None = None
 
     @classmethod
-    def create_default(
+    def create_from_state(
         cls,
         *,
+        state: RuntimeState,
         enemy_names: Optional[Sequence[str]] = None,
         seed: Optional[int] = None,
         selected_location_group: str | None = None,
         selected_location: str | None = None,
     ) -> "WasmBattleEngine":
-        state = init_runtime_state()
         if enemy_names:
             selected_enemy_names = list(enemy_names)
             selected_group = selected_location_group or ""
@@ -705,6 +705,24 @@ class WasmBattleEngine:
             selected_location_group=selected_group,
             selected_location=selected_loc,
             battle_start_progress=_build_party_progress_snapshot(session),
+        )
+
+    @classmethod
+    def create_default(
+        cls,
+        *,
+        enemy_names: Optional[Sequence[str]] = None,
+        seed: Optional[int] = None,
+        selected_location_group: str | None = None,
+        selected_location: str | None = None,
+    ) -> "WasmBattleEngine":
+        state = init_runtime_state()
+        return cls.create_from_state(
+            state=state,
+            enemy_names=enemy_names,
+            seed=seed,
+            selected_location_group=selected_location_group,
+            selected_location=selected_location,
         )
 
     def build_initial_payload(self) -> dict[str, Any]:

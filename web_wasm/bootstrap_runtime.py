@@ -1,0 +1,543 @@
+# web_wasm/bootstrap_runtime.py
+import json
+from typing import Callable, cast
+
+from combat.wasm_api import WasmBattleEngine
+from combat.runtime_state import init_runtime_state
+from combat.usecases import build_battle_session
+from random import Random
+from assets.data.data_loader import load_explicit_groups
+from combat.enemy_selection import build_groups, build_location_index, pick_enemy_names
+from system.cp_system import compute_job_change_cp_cost, load_job_attribution
+
+state = init_runtime_state()
+
+location_entries = build_location_index(state.monsters)
+explicit_groups = {}
+try:
+    explicit_groups = load_explicit_groups("/tmp/explicit_groups.json")
+except (OSError, ValueError):
+    explicit_groups = {}
+location_groups = build_groups(
+    location_entries,
+    explicit_groups=explicit_groups,
+)
+groups_payload = []
+location_to_entry = {}
+for group in location_groups:
+    locations = []
+    for child in group.children:
+        locations.append(str(child.location))
+        location_to_entry[str(child.location)] = child
+    groups_payload.append(
+        {
+            "group_name": str(group.group_name),
+            "locations": locations,
+        }
+    )
+
+default_group = groups_payload[0]["group_name"] if groups_payload else ""
+default_location = (
+    groups_payload[0]["locations"][0]
+    if groups_payload and groups_payload[0]["locations"]
+    else ""
+)
+
+engine: WasmBattleEngine | None = None
+try:
+    job_attr = load_job_attribution("/assets/data/job_attribution.csv")
+except Exception:
+    job_attr = {}
+
+
+def get_location_selection_json():
+    payload = {
+        "groups": groups_payload,
+        "selected_group": default_group,
+        "selected_location": default_location,
+    }
+    return json.dumps(payload, ensure_ascii=False)
+
+
+def boot_engine_for_location(location_group, location, seed=7):
+    selected_group = str(location_group or "")
+    selected_location = str(location or "")
+    entry = location_to_entry.get(selected_location)
+    if entry is None:
+        enemy_names = sorted(state.monsters.keys())[:3]
+    else:
+        enemy_names = pick_enemy_names(entry, state.monsters, k_min=2, k_max=6)
+
+    create_from_state = cast(
+        Callable[..., WasmBattleEngine] | None,
+        getattr(WasmBattleEngine, "create_from_state", None),
+    )
+    if create_from_state is not None:
+        created_engine: WasmBattleEngine = create_from_state(
+            state=state,
+            enemy_names=enemy_names,
+            seed=seed,
+            selected_location_group=selected_group,
+            selected_location=selected_location,
+        )
+    else:
+        # python_bundle.zip 側が古く create_from_state を持たない場合の互換フォールバック
+        session = build_battle_session(state=state, enemy_names=enemy_names)
+        created_engine = WasmBattleEngine(
+            session=session,
+            rng=Random(seed),
+            selected_location_group=selected_group,
+            selected_location=selected_location,
+            battle_start_progress=None,
+        )
+
+    globals()["engine"] = created_engine
+    created_engine.full_recover_party_payload()
+    return json.dumps(created_engine.build_initial_payload(), ensure_ascii=False)
+
+
+def get_initial_payload_json():
+    runtime_engine = engine if isinstance(engine, WasmBattleEngine) else None
+    if runtime_engine is None:
+        return json.dumps({}, ensure_ascii=False)
+    return json.dumps(runtime_engine.build_initial_payload(), ensure_ascii=False)
+
+
+def _saved_job_level(save_entry, job_name):
+    if not isinstance(save_entry, dict):
+        return 1
+    job_levels = save_entry.get("job_levels")
+    if not isinstance(job_levels, dict):
+        return 1
+    row = job_levels.get(job_name)
+    if isinstance(row, dict):
+        raw = row.get("level", 1)
+    else:
+        raw = row
+    try:
+        return max(1, int(raw))
+    except (TypeError, ValueError):
+        return 1
+
+
+def _safe_int(value: object, default: int = 0) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _canon_job_code(text):
+    t = str(text or "").strip()
+    if not t:
+        return ""
+    return t.replace(" ", "").replace("_", "").replace("-", "").lower()
+
+
+JOB_NAME_TO_CODE = {
+    "Onion Knight": "OK",
+    "Warrior": "Wa",
+    "Monk": "Mo",
+    "White Mage": "WM",
+    "Black Mage": "BM",
+    "Red Mage": "RM",
+    "Ranger": "Ra",
+    "Knight": "Kn",
+    "Thief": "Th",
+    "Scholar": "Sc",
+    "Geomancer": "Ge",
+    "Dragoon": "Dr",
+    "Viking": "Vi",
+    "Black Belt": "BB",
+    "Evoker": "Ev",
+    "Bard": "Ba",
+    "Magus": "Ma",
+    "Devout": "De",
+    "Summoner": "Su",
+    "Sage": "Sa",
+    "Ninja": "Ni",
+    "Mystic Knight": "MK",
+}
+
+
+def _actor_job_code(member):
+    slug = str(getattr(getattr(member, "job", None), "slug", "") or "").strip()
+    if slug and len(slug) <= 3:
+        return slug
+    job_name = str(getattr(getattr(member, "job", None), "name", "") or "").strip()
+    if job_name in JOB_NAME_TO_CODE:
+        return JOB_NAME_TO_CODE[job_name]
+    return job_name
+
+
+def _item_allowed_for_member(member, item_raw):
+    equipped_by = item_raw.get("EquippedBy") if isinstance(item_raw, dict) else None
+    if not isinstance(equipped_by, list) or not equipped_by:
+        return True
+    allow = {_canon_job_code(code) for code in equipped_by}
+    current_job = _canon_job_code(_actor_job_code(member))
+    return current_job in allow if current_job else True
+
+
+def _is_two_handed_weapon(item_raw):
+    if not isinstance(item_raw, dict):
+        return False
+    if "Two-Handed" in item_raw:
+        return True
+    hands = item_raw.get("Hands")
+    if isinstance(hands, int):
+        return hands >= 2
+    if isinstance(hands, str) and hands.isdigit():
+        return int(hands) >= 2
+    return bool(item_raw.get("TwoHanded"))
+
+
+def _build_equip_candidates_by_member(session):
+    state = getattr(session, "state", None)
+    weapons = getattr(state, "weapons", {}) if state is not None else {}
+    armors = getattr(state, "armors", {}) if state is not None else {}
+    if not isinstance(weapons, dict):
+        weapons = {}
+    if not isinstance(armors, dict):
+        armors = {}
+
+    out = []
+    slot_to_armor_type = {"head": "Helm", "body": "Armor", "arms": "Gloves"}
+
+    for member in getattr(session, "party_members", []):
+        by_slot = {}
+        for slot in ("main_hand", "off_hand"):
+            rows = [{"kind": "none", "name": None}]
+            for name, raw in weapons.items():
+                if not isinstance(name, str) or not isinstance(raw, dict):
+                    continue
+                if not _item_allowed_for_member(member, raw):
+                    continue
+                if slot == "off_hand" and _is_two_handed_weapon(raw):
+                    continue
+                rows.append(
+                    {
+                        "kind": "weapon",
+                        "name": name,
+                        "atk": _safe_int(
+                            raw.get("BasePower", raw.get("AttackPower", 0)), 0
+                        ),
+                        "acc": _safe_int(
+                            (
+                                round(
+                                    float(
+                                        raw.get("BaseAccuracy", raw.get("HitRate", 0))
+                                        or 0
+                                    )
+                                    * 100
+                                )
+                                if raw.get("BaseAccuracy", None) is not None
+                                else raw.get("HitRate", 0)
+                            ),
+                            0,
+                        ),
+                    }
+                )
+            if slot == "off_hand":
+                for name, raw in armors.items():
+                    if not isinstance(name, str) or not isinstance(raw, dict):
+                        continue
+                    if str(raw.get("ArmorType", "")) != "Shield":
+                        continue
+                    if not _item_allowed_for_member(member, raw):
+                        continue
+                    rows.append(
+                        {
+                            "kind": "armor",
+                            "name": name,
+                            "def": _safe_int(raw.get("Defense", 0), 0),
+                            "eva": _safe_int(
+                                (
+                                    round(
+                                        float(
+                                            raw.get(
+                                                "Evasion", raw.get("EvasionPenalty", 0)
+                                            )
+                                            or 0
+                                        )
+                                        * 100
+                                    )
+                                    if raw.get("Evasion", None) is not None
+                                    else raw.get("EvasionPenalty", 0)
+                                ),
+                                0,
+                            ),
+                        }
+                    )
+            by_slot[slot] = rows
+
+        for slot, armor_type in slot_to_armor_type.items():
+            rows = [{"kind": "none", "name": None}]
+            for name, raw in armors.items():
+                if not isinstance(name, str) or not isinstance(raw, dict):
+                    continue
+                if str(raw.get("ArmorType", "")) != armor_type:
+                    continue
+                if not _item_allowed_for_member(member, raw):
+                    continue
+                rows.append(
+                    {
+                        "kind": "armor",
+                        "name": name,
+                        "def": _safe_int(raw.get("Defense", 0), 0),
+                        "eva": _safe_int(
+                            (
+                                round(
+                                    float(
+                                        raw.get("Evasion", raw.get("EvasionPenalty", 0))
+                                        or 0
+                                    )
+                                    * 100
+                                )
+                                if raw.get("Evasion", None) is not None
+                                else raw.get("EvasionPenalty", 0)
+                            ),
+                            0,
+                        ),
+                    }
+                )
+            by_slot[slot] = rows
+        out.append(by_slot)
+    return out
+
+
+def _build_magic_spell_meta(session):
+    rows = {}
+    for name, raw in getattr(session, "spells_expanded", {}).items():
+        if not isinstance(name, str) or not name:
+            continue
+        if not isinstance(raw, dict):
+            continue
+        rows[name] = {
+            "type": str(raw.get("Type") or ""),
+            "level": _safe_int(raw.get("Level", 1), 1),
+        }
+    return rows
+
+
+def _load_equipped_magic_slots_from_entry(party_entry):
+    raw_magic = {}
+    if isinstance(party_entry, dict):
+        for key in ("Magic", "magic"):
+            if isinstance(party_entry.get(key), dict):
+                raw_magic = party_entry.get(key)
+                break
+    out = {lv: [None, None, None] for lv in range(1, 9)}
+    for lv in range(1, 9):
+        raw_row = raw_magic.get(f"LV{lv}")
+        if isinstance(raw_row, list):
+            row = []
+            for name in raw_row[:3]:
+                row.append(name if isinstance(name, str) and name else None)
+            while len(row) < 3:
+                row.append(None)
+            out[lv] = row
+    return out
+
+
+def _build_magic_stock_by_level(save, spell_meta):
+    inventory = save.get("inventory", {}) if isinstance(save, dict) else {}
+    inv_magic = {}
+    if isinstance(inventory, dict):
+        for key in ("Magic", "magic"):
+            if isinstance(inventory.get(key), dict):
+                inv_magic = inventory.get(key)
+                break
+    counts = {lv: {} for lv in range(1, 9)}
+    for lv in range(1, 9):
+        row = inv_magic.get(f"LV{lv}", {})
+        if not isinstance(row, dict):
+            continue
+        for spell_name, qty in row.items():
+            if isinstance(spell_name, str) and spell_name:
+                counts[lv][spell_name] = max(0, _safe_int(qty, 0))
+    for entry in save.get("party", []) if isinstance(save, dict) else []:
+        if not isinstance(entry, dict):
+            continue
+        slots = _load_equipped_magic_slots_from_entry(entry)
+        for lv in range(1, 9):
+            for name in slots[lv]:
+                if not isinstance(name, str) or not name:
+                    continue
+                remain = _safe_int(counts.get(lv, {}).get(name, 0), 0)
+                if remain > 0:
+                    counts[lv][name] = remain - 1
+    type_order = {"Black Magic": 0, "White Magic": 1, "Summon Magic": 2}
+    stock = {}
+    for lv in range(1, 9):
+        expanded = []
+        for spell_name, qty in counts.get(lv, {}).items():
+            mtype = str(spell_meta.get(spell_name, {}).get("type") or "")
+            expanded.extend(
+                [(type_order.get(mtype, 99), spell_name)] * max(0, _safe_int(qty, 0))
+            )
+        expanded.sort(key=lambda row: (row[0], row[1]))
+        stock[str(lv)] = [name for _, name in expanded]
+    return stock
+
+
+def _ensure_menu_magic_setup(session):
+    runtime_state = getattr(session, "state", None)
+    raw_save = getattr(runtime_state, "save", {})
+    save = raw_save if isinstance(raw_save, dict) else {}
+    spell_meta = _build_magic_spell_meta(session)
+    stock_by_level = _build_magic_stock_by_level(save, spell_meta)
+    equipped_by_member = []
+    has_equipped_magic = False
+    for entry in save.get("party", []) if isinstance(save, dict) else []:
+        if not isinstance(entry, dict):
+            continue
+        slots = _load_equipped_magic_slots_from_entry(entry)
+        if any(name for lv in range(1, 9) for name in slots[lv]):
+            has_equipped_magic = True
+        equipped_by_member.append({str(lv): list(slots[lv]) for lv in range(1, 9)})
+    if not has_equipped_magic and not any(
+        stock_by_level.get(str(lv)) for lv in range(1, 9)
+    ):
+        slots_by_level = {str(lv): [] for lv in range(1, 9)}
+        for name, info in spell_meta.items():
+            if not isinstance(info, dict):
+                continue
+            level = max(1, min(8, _safe_int(info.get("level", 1), 1)))
+            magic_type = str(info.get("type") or "")
+            if "Black" in magic_type:
+                type_order = 0
+            elif "White" in magic_type:
+                type_order = 1
+            elif "Summon" in magic_type:
+                type_order = 2
+            else:
+                continue
+            slots_by_level[str(level)].append((type_order, name))
+        for lv in range(1, 9):
+            grouped = sorted(slots_by_level[str(lv)], key=lambda row: (row[0], row[1]))
+            black = [name for typ, name in grouped if typ == 0][:3]
+            white = [name for typ, name in grouped if typ == 1][:3]
+            summon = [name for typ, name in grouped if typ == 2][:1]
+            stock_by_level[str(lv)] = black + white + summon
+    return {"stock_by_level": stock_by_level, "equipped_by_member": equipped_by_member}
+
+
+def get_menu_state_json():
+    if engine is None:
+        return json.dumps({}, ensure_ascii=False)
+    runtime_state = getattr(engine.session, "state", None)
+    save = getattr(runtime_state, "save", {})
+    jobs_by_name = getattr(runtime_state, "jobs_by_name", {})
+    job_names = sorted(
+        [
+            name
+            for name in (jobs_by_name.keys() if isinstance(jobs_by_name, dict) else [])
+            if isinstance(name, str) and name
+        ]
+    )
+    save_party = save.get("party", []) if isinstance(save, dict) else []
+    by_member = []
+    equip_by_member = []
+    for idx, member in enumerate(engine.session.party_members):
+        from_job = str(getattr(getattr(member, "job", None), "name", ""))
+        save_entry = (
+            save_party[idx]
+            if isinstance(save_party, list) and idx < len(save_party)
+            else {}
+        )
+        rows = []
+        for job_name in job_names:
+            to_level = _saved_job_level(save_entry, job_name)
+            cp_cost = 0
+            if (
+                isinstance(job_attr, dict)
+                and from_job in job_attr
+                and job_name in job_attr
+            ):
+                cp_cost = int(
+                    compute_job_change_cp_cost(
+                        from_job=from_job,
+                        to_job=job_name,
+                        to_job_level=to_level,
+                        job_attr=job_attr,
+                    )
+                )
+            rows.append(
+                {
+                    "job_name": job_name,
+                    "cp_cost": int(cp_cost),
+                    "saved_job_level": int(to_level),
+                    "is_current": bool(job_name == from_job),
+                }
+            )
+        by_member.append(rows)
+        eq = getattr(member, "equipment", None)
+        if eq is None and isinstance(save_entry, dict):
+            eq = save_entry.get("equipment")
+        if isinstance(eq, dict):
+            eq_dict = eq
+        else:
+            eq_dict = {
+                "main_hand": getattr(eq, "main_hand", None),
+                "off_hand": getattr(eq, "off_hand", None),
+                "head": getattr(eq, "head", None),
+                "body": getattr(eq, "body", None),
+                "arms": getattr(eq, "arms", None),
+            }
+        equip_by_member.append(
+            {
+                "main_hand": eq_dict.get("main_hand"),
+                "off_hand": eq_dict.get("off_hand"),
+                "head": eq_dict.get("head"),
+                "body": eq_dict.get("body"),
+                "arms": eq_dict.get("arms"),
+            }
+        )
+    cp = int(save.get("CP", 0)) if isinstance(save, dict) else 0
+    gil = int(save.get("gil", 0)) if isinstance(save, dict) else 0
+    payload = {
+        "jobs": job_names,
+        "job_candidates_by_member": by_member,
+        "equip_candidates_by_member": _build_equip_candidates_by_member(engine.session),
+        "equipment_by_member": equip_by_member,
+        "magic_setup": _ensure_menu_magic_setup(engine.session),
+        "resources": {"cp": cp, "cp_max": 255, "gil": gil},
+    }
+    return json.dumps(payload, ensure_ascii=False)
+
+
+def run_battle_round_wasm(js_input_json):
+    if engine is None:
+        return json.dumps(
+            {"error": "engine is not initialized"},
+            ensure_ascii=False,
+        )
+    return engine.execute_round_json(js_input_json)
+
+
+def full_recover_party_json():
+    if engine is None:
+        return json.dumps({"session_status": None}, ensure_ascii=False)
+    return json.dumps(engine.full_recover_party_payload(), ensure_ascii=False)
+
+
+def boot_engine_for_location_with_save_json(
+    location_group, location, save_json, seed=7
+):
+    global state
+    parsed = json.loads(save_json)
+    if not isinstance(parsed, dict):
+        raise ValueError("save_json must be JSON object")
+    state.save = parsed
+    return boot_engine_for_location(location_group, location, seed=seed)
+
+
+def export_runtime_save_json():
+    if engine is None:
+        return ""
+    runtime_state = getattr(engine.session, "state", None)
+    save = getattr(runtime_state, "save", None)
+    if not isinstance(save, dict):
+        return ""
+    return json.dumps(save, ensure_ascii=False)
