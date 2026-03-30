@@ -203,6 +203,24 @@ def _spell_weight_for_enemy_action(
     return 0
 
 
+def _append_skipped_character_action_logs(
+    *,
+    party_members: List[PartyMemberRuntime],
+    planned_actions: List[Optional[PlannedAction]],
+    acted_actor_indexes: set[int],
+    handled_actor_indexes: set[int],
+    logs: List[str],
+) -> None:
+    for idx, pm in enumerate(party_members):
+        if idx in acted_actor_indexes or idx in handled_actor_indexes:
+            continue
+        action = planned_actions[idx] if idx < len(planned_actions) else None
+        if action is None:
+            continue
+        logs.append(f"▶ {pm.name} の行動（{action.command}）")
+        logs.append(f"{pm.name}は敵が全滅していたため行動できなかった。")
+
+
 def _plan_enemy_action(
     *,
     enemy_json: Dict[str, Any],
@@ -549,6 +567,7 @@ def simulate_one_round_multi_party(
         )
 
     handled_actor_indexes: set[int] = set()
+    acted_actor_indexes: set[int] = set()
     if _run_turn_start_priority_actions(
         party_members=party_members,
         enemies=enemies,
@@ -615,6 +634,13 @@ def simulate_one_round_multi_party(
             break
 
         if not any_enemy_alive(enemies):
+            _append_skipped_character_action_logs(
+                party_members=party_members,
+                planned_actions=planned_actions,
+                acted_actor_indexes=acted_actor_indexes,
+                handled_actor_indexes=handled_actor_indexes,
+                logs=logs,
+            )
             logs.append("敵は全滅した！")
             final_result.end_reason = "enemy_defeated"
             break
@@ -625,6 +651,11 @@ def simulate_one_round_multi_party(
         if side == "char":
             pm = party_members[idx]
             if is_out_of_battle(pm.state):
+                action = planned_actions[idx] if idx < len(planned_actions) else None
+                if action is not None and idx not in handled_actor_indexes:
+                    logs.append(f"▶ {pm.name} の行動（{action.command}）")
+                    logs.append(f"{pm.name}は戦闘不能のため行動できない。")
+                    acted_actor_indexes.add(idx)
                 continue
 
             action = planned_actions[idx]
@@ -649,6 +680,8 @@ def simulate_one_round_multi_party(
 
             if action is None:
                 continue
+
+            acted_actor_indexes.add(idx)
 
             if action.kind == "defend":
                 logs.append(f"▶ {pm.name} の行動（{action.command}）")

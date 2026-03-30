@@ -406,6 +406,23 @@ function findNextPendingMemberIndex(startIdx) {
   return null;
 }
 
+function findPreviousCommittedMemberIndex(startIdx) {
+  const actionable = actionableMemberIndices();
+  if (!actionable.length) return null;
+  const rawStartPos = actionable.indexOf(startIdx);
+  const startPos = rawStartPos >= 0 ? rawStartPos : 0;
+  for (let step = 1; step <= actionable.length; step += 1) {
+    const idx = actionable[(startPos - step + actionable.length) % actionable.length];
+    if (pendingActions[idx]) return idx;
+  }
+  return null;
+}
+
+function canGoBackToPreviousMember() {
+  if (battleFinished) return false;
+  return findPreviousCommittedMemberIndex(currentMemberIndex) !== null;
+}
+
 function syncCurrentMemberToActionable() {
   const party = Array.isArray(sessionStatus.party) ? sessionStatus.party : [];
   if (!party.length) {
@@ -831,6 +848,27 @@ function renderCommandButtons() {
     });
     commandGrid.appendChild(button);
   });
+
+  if (canGoBackToPreviousMember()) {
+    const backBtn = document.createElement("button");
+    backBtn.className = "btn";
+    backBtn.type = "button";
+    backBtn.textContent = "← 戻る";
+    backBtn.addEventListener("click", () => {
+      goBackToPreviousMemberAction();
+    });
+    commandGrid.appendChild(backBtn);
+  }
+}
+
+function goBackToPreviousMemberAction() {
+  const prevIndex = findPreviousCommittedMemberIndex(currentMemberIndex);
+  if (prevIndex === null) return;
+  pendingActions[prevIndex] = null;
+  currentMemberIndex = prevIndex;
+  enterCommandMode();
+  battlePhase.textContent = `${committedActionCount()}/${requiredActionCount()} 入力済み`;
+  rerenderAll();
 }
 
 function renderPlannedActions() {
