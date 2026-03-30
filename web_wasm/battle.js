@@ -1164,13 +1164,14 @@ function buildLogBlocks(logs) {
   };
   lines.forEach((lineRaw) => {
     const line = String(lineRaw ?? "");
-    if (line.startsWith("▶ ") || line.startsWith("◆ ")) {
+    const normalized = line.replace(/^[\s\u3000]+/, "");
+    if (/^[▶◆]\s/.test(normalized)) {
       flush();
       type = "action";
       current.push(line);
       return;
     }
-    if (line.startsWith("=== Battle Rewards ===")) {
+    if (normalized.startsWith("=== Battle Rewards ===")) {
       flush();
       type = "reward";
       current.push(line);

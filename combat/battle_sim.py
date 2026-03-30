@@ -651,6 +651,7 @@ def simulate_one_round_multi_party(
                 continue
 
             if action.kind == "defend":
+                logs.append(f"▶ {pm.name} の行動（{action.command}）")
                 pm.state.temp_flags["defending"] = True
                 logs.append(f"{pm.name}は防御した！")
 
