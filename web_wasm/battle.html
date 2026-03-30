@@ -27,7 +27,11 @@
       .party-face{ object-fit:cover; object-position:center 22%; }
       .enemy-sprite{ object-fit:contain; object-position:center; }
       .party-face-fallback,.enemy-sprite-fallback{ position:absolute; inset:0; display:grid; place-items:center; background:rgba(4,8,24,.78); color:var(--muted); font-size:.7rem; z-index:0; }
-      .party-card-content,.enemy-card-content{ position:relative; z-index:2; text-shadow:0 1px 4px rgba(0,0,0,.82); }
+      .party-card-content,.enemy-card-content{ position:relative; z-index:2; text-shadow:0 1px 4px rgba(0,0,0,.82); display:flex; flex-direction:column; gap:2px; }
+      .party-name-row { order: 1; }
+      .party-hp-row { order: 2; }
+      .party-level-row { order: 3; }
+      .party-status-icons-row { order: 4; min-height: 16px; }
       .name { font-weight:700; font-size:.86rem; }
       .hp { font-size:.78rem; color:var(--ok); }
       .command-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
@@ -71,6 +75,6 @@
         <div id="rewardPanel" class="reward" style="margin-top:10px;"></div>
       </section>
     </main>
-    <script type="module" src="./battle.js"></script>
+    <script type="module" src="./battle.js?v=20260330a"></script>
   </body>
 </html>

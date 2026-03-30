@@ -486,14 +486,24 @@ function renderParty() {
     const content = document.createElement("div");
     content.className = "party-card-content";
     const nameRow = document.createElement("div");
-    nameRow.className = "name";
+    nameRow.className = "name party-name-row";
     nameRow.textContent = String(member?.name ?? `Member ${idx + 1}`);
     content.appendChild(nameRow);
+
+    const hpRow = document.createElement("div");
+    hpRow.className = "hp party-hp-row";
+    hpRow.textContent = `HP ${Number(member?.hp ?? 0)} / ${Number(member?.max_hp ?? 0)}`;
+    content.appendChild(hpRow);
+
+    const levelRow = document.createElement("div");
+    levelRow.className = "status party-level-row";
+    levelRow.textContent = `Lv ${Number(member?.level ?? 0)}`;
+    content.appendChild(levelRow);
 
     const memberStatusIcons = Array.isArray(member?.status_icons) ? member.status_icons : [];
     if (memberStatusIcons.length) {
       const iconRow = document.createElement("div");
-      iconRow.className = "status-icon-row";
+      iconRow.className = "status-icon-row party-status-icons-row";
       memberStatusIcons.forEach((iconKey) => {
         const icon = document.createElement("img");
         icon.className = "status-icon";
@@ -520,16 +530,6 @@ function renderParty() {
         content.appendChild(iconRow);
       }
     }
-
-    const hpRow = document.createElement("div");
-    hpRow.className = "hp";
-    hpRow.textContent = `HP ${Number(member?.hp ?? 0)} / ${Number(member?.max_hp ?? 0)}`;
-    content.appendChild(hpRow);
-
-    const levelRow = document.createElement("div");
-    levelRow.className = "status";
-    levelRow.textContent = `Lv ${Number(member?.level ?? 0)}`;
-    content.appendChild(levelRow);
 
     card.appendChild(content);
     partyGrid.appendChild(card);
