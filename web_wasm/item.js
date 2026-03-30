@@ -16,7 +16,14 @@ const MODES = [
   { key: "key_item", label: "だいじなもの" },
 ];
 
-const ITEM_TYPE_ORDER = { Anywhere: 0, Field: 1, Combat: 2, "Key Item": 3 };
+const ITEM_TYPE_ORDER = {
+  Anywhere: 0,
+  Field: 1,
+  Combat: 2,
+  Weapon: 3,
+  Armor: 4,
+  "Key Item": 5,
+};
 const FIELD_USABLE_TYPES = new Set(["Anywhere", "Field"]);
 const TARGET_REQUIRED = new Set([
   "potion", "hi potion", "elixir", "antidote", "echo herbs", "mallet", "maiden's kiss",
@@ -35,10 +42,17 @@ const STATUS_CLEAR = {
 let modeKey = "use";
 let selectedItemName = "";
 let sortAscending = true;
-let itemMetaByName = {};
+let itemTypeByItemName = {};
+let weaponNames = new Set();
+let armorNames = new Set();
+let itemTypeByCanonName = {};
+let weaponCanonNames = new Set();
+let armorCanonNames = new Set();
 
 function isEquipmentLabelItem(name) {
-  return name === "Onion Helm" || name === "Onion Sword";
+  const rawName = String(name || "");
+  const key = canon(rawName);
+  return weaponNames.has(rawName) || armorNames.has(rawName) || weaponCanonNames.has(key) || armorCanonNames.has(key);
 }
 
 function asObj(v) { return v && typeof v === "object" ? v : {}; }
@@ -90,9 +104,36 @@ function resolveStatusIconCandidates(iconKey) {
 }
 
 function itemTypeForRow(row) {
+  const itemName = String(row?.name || "");
+  const canonName = canon(itemName);
+  if (weaponNames.has(itemName) || weaponCanonNames.has(canonName)) return "Weapon";
+  if (armorNames.has(itemName) || armorCanonNames.has(canonName)) return "Armor";
+
+  const inferEquipmentTypeFromName = (nameKey) => {
+    const weaponHints = [
+      "sword", "blade", "knife", "dagger", "staff", "rod", "bow", "axe",
+      "spear", "hammer", "whip", "nunchaku", "bell", "harp", "boomerang",
+      "shuriken", "book", "tome", "claw", "katana", "lance",
+    ];
+    const armorHints = [
+      "helm", "helmet", "cap", "hat", "armor", "mail", "robe", "vest",
+      "garb", "gi", "shield", "gauntlet", "gauntlets", "glove", "gloves", "armlet", "bracer",
+      "ribbon", "cowl", "band",
+    ];
+    const hasWholeToken = (hints) => {
+      const normalized = ` ${String(nameKey || "").replace(/[^a-z0-9]+/g, " ")} `;
+      return hints.some((token) => normalized.includes(` ${token} `));
+    };
+    if (hasWholeToken(weaponHints)) return "Weapon";
+    if (hasWholeToken(armorHints)) return "Armor";
+    return "";
+  };
+
   const fromInv = String(row?.itemType || "");
+  const inferredByName = inferEquipmentTypeFromName(canonName);
+  if (inferredByName) return inferredByName;
   if (fromInv && ITEM_TYPE_ORDER[fromInv] != null) return fromInv;
-  const fromMeta = String(itemMetaByName?.[row?.name]?.ItemType || "");
+  const fromMeta = String(itemTypeByItemName?.[itemName] || itemTypeByCanonName?.[canonName] || "");
   return ITEM_TYPE_ORDER[fromMeta] != null ? fromMeta : "Combat";
 }
 
@@ -250,8 +291,8 @@ function renderItemRows() {
     const button = document.createElement("button");
     button.type = "button";
     button.className = `item-row${selectedItemName === row.name ? " sel" : ""}`;
-    const equipmentSuffix = isEquipmentLabelItem(row.name) ? " <span class='eq-tag'>[Equipment]</span>" : "";
-    const typeSuffix = isEquipmentLabelItem(row.name) ? "" : ` <span class="desc">[${itemTypeForRow(row)}]</span>`;
+    const equipmentSuffix = "";
+    const typeSuffix = ` <span class="desc">[${itemTypeForRow(row)}]</span>`;
     button.innerHTML = `<div>${row.name}${equipmentSuffix}${typeSuffix}</div><div>×${row.count}</div>`;
     button.addEventListener("click", () => {
       selectedItemName = row.name;
@@ -323,22 +364,38 @@ function renderTargetRows(state) {
   });
 }
 
-async function loadItemMeta() {
-  try {
-    const response = await fetch("../assets/data/ffiii_items.json");
-    if (!response.ok) return;
-    const rows = await response.json();
-    if (!Array.isArray(rows)) return;
-    const next = {};
-    rows.forEach((row) => {
-      const name = String(row?.Name || row?.name || "");
-      if (!name) return;
-      next[name] = row;
-    });
-    itemMetaByName = next;
-  } catch (_error) {
-    itemMetaByName = {};
-  }
+function readInventoryCatalogFromStorage() {
+  const menuState = parseMenuState().raw;
+  const envelope = parseSaveEnvelope();
+  const fromMenuState = asObj(menuState?.inventory_catalog);
+  const fromEnvelope = asObj(envelope?.menu_state?.inventory_catalog);
+  const catalog = Object.keys(fromMenuState).length ? fromMenuState : fromEnvelope;
+
+  const toNameSet = (value) => {
+    const rows = Array.isArray(value) ? value : [];
+    return new Set(rows.map((name) => String(name || "")).filter((name) => name));
+  };
+  const toCanonSet = (nameSet) => new Set(Array.from(nameSet).map((name) => canon(name)).filter((name) => name));
+  const itemTypes = asObj(catalog?.item_types);
+  const nextItemTypeByName = {};
+  const nextItemTypeByCanon = {};
+  Object.entries(itemTypes).forEach(([name, itemType]) => {
+    const itemName = String(name || "");
+    if (!itemName) return;
+    const normalizedItemType = String(itemType || "");
+    nextItemTypeByName[itemName] = normalizedItemType;
+    const key = canon(itemName);
+    if (key) {
+      nextItemTypeByCanon[key] = normalizedItemType;
+    }
+  });
+
+  itemTypeByItemName = nextItemTypeByName;
+  itemTypeByCanonName = nextItemTypeByCanon;
+  weaponNames = toNameSet(catalog?.weapons);
+  weaponCanonNames = toCanonSet(weaponNames);
+  armorNames = toNameSet(catalog?.armors);
+  armorCanonNames = toCanonSet(armorNames);
 }
 
 function render() {
@@ -353,5 +410,5 @@ backBtn?.addEventListener("click", () => {
   window.location.href = "./menu.html";
 });
 
-await loadItemMeta();
+readInventoryCatalogFromStorage();
 render();

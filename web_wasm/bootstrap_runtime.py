@@ -501,12 +501,49 @@ def get_menu_state_json():
         )
     cp = int(save.get("CP", 0)) if isinstance(save, dict) else 0
     gil = int(save.get("gil", 0)) if isinstance(save, dict) else 0
+    items_by_name = getattr(runtime_state, "items_by_name", {})
+    weapons_by_name = getattr(runtime_state, "weapons", {})
+    armors_by_name = getattr(runtime_state, "armors", {})
+    if not isinstance(items_by_name, dict):
+        items_by_name = {}
+    if not isinstance(weapons_by_name, dict):
+        weapons_by_name = {}
+    if not isinstance(armors_by_name, dict):
+        armors_by_name = {}
     payload = {
         "jobs": job_names,
         "job_candidates_by_member": by_member,
         "equip_candidates_by_member": _build_equip_candidates_by_member(engine.session),
         "equipment_by_member": equip_by_member,
         "magic_setup": _ensure_menu_magic_setup(engine.session),
+        "inventory_catalog": {
+            "items": sorted(
+                [
+                    name
+                    for name in items_by_name.keys()
+                    if isinstance(name, str) and name
+                ]
+            ),
+            "weapons": sorted(
+                [
+                    name
+                    for name in weapons_by_name.keys()
+                    if isinstance(name, str) and name
+                ]
+            ),
+            "armors": sorted(
+                [
+                    name
+                    for name in armors_by_name.keys()
+                    if isinstance(name, str) and name
+                ]
+            ),
+            "item_types": {
+                name: str(item_json.get("ItemType") or "")
+                for name, item_json in items_by_name.items()
+                if isinstance(name, str) and name and isinstance(item_json, dict)
+            },
+        },
         "resources": {"cp": cp, "cp_max": 255, "gil": gil},
     }
     return json.dumps(payload, ensure_ascii=False)
