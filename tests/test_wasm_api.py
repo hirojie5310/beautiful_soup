@@ -194,6 +194,12 @@ def test_wasm_engine_applies_drop_item_stock_to_inventory_on_victory(
     )
 
     assert payload["victory_rewards"]["dropped_item"] == ["Potion"]
+    assert payload["victory_rewards"]["gil_before"] >= 0
+    assert payload["victory_rewards"]["gil_after"] >= payload["victory_rewards"]["gil_before"]
+    assert payload["victory_rewards"]["cp_before"] >= 0
+    assert payload["victory_rewards"]["cp_after"] >= payload["victory_rewards"]["cp_before"]
+    assert any("Gil +10 (" in row for row in payload["logs"])
+    assert any("CP +1 (" in row for row in payload["logs"])
     assert calls == [engine.session.state.save]
 
 

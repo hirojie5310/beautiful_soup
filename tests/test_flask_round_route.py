@@ -428,4 +428,8 @@ def test_post_round_appends_victory_reward_logs(monkeypatch):
     assert payload["lifecycle"]["battle_finished"] is True
     assert any("=== Battle Rewards ===" in row for row in payload["logs"])
     assert any("EXP +120" in row for row in payload["logs"])
+    assert any("Gil +80 (" in row for row in payload["logs"])
+    assert any("CP +3 (" in row for row in payload["logs"])
     assert payload["victory_rewards"]["gained_gil"] == 80
+    assert "gil_before" in payload["victory_rewards"]
+    assert "gil_after" in payload["victory_rewards"]

@@ -883,16 +883,36 @@ def _build_party_progress_snapshot(session: BattleSession) -> dict[str, dict[str
     return rows
 
 
+def _build_resource_progress_snapshot(session: BattleSession) -> dict[str, int]:
+    save = getattr(getattr(session, "state", None), "save", None)
+    if not isinstance(save, dict):
+        return {"gil": 0, "cp": 0}
+    return {
+        "gil": _safe_int(save.get("gil", 0), 0),
+        "cp": _safe_int(save.get("CP", 0), 0),
+    }
+
+
 def _format_victory_progress_logs(
     *,
     before_progress: dict[str, dict[str, Any]],
     after_progress: dict[str, dict[str, Any]],
+    before_resources: dict[str, int],
+    after_resources: dict[str, int],
     rewards: dict[str, Any],
 ) -> list[str]:
     lines: list[str] = ["=== Battle Rewards ==="]
     lines.append(f"EXP +{_safe_int(rewards.get('gained_exp', 0), 0)}")
-    lines.append(f"Gil +{_safe_int(rewards.get('gained_gil', 0), 0)}")
-    lines.append(f"CP +{_safe_int(rewards.get('gained_cp', 0), 0)}")
+    gil_before = _safe_int(before_resources.get("gil", 0), 0)
+    gil_after = _safe_int(after_resources.get("gil", gil_before), gil_before)
+    cp_before = _safe_int(before_resources.get("cp", 0), 0)
+    cp_after = _safe_int(after_resources.get("cp", cp_before), cp_before)
+    lines.append(
+        f"Gil +{_safe_int(rewards.get('gained_gil', 0), 0)} ({gil_before} -> {gil_after})"
+    )
+    lines.append(
+        f"CP +{_safe_int(rewards.get('gained_cp', 0), 0)} ({cp_before} -> {cp_after})"
+    )
 
     for name, after in after_progress.items():
         before = before_progress.get(name, {})
@@ -1021,10 +1041,11 @@ def create_app(
         job_attr = None
 
     battle_start_progress = _build_party_progress_snapshot(battle_session)
+    battle_start_resources = _build_resource_progress_snapshot(battle_session)
 
     @app.get("/")
     def index():
-        nonlocal battle_session, battle_start_progress
+        nonlocal battle_session, battle_start_progress, battle_start_resources
         if selection_context.get("enabled"):
             selected_group = request.args.get(
                 "location_group", selection_context["selected_group"]
@@ -1070,6 +1091,9 @@ def create_app(
                     battle_start_progress = _build_party_progress_snapshot(
                         battle_session
                     )
+                    battle_start_resources = _build_resource_progress_snapshot(
+                        battle_session
+                    )
                     selection_context["selected_enemy_names"] = enemy_names_for_location
 
             selection_context["selected_group"] = selected_group
@@ -1102,7 +1126,7 @@ def create_app(
 
     @app.post("/battle/round")
     def post_battle_round():
-        nonlocal battle_start_progress
+        nonlocal battle_start_progress, battle_start_resources
         payload = request.get_json(silent=True)
         if not isinstance(payload, dict):
             raise InputValidationError(
@@ -1132,11 +1156,18 @@ def create_app(
                 level_table=battle_session.level_table,
             )
             after_progress = _build_party_progress_snapshot(battle_session)
+            after_resources = _build_resource_progress_snapshot(battle_session)
+            rewards["gil_before"] = _safe_int(battle_start_resources.get("gil", 0), 0)
+            rewards["gil_after"] = _safe_int(after_resources.get("gil", 0), 0)
+            rewards["cp_before"] = _safe_int(battle_start_resources.get("cp", 0), 0)
+            rewards["cp_after"] = _safe_int(after_resources.get("cp", 0), 0)
             response_payload["logs"] = list(
                 response_payload.get("logs", [])
             ) + _format_victory_progress_logs(
                 before_progress=battle_start_progress,
                 after_progress=after_progress,
+                before_resources=battle_start_resources,
+                after_resources=after_resources,
                 rewards=rewards,
             )
             response_payload["victory_rewards"] = rewards
@@ -1151,6 +1182,7 @@ def create_app(
         )
         if output_dto.lifecycle.battle_finished:
             battle_start_progress = _build_party_progress_snapshot(battle_session)
+            battle_start_resources = _build_resource_progress_snapshot(battle_session)
         return jsonify(response_payload), 200
 
     @app.get("/assets/enemy-sprites/<path:filename>")

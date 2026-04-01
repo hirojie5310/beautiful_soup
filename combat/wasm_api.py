@@ -524,16 +524,36 @@ def _build_party_progress_snapshot(session: BattleSession) -> dict[str, dict[str
     return rows
 
 
+def _build_resource_progress_snapshot(session: BattleSession) -> dict[str, int]:
+    save = getattr(getattr(session, "state", None), "save", None)
+    if not isinstance(save, dict):
+        return {"gil": 0, "cp": 0}
+    return {
+        "gil": _safe_int(save.get("gil", 0), 0),
+        "cp": _safe_int(save.get("CP", 0), 0),
+    }
+
+
 def _format_victory_progress_logs(
     *,
     before_progress: dict[str, dict[str, Any]],
     after_progress: dict[str, dict[str, Any]],
+    before_resources: dict[str, int],
+    after_resources: dict[str, int],
     rewards: dict[str, Any],
 ) -> list[str]:
     lines: list[str] = ["=== Battle Rewards ==="]
     lines.append(f"EXP +{_safe_int(rewards.get('gained_exp', 0), 0)}")
-    lines.append(f"Gil +{_safe_int(rewards.get('gained_gil', 0), 0)}")
-    lines.append(f"CP +{_safe_int(rewards.get('gained_cp', 0), 0)}")
+    gil_before = _safe_int(before_resources.get("gil", 0), 0)
+    gil_after = _safe_int(after_resources.get("gil", gil_before), gil_before)
+    cp_before = _safe_int(before_resources.get("cp", 0), 0)
+    cp_after = _safe_int(after_resources.get("cp", cp_before), cp_before)
+    lines.append(
+        f"Gil +{_safe_int(rewards.get('gained_gil', 0), 0)} ({gil_before} -> {gil_after})"
+    )
+    lines.append(
+        f"CP +{_safe_int(rewards.get('gained_cp', 0), 0)} ({cp_before} -> {cp_after})"
+    )
 
     for name, after in after_progress.items():
         before = before_progress.get(name, {})
@@ -668,6 +688,7 @@ class WasmBattleEngine:
     selected_location_group: str = ""
     selected_location: str = ""
     battle_start_progress: dict[str, dict[str, Any]] | None = None
+    battle_start_resources: dict[str, int] | None = None
 
     @classmethod
     def create_from_state(
@@ -705,6 +726,7 @@ class WasmBattleEngine:
             selected_location_group=selected_group,
             selected_location=selected_loc,
             battle_start_progress=_build_party_progress_snapshot(session),
+            battle_start_resources=_build_resource_progress_snapshot(session),
         )
 
     @classmethod
@@ -792,6 +814,7 @@ class WasmBattleEngine:
             output_dto.end_reason == "enemy_defeated"
             and hasattr(self.session, "level_table")
             and self.battle_start_progress is not None
+            and self.battle_start_resources is not None
         ):
             rewards = apply_victory_rewards(
                 party_members=self.session.party_members,
@@ -800,11 +823,20 @@ class WasmBattleEngine:
                 level_table=self.session.level_table,
             )
             after_progress = _build_party_progress_snapshot(self.session)
+            after_resources = _build_resource_progress_snapshot(self.session)
+            rewards["gil_before"] = _safe_int(
+                self.battle_start_resources.get("gil", 0), 0
+            )
+            rewards["gil_after"] = _safe_int(after_resources.get("gil", 0), 0)
+            rewards["cp_before"] = _safe_int(self.battle_start_resources.get("cp", 0), 0)
+            rewards["cp_after"] = _safe_int(after_resources.get("cp", 0), 0)
             response_payload["logs"] = list(
                 response_payload.get("logs", [])
             ) + _format_victory_progress_logs(
                 before_progress=self.battle_start_progress,
                 after_progress=after_progress,
+                before_resources=self.battle_start_resources,
+                after_resources=after_resources,
                 rewards=rewards,
             )
             response_payload["victory_rewards"] = rewards
@@ -817,6 +849,7 @@ class WasmBattleEngine:
         if output_dto.lifecycle.battle_finished:
             self.persist_runtime_save()
             self.battle_start_progress = _build_party_progress_snapshot(self.session)
+            self.battle_start_resources = _build_resource_progress_snapshot(self.session)
 
         return response_payload
 

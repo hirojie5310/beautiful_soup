@@ -876,6 +876,53 @@ function maybeShowRewards(payload) {
   rewardPanel.textContent = "";
 }
 
+function normalizeVictoryRewards(payload, beforeResources, afterResources) {
+  if (!payload?.victory_rewards) return payload;
+  const rewards = payload.victory_rewards;
+  const gilBefore = Number(rewards?.gil_before ?? beforeResources?.gil ?? 0);
+  const cpBefore = Number(rewards?.cp_before ?? beforeResources?.cp ?? 0);
+  const gilAfter = Number(rewards?.gil_after ?? afterResources?.gil ?? (gilBefore + Number(rewards?.gained_gil ?? 0)));
+  const cpAfter = Number(rewards?.cp_after ?? afterResources?.cp ?? (cpBefore + Number(rewards?.gained_cp ?? 0)));
+  rewards.gil_before = gilBefore;
+  rewards.gil_after = gilAfter;
+  rewards.cp_before = cpBefore;
+  rewards.cp_after = cpAfter;
+  return payload;
+}
+
+function injectResourceDiffsIntoRewardLogs(logs, rewards) {
+  if (!Array.isArray(logs) || !rewards) return Array.isArray(logs) ? logs : [];
+  const gilLine = `Gil +${Number(rewards?.gained_gil ?? 0)} (${Number(rewards?.gil_before ?? 0)} -> ${Number(rewards?.gil_after ?? 0)})`;
+  const cpLine = `CP +${Number(rewards?.gained_cp ?? 0)} (${Number(rewards?.cp_before ?? 0)} -> ${Number(rewards?.cp_after ?? 0)})`;
+  let inRewardBlock = false;
+  let foundRewardHeader = false;
+  return logs.map((lineRaw) => {
+    const line = String(lineRaw ?? "");
+    const normalized = line.replace(/^[\s\u3000]+/, "");
+    if (normalized.startsWith("=== Battle Rewards ===")) {
+      inRewardBlock = true;
+      foundRewardHeader = true;
+      return line;
+    }
+    if (inRewardBlock && normalized.startsWith("Gil +")) {
+      return gilLine;
+    }
+    if (inRewardBlock && normalized.startsWith("CP +")) {
+      return cpLine;
+    }
+    if (inRewardBlock && /^[▶◆]\s/.test(normalized)) {
+      inRewardBlock = false;
+    }
+    return line;
+  }).concat(foundRewardHeader ? [] : [
+    "=== Battle Rewards ===",
+    `EXP +${Number(rewards?.gained_exp ?? 0)}`,
+    gilLine,
+    cpLine,
+    `Drop: ${Array.isArray(rewards?.dropped_item) && rewards.dropped_item.length ? rewards.dropped_item.join(", ") : "(none)"}`,
+  ]);
+}
+
 function makeSaveEnvelope(saveObj, options = {}) {
   return {
     version: 1,
@@ -1163,6 +1210,10 @@ function buildRewardLogBlock(payload) {
     return null;
   }
   const rewards = payload.victory_rewards;
+  const gilBefore = Number(rewards?.gil_before ?? 0);
+  const gilAfter = Number(rewards?.gil_after ?? gilBefore + Number(rewards?.gained_gil ?? 0));
+  const cpBefore = Number(rewards?.cp_before ?? 0);
+  const cpAfter = Number(rewards?.cp_after ?? cpBefore + Number(rewards?.gained_cp ?? 0));
   const drops = Array.isArray(rewards?.dropped_item) && rewards.dropped_item.length
     ? rewards.dropped_item.join(", ")
     : "(none)";
@@ -1171,8 +1222,8 @@ function buildRewardLogBlock(payload) {
     lines: [
       "=== Battle Rewards ===",
       `EXP +${Number(rewards?.gained_exp ?? 0)}`,
-      `Gil +${Number(rewards?.gained_gil ?? 0)}`,
-      `CP +${Number(rewards?.gained_cp ?? 0)}`,
+      `Gil +${Number(rewards?.gained_gil ?? 0)} (${gilBefore} -> ${gilAfter})`,
+      `CP +${Number(rewards?.gained_cp ?? 0)} (${cpBefore} -> ${cpAfter})`,
       `Drop: ${drops}`,
     ],
   };
@@ -1516,9 +1567,21 @@ async function executeRound() {
     planned_actions: pendingActions,
     lifecycle_state: lifecycleState,
   };
+  const resourcesBeforeRound = sessionStatus?.resources && typeof sessionStatus.resources === "object"
+    ? {
+      gil: Number(sessionStatus.resources?.gil ?? 0),
+      cp: Number(sessionStatus.resources?.cp ?? 0),
+    }
+    : { gil: 0, cp: 0 };
   const resultJson = runRound(JSON.stringify(payload));
   const result = JSON.parse(resultJson);
-
+  const resourcesAfterRound = result?.session_status?.resources && typeof result.session_status.resources === "object"
+    ? {
+      gil: Number(result.session_status.resources?.gil ?? 0),
+      cp: Number(result.session_status.resources?.cp ?? 0),
+    }
+    : resourcesBeforeRound;
+  normalizeVictoryRewards(result, resourcesBeforeRound, resourcesAfterRound);
   sessionStatus = result?.session_status ?? sessionStatus;
   latestMenuState = parseMenuStateCandidate(result?.menu_state) || latestMenuState;
   currentSelectedLocationGroup = String(
@@ -1529,7 +1592,10 @@ async function executeRound() {
     : (result?.lifecycle?.after ?? "ready_for_actions");
   battleFinished = Boolean(result?.lifecycle?.battle_finished);
 
-  const logs = Array.isArray(result?.logs) ? result.logs : [];
+  const logs = injectResourceDiffsIntoRewardLogs(
+    Array.isArray(result?.logs) ? result.logs : [],
+    result?.victory_rewards,
+  );
   await playBattleLogBlocks(logs, result);
 
   resetPendingActionsForParty();
