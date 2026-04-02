@@ -1,4 +1,3 @@
-# tests/test_enemy_libra_spell.py
 from pathlib import Path
 from random import Random
 from typing import Any, cast
@@ -8,18 +7,17 @@ from combat.models import (
     FinalCharacterStats,
     FinalEnemyStats,
     PartyMemberRuntime,
-    PlannedEnemyAction,
 )
 from combat.runtime_state import RuntimeState
 from combat.turn_logic import run_enemy_turn
 
 
-def _char_stats() -> FinalCharacterStats:
+def _char_stats(level: int = 40) -> FinalCharacterStats:
     return FinalCharacterStats(
-        level=20,
+        level=level,
         job_level=20,
         job_skill_point=0,
-        max_hp=1079,
+        max_hp=999,
         strength=10,
         agility=10,
         vitality=10,
@@ -43,17 +41,14 @@ def _char_stats() -> FinalCharacterStats:
         magic_def_multiplier=0,
         magic_resistance=0,
         shield_count=0,
-        elemental_resists=frozenset({"fire"}),
-        elemental_absorbs=frozenset({"ice"}),
-        elemental_weaks=frozenset({"lightning"}),
     )
 
 
-def _enemy_stats() -> FinalEnemyStats:
+def _enemy_stats(name: str = "Hein", level: int = 13) -> FinalEnemyStats:
     return FinalEnemyStats(
-        name="Xande",
-        hp=21000,
-        level=50,
+        name=name,
+        hp=1600,
+        level=level,
         job_level=1,
         attack_power=1,
         attack_multiplier=1,
@@ -81,30 +76,21 @@ def _state() -> RuntimeState:
     )
 
 
-def test_enemy_libra_shows_hp_and_element_traits_without_damage() -> None:
-    char_stats = _char_stats()
-    enemy_stats = _enemy_stats()
-    char_state = BattleActorState(hp=706, max_hp=1079)
-    enemy_state = BattleActorState(hp=21000, max_hp=21000)
+def test_plot_battle_enemy_does_not_escape_even_with_large_level_gap() -> None:
+    char_stats = _char_stats(level=45)
+    enemy_stats = _enemy_stats(level=13)
+    char_state = BattleActorState(hp=999, max_hp=999)
+    enemy_state = BattleActorState(hp=1600, max_hp=1600)
     logs: list[str] = []
-    libra_spell = {
-        "Name": "Libra",
-        "Power": 999,
-        "Multiplier": 1,
-        "Accuracy": 1.0,
-        "Reflectable": "No",
-        "Target": "One Enemy",
-    }
 
     result = run_enemy_turn(
-        char_name="Ingus",
-        enemy_name="Xande",
+        char_name="Refia",
+        enemy_name="Hein",
         char_stats=char_stats,
         enemy_stats=enemy_stats,
         enemy_json={
-            "SpecialAttackRate": 1.0,
-            "Special Attacks": [{"Attack": "Libra", "Rate": 1.0}],
-            "Spells": [libra_spell],
+            "PlotBattles": [{"Map": "Hein's Castle 5F"}],
+            "SpecialAttackRate": 0.0,
         },
         char_state=char_state,
         enemy_state=enemy_state,
@@ -117,7 +103,7 @@ def test_enemy_libra_shows_hp_and_element_traits_without_damage() -> None:
         rng=Random(0),
         party_members=[
             PartyMemberRuntime(
-                name="Ingus",
+                name="Refia",
                 level=char_stats.level,
                 job=cast(Any, None),
                 base=cast(Any, None),
@@ -125,15 +111,9 @@ def test_enemy_libra_shows_hp_and_element_traits_without_damage() -> None:
                 state=char_state,
             )
         ],
-        planned_enemy_action=PlannedEnemyAction(
-            kind="special", spell_name="Libra", spell_json=libra_spell
-        ),
     )
 
     assert result.end_reason == "continue"
-    assert char_state.hp == 706
-    assert any("Xandeの《Libra》！" in line for line in logs)
-    assert any("IngusのHPは706/1079だ。" in line for line in logs)
-    assert any("IngusはLightning属性に弱い。" in line for line in logs)
-    assert any("IngusはIce属性を吸収する。" in line for line in logs)
-    assert any("IngusはFire属性に強い。" in line for line in logs)
+    assert enemy_state.hp > 0
+    assert not any("逃げ出そうとしている" in line for line in logs)
+    assert not any("逃げ出した" in line for line in logs)

@@ -56,6 +56,22 @@ def _expand_synonyms(elems: Iterable[str]) -> set[str]:
     return out
 
 
+def current_monster_elemental_vulnerability(
+    monster: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    戦闘中の一時上書きがあればそちらを優先して現在の属性相性を返す。
+    Barrier Shift のような戦闘内ギミック用。
+    """
+    override = monster.get("_battle_elemental_vulnerability")
+    if isinstance(override, dict) and override:
+        return override
+    ev = monster.get("ElementalVulnerability")
+    if isinstance(ev, dict):
+        return ev
+    return {}
+
+
 def element_relation_and_hits_generic(
     attack_elements: list[str] | None,
     *,
@@ -98,7 +114,7 @@ def element_relation_and_hits_for_monster(
     monster["ElementalVulnerability"] と attack_elements から
     (relation, hit_elements) を返す。
     """
-    ev = monster.get("ElementalVulnerability", {}) or {}
+    ev = current_monster_elemental_vulnerability(monster)
 
     return element_relation_and_hits_generic(
         parse_elements(attack_elements),  # ★ 攻撃側も正規化

@@ -34,7 +34,12 @@ from combat.life_check import (
     all_chars_defeated,
 )
 from combat.initiative import calc_initiative, command_weight
-from combat.turn_logic import run_enemy_turn, run_character_turn
+from combat.turn_logic import (
+    run_enemy_turn,
+    run_character_turn,
+    _consume_pending_barrier_shift_log,
+)
+from utils.text_normalize import normalize_text_basic
 from combat.spell_repo import spell_from_json
 from combat.spell_repo import _choose_monster_special_spell
 from combat.magic_damage import healing_spell_kind
@@ -227,8 +232,49 @@ def _plan_enemy_action(
     state: RuntimeState,
     rng: Random,
 ) -> PlannedEnemyAction:
+    spells = enemy_json.get("Spells") or []
+    barrier_spell = next(
+        (
+            spell
+            for spell in spells
+            if normalize_text_basic(spell.get("Name") or "") == "barrier shift"
+        ),
+        None,
+    )
+    has_barrier_schedule = any(
+        "every third round" in normalize_text_basic(sa.get("Attack") or "")
+        for sa in (enemy_json.get("Special Attacks") or [])
+    )
+    if barrier_spell is not None and has_barrier_schedule:
+        if not enemy_json.get("_battle_elemental_vulnerability"):
+            from combat.turn_logic import _apply_barrier_shift
+
+            _apply_barrier_shift(enemy_json, rng)
+            enemy_json["_battle_barrier_shift_pending_log"] = True
+            enemy_json["_battle_round_counter"] = 0
+        else:
+            turn_no = int(enemy_json.get("_battle_round_counter", 0) or 0) + 1
+            enemy_json["_battle_round_counter"] = turn_no
+            if turn_no % 3 == 0:
+                from combat.turn_logic import _apply_barrier_shift
+
+                _apply_barrier_shift(enemy_json, rng)
+                enemy_json["_battle_barrier_shift_pending_log"] = True
+                enemy_json["_battle_barrier_shift_applied_this_round"] = True
+                return PlannedEnemyAction(
+                    kind="special",
+                    spell_name=barrier_spell.get("Name"),
+                    spell_json=barrier_spell,
+                )
+
     special_rate = enemy_json.get("SpecialAttackRate") or 0.0
     specials = enemy_json.get("Special Attacks") or []
+    if barrier_spell is not None and has_barrier_schedule:
+        specials = [
+            sa
+            for sa in specials
+            if "barrier shift" not in normalize_text_basic(sa.get("Attack") or "")
+        ]
 
     if not specials or special_rate <= 0:
         return PlannedEnemyAction(kind="normal")
@@ -236,7 +282,13 @@ def _plan_enemy_action(
     if rng.random() >= special_rate:
         return PlannedEnemyAction(kind="normal")
 
-    spell_def = _choose_monster_special_spell(enemy_json, rng=rng)
+    spell_def = _choose_monster_special_spell(
+        {
+            **enemy_json,
+            "Special Attacks": specials,
+        },
+        rng=rng,
+    )
     if spell_def is None:
         return PlannedEnemyAction(kind="normal")
 
@@ -595,6 +647,12 @@ def simulate_one_round_multi_party(
             state=state,
             rng=rng,
         )
+        pending_barrier_shift_weak = _consume_pending_barrier_shift_log(em.json)
+        if pending_barrier_shift_weak:
+            logs.append(
+                f"{em.label}の《Barrier Shift》！ "
+                f"{pending_barrier_shift_weak.title()}属性が弱点になった。"
+            )
 
     for i, pm in enumerate(party_members):
         if is_out_of_battle(pm.state):

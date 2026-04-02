@@ -32,6 +32,7 @@ from combat.elements import (
     elements_from_monster_spell,
     element_relation_and_hits_for_char,
     element_relation_and_hits_for_monster,
+    current_monster_elemental_vulnerability,
     parse_elements,
 )
 from combat.magic_damage import (
@@ -96,6 +97,40 @@ from combat.logging import log_damage, log_hp_change, relation_comment
 from combat.hp_change import apply_signed_hp_change
 
 
+_BARRIER_SHIFT_ELEMENTS = ("fire", "ice", "lightning")
+
+def _apply_barrier_shift(monster: dict[str, Any], rng: Random) -> str:
+    """
+    Barrier Shift の現在弱点を更新する。
+    Fire / Ice / Lightning のいずれか 1 つだけを弱点にし、
+    それ以外は吸収へ寄せる。
+    """
+    weak = rng.choice(_BARRIER_SHIFT_ELEMENTS)
+    base_ev = monster.get("ElementalVulnerability", {}) or {}
+    absorb_pool = {
+        elem
+        for elem in parse_elements(base_ev.get("Absorb"))
+        if elem not in _BARRIER_SHIFT_ELEMENTS
+    }
+    absorb_pool.update(elem for elem in _BARRIER_SHIFT_ELEMENTS if elem != weak)
+
+    monster["_battle_elemental_vulnerability"] = {
+        "Weakness": [weak],
+        "Absorb": sorted(absorb_pool),
+    }
+    monster["_battle_barrier_shift_weakness"] = weak
+    return weak
+
+
+def _consume_pending_barrier_shift_log(monster: dict[str, Any]) -> str | None:
+    if not monster.pop("_battle_barrier_shift_pending_log", False):
+        return None
+    weak = monster.get("_battle_barrier_shift_weakness")
+    if not isinstance(weak, str) or not weak:
+        return None
+    return weak
+
+
 def _choose_alive_reflect_target(
     units: list | None,
     *,
@@ -125,7 +160,7 @@ def _enemy_is_tornado_immune(enemy_def: dict[str, Any] | None) -> bool:
 
 
 def _format_enemy_peep_lines(enemy_name: str, enemy_json: dict[str, Any]) -> list[str]:
-    ev = enemy_json.get("ElementalVulnerability", {}) or {}
+    ev = current_monster_elemental_vulnerability(enemy_json)
 
     def _fmt_elems(raw: Any) -> str:
         elems = parse_elements(raw)
@@ -314,6 +349,16 @@ def _as_damage(x: Any) -> int:
     if hasattr(x, "damage"):
         return _to_int(getattr(x, "damage"))
     return _to_int(x)
+
+
+def _all_runtime_enemies_defeated(enemies: list | None) -> bool:
+    """
+    EnemyRuntime の一覧が明示的に渡されたときだけ全滅判定する。
+    空リストは「全体対象の文脈がない」ケースでも来るため、全滅扱いしない。
+    """
+    if not enemies:
+        return False
+    return all(getattr(e.state, "hp", 0) <= 0 for e in enemies)
 
 
 # 4) キャラの1行動フェーズ（★ここだけが「キャラ側ロジック」）==========================================
@@ -1786,9 +1831,7 @@ def run_character_turn(
                         )
 
                 # ★ 行動後：敵全滅チェック（ここで end_reason だけ返す。ログは外側が出す想定）
-                if enemies is not None and all(
-                    getattr(e.state, "hp", 0) <= 0 for e in enemies
-                ):
+                if _all_runtime_enemies_defeated(enemies):
                     return total_damage, OneTurnResult(
                         char_state=char_state,
                         enemy_state=enemy_state,
@@ -1909,9 +1952,7 @@ def run_character_turn(
 
             enemies_defeated_now = False
             if enemies is not None:
-                enemies_defeated_now = all(
-                    getattr(e.state, "hp", 0) <= 0 for e in enemies
-                )
+                enemies_defeated_now = _all_runtime_enemies_defeated(enemies)
             elif enemy_state.hp <= 0:
                 enemies_defeated_now = True
 
@@ -2771,6 +2812,12 @@ def run_enemy_turn(
     # ------------------------------------------------------------
     # 敵ターンで使う状態異常フラグを最新状態から定義
     # ------------------------------------------------------------
+    pending_barrier_shift_weak = _consume_pending_barrier_shift_log(enemy_json)
+    if pending_barrier_shift_weak:
+        logs.append(
+            f"{enemy_name}の《Barrier Shift》！ {pending_barrier_shift_weak.title()}属性が弱点になった。"
+        )
+
     enemy_is_blind = enemy_state.has(Status.BLIND)
     enemy_is_mini_or_toad = enemy_state.has(Status.MINI) or enemy_state.has(Status.TOAD)
     enemy_is_silenced = enemy_state.has(Status.SILENCE)
@@ -2799,7 +2846,9 @@ def run_enemy_turn(
     # =========================================================
     # 3) 敵逃走判定（Boss 以外 & Lv 差 > 15）
     # =========================================================
-    is_boss = bool(enemy_json.get("Boss") or enemy_json.get("IsBoss"))
+    plot_battles = enemy_json.get("PlotBattles")
+    is_plot_boss = isinstance(plot_battles, list) and len(plot_battles) > 0
+    is_boss = bool(enemy_json.get("Boss") or enemy_json.get("IsBoss") or is_plot_boss)
 
     if not is_boss:
         lowest_char_level = char_stats.level
@@ -3242,6 +3291,18 @@ def run_enemy_turn(
                         logs=logs,
                         charges=1,
                     )
+                    dmg_to_char = 0
+                    enemy_attack = None
+
+                elif name_lower == "barrier shift":
+                    if enemy_json.pop("_battle_barrier_shift_applied_this_round", False):
+                        pass
+                    else:
+                        weak = _apply_barrier_shift(enemy_json, rng)
+                        weak_label = weak.title()
+                        logs.append(
+                            f"{enemy_name}の《{spell_name}》！ {weak_label}属性が弱点になった。"
+                        )
                     dmg_to_char = 0
                     enemy_attack = None
 
