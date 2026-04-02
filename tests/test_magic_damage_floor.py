@@ -134,3 +134,39 @@ def test_magic_floor_not_applied_when_expected_hits_is_zero() -> None:
     )
 
     assert damage == 0
+
+
+def test_magic_absorb_preserves_negative_damage_for_healing() -> None:
+    caster = make_char()
+    enemy = make_enemy(magic_defense=0)
+    spell = SpellInfo(power=10, accuracy_percent=100, magic_type="black", elements=[])
+
+    damage = magic_damage_char_to_enemy(
+        caster=caster,
+        spell=spell,
+        enemy=enemy,
+        element_relation="absorb",
+        use_expectation=True,
+    )
+
+    assert damage < 0
+
+
+def test_magic_absorb_ignores_hit_count_reduction_and_still_heals() -> None:
+    caster = make_char()
+    enemy = make_enemy(
+        magic_defense=0,
+        magic_def_multiplier=99,
+        magic_resistance_percent=100,
+    )
+    spell = SpellInfo(power=10, accuracy_percent=0, magic_type="black", elements=[])
+
+    damage = magic_damage_char_to_enemy(
+        caster=caster,
+        spell=spell,
+        enemy=enemy,
+        element_relation="absorb",
+        use_expectation=False,
+    )
+
+    assert damage < 0

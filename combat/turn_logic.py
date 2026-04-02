@@ -92,7 +92,8 @@ from combat.phys_damage import (
     physical_damage_enemy_to_char,
 )
 from combat.life_check import any_char_alive, is_out_of_battle, random_alive_char_index
-from combat.logging import log_damage, relation_comment
+from combat.logging import log_damage, log_hp_change, relation_comment
+from combat.hp_change import apply_signed_hp_change
 
 
 def _choose_alive_reflect_target(
@@ -223,24 +224,26 @@ def _apply_healing_spell_holy_damage_to_enemy(
         blind=char_is_blind,
         split_to_targets=split_to_targets,
     )
-    damage = int(max(0, damage))
-    old_hp = enemy_state.hp
-    enemy_state.hp = max(enemy_state.hp - damage, 0)
+    old_hp, new_hp, actual_change = apply_signed_hp_change(enemy_state, int(damage))
     relation_msg = relation_comment(rel, hit_elems, perspective="attacker")
-    if damage > 0:
-        log_damage(
+    if actual_change != 0 or rel == "absorb":
+        log_hp_change(
             logs,
             f"  {relation_msg + ' ' if relation_msg else ''}",
             enemy_name,
-            damage,
+            actual_change,
             old_hp,
-            enemy_state.hp,
+            new_hp,
             "attacker",
             "remain",
+            None,
+            "",
+            False,
+            rel == "absorb",
         )
     else:
         logs.append(f"  しかし{enemy_name}には効かなかった。")
-    return damage
+    return max(0, actual_change)
 
 
 def _to_int(v: Any) -> int:
@@ -357,6 +360,8 @@ def run_character_turn(
 
     if rng is None:
         rng = Random()
+
+    actual_enemy_change = 0
 
     # ---- 状態異常フラグ類の初期化 --------------------------------------------------
     char_is_blind = char_state.has(Status.BLIND)
@@ -1631,9 +1636,8 @@ def run_character_turn(
                             use_expectation=False,
                             split_to_targets=split,
                             blind=char_is_blind,
+                            spell_name=char_spell_name or spell_label,
                         )
-
-                    dmg = int(max(0, dmg))
 
                     # =====================================================
                     # ★ Reflect：敵ごとに判定（反射した分は敵に入らない）
@@ -1726,9 +1730,10 @@ def run_character_turn(
                         continue
 
                     # --- 通常ダメージ適用 ---
-                    old_hp = em_state.hp
-                    em_state.hp = max(em_state.hp - dmg, 0)
-                    total_damage += dmg
+                    old_hp, new_hp, actual_change = apply_signed_hp_change(
+                        em_state, int(dmg)
+                    )
+                    total_damage += max(0, actual_change)
 
                     # --- 状態異常（AoEなので敵ごと） ---
                     apply_status_spell_to_enemy(
@@ -1743,22 +1748,24 @@ def run_character_turn(
                     )
 
                     # --- ダメージログ（敵ごと） ---
-                    if dmg > 0:
+                    if actual_change != 0 or rel == "absorb":
                         relation_msg = relation_comment(
                             rel, hit_elems, perspective="attacker"
                         )
-                        log_damage(
+                        log_hp_change(
                             logs,
                             f"{char_name}は《{spell_label}》を唱えた！ "
                             f"{relation_msg + ' ' if relation_msg else ''}",
                             em_name,
-                            dmg,
+                            actual_change,
                             old_hp,
-                            em_state.hp,
+                            new_hp,
                             "attacker",
                             "remain",
                             None,
                             f" {suffix}",
+                            False,
+                            rel == "absorb",
                         )
 
                 # ★ まとめログ（複数反射だけ出す例。1回でも出したければ >=1 に）
@@ -1846,10 +1853,12 @@ def run_character_turn(
                     rng=rng,
                     use_expectation=False,
                     blind=char_is_blind,
+                    spell_name=char_spell_name or spell_label,
                 )
 
-            old_enemy_hp = enemy_state.hp
-            enemy_state.hp = max(enemy_state.hp - dmg_to_enemy, 0)
+            old_enemy_hp, new_enemy_hp, actual_enemy_change = apply_signed_hp_change(
+                enemy_state, int(dmg_to_enemy)
+            )
 
             apply_status_spell_to_enemy(
                 spell_json=char_spell_json,
@@ -1869,24 +1878,28 @@ def run_character_turn(
             )
 
             # 即死系のログ抑制はあなたの既存ロジックを踏襲（必要ならここに移植）
-            if dmg_to_enemy > 0:
-                log_damage(
+            if actual_enemy_change != 0 or char_spell_relation == "absorb":
+                log_hp_change(
                     logs,
                     f"{char_name}は《{spell_label}》を唱えた！ "
                     f"{relation_msg + ' ' if relation_msg else ''}",
                     enemy_name,
-                    dmg_to_enemy,
+                    actual_enemy_change,
                     old_enemy_hp,
-                    enemy_state.hp,
+                    new_enemy_hp,
                     "attacker",
                     "remain",
                     None,
                     f" {suffix}",
+                    False,
+                    char_spell_relation == "absorb",
                 )
 
-            if is_drain_spell and dmg_to_enemy > 0:
+            if is_drain_spell and actual_enemy_change > 0:
                 old_hp = char_state.hp
-                char_state.hp = min(char_state.hp + dmg_to_enemy, char_stats.max_hp)
+                char_state.hp = min(
+                    char_state.hp + actual_enemy_change, char_stats.max_hp
+                )
                 actual_heal = char_state.hp - old_hp
                 if actual_heal > 0:
                     logs.append(
@@ -1903,7 +1916,7 @@ def run_character_turn(
                 enemies_defeated_now = True
 
             if enemies_defeated_now:
-                return dmg_to_enemy, OneTurnResult(
+                return max(0, actual_enemy_change), OneTurnResult(
                     char_state=char_state,
                     enemy_state=enemy_state,
                     logs=logs,
@@ -1911,7 +1924,7 @@ def run_character_turn(
                     end_reason="enemy_defeated",
                 )
 
-            return dmg_to_enemy, None
+            return max(0, actual_enemy_change), None
 
     elif char_attack_kind == "item":
         # --- アイテム使用 ---
@@ -1996,8 +2009,10 @@ def run_character_turn(
                     rng=rng,
                 )
 
-                old_enemy_hp = enemy_state.hp
-                enemy_state.hp = max(enemy_state.hp - dmg_to_enemy, 0)
+                old_enemy_hp, new_enemy_hp, actual_enemy_change = apply_signed_hp_change(
+                    enemy_state,
+                    int(dmg_to_enemy),
+                )
 
                 relation_msg = relation_comment(
                     relation,
@@ -2005,16 +2020,20 @@ def run_character_turn(
                     perspective="attacker",
                 )
 
-                log_damage(
+                log_hp_change(
                     logs,
                     f"{char_name}は{char_item.get('Name')}を使った！ "
                     f"{relation_msg + ' ' if relation_msg else ''}",
                     enemy_name,
-                    dmg_to_enemy,
+                    actual_enemy_change,
                     old_enemy_hp,
-                    enemy_state.hp,
+                    new_enemy_hp,
                     "attacker",
                     "remain",
+                    None,
+                    "",
+                    False,
+                    relation == "absorb",
                 )
 
                 # 吸収系
@@ -2023,9 +2042,9 @@ def run_character_turn(
                     or item_spell_effect == "drain"
                     or "lilith's kiss" in item_name_lower
                 )
-                if is_drain_item and dmg_to_enemy > 0:
+                if is_drain_item and actual_enemy_change > 0:
                     old_hp = char_state.hp
-                    heal = dmg_to_enemy
+                    heal = actual_enemy_change
                     char_state.hp = min(char_state.hp + heal, char_stats.max_hp)
                     actual_heal = char_state.hp - old_hp
                     if actual_heal > 0:
@@ -2621,8 +2640,9 @@ def run_character_turn(
 
         dmg_to_enemy = int(dmg_to_enemy)
 
-        old_enemy_hp = enemy_state.hp
-        enemy_state.hp = max(enemy_state.hp - dmg_to_enemy, 0)
+        old_enemy_hp, new_enemy_hp, actual_enemy_change = apply_signed_hp_change(
+            enemy_state, int(dmg_to_enemy)
+        )
 
         relation_msg = relation_comment(relation, hit_elems, perspective="attacker")
 
@@ -2645,21 +2665,23 @@ def run_character_turn(
 
         suffix = boost_comment
 
-        log_damage(
+        log_hp_change(
             logs,
             prefix,
             enemy_name,
-            dmg_to_enemy,
+            actual_enemy_change,
             old_enemy_hp,
-            enemy_state.hp,
+            new_enemy_hp,
             "attacker",
             "remain",
             None,
             suffix,
+            False,
+            relation == "absorb",
         )
 
     # ここまで来たら戦闘は継続中（敵ターンへ）
-    return dmg_to_enemy, None
+    return max(0, actual_enemy_change), None
 
 
 # 5) 敵の1行動フェーズ（★ここだけが「敵側ロジック」）================================================
@@ -3364,9 +3386,6 @@ def run_enemy_turn(
         # --------------------------------------------------------
         # Reflect しなかった通常ダメージ処理
         # --------------------------------------------------------
-        # ダメージ適用前のHPを記録
-        old_char_hp = char_state.hp
-
         # 防御（Defend）によるダメージ軽減
         if getattr(char_state, "temp_flags", {}).get("defending"):
             if dmg_to_char > 0:
@@ -3374,19 +3393,23 @@ def run_enemy_turn(
                 logs.append(f"{char_name}は防御してダメージを軽減した！")
 
         # 最終的なダメージを適用
-        char_state.hp = max(char_state.hp - dmg_to_char, 0)
+        old_char_hp, new_char_hp, actual_char_change = apply_signed_hp_change(
+            char_state,
+            int(dmg_to_char),
+            max_hp=getattr(char_state, "max_hp", None),
+        )
 
         # ここまでで char_state.hp は更新済み（old_char_hp もある）
         if enemy_attack is None:
             # 例：AOE/Tornado などで enemy_attack を None にした、または行動不能など
-            if dmg_to_char > 0:
-                log_damage(
+            if actual_char_change != 0:
+                log_hp_change(
                     logs=logs,
                     prefix=f"{enemy_name}の攻撃！ ",
                     target_name=char_name,
-                    damage=dmg_to_char,
+                    amount=actual_char_change,
                     old_hp=old_char_hp,
-                    new_hp=char_state.hp,
+                    new_hp=new_char_hp,
                     perspective="target",
                     hp_style="arrow_with_max",
                     max_hp=getattr(char_state, "max_hp", None),
@@ -3394,7 +3417,7 @@ def run_enemy_turn(
                 )
         else:
             # enemy_attack がある場合
-            if dmg_to_char > 0:
+            if actual_char_change != 0:
 
                 # ★ 追加：ヒット数を prefix に差し込む（通常攻撃のみ）
                 hit_count = None
@@ -3426,13 +3449,13 @@ def run_enemy_turn(
                     spell_name = enemy_attack.attack_name or "攻撃"
                     prefix = f"{enemy_name}の《{spell_name}》！ "
 
-                log_damage(
+                log_hp_change(
                     logs=logs,
                     prefix=prefix,
                     target_name=char_name,
-                    damage=dmg_to_char,
+                    amount=actual_char_change,
                     old_hp=old_char_hp,
-                    new_hp=char_state.hp,
+                    new_hp=new_char_hp,
                     perspective="target",
                     hp_style="arrow_with_max",
                     max_hp=getattr(char_state, "max_hp", None),
@@ -3654,6 +3677,9 @@ def enemy_attack_to_char_with_special(
                     attacker_is_blind=attacker_is_blind,
                     target_is_mini_or_toad=target_is_mini_or_toad,
                     target_state=target_state,  # ★ ここ！
+                    spell_name=str(spell_def.get("Name") or ""),
+                    auto_all_target=False,
+                    magic_type=normalize_text_basic(spell_def.get("Type") or ""),
                 )
 
                 # 状態異常がある場合は成功確率も計算
@@ -3756,6 +3782,9 @@ def enemy_attack_to_char_with_special(
                 attacker_is_blind=attacker_is_blind,
                 target_is_mini_or_toad=target_is_mini_or_toad,
                 target_state=target_state,  # ★ ここ！
+                spell_name=str(spell_def.get("Name") or ""),
+                auto_all_target=False,
+                magic_type=normalize_text_basic(spell_def.get("Type") or ""),
             )
 
             # 状態異常付与判定

@@ -25,7 +25,8 @@ from combat.elements import (
 )
 from combat.magic_damage import magic_damage_enemy_to_char
 from combat.life_check import is_out_of_battle
-from combat.logging import log_damage
+from combat.logging import log_hp_change
+from combat.hp_change import apply_signed_hp_change
 from utils.text_normalize import normalize_text_basic
 
 
@@ -54,6 +55,8 @@ def enemy_cast_aoe_damage_spell_to_party(
 
     spell_name = spell_json.get("Name") or "Spell"
     attack_elements = elements_from_monster_spell(spell_json or {})
+    spell_type = normalize_text_basic(spell_json.get("Type") or "")
+    auto_all_target = spell_is_aoe(spell_json)
 
     base_acc = float(
         spell_json.get("Accuracy", spell_json.get("BaseAccuracy", 1.0)) or 1.0
@@ -140,9 +143,10 @@ def enemy_cast_aoe_damage_spell_to_party(
             attacker_is_blind=False,
             target_is_mini_or_toad=target_is_mini_or_toad,
             target_state=state,
+            spell_name=spell_name,
+            auto_all_target=auto_all_target,
+            magic_type=spell_type,
         )
-        damage = int(max(0, damage))
-
         # 4) ★ Reflect（対象ごと）
         if is_reflectable and getattr(state, "reflect_charges", 0) > 0:
             state.reflect_charges -= 1
@@ -151,19 +155,21 @@ def enemy_cast_aoe_damage_spell_to_party(
 
             reflect_target_state, reflect_target_name = choose_enemy_reflect_target()
             old_enemy_hp = reflect_target_state.hp
-            reflect_target_state.hp = max(0, old_enemy_hp - damage)
+            max_hp_enemy = caster_max_hp or getattr(reflect_target_state, "max_hp", None)
+            _, new_enemy_hp, actual_enemy_change = apply_signed_hp_change(
+                reflect_target_state,
+                int(damage),
+                max_hp=max_hp_enemy,
+            )
 
             # 個別ログ（必要なら残す：あなたの案のまま）
-            max_hp_enemy = caster_max_hp or getattr(
-                reflect_target_state, "max_hp", None
-            )
-            log_damage(
+            log_hp_change(
                 logs,
                 f"{name}を覆う魔法障壁が《{spell_name}》を跳ね返した！ ",
                 reflect_target_name,
-                damage,
+                actual_enemy_change,
                 old_enemy_hp,
-                reflect_target_state.hp,
+                new_enemy_hp,
                 "target",
                 "arrow_with_max" if max_hp_enemy is not None else "arrow",
                 max_hp_enemy,
@@ -197,24 +203,29 @@ def enemy_cast_aoe_damage_spell_to_party(
             continue  # 対象への適用はしない（状態異常も不発扱い）
 
         # 5) 通常適用
-        state.hp = max(0, old_hp - damage)
+        old_hp, new_hp, actual_change = apply_signed_hp_change(
+            state,
+            int(damage),
+            max_hp=getattr(stats, "max_hp", None) or getattr(state, "max_hp", None),
+        )
 
         max_hp = (
             getattr(stats, "hp_max", None)
             or getattr(stats, "max_hp", None)
             or getattr(state, "max_hp", None)
         )
-        log_damage(
+        log_hp_change(
             logs=logs,
             prefix="",
             target_name=name,
-            damage=damage,
+            amount=actual_change,
             old_hp=old_hp,
-            new_hp=state.hp,
+            new_hp=new_hp,
             perspective="target",
             hp_style="arrow_with_max" if max_hp is not None else "arrow",
             max_hp=max_hp,
             shout=True,
+            treat_zero_as_recover=(relation == "absorb"),
         )
 
         if state.hp <= 0:

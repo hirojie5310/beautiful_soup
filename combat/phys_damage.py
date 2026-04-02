@@ -265,7 +265,6 @@ def physical_damage_char_to_enemy(
         attacker_state=attacker_state,
     )
     result.damage = apply_element_relation_to_damage(result.damage, element_relation)
-    result.damage = max(result.damage, 0)
     return result
 
 

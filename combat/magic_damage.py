@@ -327,10 +327,83 @@ def _calc_base_magic_damage_per_hit(
     return raw - magic_defense
 
 
+def _is_absorb_full_heal_spell(spell: SpellInfo, spell_name: str = "") -> bool:
+    normalized = normalize_text_basic(spell_name)
+    if normalized == "quake":
+        return True
+    if normalized in {"leviathan: cyclone", "leviathan: tidal wave", "hyper"}:
+        return True
+    return bool(spell.auto_all_target and spell.magic_type == "summon")
+
+
+def _magic_absorb_amount_char_to_enemy(
+    caster: FinalCharacterStats,
+    spell: SpellInfo,
+    enemy: FinalEnemyStats,
+    *,
+    split_to_targets: int = 1,
+    spell_name: str = "",
+) -> int:
+    magic_power = _calc_magic_power(caster, spell)
+    magic_mult = _calc_magic_multiplier(caster, spell)
+    if magic_mult <= 0:
+        return 0
+    if _is_absorb_full_heal_spell(spell, spell_name):
+        return -9999
+
+    base_per_hit = _calc_base_magic_damage_per_hit(
+        magic_power=magic_power,
+        magic_defense=enemy.magic_defense,
+        rng=None,
+        use_expectation=True,
+    )
+    absorb = max(int(base_per_hit * magic_mult), 0)
+    if split_to_targets > 1 and not spell.auto_all_target:
+        absorb = int(absorb / split_to_targets)
+    absorb = max(absorb, 0)
+    return -absorb
+
+
+def _magic_absorb_amount_enemy_to_char(
+    enemy_caster: EnemyCasterStats,
+    char: FinalCharacterStats,
+    *,
+    split_to_targets: int = 1,
+    spell_name: str = "",
+    auto_all_target: bool = False,
+    magic_type: str = "other",
+) -> int:
+    if enemy_caster.magic_multiplier <= 0:
+        return 0
+    spell_stub = SpellInfo(
+        power=enemy_caster.magic_power_base,
+        accuracy_percent=enemy_caster.magic_accuracy_percent,
+        magic_type=magic_type,
+        elements=[],
+        auto_all_target=auto_all_target,
+    )
+    if _is_absorb_full_heal_spell(spell_stub, spell_name):
+        return -9999
+
+    base_per_hit = _calc_base_magic_damage_per_hit(
+        magic_power=enemy_caster.magic_power_base,
+        magic_defense=char.magic_defense,
+        rng=None,
+        use_expectation=True,
+    )
+    absorb = max(int(base_per_hit * enemy_caster.magic_multiplier), 0)
+    if split_to_targets > 1 and not auto_all_target:
+        absorb = int(absorb / split_to_targets)
+    absorb = max(absorb, 0)
+    return -absorb
+
+
 def _apply_magic_damage_floor(damage: float | int, hit_count: float | int) -> int:
     """FAQ に寄せた魔法ダメージ下限。ヒット成立時のみ最終 1 を保証する。"""
     if hit_count <= 0:
         return 0
+    if damage < 0:
+        return min(int(damage), -1)
     return max(int(damage), 1)
 
 
@@ -363,6 +436,7 @@ def magic_damage_char_to_enemy(
     use_expectation: bool = True,
     split_to_targets: int = 1,
     blind: bool = False,
+    spell_name: str = "",
 ) -> int:
     """
     キャラ → 敵の魔法ダメージ。
@@ -374,6 +448,15 @@ def magic_damage_char_to_enemy(
     """
     if rng is None:
         rng = random.Random()
+
+    if element_relation == "absorb":
+        return _magic_absorb_amount_char_to_enemy(
+            caster,
+            spell,
+            enemy,
+            split_to_targets=split_to_targets,
+            spell_name=spell_name,
+        )
 
     magic_power = _calc_magic_power(caster, spell)
     magic_mult = _calc_magic_multiplier(caster, spell)
@@ -422,7 +505,7 @@ def magic_damage_char_to_enemy(
     dmg *= _elemental_magic_boost_multiplier(caster, spell)
 
     dmg = _apply_magic_damage_floor(dmg, real_hits)
-    return max(int(dmg), 0)
+    return int(dmg)
 
 
 # Tornado -----------------------
@@ -654,6 +737,9 @@ def magic_damage_enemy_to_char(
     attacker_is_blind: bool = False,
     target_is_mini_or_toad: bool = False,  # ★ 追加
     target_state: Optional[BattleActorState] = None,  # ★ Boost 判定用に追加
+    spell_name: str = "",
+    auto_all_target: bool = False,
+    magic_type: str = "other",
 ) -> int:
     """
     敵 → キャラの魔法ダメージ（期待値）。
@@ -665,6 +751,16 @@ def magic_damage_enemy_to_char(
         print("[Debug] caller stack (power=0):", flush=True)
         stack = "".join(traceback.format_stack(limit=12))
         print(stack, flush=True)
+
+    if element_relation == "absorb":
+        return _magic_absorb_amount_enemy_to_char(
+            enemy_caster,
+            char,
+            split_to_targets=split_to_targets,
+            spell_name=spell_name,
+            auto_all_target=auto_all_target,
+            magic_type=magic_type,
+        )
 
     # キャラ側魔法防御パラメータ
     mdef = char.magic_defense
@@ -710,4 +806,4 @@ def magic_damage_enemy_to_char(
         dmg = int(dmg / split_to_targets)
 
     dmg = _apply_magic_damage_floor(dmg, expected_hits)
-    return max(int(dmg), 0)
+    return int(dmg)

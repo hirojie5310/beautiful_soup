@@ -55,6 +55,65 @@ def log_damage(
     logs.append(f"{prefix}{main}{hp_part}{suffix}")
 
 
+def log_hp_change(
+    logs: list[str],
+    prefix: str,
+    target_name: str,
+    amount: int,
+    old_hp: int,
+    new_hp: int,
+    perspective: Literal["attacker", "target", "neutral"] = "attacker",
+    hp_style: Literal["remain", "arrow", "arrow_with_max"] = "remain",
+    max_hp: int | None = None,
+    suffix: str = "",
+    shout: bool = False,
+    treat_zero_as_recover: bool = False,
+) -> None:
+    if amount > 0 or (amount == 0 and not treat_zero_as_recover):
+        log_damage(
+            logs=logs,
+            prefix=prefix,
+            target_name=target_name,
+            damage=amount,
+            old_hp=old_hp,
+            new_hp=new_hp,
+            perspective=perspective,
+            hp_style=hp_style,
+            max_hp=max_hp,
+            suffix=suffix,
+            shout=shout,
+        )
+        return
+
+    heal = abs(int(amount))
+    if heal == 0:
+        if perspective == "attacker":
+            main = f"{target_name}は吸収したがHPはこれ以上回復しない"
+        elif perspective == "target":
+            main = f"{target_name}は吸収したがHPはこれ以上回復しない"
+        else:
+            main = f"{target_name}は吸収したがHPはこれ以上回復しない"
+    elif perspective == "attacker":
+        main = f"{target_name}のHPが{heal}回復"
+    elif perspective == "target":
+        main = f"{target_name}はHPを{heal}回復した"
+    else:
+        main = f"{target_name}はHPが{heal}回復"
+
+    main += "！" if shout else "。"
+
+    if hp_style == "remain":
+        hp_part = f"（{target_name} 残りHP: {new_hp}）"
+    elif hp_style == "arrow":
+        hp_part = f"（{old_hp}→{new_hp}）"
+    elif hp_style == "arrow_with_max" and max_hp is not None:
+        hp_part = f"（{old_hp}→{new_hp}/{max_hp}）"
+    else:
+        hp_part = ""
+
+    logs.append(f"{prefix}{main}{hp_part}{suffix}")
+
+
 # 属性相性コメント
 def relation_comment(
     relation: ElementRelation,

@@ -544,4 +544,4 @@ def item_damage_char_to_enemy(
         total += dmg
 
     total = apply_element_relation_to_damage(int(total), element_relation)
-    return max(0, int(total))
+    return int(total)
