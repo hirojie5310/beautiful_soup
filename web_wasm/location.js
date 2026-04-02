@@ -8,12 +8,13 @@ const menuBtn = document.getElementById("menuBtn");
 
 const LOCAL_SAVE_STORAGE_KEY = "ff3_wasm_savedata_v1";
 const BATTLE_START_SELECTION_KEY = "ff3_wasm_battle_start_selection_v1";
+const PYTHON_BUNDLE_VERSION = "20260402b";
 
 let pyodide = null;
 let locationGroups = [];
 
 async function preparePythonBundle(instance) {
-  const response = await fetch("./python_bundle.zip");
+  const response = await fetch(`./python_bundle.zip?v=${PYTHON_BUNDLE_VERSION}`, { cache: "no-store" });
   if (!response.ok) throw new Error(`python_bundle.zip fetch failed: ${response.status}`);
   const bytes = new Uint8Array(await response.arrayBuffer());
   instance.FS.writeFile("/tmp/python_bundle.zip", bytes);

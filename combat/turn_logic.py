@@ -852,18 +852,20 @@ def run_character_turn(
                     else int(max(0, heal) / target_count)
                 )
                 total_actual = 0
+                total_display = 0
                 details: list[str] = []
                 for pm in alive_targets:
                     old_hp = pm.state.hp
                     pm.state.hp = min(pm.state.hp + per_target_heal, pm.stats.max_hp)
                     actual = pm.state.hp - old_hp
                     total_actual += actual
-                    details.append(f"{pm.name}:{actual}")
+                    total_display += per_target_heal
+                    details.append(f"{pm.name}:{per_target_heal}")
 
                 if total_actual > 0:
                     logs.append(
                         f"{char_name}は味方全体に《{spell_label}》を唱えた！ "
-                        f"合計HPが{total_actual}回復（{', '.join(details)}）。 {suffix}"
+                        f"合計HPが{total_display}回復（{', '.join(details)}）。 {suffix}"
                     )
                 else:
                     logs.append(
@@ -881,13 +883,13 @@ def run_character_turn(
                 if is_summon_heal:
                     logs.append(
                         f"{char_name}は召喚魔法《{spell_label}》を呼び出した！ "
-                        f"癒しの光がパーティを包み、{target_name}のHPが{actual}回復。"
+                        f"癒しの光がパーティを包み、{target_name}のHPが{heal}回復。"
                         f"（{target_name} 残りHP: {target_state.hp}） {suffix}"
                     )
                 else:
                     logs.append(
                         f"{char_name}は{target_name}に《{spell_label}》を唱えた！ "
-                        f"HPが{actual}回復。（{target_name} 残りHP: {target_state.hp}） {suffix}"
+                        f"HPが{heal}回復。（{target_name} 残りHP: {target_state.hp}） {suffix}"
                     )
             else:
                 if is_summon_heal:

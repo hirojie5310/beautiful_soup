@@ -8,6 +8,7 @@ from combat.models import (
     FinalEnemyStats,
     SpellInfo,
 )
+from combat.magic_damage import magic_heal_amount_to_char
 from combat.turn_logic import run_character_turn
 
 
@@ -169,3 +170,137 @@ def test_curaja_multi_target_uses_normal_heal_route() -> None:
     assert ally1_state.hp < ally1_stats.max_hp
     assert ally2_state.hp < ally2_stats.max_hp
     assert any("味方全体" in line for line in logs)
+
+
+def test_single_target_heal_log_displays_spell_amount_even_when_capped() -> None:
+    caster_stats = _char_stats(max_hp=9999)
+    target_stats = _char_stats(max_hp=1800)
+    enemy_stats = _enemy_stats()
+    caster_state = BattleActorState(hp=1500, max_hp=9999)
+    caster_state.mp_pool[1] = 1
+    caster_state.max_mp_pool[1] = 1
+    target_state = BattleActorState(hp=1790, max_hp=1800)
+    enemy_state = BattleActorState(hp=500, max_hp=500)
+    cure = SpellInfo(power=32, accuracy_percent=100, magic_type="white", elements=[])
+    spell_json = {
+        "Name": "Cure",
+        "Type": "White Magic",
+        "Level": 1,
+        "Target": "One/All Allies",
+        "Effect": "Restore target's HP",
+    }
+    party = [
+        SimpleNamespace(name="Refia", stats=caster_stats, state=caster_state),
+        SimpleNamespace(name="Ingus", stats=target_stats, state=target_state),
+    ]
+    expected_heal = magic_heal_amount_to_char(
+        caster=caster_stats,
+        spell=cure,
+        rng=Random(0),
+        use_expectation=False,
+        blind=False,
+        target_count=1,
+        spell_name="Cure",
+    )
+    logs: list[str] = []
+
+    damage, result = run_character_turn(
+        char_name="Refia",
+        enemy_name="Goblin",
+        char_stats=caster_stats,
+        enemy_stats=enemy_stats,
+        enemy_json={},
+        char_state=caster_state,
+        enemy_state=enemy_state,
+        char_attack_kind="magic",
+        char_battle_command="Magic",
+        char_weapon_hand="main",
+        char_spell=cure,
+        char_spell_json=spell_json,
+        char_spell_healing_type="hp",
+        char_spell_name="Cure",
+        char_item=None,
+        logs=logs,
+        rng=Random(0),
+        target_side="ally",
+        target_index=1,
+        party_members=party,
+        aoe_selected_override=False,
+    )
+
+    assert damage == 0
+    assert result is None
+    assert target_state.hp == target_stats.max_hp
+    assert any(f"HPが{expected_heal}回復。" in line for line in logs)
+
+
+def test_multi_target_heal_log_displays_spell_amount_even_when_capped() -> None:
+    caster_stats = _char_stats(max_hp=9999)
+    ally1_stats = _char_stats(max_hp=1800)
+    ally2_stats = _char_stats(max_hp=1900)
+    enemy_stats = _enemy_stats()
+    caster_state = BattleActorState(hp=1500, max_hp=9999)
+    caster_state.mp_pool[7] = 1
+    caster_state.max_mp_pool[7] = 1
+    ally1_state = BattleActorState(hp=1790, max_hp=1800)
+    ally2_state = BattleActorState(hp=1890, max_hp=1900)
+    enemy_state = BattleActorState(hp=500, max_hp=500)
+    curaja = SpellInfo(power=80, accuracy_percent=100, magic_type="white", elements=[])
+    spell_json = {
+        "Name": "Curaja",
+        "Type": "White Magic",
+        "Level": 7,
+        "Target": "One/All Allies",
+        "Effect": "Restore target's HP",
+    }
+    party = [
+        SimpleNamespace(name="Refia", stats=caster_stats, state=caster_state),
+        SimpleNamespace(name="Ingus", stats=ally1_stats, state=ally1_state),
+        SimpleNamespace(name="Arc", stats=ally2_stats, state=ally2_state),
+    ]
+    total_targets = len(party)
+    expected_heal = magic_heal_amount_to_char(
+        caster=caster_stats,
+        spell=curaja,
+        rng=Random(0),
+        use_expectation=False,
+        blind=False,
+        target_count=total_targets,
+        spell_name="Curaja",
+    )
+    per_target_heal = int(max(0, expected_heal) / total_targets)
+    logs: list[str] = []
+
+    damage, result = run_character_turn(
+        char_name="Refia",
+        enemy_name="Goblin",
+        char_stats=caster_stats,
+        enemy_stats=enemy_stats,
+        enemy_json={},
+        char_state=caster_state,
+        enemy_state=enemy_state,
+        char_attack_kind="magic",
+        char_battle_command="Magic",
+        char_weapon_hand="main",
+        char_spell=curaja,
+        char_spell_json=spell_json,
+        char_spell_healing_type="hp",
+        char_spell_name="Curaja",
+        char_item=None,
+        logs=logs,
+        rng=Random(0),
+        target_side="ally",
+        target_index=1,
+        party_members=party,
+        aoe_selected_override=True,
+    )
+
+    assert damage == 0
+    assert result is None
+    assert ally1_state.hp == ally1_stats.max_hp
+    assert ally2_state.hp == ally2_stats.max_hp
+    assert any(
+        f"合計HPが{per_target_heal * total_targets}回復（Refia:{per_target_heal}, Ingus:{per_target_heal}, Arc:{per_target_heal}）。"
+        in line
+        for line in logs
+    )

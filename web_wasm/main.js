@@ -34,6 +34,7 @@ let latestMenuState = null;
 const locationMapImageCache = {};
 let activeLogPlaybackId = 0;
 let loadedSaveData = null;
+const PYTHON_BUNDLE_VERSION = "20260402b";
 
 const LOCAL_SAVE_STORAGE_KEY = "ff3_wasm_savedata_v1";
 const LOCAL_MENU_STORAGE_KEY = "ff3_wasm_menu_state_v1";
@@ -49,7 +50,7 @@ const COMMAND_LABELS = {
 };
 
 async function preparePythonBundle(instance) {
-  const response = await fetch("./python_bundle.zip");
+  const response = await fetch(`./python_bundle.zip?v=${PYTHON_BUNDLE_VERSION}`, { cache: "no-store" });
   if (!response.ok) {
     throw new Error(`python_bundle.zip fetch failed: ${response.status}`);
   }
