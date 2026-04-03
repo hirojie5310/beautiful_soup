@@ -95,10 +95,18 @@ from combat.phys_damage import (
 from combat.life_check import any_char_alive, is_out_of_battle, random_alive_char_index
 from combat.logging import log_damage, log_hp_change, relation_comment
 from combat.hp_change import apply_signed_hp_change
-from combat.enemy_build import clone_enemy_for_divide, refresh_enemy_display_names
+from combat.enemy_build import (
+    build_enemy_runtime,
+    clone_enemy_for_divide,
+    refresh_enemy_display_names,
+)
 
 
 _BARRIER_SHIFT_ELEMENTS = ("fire", "ice", "lightning")
+_SUMMON_TARGET_BY_CASTER = {
+    "greater demon": "Iron Claws",
+    "bluck": "Kum Kum",
+}
 
 
 def _enemy_has_divide_reaction(enemy_json: dict[str, Any]) -> bool:
@@ -107,6 +115,77 @@ def _enemy_has_divide_reaction(enemy_json: dict[str, Any]) -> bool:
         if normalize_text_basic(special.get("Attack") or "") == "divide":
             return True
     return False
+
+
+def _resolve_enemy_summon_target_name(
+    *,
+    enemy_json: dict[str, Any],
+    spell_def: dict[str, Any],
+) -> str | None:
+    caster_name = str(enemy_json.get("name") or enemy_json.get("Name") or "").strip()
+    if not caster_name:
+        return None
+
+    summon_casters = spell_def.get("Monsters") or []
+    if summon_casters:
+        caster_names = {
+            normalize_text_basic(entry.get("Name") or "")
+            for entry in summon_casters
+            if isinstance(entry, dict)
+        }
+        if normalize_text_basic(caster_name) not in caster_names:
+            return None
+
+    return _SUMMON_TARGET_BY_CASTER.get(normalize_text_basic(caster_name))
+
+
+def _apply_enemy_summon_if_possible(
+    *,
+    enemy_name: str,
+    enemy_json: dict[str, Any],
+    spell_def: dict[str, Any],
+    state: RuntimeState,
+    enemies: list | None,
+    logs: list[str],
+) -> bool:
+    if enemies is None:
+        return False
+
+    alive_count = sum(1 for enemy in enemies if getattr(enemy.state, "hp", 0) > 0)
+    if alive_count >= 6:
+        logs.append(f"{enemy_name}の《Summon》！ しかしこれ以上は呼び出せない。")
+        return True
+
+    summoned_name = _resolve_enemy_summon_target_name(
+        enemy_json=enemy_json,
+        spell_def=spell_def,
+    )
+    if not summoned_name:
+        logs.append(f"{enemy_name}の《Summon》！ しかし何も起こらなかった…")
+        return True
+
+    try:
+        summoned_enemy = build_enemy_runtime(
+            enemy_defs_by_name=state.monsters,
+            spells_by_name=state.spells,
+            enemy_name=summoned_name,
+        )
+    except KeyError:
+        logs.append(f"{enemy_name}の《Summon》！ しかし何も起こらなかった…")
+        return True
+
+    reuse_idx = next(
+        (i for i, enemy in enumerate(enemies) if getattr(enemy.state, "hp", 0) <= 0),
+        None,
+    )
+    if reuse_idx is None:
+        enemies.append(summoned_enemy)
+    else:
+        enemies[reuse_idx] = summoned_enemy
+
+    refresh_enemy_display_names(enemies)
+    logs.append(f"{enemy_name}の《Summon》！ {summoned_enemy.label}が現れた。")
+    return True
 
 
 def _attack_has_dark_element(
@@ -3415,6 +3494,18 @@ def run_enemy_turn(
                         logs.append(
                             f"{enemy_name}の《{spell_name}》！ {weak_label}属性が弱点になった。"
                         )
+                    dmg_to_char = 0
+                    enemy_attack = None
+
+                elif name_lower == "summon":
+                    _apply_enemy_summon_if_possible(
+                        enemy_name=enemy_name,
+                        enemy_json=enemy_json,
+                        spell_def=spell_def or {},
+                        state=state,
+                        enemies=enemies,
+                        logs=logs,
+                    )
                     dmg_to_char = 0
                     enemy_attack = None
 

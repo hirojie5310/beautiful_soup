@@ -61,6 +61,47 @@ def clone_enemy_for_divide(source: EnemyRuntime) -> EnemyRuntime:
     )
 
 
+def build_enemy_runtime(
+    *,
+    enemy_defs_by_name: Dict[str, Dict[str, Any]],
+    spells_by_name: Dict[str, Dict[str, Any]],
+    enemy_name: str,
+    difficulty: int = 0,
+) -> EnemyRuntime:
+    """
+    敵名 1 体分の EnemyRuntime を構築する。
+    戦闘中の召喚など、単体追加時に使う。
+    """
+    try:
+        raw_enemy_json = enemy_defs_by_name[enemy_name]
+    except KeyError as e:
+        raise KeyError(f"enemy_defs_by_name に '{enemy_name}' が存在しません") from e
+
+    raw_enemy_json = dict(raw_enemy_json)
+    enemy_json = enrich_monster_spells(raw_enemy_json, spells_by_name=spells_by_name)
+
+    sprite_id: Optional[str] = enemy_json.get("sprite_id")
+    if isinstance(sprite_id, str):
+        sprite_id = sprite_id.strip() or None
+    else:
+        sprite_id = None
+
+    enemy_final = compute_enemy_final_stats(enemy_json, difficulty=difficulty)
+    enemy_state = BattleActorState(hp=enemy_final.hp, max_hp=enemy_final.hp)
+
+    plot_battles = enemy_json.get("PlotBattles")
+    is_boss = isinstance(plot_battles, list) and len(plot_battles) > 0
+
+    return EnemyRuntime(
+        name=enemy_name,
+        sprite_id=sprite_id,
+        stats=enemy_final,
+        state=enemy_state,
+        json=enemy_json,
+        is_boss=is_boss,
+    )
+
+
 # ============================================================
 # 敵最終ステータス計算
 # ============================================================
@@ -75,41 +116,12 @@ def build_enemies(
     enemies: List[EnemyRuntime] = []
 
     for enemy_name in enemy_names:
-        try:
-            raw_enemy_json = enemy_defs_by_name[enemy_name]
-        except KeyError as e:
-            raise KeyError(
-                f"enemy_defs_by_name に '{enemy_name}' が存在しません"
-            ) from e
-
-        # ★ 純度を上げる（enrich が破壊的でも安全）
-        raw_enemy_json = dict(raw_enemy_json)
-
-        enemy_json = enrich_monster_spells(
-            raw_enemy_json, spells_by_name=spells_by_name
-        )
-
-        sprite_id: Optional[str] = enemy_json.get("sprite_id")
-        if isinstance(sprite_id, str):
-            sprite_id = sprite_id.strip() or None
-        else:
-            sprite_id = None
-
-        enemy_final = compute_enemy_final_stats(enemy_json, difficulty=difficulty)
-        enemy_state = BattleActorState(hp=enemy_final.hp, max_hp=enemy_final.hp)
-
-        # ★ボス判定：PlotBattles が存在し、空でないならボス扱い
-        plot_battles = enemy_json.get("PlotBattles")
-        is_boss = isinstance(plot_battles, list) and len(plot_battles) > 0
-
         enemies.append(
-            EnemyRuntime(
-                name=enemy_name,
-                sprite_id=sprite_id,
-                stats=enemy_final,
-                state=enemy_state,
-                json=enemy_json,
-                is_boss=is_boss,  # ★追加
+            build_enemy_runtime(
+                enemy_defs_by_name=enemy_defs_by_name,
+                spells_by_name=spells_by_name,
+                enemy_name=enemy_name,
+                difficulty=difficulty,
             )
         )
 
