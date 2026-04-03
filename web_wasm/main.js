@@ -1064,13 +1064,21 @@ function buildMenuViewState() {
 }
 
 function syncMenuViewStateToStorage() {
+  const nextState = buildMenuViewState();
   try {
     localStorage.setItem(
       LOCAL_MENU_STORAGE_KEY,
-      JSON.stringify(buildMenuViewState()),
+      JSON.stringify(nextState),
     );
   } catch (_error) {
     // ignore storage write failure in wasm runner.
+  }
+  const envelope = restoreSaveEnvelopeFromStorage();
+  if (envelope?.save && typeof envelope.save === "object") {
+    persistSaveEnvelopeToStorage({
+      ...envelope,
+      menu_state: nextState,
+    });
   }
 }
 

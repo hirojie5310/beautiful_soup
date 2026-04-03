@@ -1,4 +1,5 @@
 # tests/test_turn_start_priority_actions.py
+from pathlib import Path
 from random import Random
 
 from combat.battle_sim import simulate_one_round_multi_party
@@ -114,6 +115,7 @@ def _make_runtime_state(*, member_name: str) -> RuntimeState:
         items_by_name={},
         jobs_by_name={},
         save={"party": [{"name": member_name}]},
+        base_dir=Path("."),
     )
 
 

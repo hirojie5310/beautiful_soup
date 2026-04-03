@@ -6,6 +6,8 @@ from __future__ import annotations
 import io
 import json
 import os
+from collections import Counter
+from copy import deepcopy
 from pathlib import Path
 from random import Random
 from typing import Any, Sequence
@@ -50,8 +52,14 @@ from combat.usecases import BattleSession, build_battle_session, execute_round_d
 from combat.models import EquipmentSet
 from combat.constants import STATUS_ICON_KEY_BY_ENUM
 from assets.data.data_loader import save_savedata
-from ui_pygame.field_effects import sync_equipment_to_save
+from ui_pygame.field_effects import (
+    dec_inventory_item,
+    get_inventory_item_count,
+    inc_inventory_item,
+    sync_equipment_to_save,
+)
 from adapters.flask_menu_actions import make_cast_field_magic_fn, make_use_field_item_fn
+from utils.name_normalize import normalize_name
 from utils.text_normalize import normalize_text_basic
 from system.cp_system import compute_job_change_cp_cost, load_job_attribution
 
@@ -526,12 +534,38 @@ def _build_equip_candidates_by_member(
     session: BattleSession,
 ) -> list[dict[str, list[dict[str, Any]]]]:
     state = getattr(session, "state", None)
+    save = getattr(state, "save", {}) if state is not None else {}
+    inventory = save.get("inventory", {}) if isinstance(save, dict) else {}
     weapons = getattr(state, "weapons", {}) if state is not None else {}
     armors = getattr(state, "armors", {}) if state is not None else {}
+    weapon_stock = inventory.get("Weapon", {}) if isinstance(inventory, dict) else {}
+    armor_stock = inventory.get("Armor", {}) if isinstance(inventory, dict) else {}
     if not isinstance(weapons, dict):
         weapons = {}
     if not isinstance(armors, dict):
         armors = {}
+    if not isinstance(weapon_stock, dict):
+        weapon_stock = {}
+    if not isinstance(armor_stock, dict):
+        armor_stock = {}
+    weapon_stock_norm = {
+        normalize_name(name): _safe_int(count, 0)
+        for name, count in weapon_stock.items()
+        if isinstance(name, str)
+    }
+    armor_stock_norm = {
+        normalize_name(name): _safe_int(count, 0)
+        for name, count in armor_stock.items()
+        if isinstance(name, str)
+    }
+
+    def _stock_count(item_type: str, item_name: str) -> int:
+        bucket = weapon_stock if item_type == "Weapon" else armor_stock
+        bucket_norm = weapon_stock_norm if item_type == "Weapon" else armor_stock_norm
+        exact = _safe_int(bucket.get(item_name, 0), 0) if isinstance(bucket, dict) else 0
+        if exact > 0:
+            return exact
+        return _safe_int(bucket_norm.get(normalize_name(item_name), 0), 0)
 
     out: list[dict[str, list[dict[str, Any]]]] = []
     slot_to_armor_type = {"head": "Helm", "body": "Armor", "arms": "Gloves"}
@@ -544,6 +578,9 @@ def _build_equip_candidates_by_member(
             for name, raw in weapons.items():
                 if not isinstance(name, str) or not isinstance(raw, dict):
                     continue
+                stock_count = _stock_count("Weapon", name)
+                if stock_count <= 0:
+                    continue
                 if not _item_allowed_for_member(member, raw):
                     continue
                 if slot == "off_hand" and _is_two_handed_weapon(raw):
@@ -552,6 +589,7 @@ def _build_equip_candidates_by_member(
                     {
                         "kind": "weapon",
                         "name": name,
+                        "count": stock_count,
                         "atk": _safe_int(raw.get("AttackPower", 0), 0),
                         "acc": _safe_int(raw.get("HitRate", 0), 0),
                     }
@@ -561,6 +599,9 @@ def _build_equip_candidates_by_member(
                 for name, raw in armors.items():
                     if not isinstance(name, str) or not isinstance(raw, dict):
                         continue
+                    stock_count = _stock_count("Armor", name)
+                    if stock_count <= 0:
+                        continue
                     if str(raw.get("ArmorType", "")) != "Shield":
                         continue
                     if not _item_allowed_for_member(member, raw):
@@ -569,6 +610,7 @@ def _build_equip_candidates_by_member(
                         {
                             "kind": "armor",
                             "name": name,
+                            "count": stock_count,
                             "def": _safe_int(raw.get("Defense", 0), 0),
                             "eva": _safe_int(raw.get("EvasionPenalty", 0), 0),
                         }
@@ -580,6 +622,9 @@ def _build_equip_candidates_by_member(
             for name, raw in armors.items():
                 if not isinstance(name, str) or not isinstance(raw, dict):
                     continue
+                stock_count = _stock_count("Armor", name)
+                if stock_count <= 0:
+                    continue
                 if str(raw.get("ArmorType", "")) != armor_type:
                     continue
                 if not _item_allowed_for_member(member, raw):
@@ -588,6 +633,7 @@ def _build_equip_candidates_by_member(
                     {
                         "kind": "armor",
                         "name": name,
+                        "count": stock_count,
                         "def": _safe_int(raw.get("Defense", 0), 0),
                         "eva": _safe_int(raw.get("EvasionPenalty", 0), 0),
                         "mdef": _safe_int(raw.get("MagicDefense", 0), 0),
@@ -597,6 +643,72 @@ def _build_equip_candidates_by_member(
 
         out.append(by_slot)
     return out
+
+
+def _equipment_item_type(
+    session: BattleSession,
+    item_name: str | None,
+) -> str | None:
+    if not isinstance(item_name, str) or not item_name:
+        return None
+    state = getattr(session, "state", None)
+    weapons = getattr(state, "weapons", {}) if state is not None else {}
+    armors = getattr(state, "armors", {}) if state is not None else {}
+    if isinstance(weapons, dict) and item_name in weapons:
+        return "Weapon"
+    if isinstance(armors, dict) and item_name in armors:
+        return "Armor"
+    return None
+
+
+def _equipment_inventory_counter(
+    session: BattleSession,
+    equipment: EquipmentSet | None,
+) -> Counter[tuple[str, str]]:
+    eq = equipment or EquipmentSet()
+    counts: Counter[tuple[str, str]] = Counter()
+    for slot in ("main_hand", "off_hand", "head", "body", "arms"):
+        item_name = getattr(eq, slot, None)
+        item_type = _equipment_item_type(session, item_name)
+        if item_type is None or not isinstance(item_name, str) or not item_name:
+            continue
+        counts[(item_type, item_name)] += 1
+    return counts
+
+
+def _apply_equipment_inventory_delta(
+    session: BattleSession,
+    *,
+    before: EquipmentSet | None,
+    after: EquipmentSet | None,
+) -> None:
+    save = getattr(getattr(session, "state", None), "save", {})
+    before_counts = _equipment_inventory_counter(session, before)
+    after_counts = _equipment_inventory_counter(session, after)
+
+    for item_key, before_qty in before_counts.items():
+        delta = before_qty - after_counts.get(item_key, 0)
+        if delta <= 0:
+            continue
+        item_type, item_name = item_key
+        inc_inventory_item(save, item_type, item_name, delta)
+
+    for item_key, after_qty in after_counts.items():
+        delta = after_qty - before_counts.get(item_key, 0)
+        if delta <= 0:
+            continue
+        item_type, item_name = item_key
+        if get_inventory_item_count(save, item_type, item_name) < delta:
+            raise InputValidationError(
+                "equipment item is not in inventory",
+                details={"item_type": item_type, "item_name": item_name},
+            )
+        for _ in range(delta):
+            if not dec_inventory_item(save, item_type, item_name):
+                raise InputValidationError(
+                    "equipment item is not in inventory",
+                    details={"item_type": item_type, "item_name": item_name},
+                )
 
 
 def _build_menu_state_payload(
@@ -1601,15 +1713,23 @@ def create_app(
             raise InputValidationError("slot is invalid")
 
         member = battle_session.party_members[member_index]
-        equipment = member.equipment if member.equipment is not None else EquipmentSet()
-        member.equipment = equipment
-        setattr(equipment, slot, item_name)
-        member.equipment, _removed_logs = apply_job_equipment_restrictions(
-            equipment, member.job
+        before_equipment = deepcopy(
+            member.equipment if member.equipment is not None else EquipmentSet()
         )
+        next_equipment = deepcopy(before_equipment)
+        setattr(next_equipment, slot, item_name)
+        next_equipment, _removed_logs = apply_job_equipment_restrictions(
+            next_equipment, member.job
+        )
+        _apply_equipment_inventory_delta(
+            battle_session,
+            before=before_equipment,
+            after=next_equipment,
+        )
+        member.equipment = next_equipment
         member.stats = compute_character_final_stats(
             member.base,
-            equipment,
+            member.equipment,
             battle_session.state.weapons,
             battle_session.state.armors,
             job_name=member.job.name,
@@ -1638,16 +1758,19 @@ def create_app(
             raise InputValidationError("member_index out of range")
 
         member = battle_session.party_members[member_index]
-        equipment = member.equipment if member.equipment is not None else EquipmentSet()
-        member.equipment = equipment
-        equipment.main_hand = None
-        equipment.off_hand = None
-        equipment.head = None
-        equipment.body = None
-        equipment.arms = None
-        member.equipment, _removed_logs = apply_job_equipment_restrictions(
-            equipment, member.job
+        before_equipment = deepcopy(
+            member.equipment if member.equipment is not None else EquipmentSet()
         )
+        next_equipment = EquipmentSet()
+        next_equipment, _removed_logs = apply_job_equipment_restrictions(
+            next_equipment, member.job
+        )
+        _apply_equipment_inventory_delta(
+            battle_session,
+            before=before_equipment,
+            after=next_equipment,
+        )
+        member.equipment = next_equipment
         member.stats = compute_character_final_stats(
             member.base,
             member.equipment,

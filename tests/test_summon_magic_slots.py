@@ -254,6 +254,7 @@ def test_evoker_action_log_shows_resolved_child_summon_name():
             items_by_name={},
             jobs_by_name={},
             save={"party": [{"name": "Arc"}]},
+            base_dir=Path("."),
         ),
         rng=Random(0),
         spells_by_name=expanded,

@@ -9,6 +9,7 @@ from random import Random
 from assets.data.data_loader import load_explicit_groups
 from combat.enemy_selection import build_groups, build_location_index, pick_enemy_names
 from system.cp_system import compute_job_change_cp_cost, load_job_attribution
+from utils.name_normalize import normalize_name
 
 state = init_runtime_state()
 
@@ -199,12 +200,38 @@ def _is_two_handed_weapon(item_raw):
 
 def _build_equip_candidates_by_member(session):
     state = getattr(session, "state", None)
+    save = getattr(state, "save", {}) if state is not None else {}
+    inventory = save.get("inventory", {}) if isinstance(save, dict) else {}
     weapons = getattr(state, "weapons", {}) if state is not None else {}
     armors = getattr(state, "armors", {}) if state is not None else {}
+    weapon_stock = inventory.get("Weapon", {}) if isinstance(inventory, dict) else {}
+    armor_stock = inventory.get("Armor", {}) if isinstance(inventory, dict) else {}
     if not isinstance(weapons, dict):
         weapons = {}
     if not isinstance(armors, dict):
         armors = {}
+    if not isinstance(weapon_stock, dict):
+        weapon_stock = {}
+    if not isinstance(armor_stock, dict):
+        armor_stock = {}
+    weapon_stock_norm = {
+        normalize_name(name): _safe_int(count, 0)
+        for name, count in weapon_stock.items()
+        if isinstance(name, str)
+    }
+    armor_stock_norm = {
+        normalize_name(name): _safe_int(count, 0)
+        for name, count in armor_stock.items()
+        if isinstance(name, str)
+    }
+
+    def _stock_count(item_type, item_name):
+        bucket = weapon_stock if item_type == "Weapon" else armor_stock
+        bucket_norm = weapon_stock_norm if item_type == "Weapon" else armor_stock_norm
+        exact = _safe_int(bucket.get(item_name, 0), 0) if isinstance(bucket, dict) else 0
+        if exact > 0:
+            return exact
+        return _safe_int(bucket_norm.get(normalize_name(item_name), 0), 0)
 
     out = []
     slot_to_armor_type = {"head": "Helm", "body": "Armor", "arms": "Gloves"}
@@ -216,6 +243,9 @@ def _build_equip_candidates_by_member(session):
             for name, raw in weapons.items():
                 if not isinstance(name, str) or not isinstance(raw, dict):
                     continue
+                stock_count = _stock_count("Weapon", name)
+                if stock_count <= 0:
+                    continue
                 if not _item_allowed_for_member(member, raw):
                     continue
                 if slot == "off_hand" and _is_two_handed_weapon(raw):
@@ -224,6 +254,7 @@ def _build_equip_candidates_by_member(session):
                     {
                         "kind": "weapon",
                         "name": name,
+                        "count": stock_count,
                         "atk": _safe_int(
                             raw.get("BasePower", raw.get("AttackPower", 0)), 0
                         ),
@@ -247,6 +278,9 @@ def _build_equip_candidates_by_member(session):
                 for name, raw in armors.items():
                     if not isinstance(name, str) or not isinstance(raw, dict):
                         continue
+                    stock_count = _stock_count("Armor", name)
+                    if stock_count <= 0:
+                        continue
                     if str(raw.get("ArmorType", "")) != "Shield":
                         continue
                     if not _item_allowed_for_member(member, raw):
@@ -255,6 +289,7 @@ def _build_equip_candidates_by_member(session):
                         {
                             "kind": "armor",
                             "name": name,
+                            "count": stock_count,
                             "def": _safe_int(raw.get("Defense", 0), 0),
                             "eva": _safe_int(
                                 (
@@ -281,6 +316,9 @@ def _build_equip_candidates_by_member(session):
             for name, raw in armors.items():
                 if not isinstance(name, str) or not isinstance(raw, dict):
                     continue
+                stock_count = _stock_count("Armor", name)
+                if stock_count <= 0:
+                    continue
                 if str(raw.get("ArmorType", "")) != armor_type:
                     continue
                 if not _item_allowed_for_member(member, raw):
@@ -289,6 +327,7 @@ def _build_equip_candidates_by_member(session):
                     {
                         "kind": "armor",
                         "name": name,
+                        "count": stock_count,
                         "def": _safe_int(raw.get("Defense", 0), 0),
                         "eva": _safe_int(
                             (

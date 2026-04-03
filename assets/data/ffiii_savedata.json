@@ -2,8 +2,8 @@
   "party": [
     {
       "name": "Runeth",
-      "level": 41,
-      "exp": 375986,
+      "level": 45,
+      "exp": 534721,
       "job": "Sage",
       "job_level": {
         "level": 99,
@@ -27,29 +27,29 @@
           "skill_point": 0
         }
       },
-      "hp": 2279,
-      "max_hp": 2279,
+      "hp": 2658,
+      "max_hp": 2658,
       "mp": {
-        "L1MP": 45,
-        "L2MP": 38,
-        "L3MP": 30,
-        "L4MP": 22,
-        "L5MP": 17,
-        "L6MP": 13,
-        "L7MP": 8,
-        "L8MP": 4
+        "L1MP": 48,
+        "L2MP": 41,
+        "L3MP": 33,
+        "L4MP": 24,
+        "L5MP": 20,
+        "L6MP": 16,
+        "L7MP": 11,
+        "L8MP": 7
       },
-      "strength": 29,
-      "agility": 43,
-      "vitality": 40,
-      "intelligence": 56,
-      "mind": 56,
+      "strength": 31,
+      "agility": 45,
+      "vitality": 42,
+      "intelligence": 59,
+      "mind": 59,
       "row": "back",
       "equipment": {
         "main_hand": "Omnirod",
         "off_hand": "Elder Staff",
         "head": "Ribbon",
-        "body": "Black Robe",
+        "body": "White Robe",
         "arms": "Protect Ring"
       },
       "Magic": {
@@ -85,7 +85,7 @@
         ],
         "LV7": [
           "Drain",
-          "Quake",
+          "Esuna",
           "Curaja"
         ],
         "LV8": [
@@ -114,12 +114,12 @@
     },
     {
       "name": "Arc",
-      "level": 45,
-      "exp": 514177,
+      "level": 48,
+      "exp": 666444,
       "job": "Evoker",
       "job_level": {
-        "level": 16,
-        "skill_point": 64
+        "level": 31,
+        "skill_point": 52
       },
       "job_levels": {
         "Dragoon": {
@@ -139,30 +139,30 @@
           "skill_point": 12
         },
         "Evoker": {
-          "level": 16,
-          "skill_point": 64
+          "level": 31,
+          "skill_point": 52
         }
       },
-      "hp": 1583,
-      "max_hp": 1583,
+      "hp": 1776,
+      "max_hp": 1776,
       "mp": {
-        "L1MP": 10,
-        "L2MP": 10,
-        "L3MP": 9,
-        "L4MP": 7,
-        "L5MP": 5,
-        "L6MP": 5,
-        "L7MP": 4,
-        "L8MP": 4
+        "L1MP": 16,
+        "L2MP": 13,
+        "L3MP": 12,
+        "L4MP": 10,
+        "L5MP": 9,
+        "L6MP": 7,
+        "L7MP": 5,
+        "L8MP": 3
       },
-      "strength": 40,
-      "agility": 28,
-      "vitality": 14,
-      "intelligence": 42,
-      "mind": 42,
+      "strength": 42,
+      "agility": 29,
+      "vitality": 15,
+      "intelligence": 44,
+      "mind": 44,
       "row": "back",
       "equipment": {
-        "main_hand": "Ice Rod",
+        "main_hand": "Fire Rod",
         "off_hand": "Light Rod",
         "head": "Ribbon",
         "body": "Black Robe",
@@ -230,8 +230,8 @@
     },
     {
       "name": "Refia",
-      "level": 42,
-      "exp": 402129,
+      "level": 46,
+      "exp": 560863,
       "job": "Dragoon",
       "job_level": {
         "level": 99,
@@ -251,23 +251,23 @@
           "skill_point": 68
         }
       },
-      "hp": 245,
-      "max_hp": 1887,
+      "hp": 2204,
+      "max_hp": 2204,
       "mp": {
-        "L1MP": 9,
-        "L2MP": 4,
-        "L3MP": 3,
-        "L4MP": 3,
-        "L5MP": 3,
-        "L6MP": 2,
-        "L7MP": 1,
-        "L8MP": 1
+        "L1MP": 0,
+        "L2MP": 0,
+        "L3MP": 0,
+        "L4MP": 0,
+        "L5MP": 0,
+        "L6MP": 0,
+        "L7MP": 0,
+        "L8MP": 0
       },
-      "strength": 43,
-      "agility": 47,
-      "vitality": 27,
-      "intelligence": 13,
-      "mind": 27,
+      "strength": 46,
+      "agility": 50,
+      "vitality": 29,
+      "intelligence": 14,
+      "mind": 29,
       "row": "front",
       "equipment": {
         "main_hand": "Holy Lance",
@@ -338,12 +338,12 @@
     },
     {
       "name": "Ingus",
-      "level": 41,
-      "exp": 373329,
-      "job": "Scholar",
+      "level": 45,
+      "exp": 531129,
+      "job": "Thief",
       "job_level": {
-        "level": 27,
-        "skill_point": 4
+        "level": 46,
+        "skill_point": 20
       },
       "job_levels": {
         "Dragoon": {
@@ -363,37 +363,37 @@
           "skill_point": 12
         },
         "Thief": {
-          "level": 27,
-          "skill_point": 4
+          "level": 46,
+          "skill_point": 20
         },
         "Scholar": {
           "level": 26,
           "skill_point": 80
         }
       },
-      "hp": 245,
-      "max_hp": 1079,
+      "hp": 2078,
+      "max_hp": 2078,
       "mp": {
-        "L1MP": 9,
-        "L2MP": 4,
-        "L3MP": 3,
-        "L4MP": 3,
-        "L5MP": 3,
-        "L6MP": 2,
-        "L7MP": 1,
-        "L8MP": 1
+        "L1MP": 0,
+        "L2MP": 0,
+        "L3MP": 0,
+        "L4MP": 0,
+        "L5MP": 0,
+        "L6MP": 0,
+        "L7MP": 0,
+        "L8MP": 0
       },
-      "strength": 37,
-      "agility": 37,
-      "vitality": 7,
-      "intelligence": 49,
-      "mind": 17,
+      "strength": 40,
+      "agility": 52,
+      "vitality": 28,
+      "intelligence": 37,
+      "mind": 1,
       "row": "back",
       "equipment": {
-        "main_hand": "Tome Of Ice",
-        "off_hand": "Tome Of Light",
+        "main_hand": "Air Knife",
+        "off_hand": "Ice Shield",
         "head": "Ribbon",
-        "body": "Scholar Robe",
+        "body": "Black Garb",
         "arms": "Protect Ring"
       },
       "status_effects": {
@@ -457,8 +457,8 @@
       }
     }
   ],
-  "gil": 470376,
-  "CP": 215,
+  "gil": 996437,
+  "CP": 255,
   "map": {
     "map": "grassland",
     "surface": "Grassland",
@@ -472,11 +472,11 @@
       "Noah's Lute": 0
     },
     "Anywhere": {
-      "Potion": 11,
-      "Hi Potion": 3,
-      "Elixir": 9,
-      "Antidote": 2,
-      "Phoenix Down": 5
+      "Potion": 37,
+      "Hi Potion": 8,
+      "Elixir": 44,
+      "Phoenix Down": 4,
+      "Antidote": 10
     },
     "Field": {
       "Magic Key": 1,
@@ -485,7 +485,7 @@
     "Combat": {
       "Antarctic Wind": 2,
       "Zeus's Wrath": 1,
-      "Raven's Yawn": 2,
+      "Raven's Yawn": 4,
       "Black Hole": 2,
       "Black Musk": 2,
       "Devil's Sigh": 2,
@@ -495,12 +495,30 @@
       "Bacchus's Cider": 2,
       "Lilith's Kiss": 3,
       "Shining Curtain": 2,
-      "Turtle Shell": 5,
+      "Turtle Shell": 6,
       "Bomb Arm": 1
     },
-    "Equipment": {
+    "Weapon": {
+      "Air Knife": 1,
+      "Holy Lance": 1,
+      "Fire Rod": 1,
+      "Ice Rod": 1,
+      "Light Rod": 1,
+      "Omnirod": 2,
+      "Elder Staff": 2,
+      "Onion Sword": 5
+    },
+    "Armor": {
+      "Ice Shield": 1,
+      "Crystal Shield": 2,
+      "Ribbon": 4,
       "Onion Helm": 1,
-      "Onion Sword": 1
+      "White Robe": 2,
+      "Black Garb": 2,
+      "Crystal Mail": 2,
+      "Crystal Gloves": 2,
+      "Protect Ring": 4,
+      "Onion Gauntlets": 1
     },
     "Magic": {
       "LV1": {

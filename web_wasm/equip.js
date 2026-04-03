@@ -26,7 +26,7 @@ const SLOTS = [
 ];
 
 let memberIndex = 0;
-let selectedSlotKey = "arms";
+let selectedSlotKey = "main_hand";
 let modeKey = "equip";
 
 function slotLabelByKey(slotKey) {
@@ -41,7 +41,13 @@ function asNum(v, d = 0) {
 function parseState() {
   try {
     const text = localStorage.getItem(LOCAL_MENU_STORAGE_KEY);
-    const parsed = text ? JSON.parse(text) : {};
+    let parsed = text ? JSON.parse(text) : {};
+    if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed?.equip_candidates_by_member)) {
+      const envelope = parseSaveEnvelope();
+      if (envelope?.menu_state && typeof envelope.menu_state === "object") {
+        parsed = envelope.menu_state;
+      }
+    }
     const equipmentByMember = Array.isArray(parsed?.equipment_by_member)
       ? parsed.equipment_by_member
       : [];
@@ -125,6 +131,124 @@ function memberEquipment(member) {
     : { main_hand: null, off_hand: null, head: null, body: null, arms: null };
 }
 
+function saveInventory(envelope) {
+  const inventory = envelope?.save?.inventory;
+  return inventory && typeof inventory === "object" ? inventory : {};
+}
+
+function inventoryBucket(envelope, itemType) {
+  const bucket = saveInventory(envelope)?.[itemType];
+  return bucket && typeof bucket === "object" ? bucket : {};
+}
+
+function inventoryCount(envelope, itemType, itemName) {
+  if (!itemType || !itemName) return 0;
+  const count = Number(inventoryBucket(envelope, itemType)?.[itemName] ?? 0);
+  return Number.isFinite(count) ? Math.max(0, count) : 0;
+}
+
+function normalizeName(value) {
+  return String(value || "")
+    .normalize("NFKC")
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}_\u3040-\u30ff\u4e00-\u9fff]+/gu, "");
+}
+
+function normalizedInventoryCount(envelope, itemType, itemName) {
+  const exact = inventoryCount(envelope, itemType, itemName);
+  if (exact > 0) return exact;
+  const bucket = inventoryBucket(envelope, itemType);
+  const target = normalizeName(itemName);
+  for (const [name, count] of Object.entries(bucket)) {
+    if (normalizeName(name) !== target) continue;
+    const num = Number(count ?? 0);
+    if (Number.isFinite(num) && num > 0) return num;
+  }
+  return 0;
+}
+
+function candidateInventoryCount(state, envelope, row) {
+  if (!row || row.kind === "none" || row.kind === "release") return null;
+  const itemType = equipmentItemType(state, row.name, row.kind);
+  if (itemType) {
+    const invCount = normalizedInventoryCount(envelope, itemType, row.name);
+    if (invCount > 0) return invCount;
+  }
+  const rowCount = Number(row?.count ?? NaN);
+  return Number.isFinite(rowCount) && rowCount > 0 ? rowCount : null;
+}
+
+function inventoryCatalog(state) {
+  const raw = state?.raw;
+  return raw && typeof raw === "object" ? raw.inventory_catalog || {} : {};
+}
+
+function equipmentItemType(state, itemName, kindHint = "") {
+  if (!itemName) return null;
+  if (kindHint === "weapon") return "Weapon";
+  if (kindHint === "armor") return "Armor";
+  const catalog = inventoryCatalog(state);
+  if (Array.isArray(catalog?.weapons) && catalog.weapons.includes(itemName)) return "Weapon";
+  if (Array.isArray(catalog?.armors) && catalog.armors.includes(itemName)) return "Armor";
+  return null;
+}
+
+function countEquippedItems(state, member) {
+  const counts = new Map();
+  const eq = memberEquipment(member);
+  SLOTS.forEach((slot) => {
+    const name = eq?.[slot.key];
+    const itemType = equipmentItemType(state, name);
+    if (!itemType || !name) return;
+    const mapKey = `${itemType}:${name}`;
+    const prev = counts.get(mapKey);
+    if (prev) {
+      prev.count += 1;
+      return;
+    }
+    counts.set(mapKey, { itemType, itemName: name, count: 1 });
+  });
+  return counts;
+}
+
+function applyInventoryDeltaToEnvelope(envelope, beforeCounts, afterCounts) {
+  if (!envelope?.save || typeof envelope.save !== "object") return;
+  const inventory = saveInventory(envelope);
+  if (!envelope.save.inventory || typeof envelope.save.inventory !== "object") {
+    envelope.save.inventory = inventory;
+  }
+
+  beforeCounts.forEach((beforeEntry, key) => {
+    const afterEntry = afterCounts.get(key);
+    const delta = beforeEntry.count - (afterEntry?.count || 0);
+    if (delta <= 0) return;
+    const bucket = inventoryBucket(envelope, beforeEntry.itemType);
+    if (!inventory[beforeEntry.itemType] || typeof inventory[beforeEntry.itemType] !== "object") {
+      inventory[beforeEntry.itemType] = bucket;
+    }
+    const nextCount = inventoryCount(envelope, beforeEntry.itemType, beforeEntry.itemName) + delta;
+    inventory[beforeEntry.itemType][beforeEntry.itemName] = nextCount;
+  });
+
+  afterCounts.forEach((afterEntry, key) => {
+    const beforeEntry = beforeCounts.get(key);
+    const delta = afterEntry.count - (beforeEntry?.count || 0);
+    if (delta <= 0) return;
+    const current = inventoryCount(envelope, afterEntry.itemType, afterEntry.itemName);
+    if (current < delta) {
+      throw new Error(`${afterEntry.itemName} is not available in inventory`);
+    }
+    const bucket = inventoryBucket(envelope, afterEntry.itemType);
+    const nextCount = current - delta;
+    if (nextCount <= 0) {
+      delete bucket[afterEntry.itemName];
+      return;
+    }
+    bucket[afterEntry.itemName] = nextCount;
+  });
+}
+
 function modeListForSlot(mode, rows) {
   if (mode === "release") {
     return [{ name: "クリックで全装備解除", kind: "release" }];
@@ -173,27 +297,37 @@ function renderEquipRows(member) {
 }
 
 function renderCandidates(state) {
+  const member = getMember(state);
+  const envelope = parseSaveEnvelope();
   const rowsBySlot = state.equipCandidatesByMember?.[memberIndex];
   const slotRowsRaw = rowsBySlot && typeof rowsBySlot === "object" ? rowsBySlot[selectedSlotKey] : [];
-  const slotRows = Array.isArray(slotRowsRaw) ? slotRowsRaw : [];
+  const slotRows = Array.isArray(slotRowsRaw)
+    ? slotRowsRaw.filter((row) => {
+      if (!row || typeof row !== "object") return false;
+      if (row.kind === "none") return true;
+      return candidateInventoryCount(state, envelope, row) != null;
+    })
+    : [];
   const viewRows = modeListForSlot(modeKey, slotRows);
 
   const modeLabel = MODES.find((mode) => mode.key === modeKey)?.label || "そうび";
-  candidateTitle.textContent = `${modeLabel}`;
+  candidateTitle.textContent = `${modeLabel} / ${slotLabelByKey(selectedSlotKey)}`;
   candidateList.innerHTML = "";
   viewRows.forEach((row) => {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "candidate";
     const name = row?.name ? String(row.name) : "はずす";
-    const equippedName = String(memberEquipment(getMember(state))?.[selectedSlotKey] || "");
+    const stock = candidateInventoryCount(state, envelope, row);
+    const stockLabel = stock != null ? ` x${stock}` : "";
+    const equippedName = String(memberEquipment(member)?.[selectedSlotKey] || "");
     const equippedMark = modeKey === "equip" && equippedName && equippedName === name ? " [E]" : "";
     const meta = row?.kind === "release"
       ? "確認後、全装備を解除"
       : row?.atk != null
       ? `ATK:${asNum(row?.atk)} ACC:${asNum(row?.acc)}%`
       : `DEF:${asNum(row?.def)} EVA:${asNum(row?.eva)}`;
-    button.innerHTML = `<div>${name}${equippedMark}</div><div class="meta">${meta}</div>`;
+    button.innerHTML = `<div>${name}${stockLabel}${equippedMark}</div><div class="meta">${meta}</div>`;
     button.addEventListener("click", () => {
       commitEquipmentChange(state, row);
     });
@@ -251,6 +385,19 @@ function commitEquipmentChange(state, selectedRow, options = {}) {
   const member = getMember(state);
   if (!member) return;
   const changed = applyEquipmentChange(member, selectedRow, options);
+  const envelope = parseSaveEnvelope();
+  if (envelope?.save) {
+    const beforeCounts = countEquippedItems(state, member);
+    const afterCounts = countEquippedItems(state, changed.member);
+    try {
+      applyInventoryDeltaToEnvelope(envelope, beforeCounts, afterCounts);
+    } catch (_error) {
+      if (messageLine) {
+        messageLine.textContent = "在庫がないため装備できません。";
+      }
+      return;
+    }
+  }
   const nextPartyRaw = state.party.map((row, idx) => (idx === memberIndex ? changed.member : row));
   const nextState = { ...state, party: nextPartyRaw };
   const nextParty = nextPartyRaw.map((row, idx) => {
@@ -274,12 +421,12 @@ function commitEquipmentChange(state, selectedRow, options = {}) {
   };
   const okMenu = persistMenuState(nextRaw);
 
-  const envelope = parseSaveEnvelope();
   if (envelope?.save && Array.isArray(envelope.save.party) && envelope.save.party[memberIndex]) {
     const saveEntry = envelope.save.party[memberIndex];
     saveEntry.equipment = {
       ...memberEquipment(changed.member),
     };
+    envelope.menu_state = nextRaw;
     envelope.saved_at = new Date().toISOString();
     persistSaveEnvelope(envelope);
   }

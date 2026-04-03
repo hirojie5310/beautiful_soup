@@ -38,6 +38,30 @@ def dec_inventory_item(save_dict: dict, item_type: str, item_name: str) -> bool:
     return True
 
 
+def inc_inventory_item(save_dict: dict, item_type: str, item_name: str, amount: int = 1) -> bool:
+    if amount <= 0:
+        return False
+    inv = (save_dict or {}).setdefault("inventory", {})
+    if not isinstance(inv, dict):
+        return False
+    bucket = inv.setdefault(item_type, {})
+    if not isinstance(bucket, dict):
+        return False
+    cur = int(bucket.get(item_name, 0) or 0)
+    bucket[item_name] = cur + int(amount)
+    return True
+
+
+def get_inventory_item_count(save_dict: dict, item_type: str, item_name: str) -> int:
+    inv = (save_dict or {}).get("inventory", {})
+    if not isinstance(inv, dict):
+        return 0
+    bucket = inv.get(item_type, {})
+    if not isinstance(bucket, dict):
+        return 0
+    return max(0, int(bucket.get(item_name, 0) or 0))
+
+
 # get_battle_state(actor)（PartyMemberRuntime / BattleActorState の解決）
 def get_battle_state(actor):
     st = getattr(actor, "state", None)

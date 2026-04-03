@@ -193,8 +193,10 @@
         candidateGrid.innerHTML = candidates.map((row, i) => {
           const sel = mode === "candidate" && i === candIdx;
           const name = row?.name || "はずす";
+          const stock = Number(row?.count ?? 0);
+          const stockLabel = row?.name && Number.isFinite(stock) && stock > 0 ? ` x${stock}` : "";
           const sub = row?.atk != null ? `ATK:${Number(row.atk)} ACC:${Number(row.acc || 0)}%` : (row?.def != null ? `DEF:${Number(row.def)} EVA:${Number(row.eva || 0)}` : "");
-          return `<button type="button" class="candidate ${sel ? "sel" : ""}" data-candidate-index="${i}">${name}<div style="color:var(--muted);font-size:.92rem;">${sub}</div></button>`;
+          return `<button type="button" class="candidate ${sel ? "sel" : ""}" data-candidate-index="${i}">${name}${stockLabel}<div style="color:var(--muted);font-size:.92rem;">${sub}</div></button>`;
         }).join("");
 
         candidateGrid.querySelectorAll(".candidate").forEach((el) => {

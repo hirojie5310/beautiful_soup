@@ -44,8 +44,27 @@ function resolveFaceImageCandidates(member) {
 function parseMenuState() {
   try {
     const text = localStorage.getItem(LOCAL_MENU_STORAGE_KEY);
-    if (!text) return { party: [], resources: { cp: 0, cp_max: 255, gil: 0 } };
-    const parsed = JSON.parse(text);
+    let parsed = text ? JSON.parse(text) : null;
+    if (!parsed || typeof parsed !== "object") {
+      const envelope = restoreSaveEnvelopeFromStorage();
+      if (envelope?.menu_state && typeof envelope.menu_state === "object") {
+        parsed = envelope.menu_state;
+      }
+    } else if (!Array.isArray(parsed?.equip_candidates_by_member)) {
+      const envelope = restoreSaveEnvelopeFromStorage();
+      if (envelope?.menu_state && typeof envelope.menu_state === "object") {
+        parsed = {
+          ...envelope.menu_state,
+          ...parsed,
+          equip_candidates_by_member: Array.isArray(parsed?.equip_candidates_by_member)
+            ? parsed.equip_candidates_by_member
+            : envelope.menu_state.equip_candidates_by_member,
+        };
+      }
+    }
+    if (!parsed || typeof parsed !== "object") {
+      return { party: [], resources: { cp: 0, cp_max: 255, gil: 0 } };
+    }
     return {
       ...parsed,
       party: Array.isArray(parsed?.party) ? parsed.party : [],

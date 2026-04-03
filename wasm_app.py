@@ -13,6 +13,13 @@ DEFAULT_PORT = 8000
 
 
 class WasmRequestHandler(SimpleHTTPRequestHandler):
+    def end_headers(self) -> None:
+        # 開発中に JS/HTML の古いキャッシュを掴み続けないよう、常に no-store を付与する。
+        self.send_header("Cache-Control", "no-store, no-cache, must-revalidate")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
+        super().end_headers()
+
     def do_GET(self) -> None:
         request_path = unquote(self.path.split("?", 1)[0])
         if request_path.startswith("/web_wasm/faces/"):
