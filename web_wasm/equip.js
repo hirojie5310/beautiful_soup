@@ -28,6 +28,35 @@ const SLOTS = [
 let memberIndex = 0;
 let selectedSlotKey = "main_hand";
 let modeKey = "equip";
+const slotToArmorType = { head: "Helm", body: "Armor", arms: "Gloves" };
+const JOB_NAME_TO_CODE = {
+  "Onion Knight": "OK",
+  "Warrior": "Wa",
+  "Monk": "Mo",
+  "White Mage": "WM",
+  "Black Mage": "BM",
+  "Red Mage": "RM",
+  "Ranger": "Ra",
+  "Knight": "Kn",
+  "Thief": "Th",
+  "Scholar": "Sc",
+  "Geomancer": "Ge",
+  "Dragoon": "Dr",
+  "Viking": "Vi",
+  "Black Belt": "BB",
+  "Evoker": "Ev",
+  "Bard": "Ba",
+  "Magus": "Ma",
+  "Devout": "De",
+  "Summoner": "Su",
+  "Sage": "Sa",
+  "Ninja": "Ni",
+  "Mystic Knight": "MK",
+};
+
+let equipmentMaster = { weapons: [], armors: [] };
+let equipmentMasterReady = false;
+const BUNDLED_SAVE_URL = "../assets/data/ffiii_savedata.json?v=20260404-1";
 
 function slotLabelByKey(slotKey) {
   return SLOTS.find((row) => row.key === slotKey)?.label || slotKey;
@@ -84,6 +113,65 @@ function parseSaveEnvelope() {
     return null;
   } catch (_error) {
     return null;
+  }
+}
+
+function isObj(value) {
+  return value && typeof value === "object" && !Array.isArray(value);
+}
+
+function mergeInventoryBucketMissing(targetBucket, sourceBucket) {
+  if (!isObj(targetBucket) || !isObj(sourceBucket)) return false;
+  const targetNorm = new Map(
+    Object.entries(targetBucket).map(([name]) => [normalizeName(name), name]),
+  );
+  let changed = false;
+  Object.entries(sourceBucket).forEach(([name, count]) => {
+    const norm = normalizeName(name);
+    if (targetNorm.has(norm)) return;
+    targetBucket[name] = count;
+    targetNorm.set(norm, name);
+    changed = true;
+  });
+  return changed;
+}
+
+async function syncBundledEquipmentInventoryToStorage() {
+  let envelope = parseSaveEnvelope();
+  if (!envelope?.save || typeof envelope.save !== "object") {
+    return false;
+  }
+  try {
+    const response = await fetch(BUNDLED_SAVE_URL, { cache: "no-store" });
+    if (!response.ok) return false;
+    const bundledSave = await response.json();
+    const bundledInventory = bundledSave?.inventory;
+    if (!isObj(bundledInventory)) return false;
+
+    if (!isObj(envelope.save.inventory)) {
+      envelope.save.inventory = {};
+    }
+    const inventory = envelope.save.inventory;
+    if (!isObj(inventory.Weapon)) inventory.Weapon = {};
+    if (!isObj(inventory.Armor)) inventory.Armor = {};
+
+    const changedWeapon = mergeInventoryBucketMissing(
+      inventory.Weapon,
+      isObj(bundledInventory.Weapon) ? bundledInventory.Weapon : {},
+    );
+    const changedArmor = mergeInventoryBucketMissing(
+      inventory.Armor,
+      isObj(bundledInventory.Armor) ? bundledInventory.Armor : {},
+    );
+    if (!changedWeapon && !changedArmor) return false;
+
+    persistSaveEnvelope({
+      ...envelope,
+      saved_at: new Date().toISOString(),
+    });
+    return true;
+  } catch (_error) {
+    return false;
   }
 }
 
@@ -191,7 +279,115 @@ function equipmentItemType(state, itemName, kindHint = "") {
   const catalog = inventoryCatalog(state);
   if (Array.isArray(catalog?.weapons) && catalog.weapons.includes(itemName)) return "Weapon";
   if (Array.isArray(catalog?.armors) && catalog.armors.includes(itemName)) return "Armor";
+  if (equipmentMasterReady) {
+    if (equipmentMaster.weapons.some((row) => String(row?.name || "") === String(itemName))) return "Weapon";
+    if (equipmentMaster.armors.some((row) => String(row?.name || "") === String(itemName))) return "Armor";
+  }
   return null;
+}
+
+function normalizeJobCode(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, "");
+}
+
+function memberJobCode(member, envelope, targetMemberIndex) {
+  const saveParty = Array.isArray(envelope?.save?.party) ? envelope.save.party : [];
+  const saveEntry = saveParty[targetMemberIndex];
+  const jobName = String(saveEntry?.job || member?.job || "").trim();
+  if (jobName && JOB_NAME_TO_CODE[jobName]) return JOB_NAME_TO_CODE[jobName];
+  return jobName;
+}
+
+function itemAllowedForMember(member, envelope, itemRaw, targetMemberIndex) {
+  const equippedBy = Array.isArray(itemRaw?.EquippedBy) ? itemRaw.EquippedBy : [];
+  if (!equippedBy.length) return true;
+  const allow = new Set(equippedBy.map((code) => normalizeJobCode(code)));
+  const currentJob = normalizeJobCode(memberJobCode(member, envelope, targetMemberIndex));
+  return currentJob ? allow.has(currentJob) : true;
+}
+
+function isTwoHandedWeapon(itemRaw) {
+  if (!itemRaw || typeof itemRaw !== "object") return false;
+  if ("Two-Handed" in itemRaw) return true;
+  const hands = itemRaw?.Hands;
+  if (typeof hands === "number") return hands >= 2;
+  if (typeof hands === "string" && /^\d+$/.test(hands)) return Number(hands) >= 2;
+  return Boolean(itemRaw?.TwoHanded);
+}
+
+function buildDynamicCandidateRows(state, envelope, member, targetMemberIndex, slotKey) {
+  if (!equipmentMasterReady || !member) return null;
+  if (slotKey === "main_hand" || slotKey === "off_hand") {
+    const rows = [{ kind: "none", name: null }];
+    equipmentMaster.weapons.forEach((raw) => {
+      const name = String(raw?.name || "");
+      if (!name) return;
+      const stockCount = normalizedInventoryCount(envelope, "Weapon", name);
+      if (stockCount <= 0) return;
+      if (!itemAllowedForMember(member, envelope, raw, targetMemberIndex)) return;
+      if (slotKey === "off_hand" && isTwoHandedWeapon(raw)) return;
+      rows.push({
+        kind: "weapon",
+        name,
+        count: stockCount,
+        atk: asNum(raw?.BasePower ?? raw?.AttackPower),
+        acc: raw?.BaseAccuracy != null
+          ? Math.round(Number(raw.BaseAccuracy || 0) * 100)
+          : asNum(raw?.HitRate),
+      });
+    });
+    if (slotKey === "off_hand") {
+      equipmentMaster.armors.forEach((raw) => {
+        const name = String(raw?.name || "");
+        if (!name || String(raw?.ArmorType || "") !== "Shield") return;
+        const stockCount = normalizedInventoryCount(envelope, "Armor", name);
+        if (stockCount <= 0) return;
+        if (!itemAllowedForMember(member, envelope, raw, targetMemberIndex)) return;
+        rows.push({
+          kind: "armor",
+          name,
+          count: stockCount,
+          def: asNum(raw?.Defense),
+          eva: raw?.Evasion != null
+            ? Math.round(Number(raw.Evasion || 0) * 100)
+            : asNum(raw?.EvasionPenalty),
+        });
+      });
+    }
+    return rows;
+  }
+
+  const armorType = slotToArmorType[slotKey];
+  if (!armorType) return null;
+  const rows = [{ kind: "none", name: null }];
+  equipmentMaster.armors.forEach((raw) => {
+    const name = String(raw?.name || "");
+    if (!name || String(raw?.ArmorType || "") !== armorType) return;
+    const stockCount = normalizedInventoryCount(envelope, "Armor", name);
+    if (stockCount <= 0) return;
+    if (!itemAllowedForMember(member, envelope, raw, targetMemberIndex)) return;
+    rows.push({
+      kind: "armor",
+      name,
+      count: stockCount,
+      def: asNum(raw?.Defense),
+      eva: raw?.Evasion != null
+        ? Math.round(Number(raw.Evasion || 0) * 100)
+        : asNum(raw?.EvasionPenalty),
+    });
+  });
+  return rows;
+}
+
+function candidateRowsForSlot(state, envelope, member, targetMemberIndex, slotKey) {
+  const dynamicRows = buildDynamicCandidateRows(state, envelope, member, targetMemberIndex, slotKey);
+  if (Array.isArray(dynamicRows)) return dynamicRows;
+  const rowsBySlot = state.equipCandidatesByMember?.[targetMemberIndex];
+  const slotRows = rowsBySlot && typeof rowsBySlot === "object" ? rowsBySlot[slotKey] : [];
+  return Array.isArray(slotRows) ? slotRows : [];
 }
 
 function countEquippedItems(state, member) {
@@ -299,8 +495,7 @@ function renderEquipRows(member) {
 function renderCandidates(state) {
   const member = getMember(state);
   const envelope = parseSaveEnvelope();
-  const rowsBySlot = state.equipCandidatesByMember?.[memberIndex];
-  const slotRowsRaw = rowsBySlot && typeof rowsBySlot === "object" ? rowsBySlot[selectedSlotKey] : [];
+  const slotRowsRaw = candidateRowsForSlot(state, envelope, member, memberIndex, selectedSlotKey);
   const slotRows = Array.isArray(slotRowsRaw)
     ? slotRowsRaw.filter((row) => {
       if (!row || typeof row !== "object") return false;
@@ -336,8 +531,9 @@ function renderCandidates(state) {
 }
 
 function findCandidateRow(state, targetMemberIndex, slotKey, itemName) {
-  const rowsBySlot = state.equipCandidatesByMember?.[targetMemberIndex];
-  const rows = rowsBySlot && typeof rowsBySlot === "object" ? rowsBySlot[slotKey] : [];
+  const envelope = parseSaveEnvelope();
+  const member = state.party?.[targetMemberIndex] || null;
+  const rows = candidateRowsForSlot(state, envelope, member, targetMemberIndex, slotKey);
   if (!Array.isArray(rows)) return null;
   return rows.find((row) => String(row?.name || "") === String(itemName || "")) || null;
 }
@@ -512,4 +708,31 @@ window.addEventListener("keydown", (event) => {
   }
 });
 
-render();
+async function loadEquipmentMaster() {
+  try {
+    const [weaponsResponse, armorsResponse] = await Promise.all([
+      fetch("../assets/data/ffiii_weapons.json", { cache: "no-store" }),
+      fetch("../assets/data/ffiii_armors.json", { cache: "no-store" }),
+    ]);
+    if (!weaponsResponse.ok || !armorsResponse.ok) return;
+    const [weaponsJson, armorsJson] = await Promise.all([
+      weaponsResponse.json(),
+      armorsResponse.json(),
+    ]);
+    equipmentMaster = {
+      weapons: Array.isArray(weaponsJson?.weapons) ? weaponsJson.weapons : [],
+      armors: Array.isArray(armorsJson?.armors) ? armorsJson.armors : [],
+    };
+    equipmentMasterReady = true;
+    render();
+  } catch (_error) {
+    equipmentMasterReady = false;
+  }
+}
+
+Promise.all([
+  syncBundledEquipmentInventoryToStorage(),
+  loadEquipmentMaster(),
+]).finally(() => {
+  render();
+});
