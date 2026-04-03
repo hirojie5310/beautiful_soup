@@ -51,6 +51,78 @@ except Exception:
     job_attr = {}
 
 
+def _merge_save_data(base, overlay):
+    if isinstance(base, dict) and isinstance(overlay, dict):
+        merged = {
+            key: _merge_save_data(value, None)
+            for key, value in base.items()
+        }
+        for key, value in overlay.items():
+            merged[key] = _merge_save_data(base.get(key), value)
+        return merged
+    if isinstance(base, list) and isinstance(overlay, list):
+        merged = []
+        max_len = max(len(base), len(overlay))
+        for idx in range(max_len):
+            base_value = base[idx] if idx < len(base) else None
+            overlay_value = overlay[idx] if idx < len(overlay) else None
+            merged.append(_merge_save_data(base_value, overlay_value))
+        return merged
+    if overlay is None:
+        if isinstance(base, dict):
+            return {
+                key: _merge_save_data(value, None)
+                for key, value in base.items()
+            }
+        if isinstance(base, list):
+            return [_merge_save_data(value, None) for value in base]
+        return base
+    if isinstance(overlay, dict):
+        return {
+            key: _merge_save_data(None, value)
+            for key, value in overlay.items()
+        }
+    if isinstance(overlay, list):
+        return [_merge_save_data(None, value) for value in overlay]
+    return overlay
+
+
+def _mp_from_mp_levels(entry):
+    if not isinstance(entry, dict):
+        return None
+    mp_levels = entry.get("mp_levels")
+    if not isinstance(mp_levels, dict):
+        return None
+    mp = {}
+    has_value = False
+    for level in range(1, 9):
+        row = mp_levels.get(str(level))
+        current = None
+        if isinstance(row, dict):
+            current = row.get("current")
+        if current is None:
+            continue
+        mp[f"L{level}MP"] = _safe_int(current, 0)
+        has_value = True
+    return mp if has_value else None
+
+
+def _normalize_loaded_save(save_data):
+    if not isinstance(save_data, dict):
+        return save_data
+    normalized = _merge_save_data(None, save_data)
+    party = normalized.get("party")
+    if not isinstance(party, list):
+        return normalized
+    for entry in party:
+        if not isinstance(entry, dict):
+            continue
+        derived_mp = _mp_from_mp_levels(entry)
+        if isinstance(derived_mp, dict):
+            entry["mp"] = derived_mp
+    return normalized
+
+
 def get_location_selection_json():
     payload = {
         "groups": groups_payload,
@@ -610,7 +682,10 @@ def boot_engine_for_location_with_save_json(
     parsed = json.loads(save_json)
     if not isinstance(parsed, dict):
         raise ValueError("save_json must be JSON object")
-    state.save = parsed
+    parsed = _normalize_loaded_save(parsed)
+    current_save = getattr(state, "save", {})
+    base_save = current_save if isinstance(current_save, dict) else {}
+    state.save = _merge_save_data(base_save, parsed)
     return boot_engine_for_location(location_group, location, seed=seed)
 
 

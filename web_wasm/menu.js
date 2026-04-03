@@ -9,6 +9,7 @@ const modeHint = document.getElementById("modeHint");
 const menuLoadSaveInput = document.getElementById("menuLoadSaveInput");
 const MENU_LABELS = ["アイテム", "まほう", "そうび", "ステータス", "ならびかえ", "ジョブ", "セーブ", "ロード"];
 let isRowSwapMode = false;
+let defaultSaveTemplatePromise = null;
 
 function normalizeFaceKey(raw) {
   return String(raw || "")
@@ -133,6 +134,103 @@ function makeSaveEnvelope(saveObj, options = {}) {
   };
 }
 
+function compactSaveEnvelope(envelope) {
+  if (!envelope || typeof envelope !== "object") return null;
+  if (!envelope.save || typeof envelope.save !== "object") return null;
+  return {
+    version: 1,
+    saved_at: String(envelope.saved_at || ""),
+    selected_location_group: String(envelope.selected_location_group || ""),
+    selected_location: String(envelope.selected_location || ""),
+    save: envelope.save,
+  };
+}
+
+function mergeSaveData(base, overlay) {
+  if (base && typeof base === "object" && !Array.isArray(base)
+    && overlay && typeof overlay === "object" && !Array.isArray(overlay)) {
+    const merged = {};
+    Object.keys(base).forEach((key) => {
+      merged[key] = mergeSaveData(base[key], undefined);
+    });
+    Object.keys(overlay).forEach((key) => {
+      merged[key] = mergeSaveData(base?.[key], overlay[key]);
+    });
+    return merged;
+  }
+  if (Array.isArray(base) && Array.isArray(overlay)) {
+    const merged = [];
+    const maxLen = Math.max(base.length, overlay.length);
+    for (let index = 0; index < maxLen; index += 1) {
+      merged.push(mergeSaveData(base[index], overlay[index]));
+    }
+    return merged;
+  }
+  if (overlay === undefined) {
+    if (Array.isArray(base)) return base.map((value) => mergeSaveData(value, undefined));
+    if (base && typeof base === "object") {
+      return Object.fromEntries(
+        Object.entries(base).map(([key, value]) => [key, mergeSaveData(value, undefined)]),
+      );
+    }
+    return base;
+  }
+  if (Array.isArray(overlay)) return overlay.map((value) => mergeSaveData(undefined, value));
+  if (overlay && typeof overlay === "object") {
+    return Object.fromEntries(
+      Object.entries(overlay).map(([key, value]) => [key, mergeSaveData(undefined, value)]),
+    );
+  }
+  return overlay;
+}
+
+function stripRedundantSaveFields(saveObj) {
+  if (!saveObj || typeof saveObj !== "object") return saveObj;
+  const nextSave = mergeSaveData(undefined, saveObj);
+  const party = Array.isArray(nextSave?.party) ? nextSave.party : [];
+  nextSave.party = party.map((entry) => {
+    if (!entry || typeof entry !== "object") return entry;
+    const nextEntry = { ...entry };
+    if (nextEntry.mp_levels && typeof nextEntry.mp_levels === "object") {
+      delete nextEntry.mp;
+    }
+    return nextEntry;
+  });
+  return nextSave;
+}
+
+async function loadDefaultSaveTemplate() {
+  if (!defaultSaveTemplatePromise) {
+    defaultSaveTemplatePromise = fetch("../assets/data/ffiii_savedata.json", {
+      cache: "no-store",
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error(`save template load failed: ${response.status}`);
+        return response.json();
+      })
+      .then((raw) => {
+        if (raw?.save && typeof raw.save === "object") return raw.save;
+        return raw && typeof raw === "object" ? raw : null;
+      })
+      .catch(() => null);
+  }
+  return defaultSaveTemplatePromise;
+}
+
+async function finalizeSaveEnvelope(envelope) {
+  const compact = compactSaveEnvelope(envelope);
+  if (!compact) return null;
+  const template = await loadDefaultSaveTemplate();
+  if (template && typeof template === "object") {
+    compact.save = mergeSaveData(template, compact.save);
+  }
+  compact.save = stripRedundantSaveFields(compact.save);
+  return {
+    ...envelope,
+    save: compact.save,
+  };
+}
+
 function patchSaveWithMenuState(saveObj, menuState) {
   const nextSave = saveObj && typeof saveObj === "object" ? { ...saveObj } : {};
   const sourceParty = Array.isArray(nextSave?.party) ? nextSave.party : [];
@@ -248,7 +346,12 @@ function extractMenuStateFromEnvelope(envelope) {
 }
 
 async function saveEnvelopeToLocalFile(envelope) {
-  const payload = JSON.stringify(envelope, null, 2);
+  const finalizedEnvelope = await finalizeSaveEnvelope(envelope);
+  const exportEnvelope = compactSaveEnvelope(finalizedEnvelope);
+  if (!exportEnvelope) {
+    throw new Error("invalid save envelope");
+  }
+  const payload = JSON.stringify(exportEnvelope, null, 2);
   const fileName = `ffiii_savedata_${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
   if (window.showSaveFilePicker) {
     const handle = await window.showSaveFilePicker({
@@ -441,7 +544,7 @@ function renderButtons() {
     button.className = "btn";
     button.type = "button";
     button.textContent = label;
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
       if (label === "ならびかえ") {
         isRowSwapMode = !isRowSwapMode;
         updateModeHint();
@@ -480,11 +583,12 @@ function renderButtons() {
           selectedLocation: stored?.selected_location || "",
           menuState: state,
         });
-        if (!persistSaveEnvelopeToStorage(nextEnvelope)) {
+        const finalizedEnvelope = await finalizeSaveEnvelope(nextEnvelope);
+        if (!finalizedEnvelope || !persistSaveEnvelopeToStorage(finalizedEnvelope)) {
           window.alert("セーブ失敗: ブラウザ保存に失敗しました。");
           return;
         }
-        saveEnvelopeToLocalFile(nextEnvelope)
+        saveEnvelopeToLocalFile(finalizedEnvelope)
           .then(() => {
             window.alert("セーブ完了: ブラウザとローカルファイルに保存しました。");
           })

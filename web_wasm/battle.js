@@ -990,6 +990,19 @@ function makeSaveEnvelope(saveObj, options = {}) {
   };
 }
 
+function compactSaveEnvelope(envelope) {
+  if (!envelope || typeof envelope !== "object") return null;
+  if (!envelope.save || typeof envelope.save !== "object") return null;
+  return {
+    version: 1,
+    saved_at: String(envelope.saved_at || ""),
+    selected_location_group: String(envelope.selected_location_group || ""),
+    selected_location: String(envelope.selected_location || ""),
+    save: envelope.save,
+    menu_state: null,
+  };
+}
+
 function parseSaveEnvelope(raw) {
   if (!raw || typeof raw !== "object") return null;
   if (raw?.version === 1 && raw?.save && typeof raw.save === "object") {
@@ -1198,8 +1211,9 @@ function persistSaveEnvelopeToStorage(envelope) {
 }
 
 function downloadSaveEnvelope(envelope) {
-  if (!envelope) return false;
-  const payload = JSON.stringify(envelope, null, 2);
+  const exportEnvelope = compactSaveEnvelope(envelope);
+  if (!exportEnvelope) return false;
+  const payload = JSON.stringify(exportEnvelope, null, 2);
   const blob = new Blob([payload], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
