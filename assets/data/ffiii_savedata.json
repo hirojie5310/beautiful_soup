@@ -1,616 +1,718 @@
 {
-  "party": [
-    {
-      "name": "Runeth",
-      "level": 45,
-      "exp": 534721,
-      "job": "Sage",
-      "job_level": {
-        "level": 99,
-        "skill_point": 99
-      },
-      "job_levels": {
-        "Sage": {
+  "version": 1,
+  "saved_at": "2026-04-03T17:01:20.492Z",
+  "selected_location_group": "",
+  "selected_location": "",
+  "save": {
+    "party": [
+      {
+        "name": "Runeth",
+        "level": 45,
+        "exp": 534721,
+        "job": "Sage",
+        "job_level": {
           "level": 99,
           "skill_point": 99
         },
-        "Bard": {
-          "level": 12,
-          "skill_point": 3
+        "job_levels": {
+          "Sage": {
+            "level": 99,
+            "skill_point": 99
+          },
+          "Bard": {
+            "level": 12,
+            "skill_point": 3
+          },
+          "Ninja": {
+            "level": 2,
+            "skill_point": 12
+          },
+          "Knight": {
+            "level": 7,
+            "skill_point": 0
+          }
         },
-        "Ninja": {
-          "level": 2,
-          "skill_point": 12
+        "hp": 2658,
+        "max_hp": 2658,
+        "strength": 31,
+        "agility": 45,
+        "vitality": 42,
+        "intelligence": 59,
+        "mind": 59,
+        "row": "back",
+        "equipment": {
+          "main_hand": "Omnirod",
+          "off_hand": "Elder Staff",
+          "head": "Ribbon",
+          "body": "White Robe",
+          "arms": "Protect Ring"
         },
-        "Knight": {
-          "level": 7,
-          "skill_point": 0
+        "Magic": {
+          "LV1": [
+            "Fire",
+            "Blizzard",
+            "Cure"
+          ],
+          "LV2": [
+            "Blind",
+            "Thunder",
+            "Shiva"
+          ],
+          "LV3": [
+            "Fira",
+            "Thundara",
+            "Cura"
+          ],
+          "LV4": [
+            "Break",
+            "Shade",
+            "Libra"
+          ],
+          "LV5": [
+            "Thundaga",
+            "Protect",
+            "Raise"
+          ],
+          "LV6": [
+            "Firaga",
+            "Warp",
+            "Bio"
+          ],
+          "LV7": [
+            "Drain",
+            "Esuna",
+            "Curaja"
+          ],
+          "LV8": [
+            "Flare",
+            "Meteor",
+            "Bahamut"
+          ]
+        },
+        "status_effects": {
+          "Poison": true,
+          "Blind": false,
+          "Mini": false,
+          "Silence": false,
+          "Toad": false,
+          "Petrification": false,
+          "KO": false,
+          "Confusion": false,
+          "Sleep": false,
+          "Paralysis": false,
+          "Partial Petrification (1/3)": false,
+          "Partial Petrification (1/2)": false,
+          "Partial Petrification (Full)": false
+        },
+        "image_name": "",
+        "portrait_key": "runeth",
+        "mp_levels": {
+          "1": {
+            "current": 50,
+            "max": 50
+          },
+          "2": {
+            "current": 43,
+            "max": 43
+          },
+          "3": {
+            "current": 35,
+            "max": 35
+          },
+          "4": {
+            "current": 27,
+            "max": 27
+          },
+          "5": {
+            "current": 23,
+            "max": 23
+          },
+          "6": {
+            "current": 18,
+            "max": 18
+          },
+          "7": {
+            "current": 14,
+            "max": 14
+          },
+          "8": {
+            "current": 10,
+            "max": 10
+          }
         }
       },
-      "hp": 2658,
-      "max_hp": 2658,
-      "mp": {
-        "L1MP": 48,
-        "L2MP": 41,
-        "L3MP": 33,
-        "L4MP": 24,
-        "L5MP": 20,
-        "L6MP": 16,
-        "L7MP": 11,
-        "L8MP": 7
-      },
-      "strength": 31,
-      "agility": 45,
-      "vitality": 42,
-      "intelligence": 59,
-      "mind": 59,
-      "row": "back",
-      "equipment": {
-        "main_hand": "Omnirod",
-        "off_hand": "Elder Staff",
-        "head": "Ribbon",
-        "body": "White Robe",
-        "arms": "Protect Ring"
-      },
-      "Magic": {
-        "LV1": [
-          "Fire",
-          "Blizzard",
-          "Cure"
-        ],
-        "LV2": [
-          "Blind",
-          "Thunder",
-          "Shiva"
-        ],
-        "LV3": [
-          "Fira",
-          "Thundara",
-          "Cura"
-        ],
-        "LV4": [
-          "Break",
-          "Shade",
-          "Libra"
-        ],
-        "LV5": [
-          "Thundaga",
-          "Protect",
-          "Raise"
-        ],
-        "LV6": [
-          "Firaga",
-          "Warp",
-          "Bio"
-        ],
-        "LV7": [
-          "Drain",
-          "Esuna",
-          "Curaja"
-        ],
-        "LV8": [
-          "Flare",
-          "Meteor",
-          "Bahamut"
-        ]
-      },
-      "status_effects": {
-        "Poison": true,
-        "Blind": false,
-        "Mini": false,
-        "Silence": false,
-        "Toad": false,
-        "Petrification": false,
-        "KO": false,
-        "Confusion": false,
-        "Sleep": false,
-        "Paralysis": false,
-        "Partial Petrification (1/3)": false,
-        "Partial Petrification (1/2)": false,
-        "Partial Petrification (Full)": false
-      },
-      "image_name": "",
-      "portrait_key": "runeth"
-    },
-    {
-      "name": "Arc",
-      "level": 48,
-      "exp": 666444,
-      "job": "Evoker",
-      "job_level": {
-        "level": 31,
-        "skill_point": 52
-      },
-      "job_levels": {
-        "Dragoon": {
-          "level": 97,
-          "skill_point": 54
-        },
-        "Ninja": {
-          "level": 13,
-          "skill_point": 71
-        },
-        "Black Belt": {
-          "level": 8,
-          "skill_point": 68
-        },
-        "Geomancer": {
-          "level": 16,
-          "skill_point": 12
-        },
-        "Evoker": {
+      {
+        "name": "Arc",
+        "level": 48,
+        "exp": 666444,
+        "job": "Evoker",
+        "job_level": {
           "level": 31,
           "skill_point": 52
+        },
+        "job_levels": {
+          "Dragoon": {
+            "level": 97,
+            "skill_point": 54
+          },
+          "Ninja": {
+            "level": 13,
+            "skill_point": 71
+          },
+          "Black Belt": {
+            "level": 8,
+            "skill_point": 68
+          },
+          "Geomancer": {
+            "level": 16,
+            "skill_point": 12
+          },
+          "Evoker": {
+            "level": 31,
+            "skill_point": 52
+          }
+        },
+        "hp": 1776,
+        "max_hp": 1776,
+        "strength": 42,
+        "agility": 29,
+        "vitality": 15,
+        "intelligence": 44,
+        "mind": 44,
+        "row": "back",
+        "equipment": {
+          "main_hand": "Fire Rod",
+          "off_hand": "Light Rod",
+          "head": "Ribbon",
+          "body": "Black Robe",
+          "arms": "Protect Ring"
+        },
+        "status_effects": {
+          "Poison": false,
+          "Blind": false,
+          "Mini": false,
+          "Silence": false,
+          "Toad": false,
+          "Petrification": false,
+          "KO": false,
+          "Confusion": false,
+          "Sleep": false,
+          "Paralysis": false,
+          "Partial Petrification (1/3)": false,
+          "Partial Petrification (1/2)": false,
+          "Partial Petrification (Full)": false
+        },
+        "image_name": "",
+        "portrait_key": "arc",
+        "Magic": {
+          "LV1": [
+            "Chocobo",
+            null,
+            null
+          ],
+          "LV2": [
+            "Shiva",
+            null,
+            null
+          ],
+          "LV3": [
+            "Ramuh",
+            null,
+            null
+          ],
+          "LV4": [
+            "Ifrit",
+            null,
+            null
+          ],
+          "LV5": [
+            "Titan",
+            null,
+            null
+          ],
+          "LV6": [
+            "Odin",
+            null,
+            null
+          ],
+          "LV7": [
+            "Leviathan",
+            null,
+            null
+          ],
+          "LV8": [
+            "Bahamut",
+            null,
+            null
+          ]
+        },
+        "mp_levels": {
+          "1": {
+            "current": 17,
+            "max": 17
+          },
+          "2": {
+            "current": 14,
+            "max": 14
+          },
+          "3": {
+            "current": 13,
+            "max": 13
+          },
+          "4": {
+            "current": 11,
+            "max": 11
+          },
+          "5": {
+            "current": 10,
+            "max": 10
+          },
+          "6": {
+            "current": 8,
+            "max": 8
+          },
+          "7": {
+            "current": 6,
+            "max": 6
+          },
+          "8": {
+            "current": 4,
+            "max": 4
+          }
         }
       },
-      "hp": 1776,
-      "max_hp": 1776,
-      "mp": {
-        "L1MP": 16,
-        "L2MP": 13,
-        "L3MP": 12,
-        "L4MP": 10,
-        "L5MP": 9,
-        "L6MP": 7,
-        "L7MP": 5,
-        "L8MP": 3
-      },
-      "strength": 42,
-      "agility": 29,
-      "vitality": 15,
-      "intelligence": 44,
-      "mind": 44,
-      "row": "back",
-      "equipment": {
-        "main_hand": "Fire Rod",
-        "off_hand": "Light Rod",
-        "head": "Ribbon",
-        "body": "Black Robe",
-        "arms": "Protect Ring"
-      },
-      "status_effects": {
-        "Poison": false,
-        "Blind": false,
-        "Mini": false,
-        "Silence": false,
-        "Toad": false,
-        "Petrification": false,
-        "KO": false,
-        "Confusion": false,
-        "Sleep": false,
-        "Paralysis": false,
-        "Partial Petrification (1/3)": false,
-        "Partial Petrification (1/2)": false,
-        "Partial Petrification (Full)": false
-      },
-      "image_name": "",
-      "portrait_key": "arc",
-      "Magic": {
-        "LV1": [
-          "Chocobo",
-          null,
-          null
-        ],
-        "LV2": [
-          "Shiva",
-          null,
-          null
-        ],
-        "LV3": [
-          "Ramuh",
-          null,
-          null
-        ],
-        "LV4": [
-          "Ifrit",
-          null,
-          null
-        ],
-        "LV5": [
-          "Titan",
-          null,
-          null
-        ],
-        "LV6": [
-          "Odin",
-          null,
-          null
-        ],
-        "LV7": [
-          "Leviathan",
-          null,
-          null
-        ],
-        "LV8": [
-          "Bahamut",
-          null,
-          null
-        ]
-      }
-    },
-    {
-      "name": "Refia",
-      "level": 46,
-      "exp": 560863,
-      "job": "Dragoon",
-      "job_level": {
-        "level": 99,
-        "skill_point": 99
-      },
-      "job_levels": {
-        "Dragoon": {
+      {
+        "name": "Refia",
+        "level": 46,
+        "exp": 560863,
+        "job": "Dragoon",
+        "job_level": {
           "level": 99,
           "skill_point": 99
         },
-        "Ninja": {
-          "level": 24,
-          "skill_point": 83
+        "job_levels": {
+          "Dragoon": {
+            "level": 99,
+            "skill_point": 99
+          },
+          "Ninja": {
+            "level": 24,
+            "skill_point": 83
+          },
+          "Black Belt": {
+            "level": 8,
+            "skill_point": 68
+          }
         },
-        "Black Belt": {
-          "level": 8,
-          "skill_point": 68
+        "hp": 2204,
+        "max_hp": 2204,
+        "strength": 46,
+        "agility": 50,
+        "vitality": 29,
+        "intelligence": 14,
+        "mind": 29,
+        "row": "front",
+        "equipment": {
+          "main_hand": "Holy Lance",
+          "off_hand": "Crystal Shield",
+          "head": "Ribbon",
+          "body": "Crystal Mail",
+          "arms": "Crystal Gloves"
+        },
+        "status_effects": {
+          "Poison": false,
+          "Blind": false,
+          "Mini": false,
+          "Silence": false,
+          "Toad": false,
+          "Petrification": false,
+          "KO": false,
+          "Confusion": false,
+          "Sleep": false,
+          "Paralysis": false,
+          "Partial Petrification (1/3)": false,
+          "Partial Petrification (1/2)": false,
+          "Partial Petrification (Full)": false
+        },
+        "image_name": "",
+        "portrait_key": "refia",
+        "Magic": {
+          "LV1": [
+            null,
+            null,
+            null
+          ],
+          "LV2": [
+            null,
+            null,
+            null
+          ],
+          "LV3": [
+            null,
+            null,
+            null
+          ],
+          "LV4": [
+            null,
+            null,
+            null
+          ],
+          "LV5": [
+            null,
+            null,
+            null
+          ],
+          "LV6": [
+            null,
+            null,
+            null
+          ],
+          "LV7": [
+            null,
+            null,
+            null
+          ],
+          "LV8": [
+            null,
+            null,
+            null
+          ]
+        },
+        "mp_levels": {
+          "1": {
+            "current": 0,
+            "max": 0
+          },
+          "2": {
+            "current": 0,
+            "max": 0
+          },
+          "3": {
+            "current": 0,
+            "max": 0
+          },
+          "4": {
+            "current": 0,
+            "max": 0
+          },
+          "5": {
+            "current": 0,
+            "max": 0
+          },
+          "6": {
+            "current": 0,
+            "max": 0
+          },
+          "7": {
+            "current": 0,
+            "max": 0
+          },
+          "8": {
+            "current": 0,
+            "max": 0
+          }
         }
       },
-      "hp": 2204,
-      "max_hp": 2204,
-      "mp": {
-        "L1MP": 0,
-        "L2MP": 0,
-        "L3MP": 0,
-        "L4MP": 0,
-        "L5MP": 0,
-        "L6MP": 0,
-        "L7MP": 0,
-        "L8MP": 0
-      },
-      "strength": 46,
-      "agility": 50,
-      "vitality": 29,
-      "intelligence": 14,
-      "mind": 29,
-      "row": "front",
-      "equipment": {
-        "main_hand": "Holy Lance",
-        "off_hand": "Crystal Shield",
-        "head": "Ribbon",
-        "body": "Crystal Mail",
-        "arms": "Crystal Gloves"
-      },
-      "status_effects": {
-        "Poison": false,
-        "Blind": false,
-        "Mini": false,
-        "Silence": false,
-        "Toad": false,
-        "Petrification": false,
-        "KO": false,
-        "Confusion": false,
-        "Sleep": false,
-        "Paralysis": false,
-        "Partial Petrification (1/3)": false,
-        "Partial Petrification (1/2)": false,
-        "Partial Petrification (Full)": false
-      },
-      "image_name": "",
-      "portrait_key": "refia",
-      "Magic": {
-        "LV1": [
-          null,
-          null,
-          null
-        ],
-        "LV2": [
-          null,
-          null,
-          null
-        ],
-        "LV3": [
-          null,
-          null,
-          null
-        ],
-        "LV4": [
-          null,
-          null,
-          null
-        ],
-        "LV5": [
-          null,
-          null,
-          null
-        ],
-        "LV6": [
-          null,
-          null,
-          null
-        ],
-        "LV7": [
-          null,
-          null,
-          null
-        ],
-        "LV8": [
-          null,
-          null,
-          null
-        ]
-      }
-    },
-    {
-      "name": "Ingus",
-      "level": 45,
-      "exp": 531129,
-      "job": "Thief",
-      "job_level": {
-        "level": 46,
-        "skill_point": 20
-      },
-      "job_levels": {
-        "Dragoon": {
-          "level": 97,
-          "skill_point": 54
-        },
-        "Ninja": {
-          "level": 13,
-          "skill_point": 71
-        },
-        "Black Belt": {
-          "level": 8,
-          "skill_point": 68
-        },
-        "Bard": {
-          "level": 22,
-          "skill_point": 12
-        },
-        "Thief": {
+      {
+        "name": "Ingus",
+        "level": 45,
+        "exp": 531129,
+        "job": "Thief",
+        "job_level": {
           "level": 46,
           "skill_point": 20
         },
-        "Scholar": {
-          "level": 26,
-          "skill_point": 80
+        "job_levels": {
+          "Dragoon": {
+            "level": 97,
+            "skill_point": 54
+          },
+          "Ninja": {
+            "level": 13,
+            "skill_point": 71
+          },
+          "Black Belt": {
+            "level": 8,
+            "skill_point": 68
+          },
+          "Bard": {
+            "level": 22,
+            "skill_point": 12
+          },
+          "Thief": {
+            "level": 46,
+            "skill_point": 20
+          },
+          "Scholar": {
+            "level": 26,
+            "skill_point": 80
+          }
+        },
+        "hp": 2078,
+        "max_hp": 2078,
+        "strength": 40,
+        "agility": 52,
+        "vitality": 28,
+        "intelligence": 37,
+        "mind": 1,
+        "row": "back",
+        "equipment": {
+          "main_hand": "Air Knife",
+          "off_hand": "Ice Shield",
+          "head": "Ribbon",
+          "body": "Black Garb",
+          "arms": "Protect Ring"
+        },
+        "status_effects": {
+          "Poison": false,
+          "Blind": false,
+          "Mini": false,
+          "Silence": false,
+          "Toad": false,
+          "Petrification": false,
+          "KO": false,
+          "Confusion": false,
+          "Sleep": false,
+          "Paralysis": false,
+          "Partial Petrification (1/3)": false,
+          "Partial Petrification (1/2)": false,
+          "Partial Petrification (Full)": false
+        },
+        "image_name": "",
+        "portrait_key": "ingus",
+        "Magic": {
+          "LV1": [
+            "Cure",
+            "Poisona",
+            "Sight"
+          ],
+          "LV2": [
+            "Mini",
+            "Toad",
+            "Aero"
+          ],
+          "LV3": [
+            "Cura",
+            "Teleport",
+            "Blindna"
+          ],
+          "LV4": [
+            "Confuse",
+            null,
+            null
+          ],
+          "LV5": [
+            null,
+            null,
+            null
+          ],
+          "LV6": [
+            null,
+            null,
+            null
+          ],
+          "LV7": [
+            null,
+            null,
+            null
+          ],
+          "LV8": [
+            null,
+            null,
+            null
+          ]
+        },
+        "mp_levels": {
+          "1": {
+            "current": 0,
+            "max": 0
+          },
+          "2": {
+            "current": 0,
+            "max": 0
+          },
+          "3": {
+            "current": 0,
+            "max": 0
+          },
+          "4": {
+            "current": 0,
+            "max": 0
+          },
+          "5": {
+            "current": 0,
+            "max": 0
+          },
+          "6": {
+            "current": 0,
+            "max": 0
+          },
+          "7": {
+            "current": 0,
+            "max": 0
+          },
+          "8": {
+            "current": 0,
+            "max": 0
+          }
         }
+      }
+    ],
+    "gil": 996437,
+    "CP": 255,
+    "map": {
+      "map": "grassland",
+      "surface": "Grassland",
+      "x": 14,
+      "y": 32
+    },
+    "inventory": {
+      "Key Item": {
+        "Eureka Key": 1,
+        "Fang Of Wind": 1,
+        "Noah's Lute": 0
       },
-      "hp": 2078,
-      "max_hp": 2078,
-      "mp": {
-        "L1MP": 0,
-        "L2MP": 0,
-        "L3MP": 0,
-        "L4MP": 0,
-        "L5MP": 0,
-        "L6MP": 0,
-        "L7MP": 0,
-        "L8MP": 0
+      "Anywhere": {
+        "Potion": 37,
+        "Hi Potion": 8,
+        "Elixir": 44,
+        "Phoenix Down": 4,
+        "Antidote": 10
       },
-      "strength": 40,
-      "agility": 52,
-      "vitality": 28,
-      "intelligence": 37,
-      "mind": 1,
-      "row": "back",
-      "equipment": {
-        "main_hand": "Air Knife",
-        "off_hand": "Ice Shield",
-        "head": "Ribbon",
-        "body": "Black Garb",
-        "arms": "Protect Ring"
+      "Field": {
+        "Magic Key": 1,
+        "Gysahl Greens": 4
       },
-      "status_effects": {
-        "Poison": false,
-        "Blind": false,
-        "Mini": false,
-        "Silence": false,
-        "Toad": false,
-        "Petrification": false,
-        "KO": false,
-        "Confusion": false,
-        "Sleep": false,
-        "Paralysis": false,
-        "Partial Petrification (1/3)": false,
-        "Partial Petrification (1/2)": false,
-        "Partial Petrification (Full)": false
+      "Combat": {
+        "Antarctic Wind": 2,
+        "Zeus's Wrath": 1,
+        "Raven's Yawn": 4,
+        "Black Hole": 2,
+        "Black Musk": 2,
+        "Devil's Sigh": 2,
+        "Lamia Scale": 3,
+        "Sheep Pillow": 5,
+        "Tranquilizer": 5,
+        "Bacchus's Cider": 2,
+        "Lilith's Kiss": 3,
+        "Shining Curtain": 2,
+        "Turtle Shell": 6,
+        "Bomb Arm": 1
       },
-      "image_name": "",
-      "portrait_key": "ingus",
+      "Weapon": {
+        "Air Knife": 1,
+        "Holy Lance": 1,
+        "Fire Rod": 1,
+        "Ice Rod": 1,
+        "Light Rod": 1,
+        "Omnirod": 2,
+        "Elder Staff": 2,
+        "Onion Sword": 5
+      },
+      "Armor": {
+        "Ice Shield": 1,
+        "Crystal Shield": 2,
+        "Ribbon": 4,
+        "Onion Helm": 1,
+        "White Robe": 2,
+        "Black Garb": 2,
+        "Crystal Mail": 2,
+        "Crystal Gloves": 2,
+        "Protect Ring": 4,
+        "Onion Gauntlets": 1
+      },
       "Magic": {
-        "LV1": [
-          "Cure",
-          "Poisona",
-          "Sight"
-        ],
-        "LV2": [
-          "Mini",
-          "Toad",
-          "Aero"
-        ],
-        "LV3": [
-          "Cura",
-          "Teleport",
-          "Blindna"
-        ],
-        "LV4": [
-          "Confuse",
-          null,
-          null
-        ],
-        "LV5": [
-          null,
-          null,
-          null
-        ],
-        "LV6": [
-          null,
-          null,
-          null
-        ],
-        "LV7": [
-          null,
-          null,
-          null
-        ],
-        "LV8": [
-          null,
-          null,
-          null
-        ]
+        "LV1": {
+          "Blizzard": 2,
+          "Fire": 2,
+          "Sleep": 2,
+          "Cure": 2,
+          "Poisona": 2,
+          "Sight": 2,
+          "Chocobo": 2
+        },
+        "LV2": {
+          "Blind": 2,
+          "Poison": 2,
+          "Thunder": 2,
+          "Aero": 2,
+          "Mini": 2,
+          "Toad": 2,
+          "Shiva": 2
+        },
+        "LV3": {
+          "Blizzara": 2,
+          "Fira": 2,
+          "Thundara": 2,
+          "Blindna": 2,
+          "Cura": 2,
+          "Teleport": 2,
+          "Ramuh": 2
+        },
+        "LV4": {
+          "Blizzaga": 2,
+          "Break": 2,
+          "Shade": 2,
+          "Confuse": 2,
+          "Libra": 2,
+          "Silence": 2,
+          "Ifrit": 2
+        },
+        "LV5": {
+          "Erase": 2,
+          "Raze": 2,
+          "Thundaga": 2,
+          "Curaga": 2,
+          "Protect": 2,
+          "Raise": 2,
+          "Titan": 2
+        },
+        "LV6": {
+          "Bio": 2,
+          "Firaga": 2,
+          "Warp": 2,
+          "Aeroga": 2,
+          "Haste": 2,
+          "Stona": 2,
+          "Odin": 2
+        },
+        "LV7": {
+          "Breakga": 2,
+          "Drain": 2,
+          "Quake": 2,
+          "Curaja": 2,
+          "Esuna": 2,
+          "Reflect": 2,
+          "Leviathan": 2
+        },
+        "LV8": {
+          "Death": 2,
+          "Flare": 2,
+          "Meteor": 2,
+          "Arise": 2,
+          "Holy": 2,
+          "Tornado": 2,
+          "Bahamut": 2
+        }
       }
-    }
-  ],
-  "gil": 996437,
-  "CP": 255,
-  "map": {
-    "map": "grassland",
-    "surface": "Grassland",
-    "x": 14,
-    "y": 32
-  },
-  "inventory": {
-    "Key Item": {
-      "Eureka Key": 1,
-      "Fang Of Wind": 1,
-      "Noah's Lute": 0
     },
-    "Anywhere": {
-      "Potion": 37,
-      "Hi Potion": 8,
-      "Elixir": 44,
-      "Phoenix Down": 4,
-      "Antidote": 10
+    "event_flag": {
+      "met_tutorial_npc": true,
+      "opened_forest_gate": false,
+      "defeated_goblin_lord": true
     },
-    "Field": {
-      "Magic Key": 1,
-      "Gysahl Greens": 4
-    },
-    "Combat": {
-      "Antarctic Wind": 2,
-      "Zeus's Wrath": 1,
-      "Raven's Yawn": 4,
-      "Black Hole": 2,
-      "Black Musk": 2,
-      "Devil's Sigh": 2,
-      "Lamia Scale": 3,
-      "Sheep Pillow": 5,
-      "Tranquilizer": 5,
-      "Bacchus's Cider": 2,
-      "Lilith's Kiss": 3,
-      "Shining Curtain": 2,
-      "Turtle Shell": 6,
-      "Bomb Arm": 1
-    },
-    "Weapon": {
-      "Air Knife": 1,
-      "Holy Lance": 1,
-      "Fire Rod": 1,
-      "Ice Rod": 1,
-      "Light Rod": 1,
-      "Omnirod": 2,
-      "Elder Staff": 2,
-      "Onion Sword": 5
-    },
-    "Armor": {
-      "Ice Shield": 1,
-      "Crystal Shield": 2,
-      "Ribbon": 4,
-      "Onion Helm": 1,
-      "White Robe": 2,
-      "Black Garb": 2,
-      "Crystal Mail": 2,
-      "Crystal Gloves": 2,
-      "Protect Ring": 4,
-      "Onion Gauntlets": 1
-    },
-    "Magic": {
-      "LV1": {
-        "Blizzard": 2,
-        "Fire": 2,
-        "Sleep": 2,
-        "Cure": 2,
-        "Poisona": 2,
-        "Sight": 2,
-        "Chocobo": 2
+    "treasures": {
+      "grassland": {
+        "chest_01": true,
+        "chest_02": false,
+        "hidden_01": true
       },
-      "LV2": {
-        "Blind": 2,
-        "Poison": 2,
-        "Thunder": 2,
-        "Aero": 2,
-        "Mini": 2,
-        "Toad": 2,
-        "Shiva": 2
-      },
-      "LV3": {
-        "Blizzara": 2,
-        "Fira": 2,
-        "Thundara": 2,
-        "Blindna": 2,
-        "Cura": 2,
-        "Teleport": 2,
-        "Ramuh": 2
-      },
-      "LV4": {
-        "Blizzaga": 2,
-        "Break": 2,
-        "Shade": 2,
-        "Confuse": 2,
-        "Libra": 2,
-        "Silence": 2,
-        "Ifrit": 2
-      },
-      "LV5": {
-        "Erase": 2,
-        "Raze": 2,
-        "Thundaga": 2,
-        "Curaga": 2,
-        "Protect": 2,
-        "Raise": 2,
-        "Titan": 2
-      },
-      "LV6": {
-        "Bio": 2,
-        "Firaga": 2,
-        "Warp": 2,
-        "Aeroga": 2,
-        "Haste": 2,
-        "Stona": 2,
-        "Odin": 2
-      },
-      "LV7": {
-        "Breakga": 2,
-        "Drain": 2,
-        "Quake": 2,
-        "Curaja": 2,
-        "Esuna": 2,
-        "Reflect": 2,
-        "Leviathan": 2
-      },
-      "LV8": {
-        "Death": 2,
-        "Flare": 2,
-        "Meteor": 2,
-        "Arise": 2,
-        "Holy": 2,
-        "Tornado": 2,
-        "Bahamut": 2
+      "village": {
+        "well_item": true
       }
-    }
-  },
-  "event_flag": {
-    "met_tutorial_npc": true,
-    "opened_forest_gate": false,
-    "defeated_goblin_lord": true
-  },
-  "treasures": {
-    "grassland": {
-      "chest_01": true,
-      "chest_02": false,
-      "hidden_01": true
     },
-    "village": {
-      "well_item": true
+    "item_stock": {
+      "Potion": 1
     }
-  },
-  "item_stock": {
-    "Potion": 1
   }
 }
