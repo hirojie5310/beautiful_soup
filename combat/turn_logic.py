@@ -3243,9 +3243,7 @@ def run_enemy_turn(
     # ------------------------------------------------------------
     pending_barrier_shift_weak = _consume_pending_barrier_shift_log(enemy_json)
     if pending_barrier_shift_weak:
-        logs.append(
-            f"{enemy_name}の《Barrier Shift》！ {pending_barrier_shift_weak.title()}属性が弱点になった。"
-        )
+        logs.append(f"{enemy_name}の《Barrier Shift》！")
 
     enemy_is_blind = enemy_state.has(Status.BLIND)
     enemy_is_mini_or_toad = enemy_state.has(Status.MINI) or enemy_state.has(Status.TOAD)
@@ -3727,11 +3725,8 @@ def run_enemy_turn(
                     if enemy_json.pop("_battle_barrier_shift_applied_this_round", False):
                         pass
                     else:
-                        weak = _apply_barrier_shift(enemy_json, rng)
-                        weak_label = weak.title()
-                        logs.append(
-                            f"{enemy_name}の《{spell_name}》！ {weak_label}属性が弱点になった。"
-                        )
+                        _apply_barrier_shift(enemy_json, rng)
+                        logs.append(f"{enemy_name}の《{spell_name}》！")
                     dmg_to_char = 0
                     enemy_attack = None
 

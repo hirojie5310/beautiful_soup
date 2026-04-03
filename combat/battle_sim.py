@@ -656,10 +656,7 @@ def simulate_one_round_multi_party(
         )
         pending_barrier_shift_weak = _consume_pending_barrier_shift_log(em.json)
         if pending_barrier_shift_weak:
-            logs.append(
-                f"{em.label}の《Barrier Shift》！ "
-                f"{pending_barrier_shift_weak.title()}属性が弱点になった。"
-            )
+            logs.append(f"{em.label}の《Barrier Shift》！")
 
     for i, pm in enumerate(party_members):
         if is_out_of_battle(pm.state):

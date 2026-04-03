@@ -345,6 +345,7 @@ def test_hein_announces_initial_barrier_shift_state_in_first_round() -> None:
 
     assert result.end_reason == "continue"
     assert any("Heinの《Barrier Shift》！" in line for line in logs)
+    assert not any("属性が弱点になった" in line for line in logs)
 
 
 def test_initial_barrier_shift_log_appears_before_character_libra() -> None:
