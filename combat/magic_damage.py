@@ -457,6 +457,8 @@ def magic_damage_char_to_enemy(
             split_to_targets=split_to_targets,
             spell_name=spell_name,
         )
+    if element_relation == "null":
+        return 0
 
     magic_power = _calc_magic_power(caster, spell)
     magic_mult = _calc_magic_multiplier(caster, spell)
@@ -501,6 +503,9 @@ def magic_damage_char_to_enemy(
 
     if split_to_targets > 1 and not spell.auto_all_target:
         dmg = int(dmg / split_to_targets)
+
+    if dmg <= 0:
+        return _apply_magic_damage_floor(1, real_hits)
 
     dmg *= _elemental_magic_boost_multiplier(caster, spell)
 
@@ -804,6 +809,11 @@ def magic_damage_enemy_to_char(
 
     if split_to_targets > 1:
         dmg = int(dmg / split_to_targets)
+
+    if element_relation == "null":
+        return 0
+    if dmg <= 0:
+        return _apply_magic_damage_floor(1, expected_hits)
 
     dmg = _apply_magic_damage_floor(dmg, expected_hits)
     return int(dmg)

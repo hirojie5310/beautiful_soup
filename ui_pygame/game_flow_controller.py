@@ -246,7 +246,10 @@ class GameFlowController:
             get_job_commands=get_job_commands,
             build_magic_candidates_for_member=build_magic_fn,
             build_item_candidates_for_battle=lambda: build_item_candidates_for_battle_fn(
-                self.state.items_by_name, self.state.save
+                self.state.items_by_name,
+                self.state.weapons,
+                self.spells_expanded,
+                self.state.save,
             ),
             make_planned_action=make_planned_action,
         )

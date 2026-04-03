@@ -15,7 +15,8 @@ from typing import Any, List, Optional, Tuple, cast, Callable
 from combat.enums import BattleKind
 from combat.constants import FIELD_ITEM_TARGET_REQUIRED
 from combat.models import PlannedAction, TargetSide
-from combat.inventory import build_item_list, is_item_visible_in_context
+from combat.inventory import is_item_visible_in_context
+from combat.battle_items import build_battle_item_list
 from combat.input_ui import normalize_battle_command
 from ui_pygame.state import BattleUIState
 from ui_pygame.ui_types import CommandCandidate
@@ -101,8 +102,18 @@ def build_magic_candidates_for_member(
 
 
 # 戦闘中のアイテム候補リストを構築
-def build_item_candidates_for_battle(items_by_name, save) -> List[Tuple[str, str, int]]:
-    item_list = build_item_list(items_by_name, save, in_battle=True)
+def build_item_candidates_for_battle(
+    items_by_name,
+    weapons_by_name,
+    spells_by_name,
+    save,
+) -> List[Tuple[str, str, int]]:
+    item_list = build_battle_item_list(
+        items_by_name,
+        weapons_by_name,
+        spells_by_name,
+        save,
+    )
     item_list = [
         (name, itype, qty)
         for (name, itype, qty) in item_list

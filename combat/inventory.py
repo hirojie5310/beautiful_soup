@@ -151,8 +151,8 @@ def is_item_visible_in_context(item_json: Dict[str, Any], in_combat: bool) -> bo
         # 戦闘中は Key / Field は完全非表示
         if it in ("field", "key item", "key"):
             return False
-        # 戦闘中は Anywhere / Combat のみ
-        return it in ("anywhere", "combat")
+        # 戦闘中は Anywhere / Combat と、戦闘中に使える武器を許可
+        return it in ("anywhere", "combat", "weapon")
 
     # 戦闘外
     # 現状は Combat を隠す（Field は将来有効化予定）

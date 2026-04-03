@@ -32,7 +32,8 @@ from combat.life_check import (
     is_out_of_battle,
     first_alive_enemy_index,
 )
-from combat.inventory import build_item_list, is_item_visible_in_context
+from combat.inventory import is_item_visible_in_context
+from combat.battle_items import build_battle_item_definitions, build_battle_item_list
 from utils.text_normalize import (
     normalize_text_basic,
     normalize_text_nfkc,
@@ -284,6 +285,7 @@ def ask_action_for_member(
     party_magic_lists,  # ★ 追加：キャラごとの magic_list の配列
     save: dict,
     *,
+    weapons_by_name: Optional[Dict[str, Dict[str, Any]]] = None,
     input_func: Callable[[str], str],
     output_func: Callable[[str], None],
     choose_enemy_target: Callable[
@@ -476,11 +478,24 @@ def ask_action_for_member(
     # =========================
     if normalized_kind == "item":
         # 戦闘用 item_list を生成
-        item_list = build_item_list(items_by_name, save, in_battle=True)
+        battle_items_by_name = build_battle_item_definitions(
+            items_by_name,
+            weapons_by_name or {},
+            spells_by_name or {},
+        )
+        item_list = build_battle_item_list(
+            items_by_name,
+            weapons_by_name or {},
+            spells_by_name or {},
+            save,
+        )
         item_list = [
             (name, itype, qty)
             for (name, itype, qty) in item_list
-            if is_item_visible_in_context(items_by_name.get(name, {}), in_combat=True)
+            if is_item_visible_in_context(
+                battle_items_by_name.get(name, {}),
+                in_combat=True,
+            )
         ]
         if not item_list:
             output_func("使用可能なアイテムがないため、物理攻撃として扱います。")
@@ -495,7 +510,7 @@ def ask_action_for_member(
             )
 
         item_name = choose_item(
-            items_by_name,
+            battle_items_by_name,
             item_list,
             input_func=input_func,
             output_func=output_func,

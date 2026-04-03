@@ -83,7 +83,9 @@ from combat.item_effects import (
     apply_item_effect_to_actor,
     spell_from_item,
     item_damage_char_to_enemy,
+    weapon_spell_damage_char_to_enemy,
 )
+from combat.battle_items import is_weapon_spell_item
 from combat.inventory import (
     consume_item_from_inventory,
     add_item_to_inventory,
@@ -1019,16 +1021,6 @@ def run_character_turn(
             )
 
             force_all_allies = is_ifrit_healing_light or target_raw == "all allies"
-            single_target_heal = magic_heal_amount_to_char(
-                caster=char_stats,
-                spell=char_spell,
-                rng=rng,
-                use_expectation=False,
-                blind=char_is_blind,
-                target_count=1,
-                spell_name=(char_spell_name or ""),
-            )
-
             if target_side == "enemy" and not force_all_allies:
                 holy_spell = healing_magic_as_holy_spell(char_spell)
 
@@ -1039,6 +1031,9 @@ def run_character_turn(
                     target_count = max(1, len(alive_enemies))
                     total_damage = 0
                     cast_logged = False
+                    any_target_undead = any(
+                        is_undead_target(getattr(em, "json", None)) for em in alive_enemies
+                    )
                     all_targets_undead = all(
                         is_undead_target(getattr(em, "json", None)) for em in alive_enemies
                     )
@@ -1048,7 +1043,7 @@ def run_character_turn(
                         em_stats = em.stats
                         em_json = em.json
                         if not cast_logged:
-                            if all_targets_undead:
+                            if any_target_undead:
                                 _enemy_heal_spell_cast_log(
                                     logs,
                                     char_name=char_name,
@@ -1064,32 +1059,38 @@ def run_character_turn(
                                 )
                             cast_logged = True
                         if not is_undead_target(em_json):
-                            heal = magic_heal_amount_to_char(
-                                caster=char_stats,
-                                spell=char_spell,
-                                rng=rng,
-                                use_expectation=False,
-                                blind=char_is_blind,
-                                target_count=target_count,
-                                spell_name=(char_spell_name or ""),
-                            )
-                            old_hp = em_state.hp
-                            enemy_max_hp = _target_max_hp(
-                                target_state=em_state,
-                                target_stats=em_stats,
-                            )
-                            em_state.hp = min(em_state.hp + heal, enemy_max_hp)
-                            actual = em_state.hp - old_hp
-                            if actual > 0:
+                            if any_target_undead:
                                 logs.append(
-                                    f"  {em_name}のHPが{heal}回復。"
+                                    f"  {em_name}のHPが0回復。効果がない。"
                                     f"（{em_name} 残りHP: {em_state.hp}）"
                                 )
                             else:
-                                logs.append(
-                                    f"  しかし{em_name}のHPはこれ以上回復しない。"
-                                    f"（{em_name} 残りHP: {em_state.hp}）"
+                                heal = magic_heal_amount_to_char(
+                                    caster=char_stats,
+                                    spell=char_spell,
+                                    rng=rng,
+                                    use_expectation=False,
+                                    blind=char_is_blind,
+                                    target_count=target_count,
+                                    spell_name=(char_spell_name or ""),
                                 )
+                                old_hp = em_state.hp
+                                enemy_max_hp = _target_max_hp(
+                                    target_state=em_state,
+                                    target_stats=em_stats,
+                                )
+                                em_state.hp = min(em_state.hp + heal, enemy_max_hp)
+                                actual = em_state.hp - old_hp
+                                if actual > 0:
+                                    logs.append(
+                                        f"  {em_name}のHPが{heal}回復。"
+                                        f"（{em_name} 残りHP: {em_state.hp}）"
+                                    )
+                                else:
+                                    logs.append(
+                                        f"  しかし{em_name}のHPはこれ以上回復しない。"
+                                        f"（{em_name} 残りHP: {em_state.hp}）"
+                                    )
                             continue
                         dmg = _apply_healing_spell_holy_damage_to_enemy(
                             logs=logs,
@@ -1105,6 +1106,16 @@ def run_character_turn(
                         )
                         total_damage += dmg
                     return total_damage, None
+
+                single_target_heal = magic_heal_amount_to_char(
+                    caster=char_stats,
+                    spell=char_spell,
+                    rng=rng,
+                    use_expectation=False,
+                    blind=char_is_blind,
+                    target_count=1,
+                    spell_name=(char_spell_name or ""),
+                )
 
                 if not is_undead_target(target_enemy_json):
                     old_hp = target_state.hp
@@ -2438,18 +2449,19 @@ def run_character_turn(
 
             # ---- 攻撃アイテム（ダメージ/即死/吸収など） ----
             if is_attack_item:
-                # ★B案：在庫が無ければ効果ゼロ
-                if save is None:
-                    logs.append(
-                        f"{char_name}は{item_name}を使おうとした！ しかしセーブデータが無いので使用できない…"
-                    )
-                    return 0, None
+                consumes_inventory = not is_weapon_spell_item(char_item)
+                if consumes_inventory:
+                    if save is None:
+                        logs.append(
+                            f"{char_name}は{item_name}を使おうとした！ しかしセーブデータが無いので使用できない…"
+                        )
+                        return 0, None
 
-                if not consume_item_from_inventory(save, item_name):
-                    logs.append(
-                        f"{char_name}は{item_name}を使おうとした！ しかし在庫がなかった…"
-                    )
-                    return 0, None
+                    if not consume_item_from_inventory(save, item_name):
+                        logs.append(
+                            f"{char_name}は{item_name}を使おうとした！ しかし在庫がなかった…"
+                        )
+                        return 0, None
 
                 spell = spell_from_item(char_item)
                 relation, hit_elems = element_relation_and_hits_for_monster(
@@ -2457,13 +2469,22 @@ def run_character_turn(
                     spell.elements,
                 )
 
-                dmg_to_enemy = item_damage_char_to_enemy(
-                    item_spell=spell,
-                    item_json=char_item,
-                    enemy=enemy_stats,
-                    element_relation=relation,
-                    rng=rng,
-                )
+                if is_weapon_spell_item(char_item):
+                    dmg_to_enemy = weapon_spell_damage_char_to_enemy(
+                        caster_stats=char_stats,
+                        item_json=char_item,
+                        enemy=enemy_stats,
+                        element_relation=relation,
+                        rng=rng,
+                    )
+                else:
+                    dmg_to_enemy = item_damage_char_to_enemy(
+                        item_spell=spell,
+                        item_json=char_item,
+                        enemy=enemy_stats,
+                        element_relation=relation,
+                        rng=rng,
+                    )
 
                 old_enemy_hp, new_enemy_hp, actual_enemy_change = apply_signed_hp_change(
                     enemy_state,
@@ -2514,22 +2535,31 @@ def run_character_turn(
                 if "inflict ko" in effect_text:
                     enemy_state.hp = 0
                     logs.append(f"{enemy_name}に即死効果が発動した！")
+                elif "inflict " in effect_text or "partial petrification" in effect_text:
+                    apply_status_item_to_enemy(
+                        item_json=char_item,
+                        enemy_state=enemy_state,
+                        enemy_name=enemy_name,
+                        rng=rng,
+                        logs=logs,
+                    )
 
                 return dmg_to_enemy, None
 
             # ---- 状態異常アイテム（敵） ----
-            # ★B案：在庫が無ければ効果ゼロ（消費できたら判定＆効果）
-            if save is None:
-                logs.append(
-                    f"{char_name}は{item_name}を使おうとした！ しかしセーブデータが無いので使用できない…"
-                )
-                return 0, None
+            consumes_inventory = not is_weapon_spell_item(char_item)
+            if consumes_inventory:
+                if save is None:
+                    logs.append(
+                        f"{char_name}は{item_name}を使おうとした！ しかしセーブデータが無いので使用できない…"
+                    )
+                    return 0, None
 
-            if not consume_item_from_inventory(save, item_name):
-                logs.append(
-                    f"{char_name}は{item_name}を使おうとした！ しかし在庫がなかった…"
-                )
-                return 0, None
+                if not consume_item_from_inventory(save, item_name):
+                    logs.append(
+                        f"{char_name}は{item_name}を使おうとした！ しかし在庫がなかった…"
+                    )
+                    return 0, None
 
             handled_as_status = apply_status_item_to_enemy(
                 item_json=char_item,
@@ -2566,18 +2596,19 @@ def run_character_turn(
             )
             return 0, None
 
-        # ★B案：在庫が無ければ効果ゼロ
-        if save is None:
-            logs.append(
-                f"{char_name}は{item_name}を使おうとした！ しかしセーブデータが無いので使用できない…"
-            )
-            return 0, None
+        consumes_inventory = not is_weapon_spell_item(char_item)
+        if consumes_inventory:
+            if save is None:
+                logs.append(
+                    f"{char_name}は{item_name}を使おうとした！ しかしセーブデータが無いので使用できない…"
+                )
+                return 0, None
 
-        if not consume_item_from_inventory(save, item_name):
-            logs.append(
-                f"{char_name}は{item_name}を使おうとした！ しかし在庫がなかった…"
-            )
-            return 0, None
+            if not consume_item_from_inventory(save, item_name):
+                logs.append(
+                    f"{char_name}は{item_name}を使おうとした！ しかし在庫がなかった…"
+                )
+                return 0, None
 
         # Shining Curtain : NES 仕様に合わせて必中の Reflect バリア
         if item_name == "Shining Curtain":
@@ -2603,6 +2634,7 @@ def run_character_turn(
             max_hp=target_stats.max_hp,
             logs=logs,
             target_stats=target_stats,
+            actor_stats=char_stats,
             rng=rng,
             actor_name=char_name,  # ★追加
         )
@@ -2842,6 +2874,7 @@ def run_character_turn(
                         char_state.statuses.add(Status.KO)
 
                 dmg_to_enemy = total_damage
+                return dmg_to_enemy, None
 
         # Black Belt: Boost
         if char_battle_command == "Boost":

@@ -9,6 +9,7 @@ from combat.battle_result import BattleResult
 from ui_pygame.battle_context import BattleContext
 from ui_pygame.assets_py.status_icon_cashe import StatusIconCache
 from ui_pygame.controller import BattleController
+from combat.battle_items import build_battle_item_definitions
 from ui_pygame.state import BattleUIState
 from ui_pygame.app_context import BattleAppContext  # UI専用 ctx
 from ui_pygame.input_handler import handle_keydown, handle_mousedown
@@ -95,13 +96,18 @@ def run_one_battle(
 
     ui.selected_member_idx = first_alive_member_index()
     ui.command_candidates = ctx.get_job_commands(party_members[ui.selected_member_idx])
+    battle_items_by_name = build_battle_item_definitions(
+        state.items_by_name,
+        state.weapons,
+        getattr(ctx, "spells_expanded", {}) or {},
+    )
 
     # BattleAppContext を「UI用」に限定して作る
     ui_ctx = BattleAppContext(
         config=cfg,
         party_members=party_members,
         enemies=enemies,
-        items_by_name=state.items_by_name,
+        items_by_name=battle_items_by_name,
         normalize_battle_command=ctx.normalize_battle_command,
         reset_target_flags=ctx.reset_target_flags,
         is_out_of_battle=ctx.is_out_of_battle,
@@ -142,7 +148,7 @@ def run_one_battle(
             app_ctx=ui_ctx,
             save=state.save,
             spells_by_name=ui.spells_by_name,
-            items_by_name=state.items_by_name,
+            items_by_name=battle_items_by_name,
         )
 
         if ui.events:

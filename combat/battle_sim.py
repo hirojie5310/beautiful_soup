@@ -281,7 +281,29 @@ def _plan_enemy_action(
             if "barrier shift" not in normalize_text_basic(sa.get("Attack") or "")
         ]
 
-    if not specials or special_rate <= 0:
+    if not specials:
+        return PlannedEnemyAction(kind="normal")
+
+    normalized_specials = [
+        normalize_text_basic(sa.get("Attack") or "") for sa in specials
+    ]
+    if normalized_specials and all(name == "summon" for name in normalized_specials):
+        spell_def = _choose_monster_special_spell(
+            {
+                **enemy_json,
+                "Special Attacks": specials,
+            },
+            rng=rng,
+        )
+        if spell_def is None:
+            return PlannedEnemyAction(kind="normal")
+        return PlannedEnemyAction(
+            kind="special",
+            spell_name=spell_def.get("Name"),
+            spell_json=spell_def,
+        )
+
+    if special_rate <= 0:
         return PlannedEnemyAction(kind="normal")
 
     if rng.random() >= special_rate:
@@ -302,6 +324,17 @@ def _plan_enemy_action(
         spell_name=spell_def.get("Name"),
         spell_json=spell_def,
     )
+
+
+def _is_summon_enemy_action(action: Optional[PlannedEnemyAction]) -> bool:
+    if action is None or action.kind != "special":
+        return False
+    spell_name = ""
+    if action.spell_json is not None:
+        spell_name = str(action.spell_json.get("Name") or "")
+    if not spell_name:
+        spell_name = str(action.spell_name or "")
+    return normalize_text_basic(spell_name) == "summon"
 
 
 def _resolve_character_targets(
@@ -645,6 +678,8 @@ def simulate_one_round_multi_party(
     # =====================================
     actors: List[Tuple[str, int, int]] = []  # (side, index, initiative)
     enemy_planned_actions: list[Optional[PlannedEnemyAction]] = [None] * len(enemies)
+    alive_enemy_count = sum(1 for em in enemies if not is_out_of_battle(em.state))
+    summon_planned_this_round = False
 
     for i, em in enumerate(enemies):
         if is_out_of_battle(em.state):
@@ -654,6 +689,11 @@ def simulate_one_round_multi_party(
             state=state,
             rng=rng,
         )
+        if _is_summon_enemy_action(enemy_planned_actions[i]):
+            if alive_enemy_count < 6 and summon_planned_this_round:
+                enemy_planned_actions[i] = PlannedEnemyAction(kind="normal")
+            else:
+                summon_planned_this_round = True
         pending_barrier_shift_weak = _consume_pending_barrier_shift_log(em.json)
         if pending_barrier_shift_weak:
             logs.append(f"{em.label}の《Barrier Shift》！")
@@ -1410,6 +1450,8 @@ def simulate_battle_multi_party(
         # ---------- 2) イニシアティブ計算 ----------
         actors: List[Tuple[str, int, int]] = []  # (side, index, init)
         enemy_planned_actions: list[Optional[PlannedEnemyAction]] = [None] * len(enemies)
+        alive_enemy_count = sum(1 for enemy in enemies if not is_out_of_battle(enemy.state))
+        summon_planned_this_round = False
 
         for i, enemy in enumerate(enemies):
             if is_out_of_battle(enemy.state):
@@ -1419,6 +1461,11 @@ def simulate_battle_multi_party(
                 state=state,
                 rng=rng,
             )
+            if _is_summon_enemy_action(enemy_planned_actions[i]):
+                if alive_enemy_count < 6 and summon_planned_this_round:
+                    enemy_planned_actions[i] = PlannedEnemyAction(kind="normal")
+                else:
+                    summon_planned_this_round = True
 
         for i, member in enumerate(party_members):
             if is_out_of_battle(member.state):

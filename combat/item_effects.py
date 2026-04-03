@@ -10,6 +10,7 @@
 import random
 from typing import Optional, Dict, Any, List, Tuple
 
+from combat.battle_items import is_weapon_spell_item
 from combat.enums import ElementRelation, Status
 from combat.models import (
     FinalCharacterStats,
@@ -54,6 +55,9 @@ def infer_battle_item_target_side(item_json: Dict[str, Any]) -> str | None:
     if is_attack_item:
         return "enemy"
 
+    if "inflict " in effect_text:
+        return "enemy"
+
     if (
         "restore target's hp" in effect_text
         or "restore target to full hp and mp" in effect_text
@@ -74,6 +78,7 @@ def apply_item_effect_to_actor(
     max_hp: Optional[int] = None,
     logs: Optional[List[str]] = None,
     target_stats: Optional[FinalCharacterStats] = None,
+    actor_stats: Optional[FinalCharacterStats] = None,
     rng: Optional[random.Random] = None,
     actor_name: str | None = None,
 ) -> None:
@@ -236,6 +241,12 @@ def apply_item_effect_to_actor(
             logs.append(f"{prefix}{target_name}は戦闘不能のため効果がなかった…")
             return
         heal = value
+        if is_weapon_spell_item(item_json) and actor_stats is not None:
+            heal = weapon_spell_heal_amount_to_actor(
+                caster_stats=actor_stats,
+                item_json=item_json,
+                rng=rng,
+            )
         if max_hp is not None:
             old_hp = target_state.hp
             target_state.hp = min(target_state.hp + heal, max_hp)
@@ -510,6 +521,58 @@ def spell_from_item(item_json: Dict[str, Any]) -> SpellInfo:
         elements,  # ★正しく ["air","ice"] になる
         False,
     )
+
+
+def weapon_spell_magic_base_power(
+    caster_stats: FinalCharacterStats,
+    item_json: Dict[str, Any],
+) -> int:
+    spell_json = item_json.get("WeaponSpell") or {}
+    spell_info = item_json.get("SpellInfo") or {}
+    base_power = int(
+        spell_json.get("BasePower", spell_info.get("BasePower", 0)) or 0
+    )
+    magic_type = normalize_text_basic(
+        spell_json.get("Type") or spell_info.get("MagicType") or ""
+    )
+
+    if "white" in magic_type:
+        return base_power + max(0, int(getattr(caster_stats, "mind", 0)) // 2)
+
+    return base_power + max(0, int(getattr(caster_stats, "intelligence", 0)) // 2)
+
+
+def weapon_spell_heal_amount_to_actor(
+    *,
+    caster_stats: FinalCharacterStats,
+    item_json: Dict[str, Any],
+    rng: Optional[random.Random] = None,
+) -> int:
+    if rng is None:
+        rng = random.Random()
+
+    base_power = weapon_spell_magic_base_power(caster_stats, item_json)
+    factor = rng.uniform(1.0, 1.5)
+    return max(int(base_power * factor), 0)
+
+
+def weapon_spell_damage_char_to_enemy(
+    *,
+    caster_stats: FinalCharacterStats,
+    item_json: Dict[str, Any],
+    enemy: FinalEnemyStats,
+    element_relation: ElementRelation = "normal",
+    rng: Optional[random.Random] = None,
+) -> int:
+    if rng is None:
+        rng = random.Random()
+
+    base_power = weapon_spell_magic_base_power(caster_stats, item_json)
+    factor = rng.uniform(1.0, 1.5)
+    raw = int(base_power * factor)
+    dmg = max(raw - enemy.magic_defense, 0)
+    dmg = apply_element_relation_to_damage(int(dmg), element_relation)
+    return int(dmg)
 
 
 # アイテム攻撃専用のダメージ関数

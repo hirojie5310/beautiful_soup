@@ -26,10 +26,24 @@ if "pygame" not in sys.modules:
             px, py = pos
             return self.x <= px < self.x + self.w and self.y <= py < self.y + self.h
 
-    pygame_stub.Rect = _Rect
     pygame_stub.event = SimpleNamespace(Event=object)
     pygame_stub.mixer = SimpleNamespace(Sound=object)
     sys.modules["pygame"] = pygame_stub
+
+pygame_stub = sys.modules["pygame"]
+if not hasattr(pygame_stub, "Rect"):
+    class _Rect:
+        def __init__(self, x: int, y: int, w: int, h: int) -> None:
+            self.x = x
+            self.y = y
+            self.w = w
+            self.h = h
+
+        def collidepoint(self, pos: tuple[int, int]) -> bool:
+            px, py = pos
+            return self.x <= px < self.x + self.w and self.y <= py < self.y + self.h
+
+    pygame_stub.Rect = _Rect
 
 import pygame
 

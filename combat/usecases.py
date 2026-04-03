@@ -8,6 +8,7 @@ from random import Random
 from typing import Any, Optional, Sequence, cast
 
 from combat.battle_sim import simulate_one_round_multi_party
+from combat.battle_items import build_battle_item_definitions
 from combat.life_check import any_enemy_alive
 from combat.char_build import build_party_members_from_save
 from combat.dto import (
@@ -100,6 +101,11 @@ def execute_round(
     rng: Random,
 ) -> RoundExecutionResult:
     """UI入力済み行動を受けて1ラウンドを実行するユースケース。"""
+    battle_items_by_name = build_battle_item_definitions(
+        session.state.items_by_name,
+        session.state.weapons,
+        session.spells_expanded,
+    )
 
     logs, round_result, event = simulate_one_round_multi_party(
         session.party_members,
@@ -108,7 +114,7 @@ def execute_round(
         rng=rng,
         save=session.state.save,
         spells_by_name=session.spells_expanded,
-        items_by_name=session.state.items_by_name,
+        items_by_name=battle_items_by_name,
         state=session.state,
     )
     typed_events = cast(list[BattleEvent], event)

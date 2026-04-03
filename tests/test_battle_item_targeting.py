@@ -27,3 +27,15 @@ def test_infer_battle_item_target_side_for_attack_item() -> None:
         )
         == "enemy"
     )
+
+
+def test_infer_battle_item_target_side_for_status_item() -> None:
+    assert (
+        infer_battle_item_target_side(
+            {
+                "Name": "Faerie Claws",
+                "SpellInfo": {"Effect": "Inflict Confusion"},
+            }
+        )
+        == "enemy"
+    )

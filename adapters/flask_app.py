@@ -32,14 +32,16 @@ from combat.enemy_selection import build_groups, build_location_index, pick_enem
 from combat.errors import InputValidationError
 from combat.progression import apply_victory_rewards
 from combat.input_ui import normalize_battle_command
-from combat.inventory import build_item_list, is_item_visible_in_context
+from combat.inventory import is_item_visible_in_context
 from combat.item_effects import infer_battle_item_target_side
+from combat.battle_items import build_battle_item_definitions, build_battle_item_list
 from combat.magic_menu import (
     build_magic_stock_by_level,
     build_party_magic_info,
     build_party_magic_lists,
     dump_equipped_magic_slots_to_entry,
     load_equipped_magic_slots_from_entry,
+    load_party_inventory_magic_counts,
 )
 from combat.magic_damage import healing_spell_kind
 from combat.runtime_state import init_runtime_state
@@ -200,16 +202,32 @@ def _build_battle_item_command_candidates(
 ) -> list[dict[str, Any]]:
     state = getattr(session, "state", None)
     items_by_name = getattr(state, "items_by_name", {}) if state is not None else {}
+    weapons_by_name = getattr(state, "weapons", {}) if state is not None else {}
+    spells_by_name = getattr(session, "spells_expanded", {}) if session is not None else {}
     save = getattr(state, "save", {}) if state is not None else {}
     if not isinstance(items_by_name, dict):
         return []
+    if not isinstance(weapons_by_name, dict):
+        weapons_by_name = {}
+    if not isinstance(spells_by_name, dict):
+        spells_by_name = {}
     if not isinstance(save, dict):
         save = {}
 
-    item_list = build_item_list(items_by_name, save, in_battle=True)
+    battle_items_by_name = build_battle_item_definitions(
+        items_by_name,
+        weapons_by_name,
+        spells_by_name,
+    )
+    item_list = build_battle_item_list(
+        items_by_name,
+        weapons_by_name,
+        spells_by_name,
+        save,
+    )
     candidates: list[dict[str, Any]] = []
     for item_name, item_type, qty in item_list:
-        item_json = items_by_name.get(item_name, {})
+        item_json = battle_items_by_name.get(item_name, {})
         if not is_item_visible_in_context(item_json, in_combat=True):
             continue
         candidates.append(
@@ -225,9 +243,16 @@ def _build_battle_item_command_candidates(
 
 def _build_battle_item_meta(
     items_by_name: dict[str, dict[str, Any]],
+    weapons_by_name: dict[str, dict[str, Any]],
+    spells_by_name: dict[str, dict[str, Any]],
 ) -> dict[str, dict[str, Any]]:
     meta: dict[str, dict[str, Any]] = {}
-    for item_name, item_json in items_by_name.items():
+    battle_items_by_name = build_battle_item_definitions(
+        items_by_name,
+        weapons_by_name,
+        spells_by_name,
+    )
+    for item_name, item_json in battle_items_by_name.items():
         if not isinstance(item_json, dict):
             continue
         meta[item_name] = {
@@ -898,15 +923,55 @@ def _ensure_menu_magic_setup(session: BattleSession) -> dict[str, Any]:
 
     spell_meta = _build_magic_spell_meta(session)
     save = getattr(getattr(session, "state", None), "save", {})
-    stock_by_level = build_magic_stock_by_level(save, spell_meta)
+    prefer_save_menu_magic = bool(getattr(session, "_prefer_save_menu_magic", False))
+    explicit_magic_entry_indexes: set[int] = set()
+    if prefer_save_menu_magic and isinstance(save, dict):
+        for idx, entry in enumerate(save.get("party", []) or []):
+            if not isinstance(entry, dict):
+                continue
+            raw_magic = entry.get("Magic")
+            if not isinstance(raw_magic, dict):
+                raw_magic = entry.get("magic")
+            if isinstance(raw_magic, dict) and 0 < len(raw_magic) < 8:
+                explicit_magic_entry_indexes.add(idx)
+    if prefer_save_menu_magic:
+        stock_save = save
+        if explicit_magic_entry_indexes and isinstance(save, dict):
+            filtered_party: list[dict[str, Any]] = []
+            for idx, entry in enumerate(save.get("party", []) or []):
+                if not isinstance(entry, dict):
+                    continue
+                if idx in explicit_magic_entry_indexes:
+                    filtered_party.append(entry)
+                else:
+                    sanitized = dict(entry)
+                    sanitized.pop("Magic", None)
+                    sanitized.pop("magic", None)
+                    filtered_party.append(sanitized)
+            stock_save = dict(save)
+            stock_save["party"] = filtered_party
+        stock_by_level = build_magic_stock_by_level(stock_save, spell_meta)
+        magic_inventory_counts = load_party_inventory_magic_counts(save)
+        has_magic_inventory = any(
+            magic_inventory_counts.get(lv) for lv in range(1, 9)
+        )
+    else:
+        stock_by_level = {str(lv): [] for lv in range(1, 9)}
+        has_magic_inventory = False
     equipped_by_member: list[dict[str, list[str | None]]] = []
     has_equipped_magic = False
-    for entry in save.get("party", []) if isinstance(save, dict) else []:
+    for idx, entry in enumerate(save.get("party", []) if isinstance(save, dict) else []):
         if not isinstance(entry, dict):
             continue
-        slots = load_equipped_magic_slots_from_entry(entry)
-        if any(spell_name for row in slots.values() for spell_name in row):
-            has_equipped_magic = True
+        if has_magic_inventory:
+            if explicit_magic_entry_indexes and idx not in explicit_magic_entry_indexes:
+                slots = {lv: [None, None, None] for lv in range(1, 9)}
+            else:
+                slots = load_equipped_magic_slots_from_entry(entry)
+            if any(spell_name for row in slots.values() for spell_name in row):
+                has_equipped_magic = True
+        else:
+            slots = {lv: [None, None, None] for lv in range(1, 9)}
         equipped_by_member.append({str(lv): list(slots[lv]) for lv in range(1, 9)})
 
     if not has_equipped_magic and not any(
@@ -1093,6 +1158,7 @@ def create_app(
 
     if session is not None:
         battle_session = session
+        setattr(battle_session, "_prefer_save_menu_magic", True)
         selection_context = {
             "groups": [],
             "selected_group": "",
@@ -1134,6 +1200,7 @@ def create_app(
         battle_session = build_battle_session(
             state=state, enemy_names=selected_enemy_names
         )
+        setattr(battle_session, "_prefer_save_menu_magic", False)
 
         selection_context = {
             "groups": groups_payload,
@@ -1229,7 +1296,9 @@ def create_app(
                 battle_session
             ),
             item_battle_meta_by_name=_build_battle_item_meta(
-                battle_session.state.items_by_name
+                battle_session.state.items_by_name,
+                getattr(battle_session.state, "weapons", {}),
+                getattr(battle_session, "spells_expanded", {}),
             ),
             special_command_candidates=_build_special_command_candidates(
                 battle_session
@@ -1512,6 +1581,7 @@ def create_app(
         stock[lv_key] = sorted(stock_row)
         _persist_menu_magic_setup_to_save(battle_session, setup)
         _refresh_session_party(battle_session)
+        setattr(battle_session, "menu_magic_setup", setup)
 
         return (
             jsonify(
@@ -1568,6 +1638,7 @@ def create_app(
         stock[lv_key] = sorted(stock_row)
         _persist_menu_magic_setup_to_save(battle_session, setup)
         _refresh_session_party(battle_session)
+        setattr(battle_session, "menu_magic_setup", setup)
 
         return (
             jsonify(
@@ -1612,6 +1683,7 @@ def create_app(
         equipped[to_member_index][lv_key] = row_b
         _persist_menu_magic_setup_to_save(battle_session, setup)
         _refresh_session_party(battle_session)
+        setattr(battle_session, "menu_magic_setup", setup)
 
         return (
             jsonify(

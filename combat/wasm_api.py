@@ -17,8 +17,9 @@ from combat.dto import (
 from combat.enemy_selection import build_groups, build_location_index, pick_enemy_names
 from combat.errors import InputValidationError
 from combat.input_ui import normalize_battle_command
-from combat.inventory import build_item_list, is_item_visible_in_context
+from combat.inventory import is_item_visible_in_context
 from combat.item_effects import infer_battle_item_target_side
+from combat.battle_items import build_battle_item_definitions, build_battle_item_list
 from combat.life_check import is_out_of_battle
 from combat.magic_damage import healing_spell_kind
 from combat.progression import apply_item_stock_to_inventory, apply_victory_rewards
@@ -298,16 +299,32 @@ def _build_battle_item_command_candidates(
 ) -> list[dict[str, Any]]:
     state = getattr(session, "state", None)
     items_by_name = getattr(state, "items_by_name", {}) if state is not None else {}
+    weapons_by_name = getattr(state, "weapons", {}) if state is not None else {}
+    spells_by_name = getattr(session, "spells_expanded", {}) if session is not None else {}
     save = getattr(state, "save", {}) if state is not None else {}
     if not isinstance(items_by_name, dict):
         return []
+    if not isinstance(weapons_by_name, dict):
+        weapons_by_name = {}
+    if not isinstance(spells_by_name, dict):
+        spells_by_name = {}
     if not isinstance(save, dict):
         save = {}
 
-    item_list = build_item_list(items_by_name, save, in_battle=True)
+    battle_items_by_name = build_battle_item_definitions(
+        items_by_name,
+        weapons_by_name,
+        spells_by_name,
+    )
+    item_list = build_battle_item_list(
+        items_by_name,
+        weapons_by_name,
+        spells_by_name,
+        save,
+    )
     candidates: list[dict[str, Any]] = []
     for item_name, item_type, qty in item_list:
-        item_json = items_by_name.get(item_name, {})
+        item_json = battle_items_by_name.get(item_name, {})
         if not is_item_visible_in_context(item_json, in_combat=True):
             continue
         candidates.append(
@@ -323,9 +340,16 @@ def _build_battle_item_command_candidates(
 
 def _build_battle_item_meta(
     items_by_name: dict[str, dict[str, Any]],
+    weapons_by_name: dict[str, dict[str, Any]],
+    spells_by_name: dict[str, dict[str, Any]],
 ) -> dict[str, dict[str, Any]]:
     meta: dict[str, dict[str, Any]] = {}
-    for item_name, item_json in items_by_name.items():
+    battle_items_by_name = build_battle_item_definitions(
+        items_by_name,
+        weapons_by_name,
+        spells_by_name,
+    )
+    for item_name, item_json in battle_items_by_name.items():
         if not isinstance(item_json, dict):
             continue
         meta[item_name] = {
@@ -496,7 +520,11 @@ def build_session_status_snapshot(session: BattleSession) -> dict[str, Any]:
         ),
         "magic_spell_meta": _build_magic_spell_meta(session),
         "item_command_candidates": _build_battle_item_command_candidates(session),
-        "item_meta": _build_battle_item_meta(items_by_name),
+        "item_meta": _build_battle_item_meta(
+            items_by_name,
+            getattr(session.state, "weapons", {}),
+            getattr(session, "spells_expanded", {}),
+        ),
         "resources": {
             "gil": _safe_int(save.get("gil", 0), 0),
             "cp": _safe_int(save.get("CP", 0), 0),
