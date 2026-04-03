@@ -68,13 +68,14 @@ def log_hp_change(
     suffix: str = "",
     shout: bool = False,
     treat_zero_as_recover: bool = False,
+    display_amount: int | None = None,
 ) -> None:
     if amount > 0 or (amount == 0 and not treat_zero_as_recover):
         log_damage(
             logs=logs,
             prefix=prefix,
             target_name=target_name,
-            damage=amount,
+            damage=amount if display_amount is None else int(display_amount),
             old_hp=old_hp,
             new_hp=new_hp,
             perspective=perspective,

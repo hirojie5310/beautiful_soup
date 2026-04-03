@@ -6,6 +6,7 @@
 # compute_enemy_final_stats	monsters.jsonの1モンスターdictからFinalEnemyStatsを作成
 # ============================================================
 
+from copy import deepcopy
 from typing import Dict, Any, List, Iterable, Optional
 
 from combat.models import FinalEnemyStats, EnemyRuntime, BattleActorState
@@ -30,6 +31,34 @@ def _assign_enemy_display_names(enemies: List[EnemyRuntime]) -> None:
             continue
         for idx, enemy in enumerate(group):
             enemy.display_name = f"{name} {_enemy_duplicate_suffix(idx)}"
+
+
+def refresh_enemy_display_names(enemies: List[EnemyRuntime]) -> None:
+    """公開用ラッパー。戦闘中に敵数が増減した後の表示名を再採番する。"""
+    _assign_enemy_display_names(enemies)
+
+
+def clone_enemy_for_divide(source: EnemyRuntime) -> EnemyRuntime:
+    """
+    Divide 用に敵を複製する。
+    - HP は分裂元の「現在HP」を引き継ぐ
+    - 状態異常や一時フラグは引き継がない
+    - ベース定義/戦闘ステータスは現在値を複製する
+    """
+    cloned_stats = deepcopy(source.stats)
+    cloned_json = deepcopy(source.json)
+    cloned_state = BattleActorState(
+        hp=source.state.hp,
+        max_hp=source.state.max_hp,
+    )
+    return EnemyRuntime(
+        name=source.name,
+        stats=cloned_stats,
+        state=cloned_state,
+        json=cloned_json,
+        sprite_id=source.sprite_id,
+        is_boss=source.is_boss,
+    )
 
 
 # ============================================================

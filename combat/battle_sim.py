@@ -269,6 +269,11 @@ def _plan_enemy_action(
 
     special_rate = enemy_json.get("SpecialAttackRate") or 0.0
     specials = enemy_json.get("Special Attacks") or []
+    specials = [
+        sa
+        for sa in specials
+        if normalize_text_basic(sa.get("Attack") or "") != "divide"
+    ]
     if barrier_spell is not None and has_barrier_schedule:
         specials = [
             sa
@@ -488,10 +493,12 @@ def _append_enemy_diff_events(
 ) -> None:
     """敵全体のHP/状態異常差分から表示イベントを蓄積する。"""
     for i, e in enumerate(enemies):
+        old_hp = old_hp_map[i] if i < len(old_hp_map) else e.state.hp
+        old_statuses = old_status_map[i] if i < len(old_status_map) else set()
         new_hp = e.state.hp
         new_statuses = set(getattr(e.state, "statuses", set()))
 
-        delta = old_hp_map[i] - new_hp
+        delta = old_hp - new_hp
         if delta > 0:
             events.append(
                 {
@@ -504,7 +511,7 @@ def _append_enemy_diff_events(
                 }
             )
 
-        added = new_statuses - old_status_map[i]
+        added = new_statuses - old_statuses
         if added:
             events.append(
                 {

@@ -95,9 +95,81 @@ from combat.phys_damage import (
 from combat.life_check import any_char_alive, is_out_of_battle, random_alive_char_index
 from combat.logging import log_damage, log_hp_change, relation_comment
 from combat.hp_change import apply_signed_hp_change
+from combat.enemy_build import clone_enemy_for_divide, refresh_enemy_display_names
 
 
 _BARRIER_SHIFT_ELEMENTS = ("fire", "ice", "lightning")
+
+
+def _enemy_has_divide_reaction(enemy_json: dict[str, Any]) -> bool:
+    specials = enemy_json.get("Special Attacks") or []
+    for special in specials:
+        if normalize_text_basic(special.get("Attack") or "") == "divide":
+            return True
+    return False
+
+
+def _attack_has_dark_element(
+    *,
+    char_stats: FinalCharacterStats,
+    weapon_hand: Literal["main", "off"],
+) -> bool:
+    if weapon_hand == "off":
+        attack_elems = char_stats.off_weapon_elements
+    else:
+        attack_elems = char_stats.main_weapon_elements
+    return "dark" in parse_elements(attack_elems)
+
+
+def _apply_divide_reaction_if_needed(
+    *,
+    enemies: list | None,
+    target_index: int | None,
+    char_attack_kind: BattleKind,
+    char_stats: FinalCharacterStats,
+    char_weapon_hand: Literal["main", "off"],
+    enemy_state: BattleActorState,
+    enemy_json: dict[str, Any],
+    actual_enemy_change: int,
+    logs: list[str],
+) -> None:
+    if char_attack_kind != "physical":
+        return
+    if enemies is None or target_index is None:
+        return
+    if actual_enemy_change <= 0 or enemy_state.hp <= 0:
+        return
+    if not _enemy_has_divide_reaction(enemy_json):
+        return
+    if _attack_has_dark_element(char_stats=char_stats, weapon_hand=char_weapon_hand):
+        return
+
+    alive_count = sum(1 for enemy in enemies if getattr(enemy.state, "hp", 0) > 0)
+    if alive_count >= 6:
+        return
+
+    idx = int(target_index)
+    if idx < 0 or idx >= len(enemies):
+        return
+
+    source_enemy = enemies[idx]
+    cloned_enemy = clone_enemy_for_divide(source_enemy)
+
+    reuse_idx = next(
+        (
+            i
+            for i, enemy in enumerate(enemies)
+            if i != idx and getattr(enemy.state, "hp", 0) <= 0
+        ),
+        None,
+    )
+    if reuse_idx is None:
+        enemies.append(cloned_enemy)
+    else:
+        enemies[reuse_idx] = cloned_enemy
+
+    refresh_enemy_display_names(enemies)
+    logs.append(f"{source_enemy.name}の《Divide》！ 同じ敵が現れた。")
 
 def _apply_barrier_shift(monster: dict[str, Any], rng: Random) -> str:
     """
@@ -486,6 +558,18 @@ def run_character_turn(
                 True,
             )
 
+            _apply_divide_reaction_if_needed(
+                enemies=enemies,
+                target_index=target_index,
+                char_attack_kind="physical",
+                char_stats=char_stats,
+                char_weapon_hand=char_weapon_hand,
+                enemy_state=enemy_state,
+                enemy_json=enemy_json,
+                actual_enemy_change=max(0, old_enemy_hp - enemy_state.hp),
+                logs=logs,
+            )
+
             # 攻撃後に消す
             if hasattr(char_state, "jump_target_index"):
                 char_state.jump_target_index = None
@@ -570,6 +654,18 @@ def run_character_turn(
                 enemy_state.hp,
                 "attacker",
                 "remain",
+            )
+
+            _apply_divide_reaction_if_needed(
+                enemies=enemies,
+                target_index=target_index,
+                char_attack_kind="physical",
+                char_stats=char_stats,
+                char_weapon_hand=char_weapon_hand,
+                enemy_state=enemy_state,
+                enemy_json=enemy_json,
+                actual_enemy_change=max(0, old_enemy_hp - enemy_state.hp),
+                logs=logs,
             )
 
             dmg_to_char_from_self = 0  # 自傷はしていない
@@ -1811,6 +1907,7 @@ def run_character_turn(
                             f" {suffix}",
                             False,
                             rel == "absorb",
+                            display_amount=max(0, dmg),
                         )
 
                 # ★ まとめログ（複数反射だけ出す例。1回でも出したければ >=1 に）
@@ -1936,6 +2033,7 @@ def run_character_turn(
                     f" {suffix}",
                     False,
                     char_spell_relation == "absorb",
+                    display_amount=max(0, dmg_to_enemy),
                 )
 
             if is_drain_spell and actual_enemy_change > 0:
@@ -2075,6 +2173,7 @@ def run_character_turn(
                     "",
                     False,
                     relation == "absorb",
+                    display_amount=max(0, dmg_to_enemy),
                 )
 
                 # 吸収系
@@ -2719,6 +2818,19 @@ def run_character_turn(
             suffix,
             False,
             relation == "absorb",
+            display_amount=max(0, dmg_to_enemy),
+        )
+
+        _apply_divide_reaction_if_needed(
+            enemies=enemies,
+            target_index=target_index,
+            char_attack_kind="physical",
+            char_stats=char_stats,
+            char_weapon_hand=char_weapon_hand,
+            enemy_state=enemy_state,
+            enemy_json=enemy_json,
+            actual_enemy_change=max(0, actual_enemy_change),
+            logs=logs,
         )
 
     # ここまで来たら戦闘は継続中（敵ターンへ）
