@@ -50,6 +50,7 @@ from combat.status_effects import (
     _get_status_name_from_monster_spell,
     apply_reflect_to_actor,
     apply_status_spell_to_enemy,
+    apply_status_spell_to_char,
     apply_partial_petrify_from_status_attack,
     _compute_status_success_prob_for_enemy_spell,
     apply_partial_petrification,
@@ -64,6 +65,7 @@ from combat.status_effects import (
 )
 from combat.magic_damage import (
     use_mp_for_spell,
+    magic_damage_char_to_ally,
     magic_damage_char_to_enemy,
     enemy_caster_from_monster,
 )
@@ -384,6 +386,42 @@ def _enemy_heal_spell_cast_log(
     suffix: str,
 ) -> None:
     logs.append(f"{char_name}はアンデッドに効く《{spell_label}》を唱えた！ {suffix}")
+
+
+def _generic_spell_cast_log(
+    logs: list[str],
+    *,
+    char_name: str,
+    spell_label: str,
+    suffix: str,
+) -> None:
+    logs.append(f"{char_name}は《{spell_label}》を唱えた！ {suffix}")
+
+
+def _target_max_hp(
+    *,
+    target_state: BattleActorState,
+    target_stats: FinalCharacterStats | FinalEnemyStats,
+) -> int:
+    max_hp = getattr(target_stats, "max_hp", None)
+    if max_hp is not None:
+        return int(max_hp)
+    if target_state.max_hp is not None:
+        return int(target_state.max_hp)
+    return int(max(target_state.hp, 0))
+
+
+def _target_magic_resistance_percent(
+    target_stats: FinalCharacterStats | FinalEnemyStats,
+) -> int:
+    return int(
+        getattr(
+            target_stats,
+            "magic_resistance",
+            getattr(target_stats, "magic_resistance_percent", 0),
+        )
+        or 0
+    )
 
 
 def _apply_healing_spell_holy_damage_to_enemy(
@@ -863,17 +901,30 @@ def run_character_turn(
     elif char_attack_kind == "magic":
         # ★ターゲット解決（アイテムと同じ）
         target_state = char_state
-        target_stats = char_stats
+        target_stats: FinalCharacterStats | FinalEnemyStats = char_stats
         target_name = char_name
+        target_enemy_json = enemy_json
 
-        if target_side in ("ally", "self"):
-            if party_members is not None and 0 <= int(target_index) < len(
-                party_members
-            ):
-                tpm = party_members[int(target_index)]
-                target_state = tpm.state
-                target_stats = tpm.stats
-                target_name = tpm.name
+        if target_side == "enemy":
+            target_state = enemy_state
+            target_stats = enemy_stats
+            target_name = enemy_name
+            if enemies is not None and target_index is not None:
+                idx = int(target_index)
+                if 0 <= idx < len(enemies):
+                    target_enemy = enemies[idx]
+                    target_state = target_enemy.state
+                    target_stats = target_enemy.stats
+                    target_name = getattr(target_enemy, "label", target_enemy.name)
+                    target_enemy_json = target_enemy.json
+        elif target_side in ("ally", "self"):
+            if party_members is not None and target_index is not None:
+                idx = int(target_index)
+                if 0 <= idx < len(party_members):
+                    tpm = party_members[idx]
+                    target_state = tpm.state
+                    target_stats = tpm.stats
+                    target_name = tpm.name
 
         # --- 魔法コマンド ---
         if char_is_silenced:
@@ -962,8 +1013,21 @@ def run_character_turn(
             remain = char_state.mp_pool[lvl]
             maxmp = char_state.max_mp_pool.get(lvl, remain)
             suffix = f"（MP{lvl} {remain}/{maxmp}）"
+            target_max_hp = _target_max_hp(
+                target_state=target_state,
+                target_stats=target_stats,
+            )
 
             force_all_allies = is_ifrit_healing_light or target_raw == "all allies"
+            single_target_heal = magic_heal_amount_to_char(
+                caster=char_stats,
+                spell=char_spell,
+                rng=rng,
+                use_expectation=False,
+                blind=char_is_blind,
+                target_count=1,
+                spell_name=(char_spell_name or ""),
+            )
 
             if target_side == "enemy" and not force_all_allies:
                 holy_spell = healing_magic_as_holy_spell(char_spell)
@@ -974,35 +1038,59 @@ def run_character_turn(
                     ]
                     target_count = max(1, len(alive_enemies))
                     total_damage = 0
-                    hit_any_undead = False
                     cast_logged = False
+                    all_targets_undead = all(
+                        is_undead_target(getattr(em, "json", None)) for em in alive_enemies
+                    )
                     for em in alive_enemies:
                         em_name = getattr(em, "label", em.name)
                         em_state = em.state
                         em_stats = em.stats
                         em_json = em.json
-                        if not is_undead_target(em_json):
-                            if not cast_logged:
+                        if not cast_logged:
+                            if all_targets_undead:
                                 _enemy_heal_spell_cast_log(
                                     logs,
                                     char_name=char_name,
                                     spell_label=spell_label,
                                     suffix=suffix,
                                 )
-                                cast_logged = True
-                            logs.append(
-                                f"  しかし{em_name}はアンデッドではないため効果がない。"
-                            )
-                            continue
-                        hit_any_undead = True
-                        if not cast_logged:
-                            _enemy_heal_spell_cast_log(
-                                logs,
-                                char_name=char_name,
-                                spell_label=spell_label,
-                                suffix=suffix,
-                            )
+                            else:
+                                _generic_spell_cast_log(
+                                    logs,
+                                    char_name=char_name,
+                                    spell_label=spell_label,
+                                    suffix=suffix,
+                                )
                             cast_logged = True
+                        if not is_undead_target(em_json):
+                            heal = magic_heal_amount_to_char(
+                                caster=char_stats,
+                                spell=char_spell,
+                                rng=rng,
+                                use_expectation=False,
+                                blind=char_is_blind,
+                                target_count=target_count,
+                                spell_name=(char_spell_name or ""),
+                            )
+                            old_hp = em_state.hp
+                            enemy_max_hp = _target_max_hp(
+                                target_state=em_state,
+                                target_stats=em_stats,
+                            )
+                            em_state.hp = min(em_state.hp + heal, enemy_max_hp)
+                            actual = em_state.hp - old_hp
+                            if actual > 0:
+                                logs.append(
+                                    f"  {em_name}のHPが{heal}回復。"
+                                    f"（{em_name} 残りHP: {em_state.hp}）"
+                                )
+                            else:
+                                logs.append(
+                                    f"  しかし{em_name}のHPはこれ以上回復しない。"
+                                    f"（{em_name} 残りHP: {em_state.hp}）"
+                                )
+                            continue
                         dmg = _apply_healing_spell_holy_damage_to_enemy(
                             logs=logs,
                             char_stats=char_stats,
@@ -1016,14 +1104,24 @@ def run_character_turn(
                             split_to_targets=target_count,
                         )
                         total_damage += dmg
-                    if not hit_any_undead:
-                        return 0, None
                     return total_damage, None
 
-                if not is_undead_target(enemy_json):
-                    logs.append(
-                        f"{char_name}は{enemy_name}に《{spell_label}》を唱えた！ しかしアンデッドではないため効果がない。 {suffix}"
+                if not is_undead_target(target_enemy_json):
+                    old_hp = target_state.hp
+                    target_state.hp = min(
+                        target_state.hp + single_target_heal, target_max_hp
                     )
+                    actual = target_state.hp - old_hp
+                    if actual > 0:
+                        logs.append(
+                            f"{char_name}は{target_name}に《{spell_label}》を唱えた！ "
+                            f"HPが{single_target_heal}回復。（{target_name} 残りHP: {target_state.hp}） {suffix}"
+                        )
+                    else:
+                        logs.append(
+                            f"{char_name}は{target_name}に《{spell_label}》を唱えた！ "
+                            f"しかしHPはこれ以上回復しない。（{target_name} 残りHP: {target_state.hp}） {suffix}"
+                        )
                     return 0, None
 
                 _enemy_heal_spell_cast_log(
@@ -1037,10 +1135,10 @@ def run_character_turn(
                     char_stats=char_stats,
                     char_is_blind=char_is_blind,
                     holy_spell=holy_spell,
-                    enemy_name=enemy_name,
-                    enemy_stats=enemy_stats,
-                    enemy_state=enemy_state,
-                    enemy_json=enemy_json,
+                    enemy_name=target_name,
+                    enemy_stats=cast(FinalEnemyStats, target_stats),
+                    enemy_state=target_state,
+                    enemy_json=target_enemy_json,
                     rng=rng,
                 )
                 # 回復魔法の「敵対象（アンデッド特効）」では、
@@ -1101,7 +1199,7 @@ def run_character_turn(
                 return dmg_to_enemy, None
 
             old_hp = target_state.hp
-            target_state.hp = min(target_state.hp + heal, target_stats.max_hp)
+            target_state.hp = min(target_state.hp + heal, target_max_hp)
             actual = target_state.hp - old_hp
 
             if actual > 0:
@@ -1245,13 +1343,25 @@ def run_character_turn(
                 target_state.statuses.discard(Status.KO)
 
             if "full hp" in effect:
-                target_state.hp = target_stats.max_hp
+                target_state.hp = _target_max_hp(
+                    target_state=target_state,
+                    target_stats=target_stats,
+                )
                 logs.append(
                     f"{char_name}は{target_name}に《{spell_label}》を唱えた！ "
                     f"{target_name}は完全に蘇生した！（HP: {target_state.hp}） {suffix}"
                 )
             else:
-                revived_hp = max(1, int(target_stats.max_hp * 0.20))
+                revived_hp = max(
+                    1,
+                    int(
+                        _target_max_hp(
+                            target_state=target_state,
+                            target_stats=target_stats,
+                        )
+                        * 0.20
+                    ),
+                )
                 target_state.hp = revived_hp
                 logs.append(
                     f"{char_name}は{target_name}に《{spell_label}》を唱えた！ "
@@ -1306,7 +1416,9 @@ def run_character_turn(
                 buff_target_magic_parameters(
                     target_magic_defense=target_stats.magic_defense,
                     target_magic_def_multiplier=target_stats.magic_def_multiplier,
-                    target_magic_resistance_percent=target_stats.magic_resistance,
+                    target_magic_resistance_percent=_target_magic_resistance_percent(
+                        target_stats
+                    ),
                     target_is_friendly=True,
                 )
             )
@@ -1425,7 +1537,9 @@ def run_character_turn(
                     buff_target_magic_parameters(
                         target_magic_defense=target_stats.magic_defense,
                         target_magic_def_multiplier=target_stats.magic_def_multiplier,
-                        target_magic_resistance_percent=target_stats.magic_resistance,
+                        target_magic_resistance_percent=_target_magic_resistance_percent(
+                            target_stats
+                        ),
                         target_is_friendly=True,
                     )
                 )
@@ -1464,14 +1578,20 @@ def run_character_turn(
         # ------------------------
         # ⑤.5 Reflect / Odin: Protective Light
         # ------------------------
-        elif (char_spell_json or {}).get("name") in (
+        elif (
+            (char_spell_json or {}).get("name") or (char_spell_json or {}).get("Name")
+        ) in (
             "Reflect",
             "Odin: Protective Light",
         ):
             if char_spell_json is None:
                 raise ValueError("Reflect 系には char_spell_json が必要です")
 
-            raw_name = (char_spell_json or {}).get("name") or "Reflect"
+            raw_name = (
+                (char_spell_json or {}).get("name")
+                or (char_spell_json or {}).get("Name")
+                or "Reflect"
+            )
             spell_label = char_spell_name or raw_name
 
             mp_used = use_mp_for_spell(char_state, char_spell_json)
@@ -1807,6 +1927,124 @@ def run_character_turn(
                 _append_study_lines(logs, enemy_name, enemy_state)
                 logs.extend(_format_enemy_peep_lines(enemy_name, enemy_json))
                 return 0, None
+
+            if target_side in ("ally", "self"):
+                target_is_mini_or_toad = target_state.has(Status.MINI) or target_state.has(
+                    Status.TOAD
+                )
+                target_relation, target_hit_elems = element_relation_and_hits_for_char(
+                    target_stats,
+                    spell_elements,
+                )
+
+                if is_tornado_spell:
+                    if target_relation == "null":
+                        logs.append(
+                            f"{char_name}は《{spell_label}》を唱えた！ しかし{target_name}には効果がない。 {suffix}"
+                        )
+                        return 0, None
+                    hit_count = magic_hit_count_char_to_enemy(
+                        char_stats,
+                        char_spell,
+                        ff3_confused_self_dummy_enemy(target_stats),
+                        rng=rng,
+                        use_expectation=False,
+                        blind=char_is_blind,
+                    )
+                    if hit_count <= 0:
+                        logs.append(
+                            f"{char_name}は《{spell_label}》を唱えた！ しかし{target_name}には効かなかった。 {suffix}"
+                        )
+                        return 0, None
+                    dmg_to_target = apply_tornado_to_state(
+                        target_state=target_state,
+                        target_name=target_name,
+                        spell_damage=char_spell.power,
+                        rng=rng,
+                        logs=logs,
+                        prefix=f"{char_name}は《{spell_label}》を唱えた！ ",
+                    )
+                    return dmg_to_target, None
+
+                if pure_status_spell:
+                    handled = apply_status_spell_to_char(
+                        spell_json=char_spell_json,
+                        char_state=target_state,
+                        char_stats=target_stats,
+                        char_name=target_name,
+                        rng=rng,
+                        logs=logs,
+                    )
+                    if not handled:
+                        logs.append(
+                            f"{char_name}は《{spell_label}》を唱えた！ しかし{target_name}には何も起こらなかった… {suffix}"
+                        )
+                    return 0, None
+
+                dmg_to_target = magic_damage_char_to_ally(
+                    caster=char_stats,
+                    spell=char_spell,
+                    target=target_stats,
+                    element_relation=target_relation,
+                    rng=rng,
+                    use_expectation=False,
+                    blind=char_is_blind,
+                    target_is_mini_or_toad=target_is_mini_or_toad,
+                    target_state=target_state,
+                    spell_name=char_spell_name or spell_label,
+                )
+
+                old_target_hp, new_target_hp, actual_target_change = apply_signed_hp_change(
+                    target_state,
+                    int(dmg_to_target),
+                )
+
+                apply_status_spell_to_char(
+                    spell_json=char_spell_json,
+                    char_state=target_state,
+                    char_stats=target_stats,
+                    char_name=target_name,
+                    rng=rng,
+                    logs=logs,
+                )
+
+                relation_msg = relation_comment(
+                    target_relation,
+                    target_hit_elems,
+                    perspective="attacker",
+                )
+
+                if actual_target_change != 0 or target_relation == "absorb":
+                    log_hp_change(
+                        logs,
+                        f"{char_name}は《{spell_label}》を唱えた！ "
+                        f"{relation_msg + ' ' if relation_msg else ''}",
+                        target_name,
+                        actual_target_change,
+                        old_target_hp,
+                        new_target_hp,
+                        "attacker",
+                        "remain",
+                        None,
+                        f" {suffix}",
+                        False,
+                        target_relation == "absorb",
+                        display_amount=max(0, dmg_to_target),
+                    )
+
+                if is_drain_spell and actual_target_change > 0:
+                    old_hp = char_state.hp
+                    char_state.hp = min(
+                        char_state.hp + actual_target_change, char_stats.max_hp
+                    )
+                    actual_heal = char_state.hp - old_hp
+                    if actual_heal > 0:
+                        logs.append(
+                            f"{char_name}は{target_name}からHPを{actual_heal}吸収した！"
+                            f"（{char_name} 残りHP: {char_state.hp}）"
+                        )
+
+                return max(0, actual_target_change), None
 
             # ------------------------
             # AoE 実装（Reflect対応版 / Drainは合計ダメージ吸収）

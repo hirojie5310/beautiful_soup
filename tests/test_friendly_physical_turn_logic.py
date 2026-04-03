@@ -2,7 +2,7 @@
 from random import Random
 from types import SimpleNamespace
 
-from combat.models import BattleActorState, FinalCharacterStats, FinalEnemyStats
+from combat.models import BattleActorState, FinalCharacterStats, FinalEnemyStats, SpellInfo
 from combat.turn_logic import run_character_turn
 
 
@@ -104,5 +104,70 @@ def test_physical_attack_to_ally_does_not_use_target_defense() -> None:
     assert damage == 0
     assert result is None
     assert ally_state.hp == 72
+    assert enemy_state.hp == 500
+    assert any("Ingus" in line for line in logs)
+
+
+def test_offensive_magic_to_ally_hits_selected_ally_not_enemy() -> None:
+    caster_stats = _char_stats(main_power=0, defense=0)
+    caster_stats.intelligence = 40
+    ally_stats = _char_stats(main_power=5, defense=80)
+    ally_stats.magic_defense = 4
+    ally_stats.magic_def_multiplier = 1
+    enemy_stats = _enemy_stats()
+
+    caster_state = BattleActorState(hp=999, max_hp=999)
+    caster_state.mp_pool[1] = 1
+    caster_state.max_mp_pool[1] = 1
+    ally_state = BattleActorState(hp=180, max_hp=999)
+    enemy_state = BattleActorState(hp=500, max_hp=500)
+    party = [
+        SimpleNamespace(name="Refia", stats=caster_stats, state=caster_state),
+        SimpleNamespace(name="Ingus", stats=ally_stats, state=ally_state),
+    ]
+    spell = SpellInfo(
+        power=24,
+        accuracy_percent=100,
+        magic_type="black",
+        elements=["fire"],
+    )
+    spell_json = {
+        "Name": "Fire",
+        "Type": "Black Magic",
+        "Level": 1,
+        "Target": "One/All",
+        "BasePower": 24,
+        "BaseAccuracy": 1.0,
+        "Element": "Fire",
+        "Effect": "Deal fire damage",
+    }
+    logs: list[str] = []
+
+    damage, result = run_character_turn(
+        char_name="Refia",
+        enemy_name="Goblin",
+        char_stats=caster_stats,
+        enemy_stats=enemy_stats,
+        enemy_json={},
+        char_state=caster_state,
+        enemy_state=enemy_state,
+        char_attack_kind="magic",
+        char_battle_command="Magic",
+        char_weapon_hand="main",
+        char_spell=spell,
+        char_spell_json=spell_json,
+        char_spell_healing_type=None,
+        char_spell_name="Fire",
+        char_item=None,
+        logs=logs,
+        rng=Random(0),
+        target_side="ally",
+        target_index=1,
+        party_members=party,
+    )
+
+    assert damage > 0
+    assert result is None
+    assert ally_state.hp == 180 - damage
     assert enemy_state.hp == 500
     assert any("Ingus" in line for line in logs)

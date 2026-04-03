@@ -807,3 +807,41 @@ def magic_damage_enemy_to_char(
 
     dmg = _apply_magic_damage_floor(dmg, expected_hits)
     return int(dmg)
+
+
+def magic_damage_char_to_ally(
+    caster: FinalCharacterStats,
+    spell: SpellInfo,
+    target: FinalCharacterStats,
+    element_relation: ElementRelation = "normal",
+    rng: Optional[random.Random] = None,
+    use_expectation: bool = True,
+    split_to_targets: int = 1,
+    blind: bool = False,
+    target_is_mini_or_toad: bool = False,
+    target_state: Optional[BattleActorState] = None,
+    spell_name: str = "",
+) -> int:
+    """
+    キャラ → 味方(キャラ) の攻撃魔法ダメージ。
+    計算式はキャラ→敵の攻撃側パラメータを使い、防御側だけキャラの魔法防御を参照する。
+    """
+    enemy_caster = EnemyCasterStats(
+        magic_power_base=_calc_magic_power(caster, spell),
+        magic_multiplier=_calc_magic_multiplier(caster, spell),
+        magic_accuracy_percent=_calc_magic_accuracy(caster, spell, blind=blind),
+    )
+    return magic_damage_enemy_to_char(
+        enemy_caster=enemy_caster,
+        char=target,
+        element_relation=element_relation,
+        rng=rng,
+        use_expectation=use_expectation,
+        split_to_targets=split_to_targets,
+        attacker_is_blind=blind,
+        target_is_mini_or_toad=target_is_mini_or_toad,
+        target_state=target_state,
+        spell_name=spell_name,
+        auto_all_target=bool(getattr(spell, "auto_all_target", False)),
+        magic_type=str(getattr(spell, "magic_type", "other") or "other"),
+    )

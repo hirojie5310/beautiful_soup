@@ -803,6 +803,10 @@ def simulate_one_round_multi_party(
             # --- 敵全体のHP/状態異常差分から表示イベントを蓄積 ---
             old_hp_map = [e.state.hp for e in enemies]
             old_status_map = [set(getattr(e.state, "statuses", set())) for e in enemies]
+            old_party_hp_map = [m.state.hp for m in party_members]
+            old_party_status_map = [
+                set(getattr(m.state, "statuses", set())) for m in party_members
+            ]
 
             # --- 実行 ---
             dmg_to_enemy, char_result = run_character_turn(
@@ -855,6 +859,19 @@ def simulate_one_round_multi_party(
                 events=events,
                 actor_side=side,
                 actor_index=idx,
+            )
+            _append_party_diff_events(
+                party_members=party_members,
+                old_hp_map=old_party_hp_map,
+                old_status_map=old_party_status_map,
+                events=events,
+                actor_side=side,
+                actor_index=idx,
+                focus_target_index=(
+                    getattr(action, "target_index", None)
+                    if getattr(action, "target_side", "enemy") in ("ally", "self")
+                    else None
+                ),
             )
 
             # ★ 行動後：戦闘終了チェック

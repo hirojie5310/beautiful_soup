@@ -120,7 +120,7 @@ def test_healing_magic_has_no_effect_on_non_undead_enemy() -> None:
     caster_state = BattleActorState(hp=999, max_hp=9999)
     caster_state.mp_pool[1] = 1
     caster_state.max_mp_pool[1] = 1
-    enemy_state = BattleActorState(hp=500, max_hp=500)
+    enemy_state = BattleActorState(hp=320, max_hp=500)
     spell, spell_json = _cure_spell()
     logs: list[str] = []
 
@@ -149,8 +149,8 @@ def test_healing_magic_has_no_effect_on_non_undead_enemy() -> None:
 
     assert damage == 0
     assert result is None
-    assert enemy_state.hp == 500
-    assert any("効果がない" in line for line in logs)
+    assert enemy_state.hp > 320
+    assert any("HPが" in line and "回復" in line for line in logs)
 
 
 def test_healing_magic_aoe_only_damages_undead_enemies() -> None:
@@ -263,8 +263,56 @@ def test_healing_magic_aoe_logs_cast_message_only_once() -> None:
     assert sum("アンデッドに効く《Cure》を唱えた" in line for line in logs) == 1
     assert any(line.startswith("  ") and "Skeleton Aに" in line for line in logs)
     assert any(
-        line == "  しかしGoblinはアンデッドではないため効果がない。" for line in logs
+        "GoblinのHPが" in line and "回復" in line for line in logs
     )
+
+
+def test_protect_magic_applies_to_enemy_target() -> None:
+    caster_stats = _char_stats()
+    caster_state = BattleActorState(hp=999, max_hp=9999)
+    caster_state.mp_pool[2] = 1
+    caster_state.max_mp_pool[2] = 1
+    enemy_stats = _enemy_stats(name="Goblin", hp=500)
+    enemy_state = BattleActorState(hp=500, max_hp=500)
+    logs: list[str] = []
+    spell = SpellInfo(power=5, accuracy_percent=100, magic_type="white", elements=[])
+    spell_json = {
+        "Name": "Protect",
+        "Type": "White Magic",
+        "Level": 2,
+        "Target": "One/All",
+        "BasePower": 5,
+        "BaseAccuracy": 1.0,
+        "Effect": "Enhance defense and magic defense",
+    }
+
+    damage, result = run_character_turn(
+        char_name="Refia",
+        enemy_name="Goblin",
+        char_stats=caster_stats,
+        enemy_stats=enemy_stats,
+        enemy_json={"Monster Type": "Beast"},
+        char_state=caster_state,
+        enemy_state=enemy_state,
+        char_attack_kind="magic",
+        char_battle_command="Magic",
+        char_weapon_hand="main",
+        char_spell=spell,
+        char_spell_json=spell_json,
+        char_spell_healing_type="protect",
+        char_spell_name="Protect",
+        char_item=None,
+        logs=logs,
+        rng=Random(0),
+        target_side="enemy",
+        target_index=0,
+    )
+
+    assert damage == 0
+    assert result is None
+    assert enemy_stats.defense > 1
+    assert enemy_stats.magic_defense > 1
+    assert any("Goblin" in line and "防御力" in line for line in logs)
 
 
 def test_healing_magic_single_target_does_not_end_battle_if_other_enemies_alive() -> (
