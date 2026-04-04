@@ -8,7 +8,11 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 
+# local Python virtual environments
 .venv/
+.venv*/
+venv/
+env/
 .vscode/
 
 dist/
