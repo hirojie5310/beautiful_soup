@@ -45,8 +45,10 @@ let activeLogPlaybackId = 0;
 let loadedSaveData = null;
 let returnToLocationBound = false;
 let activeCombatPopups = {};
+let activeCombatEffects = {};
 let suppressMenuStateSync = false;
 const PYTHON_BUNDLE_VERSION = "20260402b";
+const ATTACK_EFFECT_SHEET_NAME = "ef_slash_frames.png";
 
 const BATTLE_START_SELECTION_KEY = "ff3_wasm_battle_start_selection_v1";
 
@@ -440,6 +442,22 @@ function popupForTarget(side, index) {
   return activeCombatPopups[combatPopupKey(side, index)] || null;
 }
 
+function effectForTarget(side, index) {
+  return activeCombatEffects[combatPopupKey(side, index)] || null;
+}
+
+function resolveAttackEffectImageCandidates(fileName = ATTACK_EFFECT_SHEET_NAME) {
+  const safeName = encodeURIComponent(String(fileName || ATTACK_EFFECT_SHEET_NAME).trim());
+  if (!safeName) return [];
+  return [
+    `/web_wasm/effects/${safeName}`,
+    `./effects/${safeName}`,
+    `../assets/images/effects/${safeName}`,
+    new URL(`../assets/images/effects/${safeName}`, import.meta.url).href,
+    `/assets/images/effects/${safeName}`,
+  ];
+}
+
 function appendCombatPopup(card, popup) {
   if (!card || !popup) return;
   const layer = document.createElement("div");
@@ -467,6 +485,37 @@ function appendCombatPopup(card, popup) {
   bubble.className = `combat-popup${extraClass}`;
   bubble.textContent = text;
   layer.appendChild(bubble);
+  card.appendChild(layer);
+}
+
+function appendCombatEffect(card, effect) {
+  if (!card || !effect || effect.kind !== "slash") return;
+
+  const layer = document.createElement("div");
+  layer.className = "combat-effect-layer";
+
+  const slash = document.createElement("div");
+  slash.className = "combat-slash";
+
+  const targetWidth = Math.max(1, card.clientWidth || card.offsetWidth || 120);
+  const targetHeight = Math.max(1, card.clientHeight || card.offsetHeight || 112);
+  const frameWidth = 41;
+  const frameHeight = 44;
+  const startX = Math.round(targetWidth * 0.16);
+  const endX = Math.round(targetWidth - frameWidth - targetWidth * 0.16);
+  const startY = Math.round(targetHeight * 0.48 - frameHeight / 2 - targetHeight * 0.06);
+  const endY = Math.round(targetHeight * 0.48 - frameHeight / 2 + targetHeight * 0.06);
+  const candidates = resolveAttackEffectImageCandidates(effect.sheetName);
+
+  slash.style.setProperty("--slash-start-x", `${startX}px`);
+  slash.style.setProperty("--slash-end-x", `${Math.max(startX, endX)}px`);
+  slash.style.setProperty("--slash-start-y", `${startY}px`);
+  slash.style.setProperty("--slash-end-y", `${endY}px`);
+  if (candidates.length) {
+    slash.style.setProperty("--slash-image", `url("${candidates[0]}")`);
+  }
+
+  layer.appendChild(slash);
   card.appendChild(layer);
 }
 
@@ -498,6 +547,12 @@ function applyEventToPlaybackStatus(playbackStatus, event) {
     return {
       side: targetSide,
       index: targetIndex,
+      effect: amount > 0
+        ? {
+          kind: "slash",
+          sheetName: ATTACK_EFFECT_SHEET_NAME,
+        }
+        : null,
       popup: {
         kind: amount > 0 ? "damage" : "miss",
         value: amount,
@@ -723,6 +778,12 @@ function applyNamedCombatEffect(playbackStatus, effect) {
   return {
     side,
     index,
+    effect: kind === "damage" && value > 0
+      ? {
+        kind: "slash",
+        sheetName: ATTACK_EFFECT_SHEET_NAME,
+      }
+      : null,
     popup: {
       kind,
       value,
@@ -817,6 +878,7 @@ function renderParty() {
     }
 
     card.appendChild(content);
+    appendCombatEffect(card, effectForTarget("char", idx));
     appendCombatPopup(card, popupForTarget("char", idx));
     partyGrid.appendChild(card);
   });
@@ -908,6 +970,7 @@ function renderEnemies() {
       }
     }
     card.appendChild(content);
+    appendCombatEffect(card, effectForTarget("enemy", idx));
     appendCombatPopup(card, popupForTarget("enemy", idx));
     card.addEventListener("click", () => {
       if (battleFinished) return;
@@ -1558,6 +1621,7 @@ async function playBattleLogBlocks(logs, payload) {
     if (playbackStatus && typeof playbackStatus === "object") {
       sessionStatus = playbackStatus;
       activeCombatPopups = {};
+      activeCombatEffects = {};
       rerenderAll();
     }
     logView.textContent = "";
@@ -1573,20 +1637,26 @@ async function playBattleLogBlocks(logs, payload) {
       if (playbackId !== activeLogPlaybackId) return;
       const block = blocks[i];
       activeCombatPopups = {};
+      activeCombatEffects = {};
       const eventsForBlock = Array.isArray(blockEvents[i]) ? blockEvents[i] : [];
       eventsForBlock.forEach((event) => {
         const applied = applyEventToPlaybackStatus(playbackStatus, event);
         if (!applied) return;
         const key = combatPopupKey(applied.side, applied.index);
         activeCombatPopups[key] = applied.popup;
+        if (applied.effect) {
+          activeCombatEffects[key] = applied.effect;
+        }
       });
       const namedEffects = buildNamedCombatEffects(block, playbackStatus);
       namedEffects.forEach((effect) => {
-        const key = combatPopupKey(effect.side, effect.index);
-        activeCombatPopups[key] = {
-          kind: effect.kind,
-          value: Number(effect.value ?? 0),
-        };
+        const applied = applyNamedCombatEffect(playbackStatus, effect);
+        if (!applied) return;
+        const key = combatPopupKey(applied.side, applied.index);
+        activeCombatPopups[key] = applied.popup;
+        if (applied.effect) {
+          activeCombatEffects[key] = applied.effect;
+        }
       });
       rerenderAll();
       logView.textContent = block.lines.join("\n");
@@ -1942,6 +2012,7 @@ async function executeRound() {
 
   sessionStatus = result?.session_status ?? sessionStatus;
   activeCombatPopups = {};
+  activeCombatEffects = {};
   resetPendingActionsForParty();
   currentMemberIndex = firstActionableMemberIndex();
   selectedEnemyIndex = 0;

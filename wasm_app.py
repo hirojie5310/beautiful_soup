@@ -20,39 +20,38 @@ class WasmRequestHandler(SimpleHTTPRequestHandler):
         self.send_header("Expires", "0")
         super().end_headers()
 
-    def do_GET(self) -> None:
+    def _rewrite_web_wasm_asset_path(self) -> bool:
         request_path = unquote(self.path.split("?", 1)[0])
-        if request_path.startswith("/web_wasm/faces/"):
+        asset_dirs = {
+            "/web_wasm/faces/": "faces",
+            "/web_wasm/enemy_sprites/": "enemy_sprites",
+            "/web_wasm/maps/": "maps",
+            "/web_wasm/effects/": "effects",
+        }
+        for prefix, folder_name in asset_dirs.items():
+            if not request_path.startswith(prefix):
+                continue
             file_name = Path(request_path).name
             if not file_name:
                 self.send_error(404, "File not found")
-                return
-            image_path = REPO_ROOT / "assets" / "images" / "faces" / file_name
+                return False
+            image_path = REPO_ROOT / "assets" / "images" / folder_name / file_name
             if not image_path.is_file():
                 self.send_error(404, "File not found")
-                return
-            self.path = f"/assets/images/faces/{file_name}"
-        elif request_path.startswith("/web_wasm/enemy_sprites/"):
-            file_name = Path(request_path).name
-            if not file_name:
-                self.send_error(404, "File not found")
-                return
-            image_path = REPO_ROOT / "assets" / "images" / "enemy_sprites" / file_name
-            if not image_path.is_file():
-                self.send_error(404, "File not found")
-                return
-            self.path = f"/assets/images/enemy_sprites/{file_name}"
-        elif request_path.startswith("/web_wasm/maps/"):
-            file_name = Path(request_path).name
-            if not file_name:
-                self.send_error(404, "File not found")
-                return
-            image_path = REPO_ROOT / "assets" / "images" / "maps" / file_name
-            if not image_path.is_file():
-                self.send_error(404, "File not found")
-                return
-            self.path = f"/assets/images/maps/{file_name}"
+                return False
+            self.path = f"/assets/images/{folder_name}/{file_name}"
+            break
+        return True
+
+    def do_GET(self) -> None:
+        if not self._rewrite_web_wasm_asset_path():
+            return
         super().do_GET()
+
+    def do_HEAD(self) -> None:
+        if not self._rewrite_web_wasm_asset_path():
+            return
+        super().do_HEAD()
 
 
 def run_dev_server(

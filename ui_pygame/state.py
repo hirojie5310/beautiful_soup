@@ -162,18 +162,22 @@ class FloatingText:
 class AttackEffect:
     target_side: str
     target_index: int
-    ttl_ms: int = 180
+    ttl_ms: int = 220
     age_ms: int = 0
 
     def update(self, dt_ms: int) -> bool:
         self.age_ms += dt_ms
         return self.age_ms < self.ttl_ms
 
+    def progress(self) -> float:
+        if self.ttl_ms <= 0:
+            return 1.0
+        return max(0.0, min(1.0, self.age_ms / self.ttl_ms))
+
     def frame_index(self, frame_count: int) -> int:
         if frame_count <= 1:
             return 0
-        half = max(1, self.ttl_ms // frame_count)
-        idx = self.age_ms // half
+        idx = int(self.progress() * frame_count)
         return max(0, min(frame_count - 1, int(idx)))
 
 

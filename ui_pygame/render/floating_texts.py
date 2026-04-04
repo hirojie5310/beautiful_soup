@@ -1,4 +1,5 @@
 from typing import Sequence, cast
+import pygame
 
 from combat.models import BattleEvent as CombatBattleEvent
 
@@ -182,6 +183,38 @@ def draw_attack_effects(screen, ui: BattleUIState) -> None:
 
         r = rects[eff.target_index]
         frame = frames[eff.frame_index(len(frames))]
-        x = r.centerx - frame.get_width() // 2
-        y = r.centery - frame.get_height() // 2
-        screen.blit(frame, (x, y))
+        draw_pos = _attack_effect_draw_position(eff, r, frame)
+        draw_frame = frame.copy()
+        draw_frame.set_alpha(_attack_effect_alpha(eff.progress()))
+        screen.blit(draw_frame, draw_pos)
+
+
+def _attack_effect_draw_position(
+    eff: AttackEffect,
+    target_rect: pygame.Rect,
+    frame: pygame.Surface,
+) -> tuple[int, int]:
+    progress = eff.progress()
+    frame_w = frame.get_width()
+    frame_h = frame.get_height()
+
+    start_center_x = target_rect.left + frame_w // 3
+    end_center_x = target_rect.right - frame_w // 3
+    if start_center_x > end_center_x:
+        center_x = target_rect.centerx
+    else:
+        center_x = round(start_center_x + (end_center_x - start_center_x) * progress)
+
+    diagonal_span = max(4, target_rect.height // 5)
+    center_y = target_rect.centery + round((0.5 - progress) * diagonal_span)
+
+    x = center_x - frame_w // 2
+    y = center_y - frame_h // 2
+    return x, y
+
+
+def _attack_effect_alpha(progress: float) -> int:
+    if progress >= 0.8:
+        fade = (1.0 - progress) / 0.2
+        return max(0, min(255, int(255 * fade)))
+    return 255
