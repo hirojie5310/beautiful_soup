@@ -1,3 +1,5 @@
+import { applyJobChangeToSaveEntry } from "./job_persistence.js";
+
 const LOCAL_MENU_STORAGE_KEY = "ff3_wasm_menu_state_v1";
 const LOCAL_SAVE_STORAGE_KEY = "ff3_wasm_savedata_v1";
 
@@ -203,12 +205,14 @@ function applyJobChange() {
     ? state.jobCandidatesByMember[memberIndex]
     : [];
   const selectedName = String(selectedJobNameByMember[memberIndex] || "");
+  const currentJob = String(member?.job || "");
   const row = rows.find((r) => String(r?.job_name || "") === selectedName);
+  const currentRow = rows.find((r) => Boolean(r?.is_current))
+    || rows.find((r) => String(r?.job_name || "") === currentJob);
   if (!selectedName || !row) {
     window.alert("ジョブを選択してください。");
     return;
   }
-  const currentJob = String(member?.job || "");
   if (selectedName === currentJob) {
     window.alert("現在のジョブです。");
     return;
@@ -223,29 +227,61 @@ function applyJobChange() {
   const ok = window.confirm(`${member?.name || "このキャラ"}を ${selectedName} に変更しますか？\n必要CP: ${requiredCp}`);
   if (!ok) return;
 
+  const nextParty = state.party.map((rowMember, idx) => {
+    if (idx !== memberIndex) return rowMember;
+    const syncedJobState = applyJobChangeToSaveEntry(
+      {
+        ...rowMember,
+        current_job: rowMember?.current_job ?? currentJob,
+        job: rowMember?.job ?? currentJob,
+        job_level: rowMember?.job_level ?? {
+          level: currentRow?.saved_job_level ?? 1,
+          skill_point: 0,
+        },
+        job_levels: rowMember?.job_levels,
+      },
+      {
+        currentJob,
+        nextJob: selectedName,
+        currentJobLevel: currentRow?.saved_job_level ?? 1,
+        currentJobSkillPoint: rowMember?.job_levels?.[currentJob]?.skill_point ?? rowMember?.job_level?.skill_point ?? 0,
+        nextJobLevel: row?.saved_job_level ?? 1,
+        nextJobSkillPoint: rowMember?.job_levels?.[selectedName]?.skill_point ?? 0,
+      },
+    );
+    return {
+      ...rowMember,
+      ...syncedJobState,
+      job: selectedName,
+      current_job: selectedName,
+    };
+  });
+  const nextResources = {
+    ...state.resources,
+    cp: currentCp - requiredCp,
+  };
+  const nextJobCandidatesByMember = state.jobCandidatesByMember.map((memberRows, idx) => {
+    if (idx !== memberIndex || !Array.isArray(memberRows)) return memberRows;
+    return memberRows.map((cand) => ({
+      ...cand,
+      is_current: String(cand?.job_name || "") === selectedName,
+    }));
+  });
+
   const nextState = {
     ...state,
-    party: state.party.map((rowMember, idx) => {
-      if (idx !== memberIndex) return rowMember;
-      return { ...rowMember, job: selectedName };
-    }),
-    resources: {
-      ...state.resources,
-      cp: currentCp - requiredCp,
-    },
-    jobCandidatesByMember: state.jobCandidatesByMember.map((memberRows, idx) => {
-      if (idx !== memberIndex || !Array.isArray(memberRows)) return memberRows;
-      return memberRows.map((cand) => ({
-        ...cand,
-        is_current: String(cand?.job_name || "") === selectedName,
-      }));
-    }),
+    party: nextParty,
+    resources: nextResources,
+    jobCandidatesByMember: nextJobCandidatesByMember,
   };
-  if (!persistMenuState({
+  const nextStoredMenuState = {
     ...(state.raw && typeof state.raw === "object" ? state.raw : {}),
     ...nextState,
     job_candidates_by_member: nextState.jobCandidatesByMember,
-  })) {
+    party: nextParty,
+    resources: nextResources,
+  };
+  if (!persistMenuState(nextStoredMenuState)) {
     window.alert("メニュー状態の保存に失敗しました。");
     return;
   }
@@ -254,7 +290,17 @@ function applyJobChange() {
   const savePartyIndex = resolveSavePartyIndex(member, memberIndex);
   if (envelope?.save && Array.isArray(envelope.save.party) && envelope.save.party[savePartyIndex]) {
     envelope.save.CP = currentCp - requiredCp;
-    envelope.save.party[savePartyIndex].job = selectedName;
+    envelope.save.party[savePartyIndex] = applyJobChangeToSaveEntry(
+      envelope.save.party[savePartyIndex],
+      {
+        currentJob,
+        nextJob: selectedName,
+        currentJobLevel: currentRow?.saved_job_level ?? 1,
+        currentJobSkillPoint: envelope.save.party[savePartyIndex]?.job_level?.skill_point ?? 0,
+        nextJobLevel: row?.saved_job_level ?? 1,
+      },
+    );
+    envelope.menu_state = nextStoredMenuState;
     envelope.saved_at = new Date().toISOString();
     persistSaveEnvelope(envelope);
   }

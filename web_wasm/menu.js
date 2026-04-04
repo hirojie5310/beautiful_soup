@@ -5,6 +5,7 @@ import {
   resolveMemberJob,
   normalizeSavePartyAgainstTemplate as sharedNormalizeSavePartyAgainstTemplate,
 } from "./shared_party.js";
+import { applyJobChangeToSaveEntry } from "./job_persistence.js";
 import {
   LOCAL_MENU_STORAGE_KEY,
   LOCAL_SAVE_STORAGE_KEY,
@@ -65,6 +66,7 @@ async function normalizeStoredStateOnMenuBoot() {
     })),
   };
 
+  envelope.save = patchSaveWithMenuState(envelope.save, nextMenuState);
   envelope.menu_state = nextMenuState;
   const nextEnvelopeJson = JSON.stringify(envelope);
   const nextMenuJson = JSON.stringify(nextMenuState);
@@ -108,13 +110,11 @@ function parseMenuState() {
         gil: Number(parsed?.resources?.gil ?? 0),
       },
     });
-    const envelope = restoreSaveEnvelopeFromStorage();
-    const saveParty = Array.isArray(envelope?.save?.party) ? envelope.save.party : [];
     return {
       ...normalized,
-      party: normalizePartyIdentityOrder(normalized.party).map((member, index) => ({
+      party: normalizePartyIdentityOrder(normalized.party).map((member) => ({
         ...member,
-        job: resolveMemberJob(member, saveParty[index]),
+        job: resolveMemberJob(member, member),
       })),
     };
   } catch (_error) {
@@ -124,6 +124,19 @@ function parseMenuState() {
 
 function persistMenuState(nextState) {
   localStorage.setItem(LOCAL_MENU_STORAGE_KEY, JSON.stringify(nextState));
+}
+
+function persistMenuStateWithEnvelope(nextState) {
+  persistMenuState(nextState);
+  const stored = restoreSaveEnvelopeFromStorage();
+  if (!stored?.save || typeof stored.save !== "object") return true;
+  const nextEnvelope = {
+    ...stored,
+    save: patchSaveWithMenuState(stored.save, nextState),
+    menu_state: nextState,
+    saved_at: new Date().toISOString(),
+  };
+  return persistSaveEnvelopeToStorage(nextEnvelope);
 }
 
 function compactSaveEnvelope(envelope) {
@@ -230,12 +243,34 @@ function patchSaveWithMenuState(saveObj, menuState) {
   const mergedParty = sourceParty.map((entry, index) => {
     const menuMember = menuParty[index];
     if (!menuMember || typeof menuMember !== "object") return entry;
-    return {
+    let nextEntry = {
       ...entry,
       row: normalizeRow(menuMember?.row),
       hp: Number(menuMember?.hp ?? entry?.hp ?? 0),
       max_hp: Number(menuMember?.max_hp ?? entry?.max_hp ?? 0),
     };
+    const nextJob = String(menuMember?.current_job || menuMember?.job || nextEntry?.current_job || nextEntry?.job || "").trim();
+    if (nextJob) {
+      const currentJob = String(nextEntry?.current_job || nextEntry?.job || nextJob).trim();
+      nextEntry = applyJobChangeToSaveEntry(nextEntry, {
+        currentJob,
+        nextJob,
+        currentJobLevel: menuMember?.job_levels?.[currentJob]?.level ?? nextEntry?.job_levels?.[currentJob]?.level ?? nextEntry?.job_level?.level ?? 1,
+        currentJobSkillPoint: menuMember?.job_levels?.[currentJob]?.skill_point ?? nextEntry?.job_levels?.[currentJob]?.skill_point ?? nextEntry?.job_level?.skill_point ?? 0,
+        nextJobLevel: menuMember?.job_level?.level ?? menuMember?.job_levels?.[nextJob]?.level ?? nextEntry?.job_levels?.[nextJob]?.level ?? 1,
+        nextJobSkillPoint: menuMember?.job_level?.skill_point ?? menuMember?.job_levels?.[nextJob]?.skill_point ?? nextEntry?.job_levels?.[nextJob]?.skill_point ?? 0,
+      });
+    }
+    if (menuMember?.job_levels && typeof menuMember.job_levels === "object") {
+      nextEntry.job_levels = mergeSaveData(nextEntry?.job_levels ?? {}, menuMember.job_levels);
+    }
+    if (menuMember?.job_level && typeof menuMember.job_level === "object") {
+      nextEntry.job_level = mergeSaveData(nextEntry?.job_level ?? {}, menuMember.job_level);
+    }
+    if (menuMember?.current_job != null) {
+      nextEntry.current_job = String(menuMember.current_job || nextEntry.current_job || nextEntry.job || "");
+    }
+    return nextEntry;
   });
   if (mergedParty.length) {
     nextSave.party = mergedParty;
@@ -244,10 +279,17 @@ function patchSaveWithMenuState(saveObj, menuState) {
     nextSave.party = menuParty.map((member) => ({
       name: String(member?.name || ""),
       job: String(member?.job || ""),
+      current_job: String(member?.current_job || member?.job || ""),
       level: Number(member?.level ?? 0),
       row: normalizeRow(member?.row),
       hp: Number(member?.hp ?? 0),
       max_hp: Number(member?.max_hp ?? 0),
+      job_level: member?.job_level && typeof member.job_level === "object"
+        ? member.job_level
+        : { level: 1, skill_point: 0 },
+      job_levels: member?.job_levels && typeof member.job_levels === "object"
+        ? member.job_levels
+        : {},
       mp_levels: member?.mp_levels && typeof member.mp_levels === "object"
         ? member.mp_levels
         : {},
@@ -334,9 +376,9 @@ function extractMenuStateFromEnvelope(envelope) {
   });
   return {
     ...normalized,
-    party: normalizePartyIdentityOrder(normalized.party).map((member, index) => ({
+    party: normalizePartyIdentityOrder(normalized.party).map((member) => ({
       ...member,
-      job: resolveMemberJob(member, saveParty[index]),
+      job: resolveMemberJob(member, member),
     })),
   };
 }
@@ -477,7 +519,7 @@ function renderParty(party) {
           return { ...entry, row: toggleMemberRow(entry) };
         });
         state.party = nextParty;
-        persistMenuState(state);
+        persistMenuStateWithEnvelope(state);
         renderParty(state.party);
       };
       card.addEventListener("click", handleToggle);
@@ -570,7 +612,7 @@ function renderButtons() {
         return;
       }
       if (label === "セーブ") {
-        persistMenuState(state);
+        persistMenuStateWithEnvelope(state);
         const stored = restoreSaveEnvelopeFromStorage();
         const currentSave = stored?.save && typeof stored.save === "object" ? stored.save : {};
         const nextSave = patchSaveWithMenuState(currentSave, state);

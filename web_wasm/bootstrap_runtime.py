@@ -207,8 +207,6 @@ def _align_party_to_base(base_party, overlay_party):
             if isinstance(base_entry, dict):
                 if base_entry.get("name"):
                     merged_entry["name"] = base_entry.get("name")
-                if base_entry.get("job"):
-                    merged_entry["job"] = base_entry.get("job")
                 if isinstance(base_entry.get("job_levels"), dict):
                     merged_entry["job_levels"] = _merge_save_data(
                         base_entry.get("job_levels"),

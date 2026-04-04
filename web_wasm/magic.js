@@ -56,7 +56,13 @@ function resolveSavePartyIndex(member, fallbackIndex) {
 function parseState() {
   try {
     const text = localStorage.getItem(LOCAL_MENU_STORAGE_KEY);
-    const parsed = text ? JSON.parse(text) : {};
+    let parsed = text ? JSON.parse(text) : {};
+    if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed?.party)) {
+      const envelope = parseSaveEnvelope();
+      if (envelope?.menu_state && typeof envelope.menu_state === "object") {
+        parsed = envelope.menu_state;
+      }
+    }
     return {
       raw: parsed,
       party: asArray(parsed?.party),
@@ -89,6 +95,21 @@ function persistState(state) {
   } catch (_error) {
     return false;
   }
+}
+
+function persistMenuAndEnvelopeState(nextRaw) {
+  const okMenu = persistState(nextRaw);
+  const envelope = parseSaveEnvelope();
+  if (envelope && typeof envelope === "object") {
+    envelope.menu_state = nextRaw;
+    envelope.saved_at = new Date().toISOString();
+    try {
+      localStorage.setItem(LOCAL_SAVE_STORAGE_KEY, JSON.stringify(envelope));
+    } catch (_error) {
+      return okMenu;
+    }
+  }
+  return okMenu;
 }
 
 function persistSaveMagicSetup(setup, party = []) {
@@ -403,7 +424,7 @@ function executeModeAction(state, row) {
       equipped_by_member: equippedByMember,
     },
   };
-  persistState(nextRaw);
+  persistMenuAndEnvelopeState(nextRaw);
   persistSaveMagicSetup(nextRaw.magic_setup, state.party);
   syncPartyToSaveEnvelope(state.party);
   render();

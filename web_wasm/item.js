@@ -67,7 +67,13 @@ function canon(text) {
 
 function parseMenuState() {
   try {
-    const parsed = JSON.parse(localStorage.getItem(LOCAL_MENU_STORAGE_KEY) || "{}");
+    let parsed = JSON.parse(localStorage.getItem(LOCAL_MENU_STORAGE_KEY) || "{}");
+    if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed?.party)) {
+      const envelope = parseSaveEnvelope();
+      if (envelope?.menu_state && typeof envelope.menu_state === "object") {
+        parsed = envelope.menu_state;
+      }
+    }
     return { raw: parsed, party: asArray(parsed?.party) };
   } catch (_error) {
     return { raw: {}, party: [] };
@@ -91,6 +97,40 @@ function persistMenuState(raw) {
 
 function persistSaveEnvelope(envelope) {
   try { localStorage.setItem(LOCAL_SAVE_STORAGE_KEY, JSON.stringify(envelope)); return true; } catch (_error) { return false; }
+}
+
+function syncPartyToSaveEnvelope(party) {
+  const envelope = parseSaveEnvelope();
+  if (!envelope?.save || typeof envelope.save !== "object") return false;
+  const saveParty = asArray(envelope.save.party);
+  if (!saveParty.length || !Array.isArray(party)) return false;
+  party.forEach((member, index) => {
+    const entry = saveParty[index];
+    if (!entry || typeof entry !== "object") return;
+    entry.hp = Number(member?.hp ?? entry.hp ?? 0);
+    entry.max_hp = Number(member?.max_hp ?? entry.max_hp ?? 0);
+    if (member?.mp_levels && typeof member.mp_levels === "object") {
+      entry.mp_levels = member.mp_levels;
+    }
+    if (Array.isArray(member?.status_icons)) {
+      entry.status_icons = member.status_icons;
+    }
+  });
+  envelope.save.party = saveParty;
+  envelope.saved_at = new Date().toISOString();
+  return persistSaveEnvelope(envelope);
+}
+
+function persistMenuAndEnvelopeState(nextRaw) {
+  const okMenu = persistMenuState(nextRaw);
+  const envelope = parseSaveEnvelope();
+  if (envelope && typeof envelope === "object") {
+    envelope.menu_state = nextRaw;
+    envelope.saved_at = new Date().toISOString();
+    persistSaveEnvelope(envelope);
+  }
+  syncPartyToSaveEnvelope(asArray(nextRaw?.party));
+  return okMenu;
 }
 
 function resolveStatusIconCandidates(iconKey) {
@@ -253,7 +293,7 @@ function useItem(itemName, targetIdx) {
   if (!consumeInventory(itemName)) return { ok: false, message: "在庫がありません。" };
 
   state.party[targetIdx] = target;
-  const ok = persistMenuState({ ...state.raw, party: state.party });
+  const ok = persistMenuAndEnvelopeState({ ...state.raw, party: state.party });
   return ok
     ? { ok: true, message: `${itemName} を ${target.name || "target"} に使用しました。` }
     : { ok: false, message: "保存に失敗しました。" };

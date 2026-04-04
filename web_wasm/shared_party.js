@@ -131,7 +131,7 @@ export function normalizeSavePartyAgainstTemplate(saveParty, templateParty, merg
       index,
       name: FIXED_PARTY_SLOT_LABELS[index] || String(merged?.name || member?.name || "Unknown"),
       portrait_key: merged?.portrait_key ?? FIXED_PARTY_SLOT_KEYS[index] ?? null,
-      job: resolveMemberJob(merged, templateEntry || merged),
+      job: resolveMemberJob(merged, merged),
     };
   });
 }
