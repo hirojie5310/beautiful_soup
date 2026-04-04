@@ -48,6 +48,10 @@ const ESUNA_CLEAR = [
 
 function asArray(v) { return Array.isArray(v) ? v : []; }
 function asObj(v) { return v && typeof v === "object" ? v : {}; }
+function resolveSavePartyIndex(member, fallbackIndex) {
+  const slotIndex = Number(member?.index ?? fallbackIndex);
+  return Number.isInteger(slotIndex) && slotIndex >= 0 ? slotIndex : fallbackIndex;
+}
 
 function parseState() {
   try {
@@ -87,13 +91,17 @@ function persistState(state) {
   }
 }
 
-function persistSaveMagicSetup(setup) {
+function persistSaveMagicSetup(setup, party = []) {
   const envelope = parseSaveEnvelope();
-  const party = asArray(envelope?.save?.party);
-  if (!party.length) return;
+  const saveParty = asArray(envelope?.save?.party);
+  if (!saveParty.length) return;
   const equippedByMember = asArray(setup?.equipped_by_member);
-  party.forEach((entry, idx) => {
-    const one = asObj(equippedByMember[idx]);
+  equippedByMember.forEach((oneRaw, idx) => {
+    const member = asArray(party)[idx];
+    const saveIndex = resolveSavePartyIndex(member, idx);
+    const entry = saveParty[saveIndex];
+    if (!entry || typeof entry !== "object") return;
+    const one = asObj(oneRaw);
     const magic = {};
     for (let lv = 1; lv <= 8; lv += 1) {
       const row = asArray(one[String(lv)]).slice(0, 3).map((name) => (typeof name === "string" && name ? name : null));
@@ -115,7 +123,8 @@ function syncPartyToSaveEnvelope(party) {
   const saveParty = asArray(envelope?.save?.party);
   if (!saveParty.length || !Array.isArray(party)) return;
   party.forEach((member, idx) => {
-    const entry = saveParty[idx];
+    const saveIndex = resolveSavePartyIndex(member, idx);
+    const entry = saveParty[saveIndex];
     if (!entry || typeof entry !== "object") return;
     entry.hp = Number(member?.hp ?? entry.hp ?? 0);
     entry.max_hp = Number(member?.max_hp ?? entry.max_hp ?? 0);
@@ -395,7 +404,7 @@ function executeModeAction(state, row) {
     },
   };
   persistState(nextRaw);
-  persistSaveMagicSetup(nextRaw.magic_setup);
+  persistSaveMagicSetup(nextRaw.magic_setup, state.party);
   syncPartyToSaveEnvelope(state.party);
   render();
 }

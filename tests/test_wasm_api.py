@@ -325,6 +325,20 @@ def test_build_session_status_snapshot_includes_menu_fields() -> None:
     assert snapshot["resources"]["gil"] >= 0
 
 
+def test_build_session_status_snapshot_prefers_runtime_member_identity() -> None:
+    engine = WasmBattleEngine.create_default(seed=23)
+    runtime_name = engine.session.party_members[0].name
+    runtime_job = str(getattr(engine.session.party_members[0].job, "name", ""))
+    engine.session.state.save["party"][0]["name"] = "Refia"
+    engine.session.state.save["party"][0]["job"] = "Dragoon"
+    engine.session.state.save["party"][0]["portrait_key"] = "refia"
+
+    snapshot = build_session_status_snapshot(engine.session)
+
+    assert snapshot["party"][0]["name"] == runtime_name
+    assert snapshot["party"][0]["job"] == runtime_job
+
+
 def test_wasm_engine_initial_payload_exposes_flat_party_members() -> None:
     engine = WasmBattleEngine.create_default(seed=3)
 

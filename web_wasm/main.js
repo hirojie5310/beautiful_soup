@@ -1,4 +1,15 @@
 import { loadPyodide } from "https://cdn.jsdelivr.net/pyodide/v0.28.3/full/pyodide.mjs";
+import { resolveFaceImageCandidates } from "./shared_party.js";
+import {
+  LOCAL_MENU_STORAGE_KEY,
+  LOCAL_SAVE_STORAGE_KEY,
+  parseSaveEnvelope,
+  restoreSaveEnvelopeFromStorage,
+  parseMenuStateFromStorage,
+  makeSaveEnvelope,
+  persistSaveEnvelopeToStorage,
+  syncRuntimeSaveToStorage,
+} from "./shared_storage.js";
 
 const battlePhase = document.getElementById("battlePhase");
 const partyGrid = document.getElementById("partyGrid");
@@ -35,9 +46,6 @@ const locationMapImageCache = {};
 let activeLogPlaybackId = 0;
 let loadedSaveData = null;
 const PYTHON_BUNDLE_VERSION = "20260402b";
-
-const LOCAL_SAVE_STORAGE_KEY = "ff3_wasm_savedata_v1";
-const LOCAL_MENU_STORAGE_KEY = "ff3_wasm_menu_state_v1";
 
 const COMMAND_LABELS = {
   Fight: "たたかう",
@@ -231,52 +239,6 @@ function targetSideForCommand(def) {
 function commandLabel(command) {
   const key = String(command || "").trim();
   return COMMAND_LABELS[key] || key || "(unknown)";
-}
-
-function normalizeFaceKey(raw) {
-  return String(raw || "")
-    .trim()
-    .toLowerCase()
-    .replace(/^ch_/, "")
-    .replace(/\.(png|jpg|jpeg|webp)$/i, "")
-    .replace(/\s+/g, "_")
-    .replace(/-/g, "_");
-}
-
-function resolveFaceImageCandidates(member, memberIndex = -1) {
-  const portraitKey = normalizeFaceKey(member?.portrait_key);
-  const nameKey = normalizeFaceKey(member?.name);
-  const imageNameKey = normalizeFaceKey(member?.image_name);
-  const fixedPartyOrderFallback = ["runeth", "arc", "refia", "ingus"];
-  const slotKey = fixedPartyOrderFallback[memberIndex] || "";
-  const aliasMap = {
-    luneth: "runeth",
-  };
-  const rawKeys = [portraitKey, imageNameKey, nameKey, slotKey];
-  const keys = rawKeys
-    .map((key) => aliasMap[key] || key)
-    .filter((value, index, arr) => value && arr.indexOf(value) === index);
-  if (!keys.length) return [];
-  const paths = [];
-  const exts = ["png", "webp", "jpg", "jpeg"];
-  keys.forEach((key) => {
-    const variants = [key, key.charAt(0).toUpperCase() + key.slice(1)];
-    variants.forEach((variantKey) => {
-      const safeKey = encodeURIComponent(variantKey);
-      exts.forEach((ext) => {
-        paths.push(`/web_wasm/faces/${safeKey}.${ext}`);
-        paths.push(`./faces/${safeKey}.${ext}`);
-        paths.push(`../assets/images/faces/${safeKey}.${ext}`);
-        paths.push(new URL(`../assets/images/faces/${safeKey}.${ext}`, import.meta.url).href);
-        paths.push(`/assets/images/faces/${safeKey}.${ext}`);
-
-        paths.push(`../assets/images/motions/${safeKey}.${ext}`);
-        paths.push(new URL(`../assets/images/motions/${safeKey}.${ext}`, import.meta.url).href);
-        paths.push(`/assets/images/motions/${safeKey}.${ext}`);
-      });
-    });
-  });
-  return paths.filter((value, index, arr) => value && arr.indexOf(value) === index);
 }
 
 function normalizeSpriteKey(raw) {
@@ -924,19 +886,6 @@ function injectResourceDiffsIntoRewardLogs(logs, rewards) {
   ]);
 }
 
-function makeSaveEnvelope(saveObj, options = {}) {
-  return {
-    version: 1,
-    saved_at: new Date().toISOString(),
-    selected_location_group: String(options?.selectedLocationGroup || currentSelectedLocationGroup || ""),
-    selected_location: String(options?.selectedLocation || locationSelect?.value || ""),
-    save: saveObj,
-    menu_state: options?.menuState && typeof options.menuState === "object"
-      ? options.menuState
-      : null,
-  };
-}
-
 function compactSaveEnvelope(envelope) {
   if (!envelope || typeof envelope !== "object") return null;
   if (!envelope.save || typeof envelope.save !== "object") return null;
@@ -950,48 +899,6 @@ function compactSaveEnvelope(envelope) {
   };
 }
 
-function parseSaveEnvelope(raw) {
-  if (!raw || typeof raw !== "object") return null;
-  if (raw?.version === 1 && raw?.save && typeof raw.save === "object") {
-    return {
-      version: 1,
-      saved_at: String(raw.saved_at || ""),
-      selected_location_group: String(raw.selected_location_group || ""),
-      selected_location: String(raw.selected_location || ""),
-      save: raw.save,
-      menu_state: raw?.menu_state && typeof raw.menu_state === "object"
-        ? raw.menu_state
-        : null,
-    };
-  }
-  if (raw?.party && Array.isArray(raw.party)) {
-    return makeSaveEnvelope(raw);
-  }
-  return null;
-}
-
-function restoreSaveEnvelopeFromStorage() {
-  try {
-    const text = localStorage.getItem(LOCAL_SAVE_STORAGE_KEY);
-    if (!text) return null;
-    const parsed = JSON.parse(text);
-    return parseSaveEnvelope(parsed);
-  } catch (_error) {
-    return null;
-  }
-}
-
-function parseMenuStateFromStorage() {
-  try {
-    const text = localStorage.getItem(LOCAL_MENU_STORAGE_KEY);
-    if (!text) return {};
-    const parsed = JSON.parse(text);
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch (_error) {
-    return {};
-  }
-}
-
 function buildMenuViewState() {
   const storedMenuState = parseMenuStateFromStorage();
   const menuState = latestMenuState && typeof latestMenuState === "object" ? latestMenuState : {};
@@ -1000,6 +907,7 @@ function buildMenuViewState() {
     : [];
   const party = Array.isArray(sessionStatus?.party)
     ? sessionStatus.party.map((member, index) => ({
+      index: Number(member?.index ?? index),
       name: String(member?.name || ""),
       portrait_key: member?.portrait_key ?? null,
       image_name: member?.image_name ?? null,
@@ -1155,14 +1063,18 @@ function getCurrentMenuStateForPersistence() {
   };
 }
 
-function persistSaveEnvelopeToStorage(envelope) {
-  if (!envelope) return false;
-  try {
-    localStorage.setItem(LOCAL_SAVE_STORAGE_KEY, JSON.stringify(envelope));
-    return true;
-  } catch (_error) {
-    return false;
-  }
+function syncNormalizedRuntimeSaveToStorage() {
+  return syncRuntimeSaveToStorage({
+    pyodide,
+    buildEnvelopeOptions: () => {
+      const storedEnvelope = restoreSaveEnvelopeFromStorage();
+      return {
+        selectedLocationGroup: currentSelectedLocationGroup || storedEnvelope?.selected_location_group || "",
+        selectedLocation: locationSelect?.value || storedEnvelope?.selected_location || "",
+        menuState: getCurrentMenuStateForPersistence(),
+      };
+    },
+  });
 }
 
 function downloadSaveEnvelope(envelope) {
@@ -1571,6 +1483,7 @@ function bootLocationAndSyncSession() {
   battleFinished = false;
   applyFullRecoverParty();
   refreshMenuStateFromPyodide();
+  syncNormalizedRuntimeSaveToStorage();
   return payload;
 }
 

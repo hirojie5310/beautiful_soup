@@ -17,6 +17,11 @@ function asNum(v, d = 0) {
   return Number.isFinite(n) ? n : d;
 }
 
+function resolveSavePartyIndex(member, fallbackIndex) {
+  const slotIndex = Number(member?.index ?? fallbackIndex);
+  return Number.isInteger(slotIndex) && slotIndex >= 0 ? slotIndex : fallbackIndex;
+}
+
 function parseState() {
   try {
     const text = localStorage.getItem(LOCAL_MENU_STORAGE_KEY);
@@ -246,9 +251,10 @@ function applyJobChange() {
   }
 
   const envelope = parseSaveEnvelope();
-  if (envelope?.save && Array.isArray(envelope.save.party) && envelope.save.party[memberIndex]) {
+  const savePartyIndex = resolveSavePartyIndex(member, memberIndex);
+  if (envelope?.save && Array.isArray(envelope.save.party) && envelope.save.party[savePartyIndex]) {
     envelope.save.CP = currentCp - requiredCp;
-    envelope.save.party[memberIndex].job = selectedName;
+    envelope.save.party[savePartyIndex].job = selectedName;
     envelope.saved_at = new Date().toISOString();
     persistSaveEnvelope(envelope);
   }

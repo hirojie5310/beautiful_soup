@@ -1,5 +1,18 @@
-const LOCAL_MENU_STORAGE_KEY = "ff3_wasm_menu_state_v1";
-const LOCAL_SAVE_STORAGE_KEY = "ff3_wasm_savedata_v1";
+import {
+  normalizeFaceKey,
+  resolveFaceImageCandidates,
+  normalizePartyIdentityOrder,
+  resolveMemberJob,
+  normalizeSavePartyAgainstTemplate as sharedNormalizeSavePartyAgainstTemplate,
+} from "./shared_party.js";
+import {
+  LOCAL_MENU_STORAGE_KEY,
+  LOCAL_SAVE_STORAGE_KEY,
+  parseSaveEnvelope,
+  restoreSaveEnvelopeFromStorage,
+  makeSaveEnvelope,
+  persistSaveEnvelopeToStorage,
+} from "./shared_storage.js";
 
 const partyList = document.getElementById("partyList");
 const menuButtons = document.getElementById("menuButtons");
@@ -11,41 +24,56 @@ const MENU_LABELS = ["アイテム", "まほう", "そうび", "ステータス"
 let isRowSwapMode = false;
 let defaultSaveTemplatePromise = null;
 
-function normalizeFaceKey(raw) {
-  return String(raw || "")
-    .trim()
-    .toLowerCase()
-    .replace(/^ch_/, "")
-    .replace(/\.(png|jpg|jpeg|webp)$/i, "")
-    .replace(/\s+/g, "_")
-    .replace(/-/g, "_");
-}
-
 function clampNesPercent(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.min(Math.trunc(n), 99));
 }
 
-function resolveFaceImageCandidates(member) {
-  const portraitKey = normalizeFaceKey(member?.portrait_key);
-  const nameKey = normalizeFaceKey(member?.name);
-  const aliasMap = { luneth: "runeth" };
-  const keys = [portraitKey, nameKey]
-    .map((key) => aliasMap[key] || key)
-    .filter((value, index, arr) => value && arr.indexOf(value) === index);
-  if (!keys.length) return [];
-  const exts = ["png", "webp", "jpg", "jpeg"];
-  const paths = [];
-  keys.forEach((key) => {
-    exts.forEach((ext) => {
-      const safeKey = encodeURIComponent(key);
-      paths.push(`/web_wasm/faces/${safeKey}.${ext}`);
-      paths.push(`../assets/images/faces/${safeKey}.${ext}`);
-      paths.push(`/assets/images/faces/${safeKey}.${ext}`);
-    });
-  });
-  return paths.filter((value, index, arr) => value && arr.indexOf(value) === index);
+async function normalizeStoredStateOnMenuBoot() {
+  const envelope = restoreSaveEnvelopeFromStorage();
+  if (!envelope?.save || typeof envelope.save !== "object") return false;
+  const template = await loadDefaultSaveTemplate();
+  const templateParty = Array.isArray(template?.party) ? template.party : [];
+  const originalEnvelopeJson = JSON.stringify(envelope);
+  const originalMenuJson = localStorage.getItem(LOCAL_MENU_STORAGE_KEY) || "";
+
+  if (Array.isArray(envelope.save.party)) {
+    envelope.save.party = sharedNormalizeSavePartyAgainstTemplate(envelope.save.party, templateParty, mergeSaveData);
+  }
+
+  const normalizedMenuState = parseMenuState();
+  const nextMenuState = {
+    ...normalizedMenuState,
+    party: sharedNormalizeSavePartyAgainstTemplate(normalizedMenuState.party, templateParty, mergeSaveData).map((member, index) => ({
+      ...member,
+      hp: Number(normalizedMenuState.party[index]?.hp ?? member?.hp ?? 0),
+      max_hp: Number(normalizedMenuState.party[index]?.max_hp ?? member?.max_hp ?? 0),
+      row: normalizeRow(normalizedMenuState.party[index]?.row ?? member?.row),
+      mp_levels: normalizedMenuState.party[index]?.mp_levels && typeof normalizedMenuState.party[index].mp_levels === "object"
+        ? normalizedMenuState.party[index].mp_levels
+        : (member?.mp_levels && typeof member.mp_levels === "object" ? member.mp_levels : {}),
+      status: normalizedMenuState.party[index]?.status && typeof normalizedMenuState.party[index].status === "object"
+        ? normalizedMenuState.party[index].status
+        : (member?.status && typeof member.status === "object" ? member.status : {}),
+      status_icons: Array.isArray(normalizedMenuState.party[index]?.status_icons)
+        ? normalizedMenuState.party[index].status_icons
+        : (Array.isArray(member?.status_icons) ? member.status_icons : []),
+      equipment: normalizedMenuState.party[index]?.equipment && typeof normalizedMenuState.party[index].equipment === "object"
+        ? normalizedMenuState.party[index].equipment
+        : (member?.equipment && typeof member.equipment === "object" ? member.equipment : {}),
+    })),
+  };
+
+  envelope.menu_state = nextMenuState;
+  const nextEnvelopeJson = JSON.stringify(envelope);
+  const nextMenuJson = JSON.stringify(nextMenuState);
+  if (nextEnvelopeJson === originalEnvelopeJson && nextMenuJson === originalMenuJson) {
+    return false;
+  }
+  persistSaveEnvelopeToStorage(envelope);
+  persistMenuState(nextMenuState);
+  return true;
 }
 
 function parseMenuState() {
@@ -72,7 +100,7 @@ function parseMenuState() {
     if (!parsed || typeof parsed !== "object") {
       return { party: [], resources: { cp: 0, cp_max: 255, gil: 0 } };
     }
-    return normalizeMenuState({
+    const normalized = normalizeMenuState({
       ...parsed,
       resources: {
         cp: Number(parsed?.resources?.cp ?? 0),
@@ -80,6 +108,15 @@ function parseMenuState() {
         gil: Number(parsed?.resources?.gil ?? 0),
       },
     });
+    const envelope = restoreSaveEnvelopeFromStorage();
+    const saveParty = Array.isArray(envelope?.save?.party) ? envelope.save.party : [];
+    return {
+      ...normalized,
+      party: normalizePartyIdentityOrder(normalized.party).map((member, index) => ({
+        ...member,
+        job: resolveMemberJob(member, saveParty[index]),
+      })),
+    };
   } catch (_error) {
     return { party: [], resources: { cp: 0, cp_max: 255, gil: 0 } };
   }
@@ -87,56 +124,6 @@ function parseMenuState() {
 
 function persistMenuState(nextState) {
   localStorage.setItem(LOCAL_MENU_STORAGE_KEY, JSON.stringify(nextState));
-}
-
-function parseSaveEnvelope(raw) {
-  if (!raw || typeof raw !== "object") return null;
-  if (raw?.version === 1 && raw?.save && typeof raw.save === "object") {
-    return {
-      version: 1,
-      saved_at: String(raw.saved_at || ""),
-      selected_location_group: String(raw.selected_location_group || ""),
-      selected_location: String(raw.selected_location || ""),
-      save: raw.save,
-      menu_state: raw?.menu_state && typeof raw.menu_state === "object"
-        ? raw.menu_state
-        : null,
-    };
-  }
-  if (raw?.party && Array.isArray(raw.party)) {
-    return {
-      version: 1,
-      saved_at: "",
-      selected_location_group: "",
-      selected_location: "",
-      save: raw,
-      menu_state: null,
-    };
-  }
-  return null;
-}
-
-function restoreSaveEnvelopeFromStorage() {
-  try {
-    const text = localStorage.getItem(LOCAL_SAVE_STORAGE_KEY);
-    if (!text) return null;
-    return parseSaveEnvelope(JSON.parse(text));
-  } catch (_error) {
-    return null;
-  }
-}
-
-function makeSaveEnvelope(saveObj, options = {}) {
-  return {
-    version: 1,
-    saved_at: new Date().toISOString(),
-    selected_location_group: String(options?.selectedLocationGroup || ""),
-    selected_location: String(options?.selectedLocation || ""),
-    save: saveObj,
-    menu_state: options?.menuState && typeof options.menuState === "object"
-      ? options.menuState
-      : null,
-  };
 }
 
 function compactSaveEnvelope(envelope) {
@@ -273,23 +260,15 @@ function patchSaveWithMenuState(saveObj, menuState) {
   return nextSave;
 }
 
-function persistSaveEnvelopeToStorage(envelope) {
-  try {
-    localStorage.setItem(LOCAL_SAVE_STORAGE_KEY, JSON.stringify(envelope));
-    return true;
-  } catch (_error) {
-    return false;
-  }
-}
-
 function normalizeMenuState(raw) {
   const parsed = raw && typeof raw === "object" ? raw : {};
   const party = Array.isArray(raw?.party) ? raw.party : [];
   const resources = raw?.resources && typeof raw.resources === "object" ? raw.resources : {};
   return {
     ...parsed,
-    party: party.map((member) => ({
+    party: party.map((member, index) => ({
       ...member,
+      index: Number(member?.index ?? index),
       name: String(member?.name || "Unknown"),
       portrait_key: member?.portrait_key ?? null,
       image_name: member?.image_name ?? null,
@@ -326,7 +305,8 @@ function extractMenuStateFromEnvelope(envelope) {
     return normalizeMenuState(envelope.menu_state);
   }
   const saveParty = Array.isArray(envelope?.save?.party) ? envelope.save.party : [];
-  const fallbackParty = saveParty.map((entry) => ({
+  const fallbackParty = saveParty.map((entry, index) => ({
+    index: Number(entry?.index ?? index),
     name: String(entry?.name || "Unknown"),
     portrait_key: entry?.portrait_key ?? entry?.image_name ?? null,
     image_name: entry?.image_name ?? null,
@@ -344,7 +324,7 @@ function extractMenuStateFromEnvelope(envelope) {
       ? entry.equipment
       : {},
   }));
-  return normalizeMenuState({
+  const normalized = normalizeMenuState({
     party: fallbackParty,
     resources: {
       cp: Number(envelope?.save?.CP ?? 0),
@@ -352,6 +332,13 @@ function extractMenuStateFromEnvelope(envelope) {
       gil: Number(envelope?.save?.gil ?? 0),
     },
   });
+  return {
+    ...normalized,
+    party: normalizePartyIdentityOrder(normalized.party).map((member, index) => ({
+      ...member,
+      job: resolveMemberJob(member, saveParty[index]),
+    })),
+  };
 }
 
 async function saveEnvelopeToLocalFile(envelope) {
@@ -653,8 +640,21 @@ if (backBtn) {
   });
 }
 
-const state = parseMenuState();
-updateModeHint();
-renderParty(state.party);
-renderButtons();
-renderResources(state.resources);
+let state = parseMenuState();
+
+async function initializeMenu() {
+  await normalizeStoredStateOnMenuBoot();
+  state = parseMenuState();
+  updateModeHint();
+  renderParty(state.party);
+  renderButtons();
+  renderResources(state.resources);
+}
+
+initializeMenu().catch(() => {
+  state = parseMenuState();
+  updateModeHint();
+  renderParty(state.party);
+  renderButtons();
+  renderResources(state.resources);
+});

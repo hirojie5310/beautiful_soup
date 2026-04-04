@@ -4,7 +4,7 @@
 # これで「アダプタ（Flask等）⇔ユースケース」間の契約を先に固定
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Optional, cast
 
 from combat.enums import BattleKind
@@ -60,6 +60,7 @@ class ExecuteRoundOutputDTO:
     enemy_was_physically_hit: bool
     events: list[BattleEvent]
     lifecycle: BattleLifecycleDTO
+    event_blocks: list[list[BattleEvent]] = field(default_factory=list)
 
 
 def validate_lifecycle_transition(
@@ -135,6 +136,7 @@ def to_json_ready_dict(dto: ExecuteRoundOutputDTO) -> dict[str, Any]:
         "escaped": dto.escaped,
         "enemy_was_physically_hit": dto.enemy_was_physically_hit,
         "events": dto.events,
+        "event_blocks": dto.event_blocks,
         "lifecycle": {
             "before": dto.lifecycle.before,
             "after": dto.lifecycle.after,

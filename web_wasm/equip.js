@@ -67,6 +67,11 @@ function asNum(v, d = 0) {
   return Number.isFinite(n) ? n : d;
 }
 
+function resolveSavePartyIndex(member, fallbackIndex) {
+  const slotIndex = Number(member?.index ?? fallbackIndex);
+  return Number.isInteger(slotIndex) && slotIndex >= 0 ? slotIndex : fallbackIndex;
+}
+
 function compactBonusLabel(bonusRaw) {
   if (!bonusRaw || typeof bonusRaw !== "object" || Array.isArray(bonusRaw)) return "";
   const keyMap = {
@@ -118,12 +123,13 @@ function parseState() {
       : [];
     const partyFromMenu = Array.isArray(parsed?.party) ? parsed.party : [];
     const party = partyFromMenu.map((member, index) => {
-      if (member?.equipment && typeof member.equipment === "object") return member;
+      const nextMember = { ...member };
+      if (nextMember?.equipment && typeof nextMember.equipment === "object") return nextMember;
       const eq = equipmentByMember[index];
       if (eq && typeof eq === "object") {
-        return { ...member, equipment: eq };
+        return { ...nextMember, equipment: eq };
       }
-      return member;
+      return nextMember;
     });
     return {
       raw: parsed,
@@ -652,8 +658,9 @@ function commitEquipmentChange(state, selectedRow, options = {}) {
   };
   const okMenu = persistMenuState(nextRaw);
 
-  if (envelope?.save && Array.isArray(envelope.save.party) && envelope.save.party[memberIndex]) {
-    const saveEntry = envelope.save.party[memberIndex];
+  const savePartyIndex = resolveSavePartyIndex(member, memberIndex);
+  if (envelope?.save && Array.isArray(envelope.save.party) && envelope.save.party[savePartyIndex]) {
+    const saveEntry = envelope.save.party[savePartyIndex];
     saveEntry.equipment = {
       ...memberEquipment(changed.member),
     };

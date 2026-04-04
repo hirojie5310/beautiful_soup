@@ -50,6 +50,11 @@ try:
 except Exception:
     job_attr = {}
 
+_FIXED_PARTY_SLOT_KEYS = ["runeth", "arc", "refia", "ingus"]
+_PARTY_ALIAS_MAP = {
+    "luneth": "runeth",
+}
+
 
 def _merge_save_data(base, overlay):
     if isinstance(base, dict) and isinstance(overlay, dict):
@@ -85,6 +90,146 @@ def _merge_save_data(base, overlay):
     if isinstance(overlay, list):
         return [_merge_save_data(None, value) for value in overlay]
     return overlay
+
+
+def _normalize_party_identity_key(raw):
+    raw_text = str(raw or "").strip()
+    if not raw_text:
+        return ""
+    key = raw_text
+    if key.lower().startswith("ch_"):
+        key = key[3:]
+    key = normalize_name(
+        key.replace(".png", "")
+        .replace(".jpg", "")
+        .replace(".jpeg", "")
+        .replace(".webp", "")
+    )
+    return _PARTY_ALIAS_MAP.get(key, key)
+
+
+def _party_entry_identity_keys(entry, fallback_index=-1):
+    if not isinstance(entry, dict):
+        return []
+    keys = []
+    for raw in (
+        entry.get("portrait_key"),
+        entry.get("image_name"),
+        entry.get("name"),
+    ):
+        key = _normalize_party_identity_key(raw)
+        if key and key not in keys:
+            keys.append(key)
+    slot_index = _safe_int(entry.get("index", fallback_index), fallback_index)
+    if 0 <= slot_index < len(_FIXED_PARTY_SLOT_KEYS):
+        slot_key = _FIXED_PARTY_SLOT_KEYS[slot_index]
+        if slot_key not in keys:
+            keys.append(slot_key)
+    return keys
+
+
+def _job_level_rows(entry):
+    rows = entry.get("job_levels") if isinstance(entry, dict) else None
+    return rows if isinstance(rows, dict) else {}
+
+
+def _highest_job_level_name(job_levels):
+    best_name = ""
+    best_level = -1
+    for job_name, row in job_levels.items():
+        if not isinstance(job_name, str) or not job_name:
+            continue
+        if isinstance(row, dict):
+            level = _safe_int(row.get("level", 0), 0)
+        else:
+            level = _safe_int(row, 0)
+        if level > best_level:
+            best_name = job_name
+            best_level = level
+    return best_name
+
+
+def _repair_party_entry_job(entry, base_entry=None):
+    if not isinstance(entry, dict):
+        return entry
+    job_levels = _job_level_rows(entry)
+    current_job = str(entry.get("job") or "").strip()
+    if current_job and (not job_levels or current_job in job_levels):
+        return entry
+
+    base_job = str(base_entry.get("job") or "").strip() if isinstance(base_entry, dict) else ""
+    if base_job and (not job_levels or base_job in job_levels):
+        entry["job"] = base_job
+        return entry
+
+    highest_job = _highest_job_level_name(job_levels)
+    if highest_job:
+        entry["job"] = highest_job
+    return entry
+
+
+def _align_party_to_base(base_party, overlay_party):
+    if not isinstance(overlay_party, list):
+        return overlay_party
+    if not isinstance(base_party, list) or not base_party:
+        return [
+            {
+                **entry,
+                "index": idx,
+            }
+            if isinstance(entry, dict)
+            else entry
+            for idx, entry in enumerate(overlay_party)
+        ]
+
+    unused = set(range(len(overlay_party)))
+    aligned = []
+    for slot_index, base_entry in enumerate(base_party):
+        base_keys = set(_party_entry_identity_keys(base_entry, slot_index))
+        match_idx = None
+        for idx in list(unused):
+            overlay_entry = overlay_party[idx]
+            overlay_keys = set(_party_entry_identity_keys(overlay_entry, idx))
+            if base_keys & overlay_keys:
+                match_idx = idx
+                break
+        if match_idx is None and slot_index in unused:
+            match_idx = slot_index
+        if match_idx is None and unused:
+            match_idx = min(unused)
+        if match_idx is None:
+            continue
+        unused.discard(match_idx)
+        overlay_entry = overlay_party[match_idx]
+        merged_entry = _merge_save_data(base_entry, overlay_entry)
+        if isinstance(merged_entry, dict):
+            merged_entry["index"] = slot_index
+            if isinstance(base_entry, dict):
+                if base_entry.get("name"):
+                    merged_entry["name"] = base_entry.get("name")
+                if base_entry.get("job"):
+                    merged_entry["job"] = base_entry.get("job")
+                if isinstance(base_entry.get("job_levels"), dict):
+                    merged_entry["job_levels"] = _merge_save_data(
+                        base_entry.get("job_levels"),
+                        merged_entry.get("job_levels"),
+                    )
+                if base_entry.get("portrait_key") is not None:
+                    merged_entry["portrait_key"] = base_entry.get("portrait_key")
+                if base_entry.get("image_name") is not None:
+                    merged_entry["image_name"] = base_entry.get("image_name")
+            merged_entry = _repair_party_entry_job(merged_entry, base_entry)
+        aligned.append(merged_entry)
+
+    for idx in sorted(unused):
+        overlay_entry = overlay_party[idx]
+        if isinstance(overlay_entry, dict):
+            extra = dict(overlay_entry)
+            extra["index"] = len(aligned)
+            aligned.append(extra)
+        else:
+            aligned.append(overlay_entry)
+    return aligned
 
 
 def _mp_from_mp_levels(entry):
@@ -719,6 +864,11 @@ def boot_engine_for_location_with_save_json(
     parsed = _normalize_loaded_save(parsed)
     current_save = getattr(state, "save", {})
     base_save = current_save if isinstance(current_save, dict) else {}
+    if isinstance(parsed, dict):
+        parsed_party = parsed.get("party")
+        base_party = base_save.get("party", []) if isinstance(base_save, dict) else []
+        if isinstance(parsed_party, list):
+            parsed["party"] = _align_party_to_base(base_party, parsed_party)
     state.save = _merge_save_data(base_save, parsed)
     return boot_engine_for_location(location_group, location, seed=seed)
 

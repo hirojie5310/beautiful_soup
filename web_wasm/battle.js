@@ -1,4 +1,15 @@
 import { loadPyodide } from "https://cdn.jsdelivr.net/pyodide/v0.28.3/full/pyodide.mjs";
+import { resolveFaceImageCandidates } from "./shared_party.js";
+import {
+  LOCAL_MENU_STORAGE_KEY,
+  LOCAL_SAVE_STORAGE_KEY,
+  parseSaveEnvelope,
+  restoreSaveEnvelopeFromStorage,
+  parseMenuStateFromStorage,
+  makeSaveEnvelope,
+  persistSaveEnvelopeToStorage,
+  syncRuntimeSaveToStorage,
+} from "./shared_storage.js";
 
 const battlePhase = document.getElementById("battlePhase");
 const partyGrid = document.getElementById("partyGrid");
@@ -33,10 +44,10 @@ const locationMapImageCache = {};
 let activeLogPlaybackId = 0;
 let loadedSaveData = null;
 let returnToLocationBound = false;
+let activeCombatPopups = {};
+let suppressMenuStateSync = false;
 const PYTHON_BUNDLE_VERSION = "20260402b";
 
-const LOCAL_SAVE_STORAGE_KEY = "ff3_wasm_savedata_v1";
-const LOCAL_MENU_STORAGE_KEY = "ff3_wasm_menu_state_v1";
 const BATTLE_START_SELECTION_KEY = "ff3_wasm_battle_start_selection_v1";
 
 function readBattleStartSelectionFromSession() {
@@ -246,52 +257,6 @@ function commandLabel(command) {
   return COMMAND_LABELS[key] || key || "(unknown)";
 }
 
-function normalizeFaceKey(raw) {
-  return String(raw || "")
-    .trim()
-    .toLowerCase()
-    .replace(/^ch_/, "")
-    .replace(/\.(png|jpg|jpeg|webp)$/i, "")
-    .replace(/\s+/g, "_")
-    .replace(/-/g, "_");
-}
-
-function resolveFaceImageCandidates(member, memberIndex = -1) {
-  const portraitKey = normalizeFaceKey(member?.portrait_key);
-  const nameKey = normalizeFaceKey(member?.name);
-  const imageNameKey = normalizeFaceKey(member?.image_name);
-  const fixedPartyOrderFallback = ["runeth", "arc", "refia", "ingus"];
-  const slotKey = fixedPartyOrderFallback[memberIndex] || "";
-  const aliasMap = {
-    luneth: "runeth",
-  };
-  const rawKeys = [portraitKey, imageNameKey, nameKey, slotKey];
-  const keys = rawKeys
-    .map((key) => aliasMap[key] || key)
-    .filter((value, index, arr) => value && arr.indexOf(value) === index);
-  if (!keys.length) return [];
-  const paths = [];
-  const exts = ["png", "webp", "jpg", "jpeg"];
-  keys.forEach((key) => {
-    const variants = [key, key.charAt(0).toUpperCase() + key.slice(1)];
-    variants.forEach((variantKey) => {
-      const safeKey = encodeURIComponent(variantKey);
-      exts.forEach((ext) => {
-        paths.push(`/web_wasm/faces/${safeKey}.${ext}`);
-        paths.push(`./faces/${safeKey}.${ext}`);
-        paths.push(`../assets/images/faces/${safeKey}.${ext}`);
-        paths.push(new URL(`../assets/images/faces/${safeKey}.${ext}`, import.meta.url).href);
-        paths.push(`/assets/images/faces/${safeKey}.${ext}`);
-
-        paths.push(`../assets/images/motions/${safeKey}.${ext}`);
-        paths.push(new URL(`../assets/images/motions/${safeKey}.${ext}`, import.meta.url).href);
-        paths.push(`/assets/images/motions/${safeKey}.${ext}`);
-      });
-    });
-  });
-  return paths.filter((value, index, arr) => value && arr.indexOf(value) === index);
-}
-
 function normalizeSpriteKey(raw) {
   return String(raw || "")
     .trim()
@@ -463,6 +428,308 @@ function currentItemCandidates() {
     : [];
 }
 
+function cloneJsonValue(value) {
+  return JSON.parse(JSON.stringify(value ?? null));
+}
+
+function combatPopupKey(side, index) {
+  return `${String(side || "")}:${Number(index ?? -1)}`;
+}
+
+function popupForTarget(side, index) {
+  return activeCombatPopups[combatPopupKey(side, index)] || null;
+}
+
+function appendCombatPopup(card, popup) {
+  if (!card || !popup) return;
+  const layer = document.createElement("div");
+  layer.className = "combat-popup-layer";
+  const bubble = document.createElement("div");
+  const value = Number(popup?.value ?? 0);
+  const kind = String(popup?.kind || "");
+  let text = String(value);
+  let extraClass = "";
+  if (kind === "heal") {
+    text = `+${Math.abs(value)}`;
+    extraClass = " heal";
+  } else if (kind === "miss") {
+    text = "MISS";
+    extraClass = " miss";
+  } else if (value > 0) {
+    text = `-${value}`;
+  } else if (value < 0) {
+    text = `+${Math.abs(value)}`;
+    extraClass = " heal";
+  } else {
+    text = "0";
+    extraClass = " miss";
+  }
+  bubble.className = `combat-popup${extraClass}`;
+  bubble.textContent = text;
+  layer.appendChild(bubble);
+  card.appendChild(layer);
+}
+
+function normalizeStatusIconKey(raw) {
+  return String(raw || "").trim().toLowerCase().replace(/^status\./, "");
+}
+
+function applyEventToPlaybackStatus(playbackStatus, event) {
+  if (!playbackStatus || typeof playbackStatus !== "object" || !event || typeof event !== "object") {
+    return null;
+  }
+  const targetSide = String(event?.target_side || "");
+  const collection = targetSide === "enemy" ? playbackStatus.enemies : playbackStatus.party;
+  if (!Array.isArray(collection)) return null;
+  const targetIndex = Number(event?.target_index ?? -1);
+  if (targetIndex < 0 || targetIndex >= collection.length) return null;
+  const target = collection[targetIndex];
+  if (!target || typeof target !== "object") return null;
+
+  if (event.type === "damage") {
+    const amount = Number(event?.value ?? 0);
+    const currentHp = Number(target?.hp ?? 0);
+    const nextHp = Math.max(0, currentHp - amount);
+    target.hp = nextHp;
+    target.out_of_battle = nextHp <= 0 ? true : Boolean(target.out_of_battle);
+    if (target?.status && typeof target.status === "object") {
+      target.status.hp = nextHp;
+    }
+    return {
+      side: targetSide,
+      index: targetIndex,
+      popup: {
+        kind: amount > 0 ? "damage" : "miss",
+        value: amount,
+      },
+    };
+  }
+
+  if (event.type === "status") {
+    const existing = Array.isArray(target.status_icons) ? target.status_icons : [];
+    const additions = Array.isArray(event?.names)
+      ? event.names.map((name) => normalizeStatusIconKey(name)).filter(Boolean)
+      : [];
+    target.status_icons = Array.from(new Set([...existing, ...additions]));
+  }
+  return null;
+}
+
+function parseActionHeaderMeta(line, actorOccurrenceMap) {
+  const header = String(line || "").trim();
+  let match = header.match(/^▶\s(.+?)\sの行動/);
+  if (match) {
+    const actorName = String(match[1] || "");
+    const occurrenceKey = `char:${actorName}`;
+    const occurrence = actorOccurrenceMap.get(occurrenceKey) || 0;
+    actorOccurrenceMap.set(occurrenceKey, occurrence + 1);
+    const party = Array.isArray(sessionStatus?.party) ? sessionStatus.party : [];
+    const candidateIndexes = party
+      .map((member, index) => ({ name: String(member?.name || ""), index }))
+      .filter((row) => row.name === actorName)
+      .map((row) => row.index);
+    return {
+      actorSide: "char",
+      actorIndex: candidateIndexes[occurrence] ?? candidateIndexes[0] ?? null,
+    };
+  }
+
+  match = header.match(/^◆\s(.+?)\sの行動/);
+  if (match) {
+    const actorName = String(match[1] || "");
+    const occurrenceKey = `enemy:${actorName}`;
+    const occurrence = actorOccurrenceMap.get(occurrenceKey) || 0;
+    actorOccurrenceMap.set(occurrenceKey, occurrence + 1);
+    const enemies = Array.isArray(sessionStatus?.enemies) ? sessionStatus.enemies : [];
+    const candidateIndexes = enemies
+      .map((enemy, index) => ({ name: String(enemy?.name || ""), index }))
+      .filter((row) => row.name === actorName)
+      .map((row) => row.index);
+    return {
+      actorSide: "enemy",
+      actorIndex: candidateIndexes[occurrence] ?? candidateIndexes[0] ?? null,
+    };
+  }
+
+  return { actorSide: null, actorIndex: null };
+}
+
+function buildPlaybackEventsByBlock(blocks, events) {
+  const actorOccurrenceMap = new Map();
+  const pendingEvents = Array.isArray(events) ? [...events] : [];
+  let cursor = 0;
+  return blocks.map((block) => {
+    if (block.type !== "action") return [];
+    const firstLine = Array.isArray(block.lines) ? block.lines[0] : "";
+    const { actorSide, actorIndex } = parseActionHeaderMeta(firstLine, actorOccurrenceMap);
+    if (actorSide == null || actorIndex == null) {
+      return [];
+    }
+    const blockEvents = [];
+    let probe = cursor;
+    while (probe < pendingEvents.length) {
+      const nextEvent = pendingEvents[probe];
+      const nextActorSide = String(nextEvent?.actor_side || "");
+      const nextActorIndex = Number(nextEvent?.actor_index ?? -1);
+      if (!nextActorSide || Number.isNaN(nextActorIndex) || nextActorIndex < 0) {
+        probe += 1;
+        continue;
+      }
+      if (
+        nextActorSide !== actorSide
+        || nextActorIndex !== Number(actorIndex)
+      ) {
+        if (blockEvents.length === 0) {
+          break;
+        }
+        break;
+      }
+      blockEvents.push(nextEvent);
+      probe += 1;
+    }
+    if (blockEvents.length > 0) {
+      cursor = probe;
+    }
+    return blockEvents;
+  });
+}
+
+function extractPopupValueQueue(block) {
+  const queue = [];
+  (Array.isArray(block?.lines) ? block.lines : []).forEach((lineRaw) => {
+    const line = String(lineRaw || "").trim();
+    let match = line.match(/(?:に|は)(\d+)のダメージ(?:を受けた)?[。！]?/);
+    if (match) {
+      queue.push({ kind: "damage", value: Number(match[1]) });
+      return;
+    }
+
+    match = line.match(/HP(?:が|を)(\d+)回復(?:した)?[。！]?/);
+    if (match) {
+      queue.push({ kind: "heal", value: Number(match[1]) });
+      return;
+    }
+
+    if (line.includes("ダメージを与えられなかった") || line.includes("（ミス）") || line.endsWith("ミス")) {
+      queue.push({ kind: "miss", value: 0 });
+    }
+  });
+  return queue;
+}
+
+function resolveNamedTarget(name, playbackStatus, preferredSide, usageMap) {
+  const targetName = String(name || "").trim();
+  if (!targetName || !playbackStatus || typeof playbackStatus !== "object") {
+    return null;
+  }
+  const collections = preferredSide === "enemy"
+    ? [
+      ["enemy", Array.isArray(playbackStatus.enemies) ? playbackStatus.enemies : []],
+      ["char", Array.isArray(playbackStatus.party) ? playbackStatus.party : []],
+    ]
+    : [
+      ["char", Array.isArray(playbackStatus.party) ? playbackStatus.party : []],
+      ["enemy", Array.isArray(playbackStatus.enemies) ? playbackStatus.enemies : []],
+    ];
+
+  for (const [side, rows] of collections) {
+    const key = `${side}:${targetName}`;
+    const occurrence = usageMap.get(key) || 0;
+    const matchedIndexes = rows
+      .map((row, index) => ({ name: String(row?.name || "").trim(), index }))
+      .filter((row) => row.name === targetName)
+      .map((row) => row.index);
+    if (matchedIndexes.length > occurrence) {
+      usageMap.set(key, occurrence + 1);
+      return { side, index: matchedIndexes[occurrence] };
+    }
+  }
+  return null;
+}
+
+function buildNamedCombatEffects(block, playbackStatus) {
+  const firstLine = Array.isArray(block?.lines) ? String(block.lines[0] || "") : "";
+  const { actorSide } = parseActionHeaderMeta(firstLine, new Map());
+  const preferredSide = actorSide === "char" ? "enemy" : "char";
+  const usageMap = new Map();
+  const effects = [];
+
+  (Array.isArray(block?.lines) ? block.lines : []).forEach((lineRaw) => {
+    const line = String(lineRaw || "").trim();
+    let match = line.match(/(?:^|[！。]\s*)(.+?)に(\d+)のダメージ/);
+    if (!match) match = line.match(/(?:^|[！。]\s*)(.+?)は(\d+)のダメージを受けた/);
+    if (!match) match = line.match(/(?:^|[！。]\s*)(.+?)は(\d+)のダメージ/);
+    if (match) {
+      const target = resolveNamedTarget(match[1], playbackStatus, preferredSide, usageMap);
+      if (target) {
+        effects.push({ ...target, kind: "damage", value: Number(match[2]) });
+      }
+      return;
+    }
+
+    match = line.match(/(?:^|[！。]\s*)(.+?)のHPが(\d+)回復/);
+    if (!match) match = line.match(/(?:^|[！。]\s*)(.+?)はHPを(\d+)回復した/);
+    if (!match) match = line.match(/(?:^|[！。]\s*)(.+?)はHPが(\d+)回復/);
+    if (match) {
+      const target = resolveNamedTarget(match[1], playbackStatus, preferredSide, usageMap);
+      if (target) {
+        effects.push({ ...target, kind: "heal", value: Number(match[2]) });
+      }
+      return;
+    }
+
+    match = line.match(/しかし(.+?)には効かなかった/);
+    if (match) {
+      const target = resolveNamedTarget(match[1], playbackStatus, preferredSide, usageMap);
+      if (target) {
+        effects.push({ ...target, kind: "miss", value: 0 });
+      }
+    }
+  });
+
+  return effects;
+}
+
+function applyNamedCombatEffect(playbackStatus, effect) {
+  if (!effect || !playbackStatus || typeof playbackStatus !== "object") return null;
+  const side = String(effect.side || "");
+  const index = Number(effect.index ?? -1);
+  const value = Number(effect.value ?? 0);
+  const kind = String(effect.kind || "");
+  const collection = side === "enemy" ? playbackStatus.enemies : playbackStatus.party;
+  if (!Array.isArray(collection) || index < 0 || index >= collection.length) return null;
+  const target = collection[index];
+  if (!target || typeof target !== "object") return null;
+
+  if (kind === "damage") {
+    const currentHp = Number(target?.hp ?? 0);
+    const nextHp = Math.max(0, currentHp - value);
+    target.hp = nextHp;
+    target.out_of_battle = nextHp <= 0 ? true : Boolean(target.out_of_battle);
+    if (target?.status && typeof target.status === "object") {
+      target.status.hp = nextHp;
+    }
+  } else if (kind === "heal") {
+    const currentHp = Number(target?.hp ?? 0);
+    const maxHp = Number(target?.max_hp ?? currentHp);
+    const nextHp = Math.min(maxHp, currentHp + value);
+    target.hp = nextHp;
+    target.out_of_battle = false;
+    if (target?.status && typeof target.status === "object") {
+      target.status.hp = nextHp;
+    }
+  }
+
+  return {
+    side,
+    index,
+    popup: {
+      kind,
+      value,
+    },
+  };
+}
+
 function renderParty() {
   const party = Array.isArray(sessionStatus.party) ? sessionStatus.party : [];
   partyGrid.innerHTML = "";
@@ -550,6 +817,7 @@ function renderParty() {
     }
 
     card.appendChild(content);
+    appendCombatPopup(card, popupForTarget("char", idx));
     partyGrid.appendChild(card);
   });
 }
@@ -640,6 +908,7 @@ function renderEnemies() {
       }
     }
     card.appendChild(content);
+    appendCombatPopup(card, popupForTarget("enemy", idx));
     card.addEventListener("click", () => {
       if (battleFinished) return;
       if (isOutOfBattleEnemy(enemy)) return;
@@ -975,21 +1244,6 @@ function injectResourceDiffsIntoRewardLogs(logs, rewards) {
   ]);
 }
 
-function makeSaveEnvelope(saveObj, options = {}) {
-  return {
-    version: 1,
-    saved_at: new Date().toISOString(),
-    selected_location_group: String(options?.selectedLocationGroup || currentSelectedLocationGroup || ""),
-    selected_location: String(
-      options?.selectedLocation || currentBattleSelection.selected_location || "",
-    ),
-    save: saveObj,
-    menu_state: options?.menuState && typeof options.menuState === "object"
-      ? options.menuState
-      : null,
-  };
-}
-
 function compactSaveEnvelope(envelope) {
   if (!envelope || typeof envelope !== "object") return null;
   if (!envelope.save || typeof envelope.save !== "object") return null;
@@ -1003,48 +1257,6 @@ function compactSaveEnvelope(envelope) {
   };
 }
 
-function parseSaveEnvelope(raw) {
-  if (!raw || typeof raw !== "object") return null;
-  if (raw?.version === 1 && raw?.save && typeof raw.save === "object") {
-    return {
-      version: 1,
-      saved_at: String(raw.saved_at || ""),
-      selected_location_group: String(raw.selected_location_group || ""),
-      selected_location: String(raw.selected_location || ""),
-      save: raw.save,
-      menu_state: raw?.menu_state && typeof raw.menu_state === "object"
-        ? raw.menu_state
-        : null,
-    };
-  }
-  if (raw?.party && Array.isArray(raw.party)) {
-    return makeSaveEnvelope(raw);
-  }
-  return null;
-}
-
-function restoreSaveEnvelopeFromStorage() {
-  try {
-    const text = localStorage.getItem(LOCAL_SAVE_STORAGE_KEY);
-    if (!text) return null;
-    const parsed = JSON.parse(text);
-    return parseSaveEnvelope(parsed);
-  } catch (_error) {
-    return null;
-  }
-}
-
-function parseMenuStateFromStorage() {
-  try {
-    const text = localStorage.getItem(LOCAL_MENU_STORAGE_KEY);
-    if (!text) return {};
-    const parsed = JSON.parse(text);
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch (_error) {
-    return {};
-  }
-}
-
 function buildMenuViewState() {
   const storedMenuState = parseMenuStateFromStorage();
   const menuState = latestMenuState && typeof latestMenuState === "object" ? latestMenuState : {};
@@ -1053,6 +1265,7 @@ function buildMenuViewState() {
     : [];
   const party = Array.isArray(sessionStatus?.party)
     ? sessionStatus.party.map((member, index) => ({
+      index: Number(member?.index ?? index),
       name: String(member?.name || ""),
       portrait_key: member?.portrait_key ?? null,
       image_name: member?.image_name ?? null,
@@ -1130,6 +1343,7 @@ function buildMenuViewState() {
 }
 
 function syncMenuViewStateToStorage() {
+  if (suppressMenuStateSync) return;
   try {
     localStorage.setItem(
       LOCAL_MENU_STORAGE_KEY,
@@ -1192,22 +1406,28 @@ function refreshMenuStateFromPyodide() {
 }
 
 function getCurrentMenuStateForPersistence() {
-  const fromStorage = parseMenuStateFromStorage();
+  const currentView = buildMenuViewState();
   const fromRuntime = latestMenuState && typeof latestMenuState === "object" ? latestMenuState : {};
   return {
-    ...fromStorage,
+    ...currentView,
     ...fromRuntime,
+    party: currentView.party,
+    resources: currentView.resources,
   };
 }
 
-function persistSaveEnvelopeToStorage(envelope) {
-  if (!envelope) return false;
-  try {
-    localStorage.setItem(LOCAL_SAVE_STORAGE_KEY, JSON.stringify(envelope));
-    return true;
-  } catch (_error) {
-    return false;
-  }
+function syncNormalizedRuntimeSaveToStorage() {
+  return syncRuntimeSaveToStorage({
+    pyodide,
+    buildEnvelopeOptions: () => {
+      const storedEnvelope = restoreSaveEnvelopeFromStorage();
+      return {
+        selectedLocationGroup: currentBattleSelection?.selected_location_group || storedEnvelope?.selected_location_group || "",
+        selectedLocation: currentBattleSelection?.selected_location || storedEnvelope?.selected_location || "",
+        menuState: getCurrentMenuStateForPersistence(),
+      };
+    },
+  });
 }
 
 function downloadSaveEnvelope(envelope) {
@@ -1256,7 +1476,7 @@ function buildLogBlocks(logs) {
   const lines = Array.isArray(logs) ? logs : [];
   const blocks = [];
   let current = [];
-  let type = "action";
+  let type = "system";
   const flush = () => {
     if (!current.length) return;
     blocks.push({ type, lines: current });
@@ -1281,6 +1501,17 @@ function buildLogBlocks(logs) {
   });
   flush();
   return blocks;
+}
+
+function alignEventBlocksToLogBlocks(blocks, eventBlocks) {
+  const source = Array.isArray(eventBlocks) ? eventBlocks : [];
+  let actionIndex = 0;
+  return blocks.map((block) => {
+    if (block?.type !== "action") return [];
+    const eventsForBlock = Array.isArray(source[actionIndex]) ? source[actionIndex] : [];
+    actionIndex += 1;
+    return eventsForBlock;
+  });
 }
 
 function buildRewardLogBlock(payload) {
@@ -1310,35 +1541,59 @@ function buildRewardLogBlock(payload) {
 async function playBattleLogBlocks(logs, payload) {
   const playbackId = ++activeLogPlaybackId;
   const blocks = buildLogBlocks(logs);
+  const blockEvents = Array.isArray(payload?.event_blocks)
+    ? alignEventBlocksToLogBlocks(blocks, payload.event_blocks)
+    : buildPlaybackEventsByBlock(blocks, payload?.events);
+  const playbackStatus = cloneJsonValue(payload?.playback_initial_status || sessionStatus);
   const hasRewardBlock = blocks.some((block) => block.type === "reward");
   if (!hasRewardBlock) {
     const rewardBlock = buildRewardLogBlock(payload);
     if (rewardBlock) {
       blocks.push(rewardBlock);
+      blockEvents.push([]);
     }
   }
-  logView.textContent = "";
-  rewardPanel.classList.remove("open");
-  rewardPanel.textContent = "";
-
-  if (!blocks.length) {
-    logView.textContent = "(no logs)";
-    return;
-  }
-
-  for (let i = 0; i < blocks.length; i += 1) {
-    if (playbackId !== activeLogPlaybackId) return;
-    const block = blocks[i];
-    logView.textContent = block.lines.join("\n");
-    if (block.type === "reward") {
-      maybeShowRewards(payload);
-    } else {
-      rewardPanel.classList.remove("open");
-      rewardPanel.textContent = "";
+  suppressMenuStateSync = true;
+  try {
+    if (playbackStatus && typeof playbackStatus === "object") {
+      sessionStatus = playbackStatus;
+      activeCombatPopups = {};
+      rerenderAll();
     }
-    if (i < blocks.length - 1) {
-      await waitForBattleLogClick(playbackId);
+    logView.textContent = "";
+    rewardPanel.classList.remove("open");
+    rewardPanel.textContent = "";
+
+    if (!blocks.length) {
+      logView.textContent = "(no logs)";
+      return;
     }
+
+    for (let i = 0; i < blocks.length; i += 1) {
+      if (playbackId !== activeLogPlaybackId) return;
+      const block = blocks[i];
+      activeCombatPopups = {};
+      const eventsForBlock = Array.isArray(blockEvents[i]) ? blockEvents[i] : [];
+      eventsForBlock.forEach((event) => {
+        const applied = applyEventToPlaybackStatus(playbackStatus, event);
+        if (!applied) return;
+        const key = combatPopupKey(applied.side, applied.index);
+        activeCombatPopups[key] = applied.popup;
+      });
+      rerenderAll();
+      logView.textContent = block.lines.join("\n");
+      if (block.type === "reward") {
+        maybeShowRewards(payload);
+      } else {
+        rewardPanel.classList.remove("open");
+        rewardPanel.textContent = "";
+      }
+      if (i < blocks.length - 1) {
+        await waitForBattleLogClick(playbackId);
+      }
+    }
+  } finally {
+    suppressMenuStateSync = false;
   }
 }
 
@@ -1624,6 +1879,7 @@ function bootLocationAndSyncSession() {
   battleFinished = false;
   applyFullRecoverParty();
   refreshMenuStateFromPyodide();
+  syncNormalizedRuntimeSaveToStorage();
   return payload;
 }
 
@@ -1639,6 +1895,7 @@ async function executeRound() {
 
   battlePhase.textContent = "ラウンド解決中...";
   setCommandLogLayout({ showCommand: false });
+  const sessionStatusBeforeRound = cloneJsonValue(sessionStatus);
   const payload = {
     planned_actions: pendingActions,
     lifecycle_state: lifecycleState,
@@ -1672,8 +1929,11 @@ async function executeRound() {
     Array.isArray(result?.logs) ? result.logs : [],
     result?.victory_rewards,
   );
+  result.playback_initial_status = sessionStatusBeforeRound;
   await playBattleLogBlocks(logs, result);
 
+  sessionStatus = result?.session_status ?? sessionStatus;
+  activeCombatPopups = {};
   resetPendingActionsForParty();
   currentMemberIndex = firstActionableMemberIndex();
   selectedEnemyIndex = 0;

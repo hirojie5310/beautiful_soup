@@ -51,6 +51,7 @@ class RoundExecutionResult:
     logs: list[str]
     round_result: SideTurnResult
     event: list[BattleEvent]
+    event_blocks: list[list[BattleEvent]]
 
 
 def build_battle_session(
@@ -122,6 +123,7 @@ def execute_round(
         logs=logs,
         round_result=round_result,
         event=typed_events,
+        event_blocks=cast(list[list[BattleEvent]], round_result.event_blocks),
     )
 
 
@@ -159,6 +161,7 @@ def execute_round_dto(
         escaped=result.round_result.escaped,
         enemy_was_physically_hit=result.round_result.enemy_was_physically_hit,
         events=result.event,
+        event_blocks=result.event_blocks,
         lifecycle=derive_round_lifecycle(
             current_state=request.lifecycle_state,
             end_reason=end_reason,

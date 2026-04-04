@@ -89,6 +89,7 @@ class SideTurnResult:
     # 将来のためのフック（例：このターン物理で殴ったか？など）
     enemy_was_physically_hit: bool = False
     enemy_attack_result: Optional[EnemyAttackResult] = None  # 敵ターン用
+    event_blocks: list[list[dict[str, Any]]] = field(default_factory=list)
 
 
 @dataclass

@@ -78,6 +78,7 @@ def _run_turn_start_priority_actions(
     rng: Random,
     save: Optional[dict],
     handled_actor_indexes: set[int],
+    event_blocks: list[list[dict]],
 ) -> bool:
     """
     NES版寄せのターン開始時優先行動を解決する。
@@ -101,6 +102,7 @@ def _run_turn_start_priority_actions(
 
         handled_actor_indexes.add(idx)
         logs.append(f"▶ {pm.name} の行動（{priority_action.command}）")
+        event_blocks.append([])
 
         if priority_action.kind == "defend":
             pm.state.temp_flags["defending"] = True
@@ -215,6 +217,7 @@ def _append_skipped_character_action_logs(
     acted_actor_indexes: set[int],
     handled_actor_indexes: set[int],
     logs: List[str],
+    event_blocks: list[list[dict]],
 ) -> None:
     for idx, pm in enumerate(party_members):
         if idx in acted_actor_indexes or idx in handled_actor_indexes:
@@ -223,6 +226,7 @@ def _append_skipped_character_action_logs(
         if action is None:
             continue
         logs.append(f"▶ {pm.name} の行動（{action.command}）")
+        event_blocks.append([])
         logs.append(f"{pm.name}は敵が全滅していたため行動できなかった。")
 
 
@@ -523,8 +527,19 @@ def _append_enemy_diff_events(
     events: list[dict],
     actor_side: str,
     actor_index: int,
+    focus_target_index: int | None = None,
+    focus_target_indexes: list[int] | None = None,
+    block_events: list[dict] | None = None,
 ) -> None:
     """敵全体のHP/状態異常差分から表示イベントを蓄積する。"""
+    focused_indexes = {
+        int(i)
+        for i in (focus_target_indexes or [])
+        if i is not None and 0 <= int(i) < len(enemies)
+    }
+    if focus_target_index is not None and 0 <= int(focus_target_index) < len(enemies):
+        focused_indexes.add(int(focus_target_index))
+
     for i, e in enumerate(enemies):
         old_hp = old_hp_map[i] if i < len(old_hp_map) else e.state.hp
         old_statuses = old_status_map[i] if i < len(old_status_map) else set()
@@ -533,29 +548,45 @@ def _append_enemy_diff_events(
 
         delta = old_hp - new_hp
         if delta > 0:
-            events.append(
-                {
-                    "type": "damage",
-                    "target_side": "enemy",
-                    "target_index": i,
-                    "value": delta,
-                    "actor_side": actor_side,
-                    "actor_index": actor_index,
-                }
-            )
+            event = {
+                "type": "damage",
+                "target_side": "enemy",
+                "target_index": i,
+                "value": delta,
+                "actor_side": actor_side,
+                "actor_index": actor_index,
+            }
+            events.append(event)
+            if block_events is not None:
+                block_events.append(dict(event))
+        elif i in focused_indexes:
+            # 0ダメージでも「敵を狙った」演出を出したいので、
+            # 対象敵だけ value=0 のダメージイベントを残す。
+            event = {
+                "type": "damage",
+                "target_side": "enemy",
+                "target_index": i,
+                "value": 0,
+                "actor_side": actor_side,
+                "actor_index": actor_index,
+            }
+            events.append(event)
+            if block_events is not None:
+                block_events.append(dict(event))
 
         added = new_statuses - old_statuses
         if added:
-            events.append(
-                {
-                    "type": "status",
-                    "target_side": "enemy",
-                    "target_index": i,
-                    "names": _status_event_names(added),
-                    "actor_side": actor_side,
-                    "actor_index": actor_index,
-                }
-            )
+            event = {
+                "type": "status",
+                "target_side": "enemy",
+                "target_index": i,
+                "names": _status_event_names(added),
+                "actor_side": actor_side,
+                "actor_index": actor_index,
+            }
+            events.append(event)
+            if block_events is not None:
+                block_events.append(dict(event))
 
 
 def _append_party_diff_events(
@@ -567,50 +598,66 @@ def _append_party_diff_events(
     actor_side: str,
     actor_index: int,
     focus_target_index: int | None = None,
+    focus_target_indexes: list[int] | None = None,
+    block_events: list[dict] | None = None,
 ) -> None:
     """パーティ全体のHP/状態異常差分から表示イベントを蓄積する。"""
+    focused_indexes = {
+        int(i)
+        for i in (focus_target_indexes or [])
+        if i is not None and 0 <= int(i) < len(party_members)
+    }
+    if (
+        focus_target_index is not None
+        and 0 <= int(focus_target_index) < len(party_members)
+    ):
+        focused_indexes.add(int(focus_target_index))
+
     for i, member in enumerate(party_members):
         new_hp = member.state.hp
         new_statuses = set(getattr(member.state, "statuses", set()))
 
         delta = old_hp_map[i] - new_hp
         if delta > 0:
-            events.append(
-                {
-                    "type": "damage",
-                    "target_side": "char",
-                    "target_index": i,
-                    "value": delta,
-                    "actor_side": actor_side,
-                    "actor_index": actor_index,
-                }
-            )
-        elif focus_target_index is not None and i == int(focus_target_index):
+            event = {
+                "type": "damage",
+                "target_side": "char",
+                "target_index": i,
+                "value": delta,
+                "actor_side": actor_side,
+                "actor_index": actor_index,
+            }
+            events.append(event)
+            if block_events is not None:
+                block_events.append(dict(event))
+        elif i in focused_indexes:
             # 0ダメージでも「攻撃が当たった」演出を出したいので、
             # 対象キャラだけ value=0 のダメージイベントを残す。
-            events.append(
-                {
-                    "type": "damage",
-                    "target_side": "char",
-                    "target_index": i,
-                    "value": 0,
-                    "actor_side": actor_side,
-                    "actor_index": actor_index,
-                }
-            )
+            event = {
+                "type": "damage",
+                "target_side": "char",
+                "target_index": i,
+                "value": 0,
+                "actor_side": actor_side,
+                "actor_index": actor_index,
+            }
+            events.append(event)
+            if block_events is not None:
+                block_events.append(dict(event))
 
         added = new_statuses - old_status_map[i]
         if added:
-            events.append(
-                {
-                    "type": "status",
-                    "target_side": "char",
-                    "target_index": i,
-                    "names": _status_event_names(added),
-                    "actor_side": actor_side,
-                    "actor_index": actor_index,
-                }
-            )
+            event = {
+                "type": "status",
+                "target_side": "char",
+                "target_index": i,
+                "names": _status_event_names(added),
+                "actor_side": actor_side,
+                "actor_index": actor_index,
+            }
+            events.append(event)
+            if block_events is not None:
+                block_events.append(dict(event))
 
 
 def simulate_one_round_multi_party(
@@ -670,6 +717,7 @@ def simulate_one_round_multi_party(
         rng=rng,
         save=save,
         handled_actor_indexes=handled_actor_indexes,
+        event_blocks=final_result.event_blocks,
     ):
         return logs, final_result, events
 
@@ -742,6 +790,7 @@ def simulate_one_round_multi_party(
                 acted_actor_indexes=acted_actor_indexes,
                 handled_actor_indexes=handled_actor_indexes,
                 logs=logs,
+                event_blocks=final_result.event_blocks,
             )
             logs.append("敵は全滅した！")
             final_result.end_reason = "enemy_defeated"
@@ -756,6 +805,7 @@ def simulate_one_round_multi_party(
                 action = planned_actions[idx] if idx < len(planned_actions) else None
                 if action is not None and idx not in handled_actor_indexes:
                     logs.append(f"▶ {pm.name} の行動（{action.command}）")
+                    final_result.event_blocks.append([])
                     logs.append(f"{pm.name}は戦闘不能のため行動できない。")
                     acted_actor_indexes.add(idx)
                 continue
@@ -787,6 +837,7 @@ def simulate_one_round_multi_party(
 
             if action.kind == "defend":
                 logs.append(f"▶ {pm.name} の行動（{action.command}）")
+                final_result.event_blocks.append([])
                 pm.state.temp_flags["defending"] = True
                 logs.append(f"{pm.name}は防御した！")
 
@@ -806,6 +857,8 @@ def simulate_one_round_multi_party(
                 continue
 
             logs.append(f"▶ {pm.name} の行動（{action.command}）")
+            final_result.event_blocks.append([])
+            current_block_events = final_result.event_blocks[-1]
 
             # --- 行動対象（敵/味方/自分）を決定 ---
             target_enemy, _, _ = _resolve_character_targets(
@@ -896,6 +949,23 @@ def simulate_one_round_multi_party(
                 events=events,
                 actor_side=side,
                 actor_index=idx,
+                focus_target_index=(
+                    getattr(action, "target_index", None)
+                    if getattr(action, "target_side", "enemy") == "enemy"
+                    and not getattr(action, "target_all", False)
+                    else None
+                ),
+                focus_target_indexes=(
+                    [
+                        enemy_idx
+                        for enemy_idx, old_hp in enumerate(old_hp_map)
+                        if old_hp > 0
+                    ]
+                    if getattr(action, "target_side", "enemy") == "enemy"
+                    and getattr(action, "target_all", False)
+                    else None
+                ),
+                block_events=current_block_events,
             )
             _append_party_diff_events(
                 party_members=party_members,
@@ -907,8 +977,20 @@ def simulate_one_round_multi_party(
                 focus_target_index=(
                     getattr(action, "target_index", None)
                     if getattr(action, "target_side", "enemy") in ("ally", "self")
+                    and not getattr(action, "target_all", False)
                     else None
                 ),
+                focus_target_indexes=(
+                    [
+                        member_idx
+                        for member_idx, old_hp in enumerate(old_party_hp_map)
+                        if old_hp > 0
+                    ]
+                    if getattr(action, "target_side", "enemy") in ("ally", "self")
+                    and getattr(action, "target_all", False)
+                    else None
+                ),
+                block_events=current_block_events,
             )
 
             # ★ 行動後：戦闘終了チェック
@@ -941,6 +1023,8 @@ def simulate_one_round_multi_party(
                 continue
 
             logs.append(f"◆ {em.label} の行動")
+            final_result.event_blocks.append([])
+            current_block_events = final_result.event_blocks[-1]
 
             target_idx = random_alive_char_index(party_members, rng)
             if target_idx is None:
@@ -987,6 +1071,7 @@ def simulate_one_round_multi_party(
                 actor_side=side,
                 actor_index=idx,
                 focus_target_index=target_idx,
+                block_events=current_block_events,
             )
 
             if all_enemies_defeated(enemies):

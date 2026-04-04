@@ -34,6 +34,14 @@
       .party-status-icons-row { order: 4; min-height: 16px; }
       .name { font-weight:700; font-size:.86rem; }
       .hp { font-size:.78rem; color:var(--ok); }
+      .combat-popup-layer { position:absolute; inset:0; z-index:3; pointer-events:none; }
+      .combat-popup { position:absolute; left:50%; top:44%; transform:translate(-50%,-50%); font-weight:700; font-size:1.3rem; color:#ffb3b3; text-shadow:0 2px 6px rgba(0,0,0,.9); letter-spacing:.03em; animation:combat-popup-rise .45s ease-out both; }
+      .combat-popup.heal { color:#9ff7ba; }
+      .combat-popup.miss { color:#ffe588; font-size:1rem; }
+      @keyframes combat-popup-rise {
+        from { opacity:0; transform:translate(-50%,-20%); }
+        to { opacity:1; transform:translate(-50%,-60%); }
+      }
       .command-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
       .command-grid.command-mode { grid-template-columns:repeat(4,minmax(0,1fr)); }
       .magic-group-header { padding:2px 6px 2px 2px; color:var(--accent); font-size:.84rem; font-weight:700; white-space:nowrap; }

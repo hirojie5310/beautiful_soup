@@ -189,6 +189,7 @@ def _build_party_status_snapshot(session: BattleSession) -> list[dict[str, Any]]
                 "row": row_label,
                 "mp_levels": mp_levels,
                 "portrait_key": getattr(member, "portrait_key", None),
+                "image_name": getattr(member, "image_name", None),
                 "status_icons": status_icons,
                 "status": {
                     "level": _safe_int(
