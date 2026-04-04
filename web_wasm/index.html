@@ -41,6 +41,39 @@
         grid-template-columns: 140px 1fr;
         gap: 8px;
         align-items: center;
+        margin-bottom: 12px;
+      }
+      .shop-frame {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid rgba(255,255,255,0.18);
+      }
+      .shop-grid {
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        gap: 8px;
+        align-items: center;
+      }
+      .shop-title {
+        margin: 0 0 10px;
+        color: var(--accent);
+        font-size: 0.95rem;
+      }
+      .shop-meta {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin: 10px 0 0;
+        min-height: 1.4em;
+      }
+      .inn-frame {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid rgba(255,255,255,0.18);
+      }
+      .resource-line {
+        color: var(--accent);
+        font-size: 0.92rem;
+        margin: 0 0 10px;
       }
       select {
         border-radius: 6px;
@@ -64,6 +97,12 @@
         cursor: pointer;
       }
       .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+      @media (max-width: 560px) {
+        .selector-row,
+        .shop-grid {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
   </head>
   <body>
@@ -83,9 +122,35 @@
           <button id="startBattleBtn" class="btn" type="button" disabled>戦闘開始</button>
           <button id="menuBtn" class="btn" type="button">メニュー</button>
         </div>
+
+        <section class="shop-frame">
+          <h2 class="shop-title">Shop</h2>
+          <div id="shopGilLine" class="resource-line">GIL ---</div>
+          <div class="shop-grid">
+            <label for="shopMapSelect">map</label>
+            <select id="shopMapSelect"></select>
+            <label for="shopTypeSelect">type</label>
+            <select id="shopTypeSelect"></select>
+            <label for="shopGoodsSelect">goods</label>
+            <select id="shopGoodsSelect"></select>
+          </div>
+          <div class="buttons">
+            <button id="buyShopBtn" class="btn" type="button" disabled>購入</button>
+          </div>
+          <div id="shopStatusLine" class="shop-meta"></div>
+        </section>
+
+        <section class="inn-frame">
+          <h2 class="shop-title">Inn</h2>
+          <div class="resource-line">宿泊料 10 GIL</div>
+          <div class="buttons">
+            <button id="stayInnBtn" class="btn" type="button">宿泊</button>
+          </div>
+          <div id="innStatusLine" class="shop-meta"></div>
+        </section>
       </section>
     </main>
 
-    <script type="module" src="./location.js?v=20260402b"></script>
+    <script type="module" src="./location.js?v=20260404-shop1"></script>
   </body>
 </html>

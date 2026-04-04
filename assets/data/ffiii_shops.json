@@ -1,0 +1,294 @@
+[
+  {
+    "map": "Ur",
+    "shops": [
+      {
+        "type": "Items",
+        "goods": [
+          { "name": "Potion", "price": 150 },
+          { "name": "Eye Drops", "price": 40 },
+          { "name": "Antidote", "price": 80 }
+        ]
+      },
+      {
+        "type": "Armor",
+        "goods": [
+          { "name": "Vest", "price": 50 },
+          { "name": "Leather Armor", "price": 95 },
+          { "name": "Leather Shield", "price": 40 },
+          { "name": "Leather Cap", "price": 15 },
+          { "name": "Bronze Bracers", "price": 80 }
+        ]
+      },
+      {
+        "type": "Weapons",
+        "goods": [
+          { "name": "Knife", "price": 20 },
+          { "name": "Dagger", "price": 60 },
+          { "name": "Longsword", "price": 100 },
+          { "name": "Staff", "price": 40 },
+          { "name": "Nunchaku", "price": 60 }
+        ]
+      },
+      {
+        "type": "Magic",
+        "goods": [
+          { "name": "Poisona", "price": 100 }
+        ]
+      }
+    ]
+  },
+  {
+    "map": "Kazus",
+    "shops": [
+      {
+        "type": "Magic",
+        "goods": [
+          { "name": "Fire", "price": 100 },
+          { "name": "Blizzard", "price": 100 },
+          { "name": "Sleep", "price": 100 }
+        ]
+      },
+      {
+        "type": "Weapons",
+        "goods": [
+          { "name": "Mythril Rod", "price": 400 },
+          { "name": "Mythril Knife", "price": 500 },
+          { "name": "Mythril Sword", "price": 500 }
+        ]
+      },
+      {
+        "type": "Armor",
+        "goods": [
+          { "name": "Mythril Armor", "price": 350 },
+          { "name": "Mythril Shield", "price": 180 },
+          { "name": "Mythril Helm", "price": 130 },
+          { "name": "Mythril Gloves", "price": 120 },
+          { "name": "Mythril Bracers", "price": 120 }
+        ]
+      },
+      {
+        "type": "Items",
+        "goods": [
+          { "name": "Potion", "price": 150 },
+          { "name": "Eye Drops", "price": 40 },
+          { "name": "Antidote", "price": 80 }
+        ]
+      }
+    ]
+  },
+  {
+    "map": "Canaan",
+    "shops": [
+      {
+        "type": "Items",
+        "goods": [
+          { "name": "Potion", "price": 150 },
+          { "name": "Eye Drops", "price": 40 },
+          { "name": "Antidote", "price": 80 }
+        ]
+      },
+      {
+        "type": "Armor",
+        "goods": [
+          { "name": "Mythril Armor", "price": 350 },
+          { "name": "Mythril Shield", "price": 180 },
+          { "name": "Mythril Helm", "price": 130 },
+          { "name": "Mythril Gloves", "price": 120 },
+          { "name": "Mythril Bracers", "price": 120 }
+        ]
+      },
+      {
+        "type": "Magic",
+        "goods": [
+          { "name": "Cure", "price": 100 },
+          { "name": "Thunder", "price": 700 },
+          { "name": "Poison", "price": 700 },
+          { "name": "Blind", "price": 700 }
+        ]
+      },
+      {
+        "type": "Weapons",
+        "goods": [
+          { "name": "Mythril Rod", "price": 400 },
+          { "name": "Mythril Knife", "price": 500 },
+          { "name": "Mythril Sword", "price": 500 }
+        ]
+      }
+    ]
+  },
+  {
+    "map": "Village of the Ancients",
+    "shops": [
+      {
+        "type": "Weapons",
+        "goods": [
+          { "name": "Serpent Sword", "price": 1500 },
+          { "name": "Wightslayer", "price": 1000 },
+          { "name": "Fire Staff", "price": 3500 },
+          { "name": "Ice Staff", "price": 3500 },
+          { "name": "Killer Bow", "price": 2000 },
+          { "name": "Light Arrow", "price": 30 },
+          { "name": "Fire Arrow", "price": 30 },
+          { "name": "Ice Arrow", "price": 30 }
+        ]
+      },
+      {
+        "type": "Armor",
+        "goods": [
+          { "name": "Shell Armor", "price": 1250 },
+          { "name": "Flame Mail", "price": 2400 },
+          { "name": "Headband", "price": 1200 },
+          { "name": "Kenpo Gi", "price": 2000 },
+          { "name": "Mage Robe", "price": 2000 }
+        ]
+      },
+      {
+        "type": "Magic",
+        "goods": [
+          { "name": "Sight", "price": 100 },
+          { "name": "Fira", "price": 1500 },
+          { "name": "Blizzara", "price": 1500 },
+          { "name": "Thundara", "price": 1500 },
+          { "name": "Cura", "price": 1500 },
+          { "name": "Teleport", "price": 1500 },
+          { "name": "Blindna", "price": 1500 }
+        ]
+      }
+    ]
+  },
+  {
+    "map": "Dwarven Hollow",
+    "shops": [
+      {
+        "type": "Weapons",
+        "goods": [
+          { "name": "Serpent Sword", "price": 1500 },
+          { "name": "Salamand Sword", "price": 3000 },
+          { "name": "Wightslayer", "price": 1000 },
+          { "name": "Tyrfing", "price": 2800 },
+          { "name": "Tonfa", "price": 500 },
+          { "name": "Three-Section Staff", "price": 3000 },
+          { "name": "Light Staff", "price": 3500 }
+        ]
+      },
+      {
+        "type": "Armor",
+        "goods": [
+          { "name": "Ice Armor", "price": 2400 },
+          { "name": "Ice Helm", "price": 1200 },
+          { "name": "Ice Shield", "price": 1800 },
+          { "name": "Kenpo Gi", "price": 2000 },
+          { "name": "Mage Robe", "price": 2000 }
+        ]
+      }
+    ]
+  },
+  {
+    "map": "Village of Gysahl",
+    "shops": [
+      {
+        "type": "Magic",
+        "goods": [
+          { "name": "Toad", "price": 700 },
+          { "name": "Mini", "price": 700 },
+          { "name": "Break", "price": 3000 },
+          { "name": "Blizzaga", "price": 3000 },
+          { "name": "Shade", "price": 3000 },
+          { "name": "Libra", "price": 3000 },
+          { "name": "Confuse", "price": 3000 },
+          { "name": "Silence", "price": 3000 }
+        ]
+      },
+      {
+        "type": "Items",
+        "goods": [
+          { "name": "Gysahl Greens", "price": 150 }
+        ]
+      },
+      {
+        "type": "Magic Keys",
+        "goods": [
+          { "name": "Magic Key", "price": 100 }
+        ]
+      }
+    ]
+  },
+  {
+    "map": "Amur",
+    "shops": [
+      {
+        "type": "Armor",
+        "goods": [
+          { "name": "Viking Helm", "price": 3000 },
+          { "name": "Viking Mail", "price": 4000 },
+          { "name": "Heroic Shield", "price": 3500 },
+          { "name": "Thief Gloves", "price": 2500 },
+          { "name": "Black Garb", "price": 3800 },
+          { "name": "Black Cowl", "price": 2000 },
+          { "name": "Black Belt Gi", "price": 3800 },
+          { "name": "Chakra Band", "price": 2000 }
+        ]
+      },
+      {
+        "type": "Weapons",
+        "goods": [
+          { "name": "Battleaxe", "price": 5500 },
+          { "name": "Morning Star", "price": 8000 },
+          { "name": "Main Gauche", "price": 7000 },
+          { "name": "Boomerang", "price": 9000 },
+          { "name": "Kaiser Knuckles", "price": 7000 }
+        ]
+      }
+    ]
+  },
+  {
+    "map": "Doga's Village",
+    "shops": [
+      {
+        "type": "Summon Magic",
+        "goods": [
+          { "name": "Chocobo", "price": 100 },
+          { "name": "Shiva", "price": 700 },
+          { "name": "Ramuh", "price": 1500 },
+          { "name": "Ifrit", "price": 3000 },
+          { "name": "Titan", "price": 5000 }
+        ]
+      }
+    ]
+  },
+  {
+    "map": "Eureka B7",
+    "shops": [
+      {
+        "type": "Magic",
+        "goods": [
+          { "name": "Flare", "price": 60000 },
+          { "name": "Death", "price": 60000 },
+          { "name": "Meteor", "price": 60000 },
+          { "name": "Tornado", "price": 60000 },
+          { "name": "Arise", "price": 60000 },
+          { "name": "Holy", "price": 60000 }
+        ]
+      },
+      {
+        "type": "Summon Magic",
+        "goods": [
+          { "name": "Odin", "price": 45000 },
+          { "name": "Leviathan", "price": 55000 },
+          { "name": "Bahamut", "price": 65000 }
+        ]
+      },
+      {
+        "type": "Weapons & Armor",
+        "goods": [
+          { "name": "Shuriken", "price": 65500 },
+          { "name": "Crystal Shield", "price": 50000 },
+          { "name": "Crystal Mail", "price": 65000 },
+          { "name": "Crystal Gloves", "price": 50000 },
+          { "name": "Crystal Helm", "price": 50000 }
+        ]
+      }
+    ]
+  }
+]
