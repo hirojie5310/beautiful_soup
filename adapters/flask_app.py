@@ -6,6 +6,7 @@ from __future__ import annotations
 import io
 import json
 import os
+from datetime import UTC, datetime
 from collections import Counter
 from copy import deepcopy
 from pathlib import Path
@@ -1262,6 +1263,15 @@ def create_app(
     battle_start_progress = _build_party_progress_snapshot(battle_session)
     battle_start_resources = _build_resource_progress_snapshot(battle_session)
 
+    def _build_save_envelope_payload() -> dict[str, Any]:
+        return {
+            "version": 1,
+            "saved_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+            "selected_location_group": selection_context.get("selected_group", ""),
+            "selected_location": selection_context.get("selected_location", ""),
+            "save": battle_session.state.save,
+        }
+
     @app.get("/")
     def index():
         nonlocal battle_session, battle_start_progress, battle_start_resources
@@ -2042,7 +2052,7 @@ def create_app(
     @app.get("/menu/save/download")
     def get_menu_save_download():
         payload = json.dumps(
-            battle_session.state.save, ensure_ascii=False, indent=2
+            _build_save_envelope_payload(), ensure_ascii=False, indent=2
         ).encode("utf-8")
         return send_file(
             io.BytesIO(payload),
@@ -2054,7 +2064,7 @@ def create_app(
     @app.post("/menu/save")
     def post_menu_save():
         save_savedata(
-            Path("assets/data/ffiii_savedata.json"), battle_session.state.save
+            Path("assets/data/ffiii_savedata.json"), _build_save_envelope_payload()
         )
         return (
             jsonify(

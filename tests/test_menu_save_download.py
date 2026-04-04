@@ -35,7 +35,11 @@ def test_menu_save_persists_file_and_returns_download_url(monkeypatch):
     assert saved_calls
     assert saved_calls[0][0] == Path("assets/data/ffiii_savedata.json")
     assert isinstance(saved_calls[0][1], dict)
-    assert "party" in saved_calls[0][1]
+    assert saved_calls[0][1]["version"] == 1
+    assert "saved_at" in saved_calls[0][1]
+    assert "selected_location_group" in saved_calls[0][1]
+    assert "selected_location" in saved_calls[0][1]
+    assert "party" in saved_calls[0][1]["save"]
 
 
 def test_menu_save_download_returns_json_attachment():
@@ -51,7 +55,11 @@ def test_menu_save_download_returns_json_attachment():
 
     payload = json.loads(resp.get_data(as_text=True))
     assert isinstance(payload, dict)
-    assert "party" in payload
+    assert payload["version"] == 1
+    assert "saved_at" in payload
+    assert "selected_location_group" in payload
+    assert "selected_location" in payload
+    assert "party" in payload["save"]
 
 
 def test_menu_save_persists_latest_progress_fields_after_victory_round(monkeypatch):
@@ -71,6 +79,7 @@ def test_menu_save_persists_latest_progress_fields_after_victory_round(monkeypat
                 "escaped": False,
                 "enemy_was_physically_hit": True,
                 "events": [],
+                "event_blocks": [],
                 "lifecycle": type(
                     "Lifecycle",
                     (),
@@ -116,9 +125,11 @@ def test_menu_save_persists_latest_progress_fields_after_victory_round(monkeypat
     save_resp = client.post("/menu/save", json={})
     assert save_resp.status_code == 200
     assert saved_calls
-    assert saved_calls[0][1]["party"][0]["exp"] == 24680
-    assert saved_calls[0][1]["party"][0]["job_level"]["level"] == 23
-    assert saved_calls[0][1]["party"][0]["job_level"]["skill_point"] == 45
-    assert saved_calls[0][1]["gil"] == 1111
-    assert saved_calls[0][1]["CP"] == 222
-    assert saved_calls[0][1]["inventory"]["Anywhere"]["Hi-Potion"] == 3
+    saved_payload = saved_calls[0][1]
+    assert saved_payload["version"] == 1
+    assert saved_payload["save"]["party"][0]["exp"] == 24680
+    assert saved_payload["save"]["party"][0]["job_level"]["level"] == 23
+    assert saved_payload["save"]["party"][0]["job_level"]["skill_point"] == 45
+    assert saved_payload["save"]["gil"] == 1111
+    assert saved_payload["save"]["CP"] == 222
+    assert saved_payload["save"]["inventory"]["Anywhere"]["Hi-Potion"] == 3
