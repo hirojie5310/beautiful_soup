@@ -51,7 +51,8 @@ def test_white_heal_uses_job_level_in_multiplier() -> None:
 
     # 期待値モード: base_per_hit = int(40 * 1.25) = 50
     # mult = 1 + 64//16 + 32//16 + 96//32 = 10
-    assert heal == 500
+    # 魔法命中率は NES 上限 99% なので expected_hits = 10 * 0.99 = 9.9
+    assert heal == 495
 
 
 def test_curaja_single_target_is_full_heal_value() -> None:

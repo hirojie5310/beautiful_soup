@@ -805,8 +805,8 @@ def calc_buff_hit_percent(base_acc_raw: float | int | None, mind: int) -> int:
     base_percent = acc * 100.0
     hit_percent = base_percent + (mind / 2.0)
 
-    if hit_percent > 100.0:
-        hit_percent = 100.0
+    if hit_percent > 99.0:
+        hit_percent = 99.0
     if hit_percent < 0.0:
         hit_percent = 0.0
 

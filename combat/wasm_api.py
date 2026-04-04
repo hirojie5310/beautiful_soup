@@ -36,6 +36,10 @@ def _safe_int(value: Any, default: int = 0) -> int:
         return default
 
 
+def _safe_nes_percent(value: Any, default: int = 0) -> int:
+    return max(0, min(_safe_int(value, default), 99))
+
+
 def _normalize_planned_actions_length(
     request_dto: ExecuteRoundInputDTO, *, expected_count: int
 ) -> ExecuteRoundInputDTO:
@@ -206,11 +210,11 @@ def _build_party_status_snapshot(session: BattleSession) -> list[dict[str, Any]]
                     "acc_value": acc_value,
                     "defense": _safe_int(getattr(stats, "defense", 0), 0),
                     "def_times": _safe_int(getattr(stats, "defense_multiplier", 0), 0),
-                    "evasion_percent": _safe_int(
+                    "evasion_percent": _safe_nes_percent(
                         getattr(stats, "evasion_percent", 0), 0
                     ),
                     "magic_defense": _safe_int(getattr(stats, "magic_defense", 0), 0),
-                    "magic_resistance": _safe_int(
+                    "magic_resistance": _safe_nes_percent(
                         getattr(stats, "magic_resistance", 0), 0
                     ),
                     "row_label": "BACK" if row_label == "back" else "FRONT",

@@ -68,6 +68,10 @@ function asNum(v, d = 0) {
   return Number.isFinite(n) ? n : d;
 }
 
+function asNesPercent(v) {
+  return Math.max(0, Math.min(asNum(v, 0), 99));
+}
+
 function renderPortrait(member) {
   portraitWrap.innerHTML = "";
   const fallback = document.createElement("div");
@@ -160,11 +164,11 @@ function render() {
     ["ちせい", asNum(st.intelligence)],
     ["せいしん", asNum(st.mind)],
     ["こうげき", `${asNum(st.atk_times)}かい ${asNum(st.atk_value)}`],
-    ["めいちゅう", `${asNum(st.acc_value)}%`],
+    ["めいちゅう", `${asNesPercent(st.acc_value)}%`],
     ["ぼうぎょ", `${asNum(st.def_times)}かい ${asNum(st.defense)}`],
-    ["かいひりつ", `${asNum(st.evasion_percent)}%`],
+    ["かいひりつ", `${asNesPercent(st.evasion_percent)}%`],
     ["まほうぼうぎょ", asNum(st.magic_defense)],
-    ["まほうかいひりつ", `${asNum(st.magic_resistance)}%`],
+    ["まほうかいひりつ", `${asNesPercent(st.magic_resistance)}%`],
     ["れつ", String(st.row_label || "BACK")],
   ];
   statusRows.innerHTML = rows.map(([k, v]) => rowHtml(k, String(v))).join("");

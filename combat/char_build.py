@@ -42,9 +42,14 @@ from utils.text_normalize import normalize_text_basic
 from typing import Dict, List
 
 
+def _cap_nes_percent_for_build(percent: int) -> int:
+    """NES版準拠で、ビルド時の命中率/回避率は 99% を上限にする。"""
+    return max(0, min(percent, 99))
+
+
 def _cap_physical_accuracy_for_build(hit_percent: int) -> int:
     """通常攻撃の命中率はビルド時点で 99% を上限にする。"""
-    return max(0, min(hit_percent, 99))
+    return _cap_nes_percent_for_build(hit_percent)
 
 
 def build_party_members_from_save(
@@ -757,7 +762,9 @@ def compute_character_final_stats(
         defense_multiplier = base.level // 32 + agility // 32
 
     # 回避率[%] = (防具 Evasion 合計 *100) + (Agi//4)
-    evasion_percent = int(round(total_eva * 100 + (agility // 4)))
+    evasion_percent = _cap_nes_percent_for_build(
+        int(round(total_eva * 100 + (agility // 4)))
+    )
 
     magic_defense = total_mdef
 
@@ -765,7 +772,7 @@ def compute_character_final_stats(
     magic_def_multiplier = agility // 32 + intelligence // 32 + mind // 32
 
     # 魔法抵抗 = Int//2 + Mind//2
-    magic_resistance = intelligence // 2 + mind // 2
+    magic_resistance = _cap_nes_percent_for_build(intelligence // 2 + mind // 2)
 
     # Attack Power = 武器威力 + Str//4
     main_power = main_pow + strength // 4 if main_pow else 0

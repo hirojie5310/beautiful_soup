@@ -488,7 +488,7 @@ def _terrain_accuracy_percent(base_accuracy: Any, intelligence: int) -> int:
     if base <= 1.0:
         base *= 100.0
     acc = int(base + intelligence / 2.0)
-    return max(0, min(acc, 100))
+    return max(0, min(acc, 99))
 
 
 def _roll_terrain_net_hits(

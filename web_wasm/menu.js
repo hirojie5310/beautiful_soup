@@ -21,6 +21,12 @@ function normalizeFaceKey(raw) {
     .replace(/-/g, "_");
 }
 
+function clampNesPercent(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(Math.trunc(n), 99));
+}
+
 function resolveFaceImageCandidates(member) {
   const portraitKey = normalizeFaceKey(member?.portrait_key);
   const nameKey = normalizeFaceKey(member?.name);
@@ -66,15 +72,14 @@ function parseMenuState() {
     if (!parsed || typeof parsed !== "object") {
       return { party: [], resources: { cp: 0, cp_max: 255, gil: 0 } };
     }
-    return {
+    return normalizeMenuState({
       ...parsed,
-      party: Array.isArray(parsed?.party) ? parsed.party : [],
       resources: {
         cp: Number(parsed?.resources?.cp ?? 0),
         cp_max: Number(parsed?.resources?.cp_max ?? 255),
         gil: Number(parsed?.resources?.gil ?? 0),
       },
-    };
+    });
   } catch (_error) {
     return { party: [], resources: { cp: 0, cp_max: 255, gil: 0 } };
   }
@@ -297,7 +302,11 @@ function normalizeMenuState(raw) {
         ? member.mp_levels
         : {},
       status: member?.status && typeof member.status === "object"
-        ? member.status
+        ? {
+          ...member.status,
+          evasion_percent: clampNesPercent(member?.status?.evasion_percent),
+          magic_resistance: clampNesPercent(member?.status?.magic_resistance),
+        }
         : {},
       status_icons: Array.isArray(member?.status_icons) ? member.status_icons : [],
       equipment: member?.equipment && typeof member.equipment === "object"

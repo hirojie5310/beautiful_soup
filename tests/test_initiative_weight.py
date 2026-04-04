@@ -166,6 +166,51 @@ def test_compute_character_final_stats_caps_physical_accuracy_at_99() -> None:
     assert stats.main_accuracy == 99
 
 
+def test_compute_character_final_stats_caps_evasion_and_magic_evasion_at_99() -> None:
+    base = BaseCharacter(
+        level=10,
+        total_exp=0,
+        job_level=10,
+        job_skill_point=0,
+        max_hp=100,
+        strength=10,
+        agility=120,
+        vitality=10,
+        intelligence=120,
+        mind=120,
+    )
+    eq = EquipmentSet(off_hand="Aegis Shield", head="Ribbon", body="Crystal Armor")
+    weapons = {}
+    armors = {
+        "Aegis Shield": {
+            "Defense": 10,
+            "Evasion": 0.35,
+            "BaseMagicDefense": 20,
+            "ArmorType": "Shield",
+            "Weight": 1,
+        },
+        "Ribbon": {
+            "Defense": 5,
+            "Evasion": 0.20,
+            "BaseMagicDefense": 10,
+            "ArmorType": "Head",
+            "Weight": 0,
+        },
+        "Crystal Armor": {
+            "Defense": 30,
+            "Evasion": 0.25,
+            "BaseMagicDefense": 15,
+            "ArmorType": "Body",
+            "Weight": 0,
+        },
+    }
+
+    stats = compute_character_final_stats(base, eq, weapons, armors, job_name="Warrior")
+
+    assert stats.evasion_percent == 99
+    assert stats.magic_resistance == 99
+
+
 def test_compute_character_final_stats_applies_legacy_string_bonus_to_stats() -> None:
     base = BaseCharacter(
         level=10,

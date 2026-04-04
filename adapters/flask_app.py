@@ -131,6 +131,10 @@ def _safe_int(value: Any, default: int = 0) -> int:
         return default
 
 
+def _safe_nes_percent(value: Any, default: int = 0) -> int:
+    return max(0, min(_safe_int(value, default), 99))
+
+
 def _build_party_status_snapshot(session: BattleSession) -> list[dict[str, Any]]:
     snapshots: list[dict[str, Any]] = []
     for idx, member in enumerate(session.party_members):
@@ -359,14 +363,16 @@ def _build_member_status_snapshot(
         "atk_times": atk_times,
         "agility": _safe_int(getattr(stats, "agility", 0), 0),
         "acc_value": acc_value,
-        "evasion_percent": _safe_int(getattr(stats, "evasion_percent", 0), 0),
+        "evasion_percent": _safe_nes_percent(getattr(stats, "evasion_percent", 0), 0),
         "vitality": _safe_int(getattr(stats, "vitality", 0), 0),
         "defense": _safe_int(getattr(stats, "defense", 0), 0),
         "def_times": def_times,
         "intelligence": _safe_int(getattr(stats, "intelligence", 0), 0),
         "mind": _safe_int(getattr(stats, "mind", 0), 0),
         "magic_defense": _safe_int(getattr(stats, "magic_defense", 0), 0),
-        "magic_resistance": _safe_int(getattr(stats, "magic_resistance", 0), 0),
+        "magic_resistance": _safe_nes_percent(
+            getattr(stats, "magic_resistance", 0), 0
+        ),
         "row_label": row_label,
         "status_line": ",".join(status_labels) if status_labels else "-",
         "status_icons": sorted(set(status_icons)),

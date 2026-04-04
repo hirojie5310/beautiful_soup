@@ -251,7 +251,7 @@ def _calc_magic_accuracy(
         acc *= 0.5
 
     acc = int(acc)
-    return max(0, min(acc, 100))
+    return max(0, min(acc, 99))
 
 
 def _calc_expected_magic_hits(
