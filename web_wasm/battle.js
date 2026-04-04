@@ -656,9 +656,9 @@ function buildNamedCombatEffects(block, playbackStatus) {
 
   (Array.isArray(block?.lines) ? block.lines : []).forEach((lineRaw) => {
     const line = String(lineRaw || "").trim();
-    let match = line.match(/(?:^|[！。]\s*)(.+?)に(\d+)のダメージ/);
-    if (!match) match = line.match(/(?:^|[！。]\s*)(.+?)は(\d+)のダメージを受けた/);
-    if (!match) match = line.match(/(?:^|[！。]\s*)(.+?)は(\d+)のダメージ/);
+    let match = line.match(/(?:^|[！。]\s*)([^！。]+?)に(\d+)のダメージ/);
+    if (!match) match = line.match(/(?:^|[！。]\s*)([^！。]+?)は(\d+)のダメージを受けた/);
+    if (!match) match = line.match(/(?:^|[！。]\s*)([^！。]+?)は(\d+)のダメージ/);
     if (match) {
       const target = resolveNamedTarget(match[1], playbackStatus, preferredSide, usageMap);
       if (target) {
@@ -667,9 +667,9 @@ function buildNamedCombatEffects(block, playbackStatus) {
       return;
     }
 
-    match = line.match(/(?:^|[！。]\s*)(.+?)のHPが(\d+)回復/);
-    if (!match) match = line.match(/(?:^|[！。]\s*)(.+?)はHPを(\d+)回復した/);
-    if (!match) match = line.match(/(?:^|[！。]\s*)(.+?)はHPが(\d+)回復/);
+    match = line.match(/(?:^|[！。]\s*)([^！。]+?)のHPが(\d+)回復/);
+    if (!match) match = line.match(/(?:^|[！。]\s*)([^！。]+?)はHPを(\d+)回復した/);
+    if (!match) match = line.match(/(?:^|[！。]\s*)([^！。]+?)はHPが(\d+)回復/);
     if (match) {
       const target = resolveNamedTarget(match[1], playbackStatus, preferredSide, usageMap);
       if (target) {
@@ -678,7 +678,7 @@ function buildNamedCombatEffects(block, playbackStatus) {
       return;
     }
 
-    match = line.match(/しかし(.+?)には効かなかった/);
+    match = line.match(/しかし([^！。]+?)には効かなかった/);
     if (match) {
       const target = resolveNamedTarget(match[1], playbackStatus, preferredSide, usageMap);
       if (target) {
@@ -1579,6 +1579,14 @@ async function playBattleLogBlocks(logs, payload) {
         if (!applied) return;
         const key = combatPopupKey(applied.side, applied.index);
         activeCombatPopups[key] = applied.popup;
+      });
+      const namedEffects = buildNamedCombatEffects(block, playbackStatus);
+      namedEffects.forEach((effect) => {
+        const key = combatPopupKey(effect.side, effect.index);
+        activeCombatPopups[key] = {
+          kind: effect.kind,
+          value: Number(effect.value ?? 0),
+        };
       });
       rerenderAll();
       logView.textContent = block.lines.join("\n");

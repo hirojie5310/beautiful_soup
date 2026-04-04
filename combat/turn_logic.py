@@ -113,6 +113,10 @@ _SUMMON_TARGET_BY_CASTER = {
 }
 
 
+def _is_enemy_self_destruct_name(name: str | None) -> bool:
+    return normalize_text_basic(name or "") in {"self destruct", "self-destruct"}
+
+
 def _enemy_has_divide_reaction(enemy_json: dict[str, Any]) -> bool:
     specials = enemy_json.get("Special Attacks") or []
     for special in specials:
@@ -3743,6 +3747,21 @@ def run_enemy_turn(
                     dmg_to_char = 0
                     enemy_attack = None
 
+                elif _is_enemy_self_destruct_name(spell_name):
+                    # FFIII寄せ: 残りHPの4倍ダメージを必中で与え、使用者は即死する。
+                    dmg_to_char = max(0, int(getattr(enemy_state, "hp", 0))) * 4
+                    enemy_state.hp = 0
+                    enemy_attack = EnemyAttackResult(
+                        damage=dmg_to_char,
+                        attack_type="special",
+                        attack_name=spell_name,
+                        is_crit=False,
+                        net_hits=None,
+                        element_relation="normal",
+                        hit_elements=[],
+                        is_reflectable_spell=False,
+                    )
+
                 # 3-3) Reflect（敵自身にバリア）
                 elif name_lower == "reflect":
                     apply_reflect_to_actor(
@@ -3990,6 +4009,7 @@ def run_enemy_turn(
                     hp_style="arrow_with_max",
                     max_hp=getattr(char_state, "max_hp", None),
                     shout=True,
+                    display_amount=max(0, int(dmg_to_char)),
                 )
             else:
                 logs.append(f"{enemy_name}の攻撃！ しかしダメージを与えられなかった…")
