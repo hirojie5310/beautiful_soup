@@ -995,6 +995,14 @@ def simulate_one_round_multi_party(
 
             # ★ 行動後：戦闘終了チェック
             if all_enemies_defeated(enemies):
+                _append_skipped_character_action_logs(
+                    party_members=party_members,
+                    planned_actions=planned_actions,
+                    acted_actor_indexes=acted_actor_indexes,
+                    handled_actor_indexes=handled_actor_indexes,
+                    logs=logs,
+                    event_blocks=final_result.event_blocks,
+                )
                 final_result.end_reason = "enemy_defeated"
                 break
 
@@ -1009,6 +1017,15 @@ def simulate_one_round_multi_party(
                 ):
                     # 敵側が実際には全滅していない場合、誤判定を無視して続行する
                     continue
+                if char_result.end_reason == "enemy_defeated":
+                    _append_skipped_character_action_logs(
+                        party_members=party_members,
+                        planned_actions=planned_actions,
+                        acted_actor_indexes=acted_actor_indexes,
+                        handled_actor_indexes=handled_actor_indexes,
+                        logs=logs,
+                        event_blocks=final_result.event_blocks,
+                    )
                 final_result.end_reason = char_result.end_reason
                 final_result.escaped = char_result.escaped
                 final_result.enemy_attack_result = char_result.enemy_attack_result
