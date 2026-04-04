@@ -561,6 +561,37 @@ def _is_two_handed_weapon(raw: dict[str, Any]) -> bool:
     return bool(raw.get("TwoHanded"))
 
 
+def _compact_bonus_label(bonus_raw: Any) -> str:
+    if not isinstance(bonus_raw, dict) or not bonus_raw:
+        return ""
+
+    key_map = {
+        "Strength": "STR",
+        "Agility": "AGI",
+        "Vitality": "VIT",
+        "Intelligence": "INT",
+        "Mind": "MND",
+        "Fire": "FIR",
+        "Ice": "ICE",
+        "Lightning": "LIT",
+        "Earth": "ERT",
+        "Air": "AIR",
+        "Holy": "HLY",
+    }
+    parts: list[str] = []
+    for key, value in bonus_raw.items():
+        short = key_map.get(str(key), str(key)[:3].upper())
+        if isinstance(value, str) and value.strip().lower() == "up":
+            parts.append(f"{short}↑")
+            continue
+        amount = _safe_int(value, 0)
+        if amount == 0:
+            continue
+        parts.append(f"{short}{amount:+d}")
+
+    return f"BON:{'/'.join(parts)}" if parts else ""
+
+
 def _build_equip_candidates_by_member(
     session: BattleSession,
 ) -> list[dict[str, list[dict[str, Any]]]]:
@@ -623,6 +654,7 @@ def _build_equip_candidates_by_member(
                         "count": stock_count,
                         "atk": _safe_int(raw.get("AttackPower", 0), 0),
                         "acc": _safe_int(raw.get("HitRate", 0), 0),
+                        "bonus_label": _compact_bonus_label(raw.get("Bonus")),
                     }
                 )
 
@@ -644,6 +676,7 @@ def _build_equip_candidates_by_member(
                             "count": stock_count,
                             "def": _safe_int(raw.get("Defense", 0), 0),
                             "eva": _safe_int(raw.get("EvasionPenalty", 0), 0),
+                            "bonus_label": _compact_bonus_label(raw.get("Bonus")),
                         }
                     )
             by_slot[slot] = rows
@@ -668,6 +701,7 @@ def _build_equip_candidates_by_member(
                         "def": _safe_int(raw.get("Defense", 0), 0),
                         "eva": _safe_int(raw.get("EvasionPenalty", 0), 0),
                         "mdef": _safe_int(raw.get("MagicDefense", 0), 0),
+                        "bonus_label": _compact_bonus_label(raw.get("Bonus")),
                     }
                 )
             by_slot[slot] = rows

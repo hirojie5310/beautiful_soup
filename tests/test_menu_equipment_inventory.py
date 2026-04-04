@@ -44,6 +44,21 @@ def _build_session_with_equipment_inventory():
     return session, weapon_name, armor_name
 
 
+def _find_allowed_bonus_item(session, item_kind: str, armor_type: str | None = None) -> tuple[str, dict]:
+    member = session.party_members[0]
+    source = session.state.weapons if item_kind == "Weapon" else session.state.armors
+    for name, raw in source.items():
+        if not isinstance(name, str) or not isinstance(raw, dict):
+            continue
+        if not raw.get("Bonus"):
+            continue
+        if armor_type is not None and raw.get("ArmorType") != armor_type:
+            continue
+        if flask_item_allowed(member, raw):
+            return name, raw
+    raise AssertionError(f"no allowed bonus {item_kind} item found")
+
+
 def test_inventory_helpers_increment_and_decrement_equipment_stock():
     save = {"inventory": {"Weapon": {}}}
 
@@ -90,3 +105,43 @@ def test_wasm_equip_candidates_only_include_items_in_inventory():
     assert weapon_name in main_names
     assert armor_name in head_names
     assert other_weapon_name not in main_names
+
+
+def test_flask_equip_candidates_include_compact_bonus_labels():
+    session, _, _ = _build_session_with_equipment_inventory()
+    weapon_name, weapon_raw = _find_allowed_bonus_item(session, "Weapon")
+    armor_name, armor_raw = _find_allowed_bonus_item(session, "Armor", armor_type="Helm")
+    session.state.save["inventory"]["Weapon"][weapon_name] = 1
+    session.state.save["inventory"]["Armor"][armor_name] = 1
+
+    rows = build_flask_candidates(session)[0]
+
+    weapon_row = next(row for row in rows["main_hand"] if row.get("name") == weapon_name)
+    armor_row = next(row for row in rows["head"] if row.get("name") == armor_name)
+
+    assert weapon_row["bonus_label"]
+    assert armor_row["bonus_label"]
+    if "Strength" in weapon_raw["Bonus"]:
+        assert "STR+5" in weapon_row["bonus_label"]
+    if "Agility" in armor_raw["Bonus"]:
+        assert "AGI+5" in armor_row["bonus_label"]
+
+
+def test_wasm_equip_candidates_include_compact_bonus_labels():
+    session, _, _ = _build_session_with_equipment_inventory()
+    weapon_name, weapon_raw = _find_allowed_bonus_item(session, "Weapon")
+    armor_name, armor_raw = _find_allowed_bonus_item(session, "Armor", armor_type="Helm")
+    session.state.save["inventory"]["Weapon"][weapon_name] = 1
+    session.state.save["inventory"]["Armor"][armor_name] = 1
+
+    rows = build_wasm_candidates(session)[0]
+
+    weapon_row = next(row for row in rows["main_hand"] if row.get("name") == weapon_name)
+    armor_row = next(row for row in rows["head"] if row.get("name") == armor_name)
+
+    assert weapon_row["bonus_label"]
+    assert armor_row["bonus_label"]
+    if "Strength" in weapon_raw["Bonus"]:
+        assert "STR+5" in weapon_row["bonus_label"]
+    if "Agility" in armor_raw["Bonus"]:
+        assert "AGI+5" in armor_row["bonus_label"]

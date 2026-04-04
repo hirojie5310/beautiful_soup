@@ -67,6 +67,42 @@ function asNum(v, d = 0) {
   return Number.isFinite(n) ? n : d;
 }
 
+function compactBonusLabel(bonusRaw) {
+  if (!bonusRaw || typeof bonusRaw !== "object" || Array.isArray(bonusRaw)) return "";
+  const keyMap = {
+    Strength: "STR",
+    Agility: "AGI",
+    Vitality: "VIT",
+    Intelligence: "INT",
+    Mind: "MND",
+    Fire: "FIR",
+    Ice: "ICE",
+    Lightning: "LIT",
+    Earth: "ERT",
+    Air: "AIR",
+    Holy: "HLY",
+  };
+  const parts = Object.entries(bonusRaw).flatMap(([key, value]) => {
+    const short = keyMap[key] || String(key).slice(0, 3).toUpperCase();
+    if (typeof value === "string" && value.trim().toLowerCase() === "up") return [`${short}↑`];
+    const amount = Number(value);
+    if (!Number.isFinite(amount) || amount === 0) return [];
+    return [`${short}${amount >= 0 ? "+" : ""}${amount}`];
+  });
+  return parts.length ? `BON:${parts.join("/")}` : "";
+}
+
+function candidateMetaText(row) {
+  if (row?.kind === "release") return "確認後、全装備を解除";
+  const core = row?.atk != null
+    ? `ATK:${asNum(row?.atk)} ACC:${asNum(row?.acc)}%`
+    : row?.def != null
+      ? `DEF:${asNum(row?.def)} EVA:${asNum(row?.eva)}`
+      : "";
+  const bonus = String(row?.bonus_label || "").trim();
+  return core && bonus ? `${core} ${bonus}` : (bonus || core);
+}
+
 function parseState() {
   try {
     const text = localStorage.getItem(LOCAL_MENU_STORAGE_KEY);
@@ -337,6 +373,7 @@ function buildDynamicCandidateRows(state, envelope, member, targetMemberIndex, s
         acc: raw?.BaseAccuracy != null
           ? Math.round(Number(raw.BaseAccuracy || 0) * 100)
           : asNum(raw?.HitRate),
+        bonus_label: compactBonusLabel(raw?.Bonus),
       });
     });
     if (slotKey === "off_hand") {
@@ -354,6 +391,7 @@ function buildDynamicCandidateRows(state, envelope, member, targetMemberIndex, s
           eva: raw?.Evasion != null
             ? Math.round(Number(raw.Evasion || 0) * 100)
             : asNum(raw?.EvasionPenalty),
+          bonus_label: compactBonusLabel(raw?.Bonus),
         });
       });
     }
@@ -377,6 +415,7 @@ function buildDynamicCandidateRows(state, envelope, member, targetMemberIndex, s
       eva: raw?.Evasion != null
         ? Math.round(Number(raw.Evasion || 0) * 100)
         : asNum(raw?.EvasionPenalty),
+      bonus_label: compactBonusLabel(raw?.Bonus),
     });
   });
   return rows;
@@ -517,11 +556,7 @@ function renderCandidates(state) {
     const stockLabel = stock != null ? ` x${stock}` : "";
     const equippedName = String(memberEquipment(member)?.[selectedSlotKey] || "");
     const equippedMark = modeKey === "equip" && equippedName && equippedName === name ? " [E]" : "";
-    const meta = row?.kind === "release"
-      ? "確認後、全装備を解除"
-      : row?.atk != null
-      ? `ATK:${asNum(row?.atk)} ACC:${asNum(row?.acc)}%`
-      : `DEF:${asNum(row?.def)} EVA:${asNum(row?.eva)}`;
+    const meta = candidateMetaText(row);
     button.innerHTML = `<div>${name}${stockLabel}${equippedMark}</div><div class="meta">${meta}</div>`;
     button.addEventListener("click", () => {
       commitEquipmentChange(state, row);

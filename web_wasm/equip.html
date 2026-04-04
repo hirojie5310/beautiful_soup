@@ -79,7 +79,14 @@
         text-align: left;
         color: var(--text);
       }
-      .candidate .meta { color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
+      .candidate .meta {
+        color: var(--muted);
+        font-size: 0.8rem;
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
       .footer {
         display: grid;
         grid-template-columns: 1fr 1.6fr 1fr;

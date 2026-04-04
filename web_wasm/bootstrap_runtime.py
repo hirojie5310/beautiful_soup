@@ -270,6 +270,37 @@ def _is_two_handed_weapon(item_raw):
     return bool(item_raw.get("TwoHanded"))
 
 
+def _compact_bonus_label(bonus_raw):
+    if not isinstance(bonus_raw, dict) or not bonus_raw:
+        return ""
+
+    key_map = {
+        "Strength": "STR",
+        "Agility": "AGI",
+        "Vitality": "VIT",
+        "Intelligence": "INT",
+        "Mind": "MND",
+        "Fire": "FIR",
+        "Ice": "ICE",
+        "Lightning": "LIT",
+        "Earth": "ERT",
+        "Air": "AIR",
+        "Holy": "HLY",
+    }
+    parts = []
+    for key, value in bonus_raw.items():
+        short = key_map.get(str(key), str(key)[:3].upper())
+        if isinstance(value, str) and value.strip().lower() == "up":
+            parts.append(f"{short}↑")
+            continue
+        amount = _safe_int(value, 0)
+        if amount == 0:
+            continue
+        parts.append(f"{short}{amount:+d}")
+
+    return f"BON:{'/'.join(parts)}" if parts else ""
+
+
 def _build_equip_candidates_by_member(session):
     state = getattr(session, "state", None)
     save = getattr(state, "save", {}) if state is not None else {}
@@ -344,6 +375,7 @@ def _build_equip_candidates_by_member(session):
                             ),
                             0,
                         ),
+                        "bonus_label": _compact_bonus_label(raw.get("Bonus")),
                     }
                 )
             if slot == "off_hand":
@@ -379,6 +411,7 @@ def _build_equip_candidates_by_member(session):
                                 ),
                                 0,
                             ),
+                            "bonus_label": _compact_bonus_label(raw.get("Bonus")),
                         }
                     )
             by_slot[slot] = rows
@@ -414,7 +447,8 @@ def _build_equip_candidates_by_member(session):
                                 else raw.get("EvasionPenalty", 0)
                             ),
                             0,
-                        ),
+                            ),
+                        "bonus_label": _compact_bonus_label(raw.get("Bonus")),
                     }
                 )
             by_slot[slot] = rows
