@@ -82,8 +82,12 @@ Flask 版の `flask_app.py` に相当する Wasm 版の起点は、次の 4 フ�
   - `combat/`, `assets/data/`, `system/`, `utils/` を `web_wasm/python_bundle.zip` に固めるビルド用スクリプト。
 - `wasm_app.py`
   - Flask サーバーの代わりに、`web_wasm/` をブラウザで確認するための静的サーバー起点。
-- `web_wasm/index.html` + `web_wasm/main.js`
-  - ブラウザ側の起点。Pyodide を起動し、`typing-extensions` を `loadPackage()` で読み込んだうえで `python_bundle.zip` を展開し、`WasmBattleEngine` を呼び出します。
+- `web_wasm/index.html` + `web_wasm/app.js` + `web_wasm/pyodide_runtime.js`
+  - ブラウザ側の起点。SPA ルータを起動し、`pyodide_runtime.js` 経由で Pyodide を 1 回だけ初期化し、`typing-extensions` を `loadPackage()` で読み込んだうえで `python_bundle.zip` を展開し、`WasmBattleEngine` を呼び出します。
+- `web_wasm/ARCHITECTURE.md`
+  - SPA 化後の `web_wasm` 構成と責務分担の簡易メモ。
+- `web_wasm/REGRESSION_CHECKLIST.md`
+  - 主要画面を手動確認するときの簡易回帰チェックリスト。
 
 ローカル開発時は、次の順で起動すると Flask 版に近い流れを確認しやすいです。
 

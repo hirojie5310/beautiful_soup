@@ -12,8 +12,8 @@ def test_wasm_app_serves_effect_assets_from_web_wasm_alias() -> None:
 
 def test_battle_ui_references_attack_effect_sheet() -> None:
     battle_js = Path("web_wasm/battle.js").read_text(encoding="utf-8")
-    battle_html = Path("web_wasm/battle.html").read_text(encoding="utf-8")
+    battle_screen = Path("web_wasm/screens/battle_screen.js").read_text(encoding="utf-8")
 
     assert 'const ATTACK_EFFECT_SHEET_NAME = "ef_slash_frames.png";' in battle_js
     assert "appendCombatEffect(card, effectForTarget(" in battle_js
-    assert "@keyframes combat-slash-sweep" in battle_html
+    assert "@keyframes combat-slash-sweep" in battle_screen

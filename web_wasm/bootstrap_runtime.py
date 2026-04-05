@@ -2,7 +2,7 @@
 import json
 from typing import Callable, SupportsIndex, SupportsInt, cast
 
-from combat.wasm_api import WasmBattleEngine
+from combat.wasm_api import WasmBattleEngine, build_session_status_snapshot
 from combat.runtime_state import init_runtime_state
 from combat.usecases import build_battle_session
 from random import Random
@@ -850,6 +850,15 @@ def full_recover_party_json():
     if engine is None:
         return json.dumps({"session_status": None}, ensure_ascii=False)
     return json.dumps(engine.full_recover_party_payload(), ensure_ascii=False)
+
+
+def get_session_status_json():
+    if engine is None:
+        return json.dumps({"session_status": None}, ensure_ascii=False)
+    return json.dumps(
+        {"session_status": build_session_status_snapshot(engine.session)},
+        ensure_ascii=False,
+    )
 
 
 def boot_engine_for_location_with_save_json(

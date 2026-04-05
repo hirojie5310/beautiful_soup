@@ -2,108 +2,14 @@
 <html lang="ja">
   <head>
     <meta charset="utf-8" />
+    <meta http-equiv="refresh" content="0; url=./index.html#/magic" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>まほう</title>
-    <style>
-      :root {
-        --bg: #050817;
-        --panel: rgba(16, 24, 56, 0.96);
-        --panel-soft: rgba(22, 36, 95, 0.94);
-        --text: #eef2ff;
-        --muted: #acb6d7;
-        --accent: #ffe588;
-      }
-      * { box-sizing: border-box; }
-      body {
-        margin: 0;
-        background: radial-gradient(circle at 20% 0%, #1c2b7a 0%, transparent 45%), var(--bg);
-        color: var(--text);
-        font-family: "BIZ UDPGothic", "Yu Gothic UI", sans-serif;
-      }
-      .layout {
-        width: min(440px, 100vw);
-        min-height: 100vh;
-        margin: 0 auto;
-        padding: 10px;
-        display: grid;
-        gap: 10px;
-        align-content: start;
-      }
-      .frame {
-        border: 2px solid rgba(255,255,255,0.45);
-        border-radius: 10px;
-        background: var(--panel);
-        padding: 10px;
-      }
-      .mode-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
-      .btn {
-        border: 1px solid rgba(255,255,255,0.7);
-        border-radius: 8px;
-        color: var(--text);
-        background: linear-gradient(180deg, #4459bf, #20317e);
-        padding: 8px;
-        cursor: pointer;
-        font-size: 0.88rem;
-      }
-      .btn.active { color: var(--accent); box-shadow: inset 0 0 0 2px rgba(255,229,136,0.5); }
-      .member { display: flex; justify-content: space-between; gap: 8px; font-weight: 700; }
-      .grid { background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(0,0,0,0.22)), var(--panel-soft); }
-      .grid-head, .grid-row { display: grid; grid-template-columns: 96px repeat(3, 1fr); }
-      .grid-head > div, .grid-row > div {
-        min-height: 40px;
-        display: flex;
-        align-items: center;
-        padding: 0 8px;
-        border-right: 1px solid rgba(255,255,255,0.25);
-        border-bottom: 1px solid rgba(255,255,255,0.25);
-        font-size: 0.8rem;
-      }
-      .grid-head > div:last-child, .grid-row > div:last-child { border-right: 0; }
-      .lv, .slot, .candidate { cursor: pointer; }
-      .sel { box-shadow: inset 0 0 0 2px rgba(255,227,127,0.6); }
-      .candidate-pane { display: grid; gap: 6px; max-height: 20vh; overflow: auto; }
-      .candidate {
-        border: 1px solid rgba(255,255,255,0.3);
-        border-radius: 6px;
-        background: rgba(0,0,0,0.2);
-        color: var(--text);
-        padding: 7px;
-        text-align: left;
-      }
-      .desc { color: var(--muted); font-size: 0.85rem; }
-      .footer { display: grid; grid-template-columns: 1fr 1.6fr 1fr; gap: 8px; }
-      .hint { color: var(--muted); font-size: 0.82rem; }
-      .empty { color: var(--muted); }
-    </style>
+    <title>Redirecting to Magic</title>
   </head>
   <body>
-    <main class="layout">
-      <section class="frame mode-row" id="modeRow"></section>
-
-      <section class="frame member">
-        <div id="memberName">-</div>
-        <div id="memberJob">-</div>
-      </section>
-
-      <section class="frame grid" id="magicGrid"></section>
-
-      <section class="frame">
-        <div id="candidateTitle">候補</div>
-        <div class="candidate-pane" id="candidatePane"></div>
-      </section>
-
-      <section class="frame">
-        <div id="messageLine" class="desc">モードを選び、スロットや候補をタップして操作します。</div>
-      </section>
-
-      <section class="frame footer">
-        <button class="btn" type="button" id="leftBtn">◀</button>
-        <button class="btn" type="button" id="backBtn">BACK</button>
-        <button class="btn" type="button" id="rightBtn">▶</button>
-      </section>
-      <section class="hint">←→でキャラ変更 / LV行・スロット行をタップ / 候補をタップで決定</section>
-    </main>
-
-    <script type="module" src="./magic.js"></script>
+    <p>Redirecting to <a href="./index.html#/magic">Magic</a>...</p>
+    <script>
+      window.location.replace("./index.html#/magic");
+    </script>
   </body>
 </html>

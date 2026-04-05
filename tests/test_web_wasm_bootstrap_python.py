@@ -10,6 +10,6 @@ def test_bootstrap_python_file_is_syntax_valid() -> None:
 
 
 def test_main_js_loads_external_bootstrap_python_file() -> None:
-    source = Path("web_wasm/main.js").read_text(encoding="utf-8")
+    source = Path("web_wasm/pyodide_runtime.js").read_text(encoding="utf-8")
     assert 'fetch("./bootstrap_runtime.py")' in source
     assert "runPythonAsync(bootstrapPython)" in source

@@ -1,0 +1,163 @@
+import { getPyodideRuntime } from "../pyodide_runtime.js";
+
+const BATTLE_START_SELECTION_KEY = "ff3_wasm_battle_start_selection_v1";
+
+function renderLayout() {
+  return `
+    <div class="screen medium" data-screen="location">
+      <section class="frame">
+        <h1 class="title">Battle Wasm Runner / Location選択</h1>
+        <div id="statusLine" class="status">起動中...</div>
+
+        <div class="selector-row">
+          <label for="locationGroupSelect">LocationGroup</label>
+          <select id="locationGroupSelect"></select>
+          <label for="locationSelect">Location</label>
+          <select id="locationSelect"></select>
+        </div>
+
+        <div class="buttons">
+          <button id="startBattleBtn" class="btn" type="button" disabled>戦闘開始</button>
+          <button id="shopBtn" class="btn" type="button">Shop</button>
+          <button id="innBtn" class="btn" type="button">Inn</button>
+          <button id="menuBtn" class="btn" type="button">メニュー</button>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
+function setSelectOptions(select, values, selectedValue = "") {
+  const wanted = String(selectedValue || "");
+  select.innerHTML = "";
+  values.forEach((value) => {
+    const option = document.createElement("option");
+    option.value = String(value);
+    option.textContent = String(value);
+    if (String(value) === wanted) {
+      option.selected = true;
+    }
+    select.appendChild(option);
+  });
+  if (values.length && !select.value) {
+    select.value = String(values[0]);
+  }
+}
+
+function renderLocationOptions({ locationGroups, locationGroupSelect, locationSelect, state }) {
+  setSelectOptions(
+    locationGroupSelect,
+    locationGroups.map((group) => group.group_name),
+    state.selectedLocationGroup,
+  );
+
+  const currentGroup = locationGroups.find((group) => group.group_name === locationGroupSelect.value)
+    || locationGroups[0];
+  const locations = Array.isArray(currentGroup?.locations) ? currentGroup.locations : [];
+  setSelectOptions(locationSelect, locations, state.selectedLocation);
+}
+
+function syncStoreSelection(store, locationGroupSelect, locationSelect) {
+  store.patch({
+    selectedLocationGroup: String(locationGroupSelect.value || ""),
+    selectedLocation: String(locationSelect.value || ""),
+  });
+}
+
+export async function mountScreen({ mountNode, store, navigate }) {
+  mountNode.innerHTML = renderLayout();
+
+  const statusLine = mountNode.querySelector("#statusLine");
+  const locationGroupSelect = mountNode.querySelector("#locationGroupSelect");
+  const locationSelect = mountNode.querySelector("#locationSelect");
+  const startBattleBtn = mountNode.querySelector("#startBattleBtn");
+  const shopBtn = mountNode.querySelector("#shopBtn");
+  const innBtn = mountNode.querySelector("#innBtn");
+  const menuBtn = mountNode.querySelector("#menuBtn");
+
+  let locationGroups = [];
+
+  const handleGroupChange = () => {
+    renderLocationOptions({
+      locationGroups,
+      locationGroupSelect,
+      locationSelect,
+      state: {
+        selectedLocationGroup: String(locationGroupSelect.value || ""),
+        selectedLocation: "",
+      },
+    });
+    syncStoreSelection(store, locationGroupSelect, locationSelect);
+  };
+  const handleLocationChange = () => {
+    syncStoreSelection(store, locationGroupSelect, locationSelect);
+  };
+  const handleStartBattle = () => {
+    const payload = {
+      selected_location_group: String(locationGroupSelect.value || ""),
+      selected_location: String(locationSelect.value || ""),
+    };
+    sessionStorage.setItem(BATTLE_START_SELECTION_KEY, JSON.stringify(payload));
+    store.patch({
+      selectedLocationGroup: payload.selected_location_group,
+      selectedLocation: payload.selected_location,
+    });
+    navigate("battle");
+  };
+  const handleGoShop = () => {
+    syncStoreSelection(store, locationGroupSelect, locationSelect);
+    navigate("shop");
+  };
+  const handleGoInn = () => {
+    syncStoreSelection(store, locationGroupSelect, locationSelect);
+    navigate("inn");
+  };
+  const handleGoMenu = () => {
+    syncStoreSelection(store, locationGroupSelect, locationSelect);
+    navigate("menu");
+  };
+
+  locationGroupSelect.addEventListener("change", handleGroupChange);
+  locationSelect.addEventListener("change", handleLocationChange);
+  startBattleBtn.addEventListener("click", handleStartBattle);
+  shopBtn.addEventListener("click", handleGoShop);
+  innBtn.addEventListener("click", handleGoInn);
+  menuBtn.addEventListener("click", handleGoMenu);
+
+  try {
+    statusLine.textContent = "Pyodide 起動中...";
+    const pyodide = await getPyodideRuntime();
+    const getSelectionJson = pyodide.globals.get("get_location_selection_json");
+    const selectionPayload = JSON.parse(getSelectionJson());
+    locationGroups = Array.isArray(selectionPayload?.groups) ? selectionPayload.groups : [];
+
+    const storedState = store.getState();
+    const selectedLocationGroup = storedState.selectedLocationGroup || selectionPayload?.selected_group || "";
+    const selectedLocation = storedState.selectedLocation || selectionPayload?.selected_location || "";
+
+    renderLocationOptions({
+      locationGroups,
+      locationGroupSelect,
+      locationSelect,
+      state: {
+        selectedLocationGroup,
+        selectedLocation,
+      },
+    });
+    syncStoreSelection(store, locationGroupSelect, locationSelect);
+
+    startBattleBtn.disabled = false;
+    statusLine.textContent = "Locationを選択して「戦闘開始」を押してください。";
+  } catch (error) {
+    statusLine.textContent = `起動失敗: ${String(error)}`;
+  }
+
+  return () => {
+    locationGroupSelect.removeEventListener("change", handleGroupChange);
+    locationSelect.removeEventListener("change", handleLocationChange);
+    startBattleBtn.removeEventListener("click", handleStartBattle);
+    shopBtn.removeEventListener("click", handleGoShop);
+    innBtn.removeEventListener("click", handleGoInn);
+    menuBtn.removeEventListener("click", handleGoMenu);
+  };
+}

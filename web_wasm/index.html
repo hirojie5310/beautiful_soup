@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Battle Wasm Runner - Location Select</title>
+    <title>Battle Wasm Runner</title>
     <style>
       :root {
         --bg: #050817;
@@ -20,13 +20,20 @@
         font-family: "BIZ UDPGothic", "Yu Gothic UI", sans-serif;
       }
       .layout {
-        width: min(760px, 100vw);
+        width: min(860px, 100vw);
         margin: 0 auto;
         min-height: 100vh;
         padding: 10px;
-        display: grid;
-        place-items: center;
       }
+      .screen {
+        width: 100%;
+        min-height: calc(100vh - 20px);
+        display: grid;
+        gap: 10px;
+        align-content: start;
+      }
+      .screen.narrow { width: min(440px, 100%); margin: 0 auto; }
+      .screen.medium { width: min(760px, 100%); margin: 0 auto; }
       .frame {
         width: 100%;
         border: 2px solid rgba(255,255,255,0.45);
@@ -65,6 +72,95 @@
         cursor: pointer;
       }
       .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+      .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+      .shop-grid {
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        gap: 8px;
+        align-items: center;
+      }
+      .resource-line {
+        color: var(--accent);
+        font-size: 0.92rem;
+        margin: 0 0 10px;
+      }
+      .meta {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin: 10px 0 0;
+        min-height: 1.4em;
+      }
+      .party-list {
+        display: grid;
+        gap: 8px;
+      }
+      .member-card {
+        border: 1px solid rgba(255,255,255,0.35);
+        border-radius: 8px;
+        background: rgba(0,0,0,0.26);
+        padding: 8px;
+        display: grid;
+        grid-template-columns: 72px 1fr;
+        gap: 8px;
+      }
+      .portrait {
+        width: 72px;
+        height: 72px;
+        object-fit: cover;
+        object-position: center 20%;
+        border-radius: 6px;
+        border: 1px solid rgba(255,255,255,0.3);
+        background: rgba(255,255,255,0.08);
+      }
+      .portrait-fallback {
+        width: 72px;
+        height: 72px;
+        border-radius: 6px;
+        border: 1px dashed rgba(255,255,255,0.55);
+        display: grid;
+        place-items: center;
+        font-size: 0.6rem;
+        color: var(--muted);
+        text-align: center;
+        padding: 4px;
+      }
+      .member-main { font-size: 0.85rem; display: grid; gap: 2px; min-width: 0; }
+      .line-strong { font-weight: 700; }
+      .hp { color: #89f0ac; }
+      .menu-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .mode-hint {
+        margin-top: 8px;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+      .mode-hint.active {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .member-card.row-mode {
+        cursor: pointer;
+      }
+      .member-card.row-mode:hover,
+      .member-card.row-mode:focus-visible {
+        outline: 2px solid rgba(255, 229, 136, 0.85);
+        outline-offset: 1px;
+      }
+      .resource-row {
+        display: grid;
+        gap: 4px;
+        font-size: 0.95rem;
+      }
+      .empty {
+        border: 1px dashed rgba(255,255,255,0.4);
+        border-radius: 8px;
+        padding: 10px;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
       @media (max-width: 560px) {
         .selector-row,
         .shop-grid {
@@ -74,27 +170,7 @@
     </style>
   </head>
   <body>
-    <main class="layout">
-      <section class="frame">
-        <h1 class="title">Battle Wasm Runner / Location選択</h1>
-        <div id="statusLine" class="status">起動中...</div>
-
-        <div class="selector-row">
-          <label for="locationGroupSelect">LocationGroup</label>
-          <select id="locationGroupSelect"></select>
-          <label for="locationSelect">Location</label>
-          <select id="locationSelect"></select>
-        </div>
-
-        <div class="buttons">
-          <button id="startBattleBtn" class="btn" type="button" disabled>戦闘開始</button>
-          <button id="shopBtn" class="btn" type="button">Shop</button>
-          <button id="innBtn" class="btn" type="button">Inn</button>
-          <button id="menuBtn" class="btn" type="button">メニュー</button>
-        </div>
-      </section>
-    </main>
-
-    <script type="module" src="./location.js?v=20260405-location-split1"></script>
+    <main id="app" class="layout" aria-live="polite"></main>
+    <script type="module" src="./app.js"></script>
   </body>
 </html>

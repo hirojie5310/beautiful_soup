@@ -6,18 +6,33 @@ from pathlib import Path
 def test_location_index_links_to_split_shop_and_inn_pages() -> None:
     source = Path("web_wasm/index.html").read_text(encoding="utf-8")
 
-    assert 'id="shopBtn"' in source
-    assert 'id="innBtn"' in source
-    assert "./location.js" in source
+    assert 'id="app"' in source
+    assert "./app.js" in source
     assert 'id="shopMapSelect"' not in source
     assert 'id="stayInnBtn"' not in source
 
 
-def test_shop_and_inn_pages_exist_with_dedicated_scripts() -> None:
+def test_phase1_spa_shell_files_exist() -> None:
+    assert Path("web_wasm/app.js").exists()
+    assert Path("web_wasm/router.js").exists()
+    assert Path("web_wasm/store/app_store.js").exists()
+    assert Path("web_wasm/screens/location_screen.js").exists()
+    assert Path("web_wasm/screens/menu_screen.js").exists()
+    assert Path("web_wasm/screens/shop_screen.js").exists()
+    assert Path("web_wasm/screens/inn_screen.js").exists()
+    assert Path("web_wasm/screens/battle_screen.js").exists()
+    assert Path("web_wasm/screens/item_screen.js").exists()
+    assert Path("web_wasm/screens/equip_screen.js").exists()
+    assert Path("web_wasm/screens/magic_screen.js").exists()
+    assert Path("web_wasm/screens/status_screen.js").exists()
+    assert Path("web_wasm/screens/job_screen.js").exists()
+
+
+def test_legacy_shop_and_inn_pages_redirect_to_spa_routes() -> None:
     shop_html = Path("web_wasm/shop.html").read_text(encoding="utf-8")
     inn_html = Path("web_wasm/inn.html").read_text(encoding="utf-8")
 
-    assert "./shop.js" in shop_html
-    assert 'id="buyShopBtn"' in shop_html
-    assert "./inn.js" in inn_html
-    assert 'id="stayInnBtn"' in inn_html
+    assert "./index.html#/shop" in shop_html
+    assert "window.location.replace" in shop_html
+    assert "./index.html#/inn" in inn_html
+    assert "window.location.replace" in inn_html

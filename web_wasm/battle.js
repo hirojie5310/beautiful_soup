@@ -1,32 +1,32 @@
-import { loadPyodide } from "https://cdn.jsdelivr.net/pyodide/v0.28.3/full/pyodide.mjs";
+import { getPyodideRuntime } from "./pyodide_runtime.js";
 import { resolveFaceImageCandidates } from "./shared_party.js";
 import {
   LOCAL_MENU_STORAGE_KEY,
-  LOCAL_SAVE_STORAGE_KEY,
   parseSaveEnvelope,
   restoreSaveEnvelopeFromStorage,
   parseMenuStateFromStorage,
   makeSaveEnvelope,
   persistSaveEnvelopeToStorage,
-  syncRuntimeSaveToStorage,
 } from "./shared_storage.js";
 
-const battlePhase = document.getElementById("battlePhase");
-const partyGrid = document.getElementById("partyGrid");
-const enemyGrid = document.getElementById("enemyGrid");
-const commandFrame = document.getElementById("commandFrame");
-const battleLogFrame = document.getElementById("battleLogFrame");
-const commandGrid = document.getElementById("commandGrid");
-const statusLine = document.getElementById("statusLine");
-const logView = document.getElementById("logView");
-const plannedActionsView = document.getElementById("plannedActionsView");
-const rewardPanel = document.getElementById("rewardPanel");
-const locationBtn = document.getElementById("locationBtn");
-const menuBtn = document.getElementById("menuBtn");
-const loadSaveBtn = document.getElementById("loadSaveBtn");
-const loadSaveInput = document.getElementById("loadSaveInput");
-const downloadSaveBtn = document.getElementById("downloadSaveBtn");
-const enemyFrame = document.getElementById("enemyFrame");
+let battlePhase = null;
+let partyGrid = null;
+let enemyGrid = null;
+let commandFrame = null;
+let battleLogFrame = null;
+let commandGrid = null;
+let statusLine = null;
+let logView = null;
+let plannedActionsView = null;
+let rewardPanel = null;
+let locationBtn = null;
+let menuBtn = null;
+let loadSaveBtn = null;
+let loadSaveInput = null;
+let downloadSaveBtn = null;
+let enemyFrame = null;
+let appStore = null;
+let appNavigate = null;
 
 let pyodide = null;
 let sessionStatus = { party: [], enemies: [] };
@@ -52,6 +52,25 @@ const ATTACK_EFFECT_SHEET_NAME = "ef_slash_frames.png";
 
 const BATTLE_START_SELECTION_KEY = "ff3_wasm_battle_start_selection_v1";
 
+function bindDom(root = document) {
+  battlePhase = root.querySelector("#battlePhase");
+  partyGrid = root.querySelector("#partyGrid");
+  enemyGrid = root.querySelector("#enemyGrid");
+  commandFrame = root.querySelector("#commandFrame");
+  battleLogFrame = root.querySelector("#battleLogFrame");
+  commandGrid = root.querySelector("#commandGrid");
+  statusLine = root.querySelector("#statusLine");
+  logView = root.querySelector("#logView");
+  plannedActionsView = root.querySelector("#plannedActionsView");
+  rewardPanel = root.querySelector("#rewardPanel");
+  locationBtn = root.querySelector("#locationBtn");
+  menuBtn = root.querySelector("#menuBtn");
+  loadSaveBtn = root.querySelector("#loadSaveBtn");
+  loadSaveInput = root.querySelector("#loadSaveInput");
+  downloadSaveBtn = root.querySelector("#downloadSaveBtn");
+  enemyFrame = root.querySelector("#enemyFrame");
+}
+
 function readBattleStartSelectionFromSession() {
   try {
     const raw = sessionStorage.getItem(BATTLE_START_SELECTION_KEY);
@@ -69,12 +88,22 @@ function readBattleStartSelectionFromSession() {
   return null;
 }
 
+function readBattleSelectionFromStore() {
+  if (!appStore) return null;
+  const state = appStore.getState();
+  return {
+    selected_location_group: String(state?.selectedLocationGroup || ""),
+    selected_location: String(state?.selectedLocation || ""),
+  };
+}
+
 const sessionBattleStartSelection = readBattleStartSelectionFromSession();
+const storeBattleStartSelection = readBattleSelectionFromStore();
 const hasSessionBattleStartSelection = Boolean(
   sessionBattleStartSelection?.selected_location_group || sessionBattleStartSelection?.selected_location,
 );
 
-let currentBattleSelection = sessionBattleStartSelection || {
+let currentBattleSelection = sessionBattleStartSelection || storeBattleStartSelection || {
   selected_location_group: "",
   selected_location: "",
 };
@@ -88,35 +117,6 @@ const COMMAND_LABELS = {
   Magic: "まほう",
   Cheer: "おうえん",
 };
-
-async function preparePythonBundle(instance) {
-  const response = await fetch(`./python_bundle.zip?v=${PYTHON_BUNDLE_VERSION}`, { cache: "no-store" });
-  if (!response.ok) {
-    throw new Error(`python_bundle.zip fetch failed: ${response.status}`);
-  }
-  const bytes = new Uint8Array(await response.arrayBuffer());
-  instance.FS.writeFile("/tmp/python_bundle.zip", bytes);
-  await instance.runPythonAsync(`
-import sys
-import zipfile
-
-with zipfile.ZipFile("/tmp/python_bundle.zip", "r") as bundle:
-    bundle.extractall("/")
-
-if "/" not in sys.path:
-    sys.path.insert(0, "/")
-`);
-}
-
-async function prepareExplicitGroups(instance) {
-  const response = await fetch("../assets/data/explicit_groups.json");
-  if (!response.ok) {
-    instance.FS.writeFile("/tmp/explicit_groups.json", new Uint8Array());
-    return;
-  }
-  const bytes = new Uint8Array(await response.arrayBuffer());
-  instance.FS.writeFile("/tmp/explicit_groups.json", bytes);
-}
 
 function resolveBattleSelection(selectionPayload) {
   const fallbackGroup = String(selectionPayload?.selected_group || "");
@@ -1407,10 +1407,15 @@ function buildMenuViewState() {
 
 function syncMenuViewStateToStorage() {
   if (suppressMenuStateSync) return;
+  const nextState = buildMenuViewState();
+  if (appStore) {
+    appStore.updateMenuState(nextState);
+    return;
+  }
   try {
     localStorage.setItem(
       LOCAL_MENU_STORAGE_KEY,
-      JSON.stringify(buildMenuViewState()),
+      JSON.stringify(nextState),
     );
   } catch (_error) {
     // ignore storage write failure in wasm runner.
@@ -1480,17 +1485,25 @@ function getCurrentMenuStateForPersistence() {
 }
 
 function syncNormalizedRuntimeSaveToStorage() {
-  return syncRuntimeSaveToStorage({
-    pyodide,
-    buildEnvelopeOptions: () => {
-      const storedEnvelope = restoreSaveEnvelopeFromStorage();
-      return {
-        selectedLocationGroup: currentBattleSelection?.selected_location_group || storedEnvelope?.selected_location_group || "",
-        selectedLocation: currentBattleSelection?.selected_location || storedEnvelope?.selected_location || "",
-        menuState: getCurrentMenuStateForPersistence(),
-      };
-    },
-  });
+  if (!pyodide) return false;
+  const exportSaveJson = pyodide.globals.get("export_runtime_save_json");
+  const saveJson = exportSaveJson ? String(exportSaveJson() || "") : "";
+  if (!saveJson) return false;
+  try {
+    const saveObj = JSON.parse(saveJson);
+    const storedEnvelope = restoreSaveEnvelopeFromStorage();
+    const envelope = makeSaveEnvelope(saveObj, {
+      selectedLocationGroup: currentBattleSelection?.selected_location_group || storedEnvelope?.selected_location_group || "",
+      selectedLocation: currentBattleSelection?.selected_location || storedEnvelope?.selected_location || "",
+      menuState: getCurrentMenuStateForPersistence(),
+    });
+    if (appStore) {
+      return appStore.updateSaveEnvelope(envelope);
+    }
+    return persistSaveEnvelopeToStorage(envelope);
+  } catch (_error) {
+    return false;
+  }
 }
 
 function downloadSaveEnvelope(envelope) {
@@ -1521,6 +1534,10 @@ function bindReturnToLocationOnClick() {
   returnToLocationBound = true;
   battleLogFrame.classList.add("is-clickable-next");
   const onClick = () => {
+    if (appNavigate) {
+      appNavigate("location");
+      return;
+    }
     window.location.href = "./index.html";
   };
   battleLogFrame.addEventListener("click", onClick, { once: true });
@@ -1859,23 +1876,18 @@ function finalizeDraftAction(targetIndex, options = {}) {
 async function bootEngine() {
   battlePhase.textContent = "Pyodide 起動中...";
 
-  pyodide = await loadPyodide();
-  await pyodide.loadPackage("typing-extensions");
-  await preparePythonBundle(pyodide);
-  await prepareExplicitGroups(pyodide);
-    const bootstrapResponse = await fetch("./bootstrap_runtime.py");
-  if (!bootstrapResponse.ok) {
-    throw new Error(`bootstrap_runtime.py fetch failed: ${bootstrapResponse.status}`);
-  }
-  const bootstrapPython = await bootstrapResponse.text();
-  await pyodide.runPythonAsync(bootstrapPython);
+  pyodide = await getPyodideRuntime();
 
   const getSelectionJson = pyodide.globals.get("get_location_selection_json");
   const selectionPayload = JSON.parse(getSelectionJson());
   locationGroups = Array.isArray(selectionPayload?.groups) ? selectionPayload.groups : [];
+  const selectionFromStore = readBattleSelectionFromStore();
+  if (selectionFromStore?.selected_location_group || selectionFromStore?.selected_location) {
+    currentBattleSelection = selectionFromStore;
+  }
   currentBattleSelection = resolveBattleSelection(selectionPayload);
 
-  const storedEnvelope = restoreSaveEnvelopeFromStorage();
+  const storedEnvelope = appStore?.getState()?.saveEnvelope || restoreSaveEnvelopeFromStorage();
   if (storedEnvelope?.save) {
     loadedSaveData = storedEnvelope.save;
     if (!hasSessionBattleStartSelection && storedEnvelope.selected_location_group) {
@@ -1914,6 +1926,9 @@ function applyFullRecoverParty() {
 }
 
 function resolveSaveDataForBoot() {
+  if (appStore?.getState()?.saveEnvelope?.save && typeof appStore.getState().saveEnvelope.save === "object") {
+    return appStore.getState().saveEnvelope.save;
+  }
   if (loadedSaveData && typeof loadedSaveData === "object") {
     return loadedSaveData;
   }
@@ -1951,6 +1966,12 @@ function bootLocationAndSyncSession() {
     selected_location_group: String(payload?.selected_location_group || selectedGroup || ""),
     selected_location: String(payload?.selected_location || selectedLocation || ""),
   };
+  if (appStore) {
+    appStore.patch({
+      selectedLocationGroup: currentBattleSelection.selected_location_group,
+      selectedLocation: currentBattleSelection.selected_location,
+    });
+  }
   sessionStatus = payload?.session_status ?? { party: [], enemies: [] };
   latestMenuState = parseMenuStateCandidate(payload?.menu_state) || latestMenuState;
   lifecycleState = "ready_for_actions";
@@ -2032,7 +2053,10 @@ async function executeRound() {
           selectedLocation: result?.selected_location,
           menuState: getCurrentMenuStateForPersistence(),
         });
-        if (persistSaveEnvelopeToStorage(envelope)) {
+        const persisted = appStore
+          ? appStore.updateSaveEnvelope(envelope)
+          : persistSaveEnvelopeToStorage(envelope);
+        if (persisted) {
           statusLine.textContent = "戦闘終了データをブラウザに保存しました。";
           setSaveButtonsEnabled(true);
         } else {
@@ -2050,32 +2074,41 @@ async function executeRound() {
   rerenderAll();
 }
 
-if (menuBtn) {
-  menuBtn.addEventListener("click", () => {
-    refreshMenuStateFromPyodide();
-    syncMenuViewStateToStorage();
-    window.location.href = "./menu.html";
-  });
-}
+function attachBattleEventHandlers() {
+  if (menuBtn) {
+    menuBtn.addEventListener("click", () => {
+      refreshMenuStateFromPyodide();
+      syncMenuViewStateToStorage();
+      if (appNavigate) {
+        appNavigate("menu");
+        return;
+      }
+      window.location.href = "./menu.html";
+    });
+  }
 
-if (locationBtn) {
-  locationBtn.addEventListener("click", () => {
-    refreshMenuStateFromPyodide();
-    syncMenuViewStateToStorage();
-    window.location.href = "./index.html";
-  });
-}
+  if (locationBtn) {
+    locationBtn.addEventListener("click", () => {
+      refreshMenuStateFromPyodide();
+      syncMenuViewStateToStorage();
+      if (appNavigate) {
+        appNavigate("location");
+        return;
+      }
+      window.location.href = "./index.html";
+    });
+  }
 
-if (loadSaveBtn) {
-  loadSaveBtn.addEventListener("click", () => {
-    if (!loadSaveInput) return;
-    loadSaveInput.value = "";
-    loadSaveInput.click();
-  });
-}
+  if (loadSaveBtn) {
+    loadSaveBtn.addEventListener("click", () => {
+      if (!loadSaveInput) return;
+      loadSaveInput.value = "";
+      loadSaveInput.click();
+    });
+  }
 
-if (loadSaveInput) {
-  loadSaveInput.addEventListener("change", async (event) => {
+  if (loadSaveInput) {
+    loadSaveInput.addEventListener("change", async (event) => {
     const file = event?.target?.files?.[0];
     if (!file) return;
     try {
@@ -2093,12 +2126,19 @@ if (loadSaveInput) {
       if (envelope.selected_location) {
         currentBattleSelection.selected_location = String(envelope.selected_location);
       }
-      if (persistSaveEnvelopeToStorage(envelope)) {
+      const persisted = appStore
+        ? appStore.updateSaveEnvelope(envelope)
+        : persistSaveEnvelopeToStorage(envelope);
+      if (persisted) {
         setSaveButtonsEnabled(true);
       }
       if (envelope?.menu_state && typeof envelope.menu_state === "object") {
         latestMenuState = parseMenuStateCandidate(envelope.menu_state) || latestMenuState;
-        syncMenuViewStateToStorage();
+        if (appStore) {
+          appStore.updateMenuState(envelope.menu_state);
+        } else {
+          syncMenuViewStateToStorage();
+        }
       }
       bootLocationAndSyncSession();
       resetPendingActionsForParty();
@@ -2115,25 +2155,43 @@ if (loadSaveInput) {
       statusLine.textContent = "ロード失敗: JSON を読み込めませんでした。";
     }
   });
+  }
+
+  if (downloadSaveBtn) {
+    downloadSaveBtn.addEventListener("click", () => {
+      const envelope = appStore?.getState()?.saveEnvelope || restoreSaveEnvelopeFromStorage();
+      if (!envelope) {
+        statusLine.textContent = "保存できるセーブデータがありません。";
+        return;
+      }
+      if (downloadSaveEnvelope(envelope)) {
+        statusLine.textContent = "セーブデータをローカルに保存しました。";
+      } else {
+        statusLine.textContent = "セーブデータの保存に失敗しました。";
+      }
+    });
+  }
 }
 
-if (downloadSaveBtn) {
-  downloadSaveBtn.addEventListener("click", () => {
-    const envelope = restoreSaveEnvelopeFromStorage();
-    if (!envelope) {
-      statusLine.textContent = "保存できるセーブデータがありません。";
-      return;
-    }
-    if (downloadSaveEnvelope(envelope)) {
-      statusLine.textContent = "セーブデータをローカルに保存しました。";
-    } else {
-      statusLine.textContent = "セーブデータの保存に失敗しました。";
-    }
-  });
+export async function initializeBattleApp({ root = document, store = null, navigate = null } = {}) {
+  bindDom(root);
+  appStore = store;
+  appNavigate = navigate;
+  const storeSelection = readBattleSelectionFromStore();
+  if (storeSelection?.selected_location_group || storeSelection?.selected_location) {
+    currentBattleSelection = storeSelection;
+  }
+  attachBattleEventHandlers();
+  rerenderAll();
+  try {
+    await bootEngine();
+  } catch (error) {
+    battlePhase.textContent = `起動失敗: ${String(error)}`;
+    statusLine.textContent = "エンジン起動に失敗しました。ページを再読み込みしてください。";
+    throw error;
+  }
 }
 
-rerenderAll();
-bootEngine().catch((error) => {
-  battlePhase.textContent = `起動失敗: ${String(error)}`;
-  statusLine.textContent = "エンジン起動に失敗しました。ページを再読み込みしてください。";
-});
+if (document.getElementById("battlePhase")) {
+  initializeBattleApp().catch(() => {});
+}
