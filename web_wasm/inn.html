@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Battle Wasm Runner - Location Select</title>
+    <title>Battle Wasm Runner - Inn</title>
     <style>
       :root {
         --bg: #050817;
@@ -36,19 +36,16 @@
       }
       .title { margin: 0 0 12px; color: var(--accent); font-size: 1rem; }
       .status { color: var(--muted); font-size: 0.9rem; margin-bottom: 12px; }
-      .selector-row {
-        display: grid;
-        grid-template-columns: 140px 1fr;
-        gap: 8px;
-        align-items: center;
-        margin-bottom: 12px;
+      .resource-line {
+        color: var(--accent);
+        font-size: 0.92rem;
+        margin: 0 0 10px;
       }
-      select {
-        border-radius: 6px;
-        border: 1px solid rgba(255,255,255,0.5);
-        background: #0b1229;
-        color: var(--text);
-        padding: 8px;
+      .meta {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin: 10px 0 0;
+        min-height: 1.4em;
       }
       .buttons {
         margin-top: 16px;
@@ -65,36 +62,26 @@
         cursor: pointer;
       }
       .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-      @media (max-width: 560px) {
-        .selector-row,
-        .shop-grid {
-          grid-template-columns: 1fr;
-        }
-      }
     </style>
   </head>
   <body>
     <main class="layout">
       <section class="frame">
-        <h1 class="title">Battle Wasm Runner / Location選択</h1>
+        <h1 class="title">Battle Wasm Runner / Inn</h1>
         <div id="statusLine" class="status">起動中...</div>
-
-        <div class="selector-row">
-          <label for="locationGroupSelect">LocationGroup</label>
-          <select id="locationGroupSelect"></select>
-          <label for="locationSelect">Location</label>
-          <select id="locationSelect"></select>
-        </div>
+        <div id="selectedLocationLine" class="status"></div>
+        <div id="gilLine" class="resource-line">GIL ---</div>
+        <div class="resource-line">宿泊料 10 GIL</div>
 
         <div class="buttons">
-          <button id="startBattleBtn" class="btn" type="button" disabled>戦闘開始</button>
-          <button id="shopBtn" class="btn" type="button">Shop</button>
-          <button id="innBtn" class="btn" type="button">Inn</button>
+          <button id="stayInnBtn" class="btn" type="button" disabled>宿泊</button>
+          <button id="backBtn" class="btn" type="button">Locationへ戻る</button>
           <button id="menuBtn" class="btn" type="button">メニュー</button>
         </div>
+        <div id="innStatusLine" class="meta"></div>
       </section>
     </main>
 
-    <script type="module" src="./location.js?v=20260405-location-split1"></script>
+    <script type="module" src="./inn.js?v=20260405-inn-split1"></script>
   </body>
 </html>
