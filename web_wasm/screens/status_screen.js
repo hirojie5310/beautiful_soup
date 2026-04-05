@@ -1,6 +1,10 @@
 import { resolveFaceImageCandidates } from "../shared_party.js";
 import { renderMenuSubpageShell } from "./menu_subpage_shell.js";
-import { bindMenuSubpageNavigation, syncMenuMemberSelection } from "./screen_shared.js";
+import {
+  bindMenuSubpageNavigation,
+  stepMenuMemberSelection,
+  syncMenuMemberSelection,
+} from "./screen_shared.js";
 
 function asNum(v, d = 0) { const n = Number(v); return Number.isFinite(n) ? n : d; }
 function asNesPercent(v) { return Math.max(0, Math.min(asNum(v, 0), 99)); }
@@ -165,8 +169,8 @@ export async function mountScreen({ mountNode, store, navigate }) {
     statusRows.innerHTML = rows.map(([k, v]) => rowHtml(k, String(v))).join("");
   }
 
-  const onLeft = () => { index -= 1; render(); };
-  const onRight = () => { index += 1; render(); };
+  const onLeft = () => { index = stepMenuMemberSelection(store, index, -1); render(); };
+  const onRight = () => { index = stepMenuMemberSelection(store, index, 1); render(); };
   const onBack = () => navigate("menu");
   const unbindButtons = bindMenuSubpageNavigation({
     leftBtn,

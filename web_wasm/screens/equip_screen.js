@@ -3,6 +3,7 @@ import { getPyodideRuntime } from "../pyodide_runtime.js";
 import {
   bindMenuSubpageNavigation,
   persistMenuEnvelope,
+  stepMenuMemberSelection,
   syncMenuMemberSelection,
 } from "./screen_shared.js";
 
@@ -501,8 +502,8 @@ export async function mountScreen({ mountNode, store, navigate }) {
       equipmentMasterReady = false;
     }
   }
-  const onLeft = () => { memberIndex -= 1; render(); };
-  const onRight = () => { memberIndex += 1; render(); };
+  const onLeft = () => { memberIndex = stepMenuMemberSelection(store, memberIndex, -1); render(); };
+  const onRight = () => { memberIndex = stepMenuMemberSelection(store, memberIndex, 1); render(); };
   const onBack = () => navigate("menu");
   const unbindButtons = bindMenuSubpageNavigation({
     leftBtn,

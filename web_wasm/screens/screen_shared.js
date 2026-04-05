@@ -17,6 +17,27 @@ export function syncMenuMemberSelection(store, requestedIndex) {
   return { party, memberIndex, member: party[memberIndex] || null };
 }
 
+export function stepMenuMemberSelection(store, requestedIndex, delta) {
+  const state = store.getState();
+  const party = Array.isArray(state.menuState?.party) ? state.menuState.party : [];
+  if (!party.length) {
+    if (Number(state.menuMemberIndex ?? 0) !== 0) {
+      store.patch({ menuMemberIndex: 0 });
+    }
+    return 0;
+  }
+
+  const baseIndex = Number(requestedIndex ?? state.menuMemberIndex ?? 0);
+  const safeBaseIndex = Number.isFinite(baseIndex) ? baseIndex : 0;
+  const step = Number(delta ?? 0);
+  const safeStep = Number.isFinite(step) ? step : 0;
+  const nextIndex = ((safeBaseIndex + safeStep) % party.length + party.length) % party.length;
+  if (nextIndex !== Number(state.menuMemberIndex ?? 0)) {
+    store.patch({ menuMemberIndex: nextIndex });
+  }
+  return nextIndex;
+}
+
 export function persistMenuEnvelope(store, nextMenuState, nextEnvelope) {
   store.updateMenuState(nextMenuState);
   if (!nextEnvelope || typeof nextEnvelope !== "object") {
@@ -71,10 +92,26 @@ export function bindMenuSubpageNavigation({
     }
   };
 
+  const onLeftClick = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    onLeft?.();
+  };
+  const onRightClick = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    onRight?.();
+  };
+  const onBackClick = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    onBack?.();
+  };
+
   const unbindButtons = bindButtonHandlers([
-    { target: leftBtn, handler: onLeft },
-    { target: rightBtn, handler: onRight },
-    { target: backBtn, handler: onBack },
+    { target: leftBtn, handler: onLeftClick },
+    { target: rightBtn, handler: onRightClick },
+    { target: backBtn, handler: onBackClick },
   ]);
   listenTarget.addEventListener("keydown", onKey);
 

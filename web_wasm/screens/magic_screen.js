@@ -2,6 +2,7 @@ import { renderMenuSubpageShell } from "./menu_subpage_shell.js";
 import {
   bindMenuSubpageNavigation,
   persistMenuEnvelope,
+  stepMenuMemberSelection,
   syncMenuMemberSelection,
 } from "./screen_shared.js";
 
@@ -349,8 +350,8 @@ export async function mountScreen({ mountNode, store, navigate }) {
       render();
     }
   };
-  const onLeft = () => { memberIndex -= 1; render(); };
-  const onRight = () => { memberIndex += 1; render(); };
+  const onLeft = () => { memberIndex = stepMenuMemberSelection(store, memberIndex, -1); render(); };
+  const onRight = () => { memberIndex = stepMenuMemberSelection(store, memberIndex, 1); render(); };
   const onBack = () => navigate("menu");
   magicGrid.addEventListener("click", onGridClick);
   const unbindButtons = bindMenuSubpageNavigation({

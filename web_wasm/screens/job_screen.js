@@ -4,6 +4,7 @@ import {
   bindButtonHandlers,
   bindMenuSubpageNavigation,
   persistMenuEnvelope,
+  stepMenuMemberSelection,
   syncMenuMemberSelection,
 } from "./screen_shared.js";
 
@@ -190,8 +191,8 @@ export async function mountScreen({ mountNode, store, navigate }) {
     selectedJobLine.textContent = `選択中: ${String(selectedRow?.job_name || "-")} / 必要CP ${asNum(selectedRow?.cp_cost, 0)}`;
   }
 
-  const onLeft = () => { memberIndex -= 1; render(); };
-  const onRight = () => { memberIndex += 1; render(); };
+  const onLeft = () => { memberIndex = stepMenuMemberSelection(store, memberIndex, -1); render(); };
+  const onRight = () => { memberIndex = stepMenuMemberSelection(store, memberIndex, 1); render(); };
   const onBack = () => navigate("menu");
   const unbindButtons = bindMenuSubpageNavigation({
     leftBtn,
