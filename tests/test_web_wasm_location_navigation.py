@@ -36,3 +36,20 @@ def test_legacy_shop_and_inn_pages_redirect_to_spa_routes() -> None:
     assert "window.location.replace" in shop_html
     assert "./index.html#/inn" in inn_html
     assert "window.location.replace" in inn_html
+
+
+def test_battle_screen_resets_click_to_return_state_on_reentry() -> None:
+    source = Path("web_wasm/battle.js").read_text(encoding="utf-8")
+
+    assert "function resetBattleLogInteractionState()" in source
+    assert "returnToLocationBound = false;" in source
+    assert "activeLogPlaybackId += 1;" in source
+    assert source.count("resetBattleLogInteractionState();") >= 3
+
+
+def test_app_store_prefers_save_envelope_menu_state_on_boot() -> None:
+    source = Path("web_wasm/store/app_store.js").read_text(encoding="utf-8")
+
+    assert "const initialMenuStateSource = (" in source
+    assert "storedEnvelope?.menu_state" in source
+    assert "normalizeMenuState(initialMenuStateSource)" in source

@@ -1662,6 +1662,14 @@ function setSaveButtonsEnabled(enabled) {
   }
 }
 
+function resetBattleLogInteractionState() {
+  activeLogPlaybackId += 1;
+  returnToLocationBound = false;
+  if (battleLogFrame) {
+    battleLogFrame.classList.remove("is-clickable-next");
+  }
+}
+
 function bindReturnToLocationOnClick() {
   if (returnToLocationBound || !battleLogFrame) return;
   returnToLocationBound = true;
@@ -1752,7 +1760,8 @@ function buildRewardLogBlock(payload) {
 }
 
 async function playBattleLogBlocks(logs, payload) {
-  const playbackId = ++activeLogPlaybackId;
+  resetBattleLogInteractionState();
+  const playbackId = activeLogPlaybackId;
   const blocks = buildLogBlocks(logs);
   const blockEvents = Array.isArray(payload?.event_blocks)
     ? alignEventBlocksToLogBlocks(blocks, payload.event_blocks)
@@ -2110,6 +2119,7 @@ function bootLocationAndSyncSession() {
   latestMenuState = parseMenuStateCandidate(payload?.menu_state) || latestMenuState;
   lifecycleState = "ready_for_actions";
   battleFinished = false;
+  resetBattleLogInteractionState();
   applyFullRecoverParty();
   refreshMenuStateFromPyodide();
   syncNormalizedRuntimeSaveToStorage();
@@ -2309,6 +2319,7 @@ function attachBattleEventHandlers() {
 
 export async function initializeBattleApp({ root = document, store = null, navigate = null } = {}) {
   bindDom(root);
+  resetBattleLogInteractionState();
   appStore = store;
   appNavigate = navigate;
   const storeSelection = readBattleSelectionFromStore();

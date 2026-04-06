@@ -56,12 +56,17 @@ export function createAppStore() {
   const storedSelection = getStoredLocationSelection();
   const storedEnvelope = restoreSaveEnvelopeFromStorage();
   const storedMenuState = parseMenuStateFromStorage();
+  const initialMenuStateSource = (
+    storedEnvelope?.menu_state && typeof storedEnvelope.menu_state === "object"
+      ? storedEnvelope.menu_state
+      : storedMenuState
+  );
   state = {
     ...state,
     selectedLocationGroup: String(storedSelection?.selected_location_group || ""),
     selectedLocation: String(storedSelection?.selected_location || ""),
-    menuState: storedMenuState && typeof storedMenuState === "object"
-      ? normalizeMenuState(storedMenuState)
+    menuState: initialMenuStateSource && typeof initialMenuStateSource === "object"
+      ? normalizeMenuState(initialMenuStateSource)
       : state.menuState,
     saveEnvelope: storedEnvelope,
   };
