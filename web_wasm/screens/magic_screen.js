@@ -23,11 +23,77 @@ const ESUNA_CLEAR = [
   "poison", "blind", "mini", "silence", "toad", "petrify", "petrification",
   "partial_petrify", "partial petrification", "confusion", "sleep", "paralyze", "paralysis",
 ];
+const STATUS_EFFECT_KEY_BY_ICON = {
+  poison: "Poison",
+  blind: "Blind",
+  mini: "Mini",
+  silence: "Silence",
+  toad: "Toad",
+  petrify: "Petrification",
+  petrification: "Petrification",
+  ko: "KO",
+  confusion: "Confusion",
+  sleep: "Sleep",
+  paralysis: "Paralysis",
+  paralyze: "Paralysis",
+  "partial petrification": "Partial Petrification",
+  partial_petrify: "Partial Petrification",
+};
 
 function asArray(v) { return Array.isArray(v) ? v : []; }
 function asObj(v) { return v && typeof v === "object" ? v : {}; }
 function normalizeStatusText(value) { return String(value || "").trim().toLowerCase().replace(/[_-]/g, " "); }
 function clone(value) { return typeof structuredClone === "function" ? structuredClone(value) : JSON.parse(JSON.stringify(value)); }
+
+export function applyMagicSetupToSaveParty(saveParty, equippedByMember) {
+  const party = asArray(saveParty);
+  const equipped = asArray(equippedByMember);
+  party.forEach((entry, memberIndex) => {
+    if (!entry || typeof entry !== "object") return;
+    const memberSetup = asObj(equipped[memberIndex]);
+    const magic = {};
+    for (let lv = 1; lv <= 8; lv += 1) {
+      const row = asArray(memberSetup[String(lv)]).slice(0, 3).map((name) => (
+        typeof name === "string" && name ? name : null
+      ));
+      while (row.length < 3) row.push(null);
+      magic[`LV${lv}`] = row;
+    }
+    entry.Magic = magic;
+    if ("magic" in entry) delete entry.magic;
+  });
+}
+
+function syncSavePartyVitalsAndStatuses(saveParty, party) {
+  const saveRows = asArray(saveParty);
+  const partyRows = asArray(party);
+  partyRows.forEach((member, index) => {
+    const saveEntry = saveRows[index];
+    if (!saveEntry || typeof saveEntry !== "object") return;
+    const mpLevels = asObj(member?.mp_levels);
+    const nextStatusEffects = saveEntry.status_effects && typeof saveEntry.status_effects === "object"
+      ? { ...saveEntry.status_effects }
+      : {};
+    Object.keys(nextStatusEffects).forEach((key) => {
+      nextStatusEffects[key] = false;
+    });
+    asArray(member?.status_icons).forEach((icon) => {
+      const statusKey = STATUS_EFFECT_KEY_BY_ICON[normalizeStatusText(icon)];
+      if (statusKey) nextStatusEffects[statusKey] = true;
+    });
+    saveEntry.hp = Number(member?.hp ?? saveEntry.hp ?? 0);
+    saveEntry.max_hp = Number(member?.max_hp ?? saveEntry.max_hp ?? 0);
+    saveEntry.mp_levels = mpLevels;
+    saveEntry.mp = Object.fromEntries(
+      Array.from({ length: 8 }, (_unused, offset) => {
+        const level = String(offset + 1);
+        return [`L${level}MP`, Number(asObj(mpLevels[level]).current ?? 0)];
+      }),
+    );
+    saveEntry.status_effects = nextStatusEffects;
+    saveEntry.status_icons = asArray(member?.status_icons);
+  });
+}
 
 function renderLayout() {
   return renderMenuSubpageShell({
@@ -110,6 +176,13 @@ export async function mountScreen({ mountNode, store, navigate }) {
     return asArray(asObj(asArray(setup?.equipped_by_member)[mIdx])[String(lv)]).slice(0, 3);
   }
   function stockRow(setup, lv) { return asArray(asObj(setup?.stock_by_level)[String(lv)]); }
+  function usableSpellNames(menuState, mIdx) {
+    return new Set(
+      asArray((menuState?.magic_candidates_by_member || menuState?.magicCandidatesByMember)?.[mIdx])
+        .map((row) => String(row?.name || ""))
+        .filter(Boolean),
+    );
+  }
   function mpText(member, lv) {
     const mp = asObj(asObj(member?.mp_levels)[String(lv)]);
     return `(${Number(mp?.current ?? 0)}/${Number(mp?.max ?? 0)})`;
@@ -223,6 +296,10 @@ export async function mountScreen({ mountNode, store, navigate }) {
     } else if (modeKey === "use") {
       const spell = String(myRow[selectedSlot] || "");
       if (!spell) return;
+      if (!usableSpellNames(menuState, memberIndex).has(spell)) {
+        messageLine.textContent = "現在のジョブではその魔法は使えません。";
+        return;
+      }
       const targetIndex = Number(row?.member_index ?? -1);
       if (targetIndex < 0 || targetIndex >= party.length) return;
       const useResult = applyFieldSpell(party[memberIndex], party[targetIndex], spell);
@@ -243,17 +320,8 @@ export async function mountScreen({ mountNode, store, navigate }) {
     const nextEnvelope = clone(state.saveEnvelope || store.createDefaultEnvelope());
     nextEnvelope.menu_state = nextMenuState;
     if (Array.isArray(nextEnvelope?.save?.party)) {
-      party.forEach((member, idx) => {
-        if (!nextEnvelope.save.party[idx]) return;
-        nextEnvelope.save.party[idx].hp = Number(member?.hp ?? nextEnvelope.save.party[idx].hp ?? 0);
-        nextEnvelope.save.party[idx].max_hp = Number(member?.max_hp ?? nextEnvelope.save.party[idx].max_hp ?? 0);
-        const mp = asObj(nextEnvelope.save.party[idx].mp);
-        const memberMp = asObj(member?.mp_levels);
-        for (let lv = 1; lv <= 8; lv += 1) {
-          mp[`L${lv}MP`] = Number(asObj(memberMp[String(lv)])?.current ?? mp[`L${lv}MP`] ?? 0);
-        }
-        nextEnvelope.save.party[idx].mp = mp;
-      });
+      applyMagicSetupToSaveParty(nextEnvelope.save.party, equippedByMember);
+      syncSavePartyVitalsAndStatuses(nextEnvelope.save.party, party);
     }
     persist(nextMenuState, nextEnvelope);
     render();

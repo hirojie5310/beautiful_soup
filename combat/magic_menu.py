@@ -283,6 +283,7 @@ def _build_equipped_magic_candidates(
     allowed_lookup: Dict[str, MagicCandidate],
 ) -> list[MagicCandidate]:
     candidates: list[MagicCandidate] = []
+    allowed_set = set(allowed_names) if allowed_names is not None else None
     for spell_name in equipped_names:
         resolved_names = resolve_summon_spell_names_for_cast_code(
             spell_name=spell_name,
@@ -290,8 +291,13 @@ def _build_equipped_magic_candidates(
             cast_code=cast_code,
             allowed_names=allowed_names,
         )
-        if len(resolved_names) <= 1:
-            candidate_name = resolved_names[0] if resolved_names else spell_name
+        if not resolved_names:
+            if allowed_set is not None and spell_name in allowed_set:
+                candidate_name = spell_name
+            else:
+                continue
+        elif len(resolved_names) == 1:
+            candidate_name = resolved_names[0]
         else:
             # Evoker 系の複数分岐召喚は、NES版に寄せて親名を 1 件だけ表示する。
             candidate_name = spell_name

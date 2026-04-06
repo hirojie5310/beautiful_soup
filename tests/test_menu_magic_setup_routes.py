@@ -112,3 +112,34 @@ def test_menu_magic_uses_save_backed_inventory_and_equips():
     assert learned_state["equipped_by_member"][0]["1"] == ["Fire", "Cure", None]
     assert learned_state["stock_by_level"]["1"] == ["Fire"]
     assert state.save["party"][0]["Magic"]["LV1"] == ["Fire", "Cure", None]
+
+
+def test_flask_menu_magic_candidates_respect_mystic_knight_spell_restrictions():
+    state = init_runtime_state()
+    state.save["party"][0]["job"] = "Mystic Knight"
+    state.save["party"][0]["current_job"] = "Mystic Knight"
+    state.save["party"][0]["job_levels"]["Mystic Knight"] = {
+        "level": state.save["party"][0].get("job_level", {}).get("level", 1),
+        "skill_point": state.save["party"][0].get("job_level", {}).get("skill_point", 0),
+    }
+    state.save["party"][0]["Magic"] = {
+        "LV1": ["Cure", None, None],
+        "LV2": ["Shiva", None, None],
+        "LV3": ["Cura", None, None],
+        "LV4": [None, None, None],
+        "LV5": [None, None, None],
+        "LV6": [None, None, None],
+        "LV7": [None, None, None],
+        "LV8": ["Bahamut", None, None],
+    }
+    session = build_battle_session(
+        state=state,
+        enemy_names=sorted(state.monsters.keys())[:3],
+    )
+    app = create_app(session=session)
+    client = app.test_client()
+
+    menu_state = client.get("/menu/state").get_json()
+    member_candidates = menu_state["magic_candidates_by_member"][0]
+
+    assert [cand["name"] for cand in member_candidates] == ["Cure", "Cura"]

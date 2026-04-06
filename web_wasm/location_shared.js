@@ -6,7 +6,7 @@ import {
 } from "./shared_storage.js";
 
 export const LOCAL_SAVE_STORAGE_KEY = "ff3_wasm_savedata_v1";
-export const PYTHON_BUNDLE_VERSION = "20260402b";
+export const PYTHON_BUNDLE_VERSION = "20260406c";
 export const INN_PRICE = 10;
 
 export function asObj(value) {

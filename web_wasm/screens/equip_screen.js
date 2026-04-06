@@ -145,6 +145,34 @@ export async function mountScreen({ mountNode, store, navigate }) {
     if (typeof hands === "string" && /^\d+$/.test(hands)) return Number(hands) >= 2;
     return Boolean(itemRaw?.TwoHanded);
   }
+  function compactBonusLabel(bonusRaw) {
+    if (!bonusRaw || typeof bonusRaw !== "object") return "";
+    const keyMap = {
+      Strength: "STR",
+      Agility: "AGI",
+      Vitality: "VIT",
+      Intelligence: "INT",
+      Mind: "MND",
+      Fire: "FIR",
+      Ice: "ICE",
+      Lightning: "LIT",
+      Earth: "ERT",
+      Air: "AIR",
+      Holy: "HLY",
+    };
+    const parts = [];
+    Object.entries(bonusRaw).forEach(([key, value]) => {
+      const short = keyMap[String(key)] || String(key).slice(0, 3).toUpperCase();
+      if (typeof value === "string" && value.trim().toLowerCase() === "up") {
+        parts.push(`${short}↑`);
+        return;
+      }
+      const amount = asNum(value, 0);
+      if (amount === 0) return;
+      parts.push(`${short}${amount >= 0 ? `+${amount}` : amount}`);
+    });
+    return parts.length ? `BON:${parts.join("/")}` : "";
+  }
   function buildDynamicCandidateRows(member, targetMemberIndex, slotKey) {
     const envelope = getEnvelope();
     if (!equipmentMasterReady || !member) return null;
@@ -157,7 +185,14 @@ export async function mountScreen({ mountNode, store, navigate }) {
         if (stockCount <= 0) return;
         if (!itemAllowedForMember(member, envelope, raw, targetMemberIndex)) return;
         if (slotKey === "off_hand" && isTwoHandedWeapon(raw)) return;
-        rows.push({ kind: "weapon", name, count: stockCount, atk: asNum(raw?.BasePower ?? raw?.AttackPower), acc: raw?.BaseAccuracy != null ? Math.round(Number(raw.BaseAccuracy || 0) * 100) : asNum(raw?.HitRate) });
+        rows.push({
+          kind: "weapon",
+          name,
+          count: stockCount,
+          atk: asNum(raw?.BasePower ?? raw?.AttackPower),
+          acc: raw?.BaseAccuracy != null ? Math.round(Number(raw.BaseAccuracy || 0) * 100) : asNum(raw?.HitRate),
+          bonus_label: compactBonusLabel(raw?.Bonus),
+        });
       });
       if (slotKey === "off_hand") {
         equipmentMaster.armors.forEach((raw) => {
@@ -166,7 +201,14 @@ export async function mountScreen({ mountNode, store, navigate }) {
           const stockCount = normalizedInventoryCount(envelope, "Armor", name);
           if (stockCount <= 0) return;
           if (!itemAllowedForMember(member, envelope, raw, targetMemberIndex)) return;
-          rows.push({ kind: "armor", name, count: stockCount, def: asNum(raw?.Defense), eva: raw?.Evasion != null ? Math.round(Number(raw.Evasion || 0) * 100) : asNum(raw?.EvasionPenalty) });
+          rows.push({
+            kind: "armor",
+            name,
+            count: stockCount,
+            def: asNum(raw?.Defense),
+            eva: raw?.Evasion != null ? Math.round(Number(raw.Evasion || 0) * 100) : asNum(raw?.EvasionPenalty),
+            bonus_label: compactBonusLabel(raw?.Bonus),
+          });
         });
       }
       return rows;
@@ -180,7 +222,14 @@ export async function mountScreen({ mountNode, store, navigate }) {
       const stockCount = normalizedInventoryCount(envelope, "Armor", name);
       if (stockCount <= 0) return;
       if (!itemAllowedForMember(member, envelope, raw, targetMemberIndex)) return;
-      rows.push({ kind: "armor", name, count: stockCount, def: asNum(raw?.Defense), eva: raw?.Evasion != null ? Math.round(Number(raw.Evasion || 0) * 100) : asNum(raw?.EvasionPenalty) });
+      rows.push({
+        kind: "armor",
+        name,
+        count: stockCount,
+        def: asNum(raw?.Defense),
+        eva: raw?.Evasion != null ? Math.round(Number(raw.Evasion || 0) * 100) : asNum(raw?.EvasionPenalty),
+        bonus_label: compactBonusLabel(raw?.Bonus),
+      });
     });
     return rows;
   }
@@ -199,6 +248,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
           acc: weaponRow?.BaseAccuracy != null
             ? Math.round(Number(weaponRow.BaseAccuracy || 0) * 100)
             : asNum(weaponRow?.HitRate),
+          bonus_label: compactBonusLabel(weaponRow?.Bonus),
         };
       }
       if (slotKey === "off_hand") {
@@ -214,6 +264,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
             eva: shieldRow?.Evasion != null
               ? Math.round(Number(shieldRow.Evasion || 0) * 100)
               : asNum(shieldRow?.EvasionPenalty),
+            bonus_label: compactBonusLabel(shieldRow?.Bonus),
           };
         }
       }
@@ -233,6 +284,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       eva: armorRow?.Evasion != null
         ? Math.round(Number(armorRow.Evasion || 0) * 100)
         : asNum(armorRow?.EvasionPenalty),
+      bonus_label: compactBonusLabel(armorRow?.Bonus),
     };
   }
   function countEquippedItems(member) {
@@ -270,6 +322,18 @@ export async function mountScreen({ mountNode, store, navigate }) {
   function modeListForSlot(rows) {
     if (modeKey === "release") return [{ name: "クリックで全装備解除", kind: "release" }];
     return rows.length ? rows : [{ name: "候補なし" }];
+  }
+  function formatCandidateMeta(row) {
+    const parts = [];
+    if (row?.atk != null) {
+      parts.push(`ATK:${asNum(row?.atk)} ACC:${asNum(row?.acc)}%`);
+    } else if (row?.def != null) {
+      parts.push(`DEF:${asNum(row?.def)} EVA:${asNum(row?.eva)}`);
+    }
+    if (row?.bonus_label) {
+      parts.push(String(row.bonus_label));
+    }
+    return parts.join(" ");
   }
   function computeSummaryStats(member) {
     const baseAtk = asNum(member?.status?.atk_value);
@@ -454,7 +518,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       const stockLabel = row?.count ? ` x${row.count}` : "";
       const equippedName = String(memberEquipment(member)?.[selectedSlotKey] || "");
       const equippedMark = modeKey === "equip" && equippedName && equippedName === name ? " [E]" : "";
-      const meta = row?.atk != null ? `ATK:${asNum(row?.atk)} ACC:${asNum(row?.acc)}%` : row?.def != null ? `DEF:${asNum(row?.def)} EVA:${asNum(row?.eva)}` : "";
+      const meta = formatCandidateMeta(row);
       button.innerHTML = `<div>${name}${stockLabel}${equippedMark}</div><div class="meta">${meta}</div>`;
       button.addEventListener("click", () => {
         void commitEquipmentChange(row);

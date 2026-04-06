@@ -89,6 +89,64 @@ def test_evoker_equipped_parent_summon_keeps_parent_name_in_menu():
     assert [row[0] for row in rows[0]] == ["Shiva"]
 
 
+def test_mystic_knight_equipped_parent_summon_is_hidden_from_magic_menu():
+    spells, jobs = _load_master_data()
+    party_entries = [
+        {
+            "name": "Luneth",
+            "job": "Mystic Knight",
+            "Magic": {
+                "LV1": [None, None, None],
+                "LV2": [None, None, None],
+                "LV3": [None, None, None],
+                "LV4": [None, None, None],
+                "LV5": [None, None, None],
+                "LV6": [None, None, None],
+                "LV7": [None, None, None],
+                "LV8": ["Bahamut", None, None],
+            },
+        }
+    ]
+
+    rows = build_party_magic_lists_from_party(
+        party_entries=party_entries,
+        jobs_by_name=jobs,
+        spells_by_name=spells,
+        job_cast_code=JOB_CAST_CODE,
+    )
+
+    assert [row[0] for row in rows[0]] == []
+
+
+def test_ranger_equipped_parent_summon_is_hidden_from_magic_menu():
+    spells, jobs = _load_master_data()
+    party_entries = [
+        {
+            "name": "Ingus",
+            "job": "Ranger",
+            "Magic": {
+                "LV1": [None, None, None],
+                "LV2": [None, None, None],
+                "LV3": [None, None, None],
+                "LV4": [None, None, None],
+                "LV5": [None, None, None],
+                "LV6": [None, None, None],
+                "LV7": [None, None, None],
+                "LV8": ["Bahamut", None, None],
+            },
+        }
+    ]
+
+    rows = build_party_magic_lists_from_party(
+        party_entries=party_entries,
+        jobs_by_name=jobs,
+        spells_by_name=spells,
+        job_cast_code=JOB_CAST_CODE,
+    )
+
+    assert [row[0] for row in rows[0]] == []
+
+
 def test_evoker_cast_uses_random_child_from_parent_summon():
     spells, jobs = _load_master_data()
     expanded = expand_spells_for_summons(spells)

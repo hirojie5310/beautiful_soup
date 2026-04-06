@@ -6,6 +6,7 @@ function asArray(v) { return Array.isArray(v) ? v : []; }
 function asNum(v, d = 0) { const n = Number(v); return Number.isFinite(n) ? n : d; }
 function canon(text) { return String(text || "").trim().toLowerCase().replace(/[\-_]/g, " "); }
 function clone(value) { return typeof structuredClone === "function" ? structuredClone(value) : JSON.parse(JSON.stringify(value)); }
+function cloneObj(value) { return value && typeof value === "object" ? { ...value } : {}; }
 
 const MODES = [
   { key: "use", label: "つかう" },
@@ -26,6 +27,22 @@ const STATUS_CLEAR = {
   "maiden's kiss": ["toad"],
   mallet: ["mini"],
   "gold needle": ["petrify", "petrification", "partial_petrify", "partial petrification"],
+};
+const STATUS_EFFECT_KEY_BY_ICON = {
+  poison: "Poison",
+  blind: "Blind",
+  mini: "Mini",
+  silence: "Silence",
+  toad: "Toad",
+  petrify: "Petrification",
+  petrification: "Petrification",
+  ko: "KO",
+  confusion: "Confusion",
+  sleep: "Sleep",
+  paralysis: "Paralysis",
+  paralyze: "Paralysis",
+  "partial petrification": "Partial Petrification",
+  partial_petrify: "Partial Petrification",
 };
 
 function renderLayout() {
@@ -157,6 +174,30 @@ export async function mountScreen({ mountNode, store, navigate }) {
     return true;
   }
 
+  function syncSaveEntryFromMember(saveEntry, member) {
+    if (!saveEntry || typeof saveEntry !== "object") return;
+    const mpLevels = asObj(member?.mp_levels);
+    const nextStatusEffects = cloneObj(saveEntry.status_effects);
+    Object.keys(nextStatusEffects).forEach((key) => {
+      nextStatusEffects[key] = false;
+    });
+    asArray(member?.status_icons).forEach((icon) => {
+      const statusKey = STATUS_EFFECT_KEY_BY_ICON[canon(icon)];
+      if (statusKey) nextStatusEffects[statusKey] = true;
+    });
+    saveEntry.hp = Number(member?.hp ?? saveEntry.hp ?? 0);
+    saveEntry.max_hp = Number(member?.max_hp ?? saveEntry.max_hp ?? 0);
+    saveEntry.mp_levels = mpLevels;
+    saveEntry.mp = Object.fromEntries(
+      Array.from({ length: 8 }, (_unused, index) => {
+        const level = String(index + 1);
+        return [`L${level}MP`, asNum(asObj(mpLevels[level]).current, 0)];
+      }),
+    );
+    saveEntry.status_effects = nextStatusEffects;
+    saveEntry.status_icons = asArray(member?.status_icons);
+  }
+
   function useItem(itemName, targetIdx) {
     const appState = getState();
     const rawMenuState = asObj(appState.menuState);
@@ -207,10 +248,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     const nextMenuState = { ...rawMenuState, party };
     nextEnvelope.menu_state = nextMenuState;
     if (Array.isArray(nextEnvelope?.save?.party) && nextEnvelope.save.party[targetIdx]) {
-      nextEnvelope.save.party[targetIdx].hp = Number(target.hp ?? 0);
-      nextEnvelope.save.party[targetIdx].max_hp = Number(target.max_hp ?? 0);
-      nextEnvelope.save.party[targetIdx].mp_levels = target.mp_levels;
-      nextEnvelope.save.party[targetIdx].status_icons = target.status_icons;
+      syncSaveEntryFromMember(nextEnvelope.save.party[targetIdx], target);
     }
     persist(nextMenuState, nextEnvelope);
     return { ok: true, message: `${itemName} を ${target.name || "target"} に使用しました。` };
