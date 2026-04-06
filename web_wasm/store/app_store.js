@@ -9,12 +9,37 @@ import {
   persistSaveEnvelopeToStorage,
   restoreSaveEnvelopeFromStorage,
 } from "../shared_storage.js";
+import {
+  normalizeMemberIndexedRows,
+  normalizePartyIdentityOrder,
+} from "../shared_party.js";
 
 function cloneState(state) {
   if (typeof structuredClone === "function") {
     return structuredClone(state);
   }
   return JSON.parse(JSON.stringify(state));
+}
+
+function normalizeMenuState(menuState) {
+  const raw = menuState && typeof menuState === "object" ? menuState : {};
+  const sourceParty = Array.isArray(raw.party) ? raw.party : [];
+  const party = normalizePartyIdentityOrder(sourceParty);
+  const magicSetup = raw.magic_setup && typeof raw.magic_setup === "object"
+    ? raw.magic_setup
+    : {};
+  return {
+    ...raw,
+    party,
+    equipment_by_member: normalizeMemberIndexedRows(sourceParty, raw.equipment_by_member),
+    job_candidates_by_member: normalizeMemberIndexedRows(sourceParty, raw.job_candidates_by_member),
+    equip_candidates_by_member: normalizeMemberIndexedRows(sourceParty, raw.equip_candidates_by_member),
+    magic_candidates_by_member: normalizeMemberIndexedRows(sourceParty, raw.magic_candidates_by_member),
+    magic_setup: {
+      ...magicSetup,
+      equipped_by_member: normalizeMemberIndexedRows(sourceParty, magicSetup.equipped_by_member),
+    },
+  };
 }
 
 export function createAppStore() {
@@ -36,7 +61,7 @@ export function createAppStore() {
     selectedLocationGroup: String(storedSelection?.selected_location_group || ""),
     selectedLocation: String(storedSelection?.selected_location || ""),
     menuState: storedMenuState && typeof storedMenuState === "object"
-      ? storedMenuState
+      ? normalizeMenuState(storedMenuState)
       : state.menuState,
     saveEnvelope: storedEnvelope,
   };
@@ -71,12 +96,13 @@ export function createAppStore() {
   }
 
   function updateMenuState(menuState) {
+    const normalizedMenuState = normalizeMenuState(menuState);
     state = {
       ...state,
-      menuState,
+      menuState: normalizedMenuState,
     };
     try {
-      localStorage.setItem(LOCAL_MENU_STORAGE_KEY, JSON.stringify(menuState));
+      localStorage.setItem(LOCAL_MENU_STORAGE_KEY, JSON.stringify(normalizedMenuState));
     } catch (_error) {
       // noop
     }
@@ -103,12 +129,15 @@ export function createAppStore() {
       selectedLocationGroup: String(nextEnvelope.selected_location_group || ""),
       selectedLocation: String(nextEnvelope.selected_location || ""),
       menuState: nextEnvelope.menu_state && typeof nextEnvelope.menu_state === "object"
-        ? nextEnvelope.menu_state
+        ? normalizeMenuState(nextEnvelope.menu_state)
         : state.menuState,
     };
     if (nextEnvelope.menu_state && typeof nextEnvelope.menu_state === "object") {
       try {
-        localStorage.setItem(LOCAL_MENU_STORAGE_KEY, JSON.stringify(nextEnvelope.menu_state));
+        localStorage.setItem(
+          LOCAL_MENU_STORAGE_KEY,
+          JSON.stringify(normalizeMenuState(nextEnvelope.menu_state)),
+        );
       } catch (_error) {
         // noop
       }

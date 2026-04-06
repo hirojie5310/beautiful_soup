@@ -91,6 +91,36 @@ export function normalizePartyIdentityOrder(party) {
   return normalized;
 }
 
+export function normalizeMemberIndexedRows(sourceParty, rows) {
+  const source = Array.isArray(sourceParty)
+    ? sourceParty.filter((member) => member && typeof member === "object")
+    : [];
+  const sourceRows = Array.isArray(rows) ? rows : [];
+  if (!source.length || !sourceRows.length) return sourceRows.slice();
+  const unused = new Set(source.map((_, index) => index));
+  const normalizedRows = [];
+  const slotCount = Math.max(source.length, FIXED_PARTY_SLOT_KEYS.length);
+  for (let slotIndex = 0; slotIndex < slotCount; slotIndex += 1) {
+    let matchIndex = -1;
+    const slotKey = FIXED_PARTY_SLOT_KEYS[slotIndex] || "";
+    if (slotKey) {
+      matchIndex = source.findIndex((member, index) => (
+        unused.has(index) && memberIdentityKeys(member, index).includes(slotKey)
+      ));
+    }
+    if (matchIndex < 0 && unused.has(slotIndex)) {
+      matchIndex = slotIndex;
+    }
+    if (matchIndex < 0) {
+      matchIndex = source.findIndex((_member, index) => unused.has(index));
+    }
+    if (matchIndex < 0) break;
+    unused.delete(matchIndex);
+    normalizedRows.push(sourceRows[matchIndex]);
+  }
+  return normalizedRows;
+}
+
 export function jobLevelRows(entry) {
   return entry?.job_levels && typeof entry.job_levels === "object" ? entry.job_levels : {};
 }

@@ -1,5 +1,10 @@
 import { getPyodideRuntime } from "./pyodide_runtime.js";
-import { resolveFaceImageCandidates } from "./shared_party.js";
+import {
+  memberIdentityKeys,
+  normalizeMemberIndexedRows,
+  normalizePartyIdentityOrder,
+  resolveFaceImageCandidates,
+} from "./shared_party.js";
 import {
   LOCAL_MENU_STORAGE_KEY,
   parseSaveEnvelope,
@@ -463,6 +468,16 @@ function normalizeStatusIconText(value) {
   return String(value || "").trim().toLowerCase().replace(/[_-]/g, " ");
 }
 
+function findSavePartyIndex(saveParty, member, fallbackIndex) {
+  const wanted = memberIdentityKeys(member, fallbackIndex);
+  if (!wanted.length) return fallbackIndex;
+  const wantedSet = new Set(wanted);
+  const matchedIndex = asArrayValue(saveParty).findIndex((entry, index) => (
+    memberIdentityKeys(entry, index).some((key) => wantedSet.has(key))
+  ));
+  return matchedIndex >= 0 ? matchedIndex : fallbackIndex;
+}
+
 function mergeMenuStateIntoSave(saveData, menuState) {
   const nextSave = cloneJsonValue(saveData || {});
   const nextMenuState = menuState && typeof menuState === "object" ? menuState : {};
@@ -472,7 +487,8 @@ function mergeMenuStateIntoSave(saveData, menuState) {
   const equippedByMember = asArrayValue(magicSetup.equipped_by_member);
 
   menuParty.forEach((member, index) => {
-    const saveEntry = asPlainObject(saveParty[index]);
+    const saveIndex = findSavePartyIndex(saveParty, member, index);
+    const saveEntry = asPlainObject(saveParty[saveIndex]);
     const mpLevels = asPlainObject(member?.mp_levels);
     const nextStatusEffects = asPlainObject(saveEntry.status_effects);
     const nextJob = String(member?.current_job || member?.job || saveEntry.current_job || saveEntry.job || "").trim();
@@ -531,7 +547,7 @@ function mergeMenuStateIntoSave(saveData, menuState) {
       delete saveEntry.magic;
     }
 
-    saveParty[index] = saveEntry;
+    saveParty[saveIndex] = saveEntry;
   });
 
   nextSave.party = saveParty;
@@ -1530,19 +1546,29 @@ function syncMenuViewStateToStorage() {
 
 function parseMenuStateCandidate(raw) {
   if (!raw || typeof raw !== "object") return null;
+  const sourceParty = Array.isArray(raw?.party) ? raw.party : [];
+  const normalizedParty = normalizePartyIdentityOrder(sourceParty);
   const jobs = Array.isArray(raw?.jobs) ? raw.jobs : [];
-  const candidates = Array.isArray(raw?.job_candidates_by_member) ? raw.job_candidates_by_member : [];
+  const candidates = Array.isArray(raw?.job_candidates_by_member)
+    ? normalizeMemberIndexedRows(sourceParty, raw.job_candidates_by_member)
+    : [];
   const equipCandidates = Array.isArray(raw?.equip_candidates_by_member)
-    ? raw.equip_candidates_by_member
+    ? normalizeMemberIndexedRows(sourceParty, raw.equip_candidates_by_member)
     : [];
   const magicSetup = raw?.magic_setup && typeof raw.magic_setup === "object"
-    ? raw.magic_setup
+    ? {
+      ...raw.magic_setup,
+      equipped_by_member: normalizeMemberIndexedRows(
+        sourceParty,
+        raw.magic_setup.equipped_by_member,
+      ),
+    }
     : { stock_by_level: {}, equipped_by_member: [] };
   const equipmentByMember = Array.isArray(raw?.equipment_by_member)
-    ? raw.equipment_by_member
+    ? normalizeMemberIndexedRows(sourceParty, raw.equipment_by_member)
     : [];
   const magicCandidatesByMember = Array.isArray(raw?.magic_candidates_by_member)
-    ? raw.magic_candidates_by_member
+    ? normalizeMemberIndexedRows(sourceParty, raw.magic_candidates_by_member)
     : [];
   const magicSpellMetaByName = raw?.magic_spell_meta_by_name && typeof raw.magic_spell_meta_by_name === "object"
     ? raw.magic_spell_meta_by_name
@@ -1550,6 +1576,7 @@ function parseMenuStateCandidate(raw) {
   const resources = raw?.resources && typeof raw.resources === "object" ? raw.resources : {};
   return {
     ...raw,
+    party: normalizedParty,
     jobs,
     job_candidates_by_member: candidates,
     equip_candidates_by_member: equipCandidates,

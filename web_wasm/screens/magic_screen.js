@@ -1,4 +1,5 @@
 import { renderMenuSubpageShell } from "./menu_subpage_shell.js";
+import { memberIdentityKeys } from "../shared_party.js";
 import {
   bindMenuSubpageNavigation,
   persistMenuEnvelope,
@@ -45,10 +46,22 @@ function asObj(v) { return v && typeof v === "object" ? v : {}; }
 function normalizeStatusText(value) { return String(value || "").trim().toLowerCase().replace(/[_-]/g, " "); }
 function clone(value) { return typeof structuredClone === "function" ? structuredClone(value) : JSON.parse(JSON.stringify(value)); }
 
-export function applyMagicSetupToSaveParty(saveParty, equippedByMember) {
+function findSavePartyIndex(saveParty, member, fallbackIndex) {
+  const wanted = memberIdentityKeys(member, fallbackIndex);
+  if (!wanted.length) return fallbackIndex;
+  const wantedSet = new Set(wanted);
+  const matchedIndex = asArray(saveParty).findIndex((entry, index) => (
+    memberIdentityKeys(entry, index).some((key) => wantedSet.has(key))
+  ));
+  return matchedIndex >= 0 ? matchedIndex : fallbackIndex;
+}
+
+export function applyMagicSetupToSaveParty(saveParty, equippedByMember, partyMembers = []) {
   const party = asArray(saveParty);
   const equipped = asArray(equippedByMember);
-  party.forEach((entry, memberIndex) => {
+  asArray(partyMembers).forEach((member, memberIndex) => {
+    const saveIndex = findSavePartyIndex(party, member, memberIndex);
+    const entry = party[saveIndex];
     if (!entry || typeof entry !== "object") return;
     const memberSetup = asObj(equipped[memberIndex]);
     const magic = {};
@@ -68,7 +81,8 @@ function syncSavePartyVitalsAndStatuses(saveParty, party) {
   const saveRows = asArray(saveParty);
   const partyRows = asArray(party);
   partyRows.forEach((member, index) => {
-    const saveEntry = saveRows[index];
+    const saveIndex = findSavePartyIndex(saveRows, member, index);
+    const saveEntry = saveRows[saveIndex];
     if (!saveEntry || typeof saveEntry !== "object") return;
     const mpLevels = asObj(member?.mp_levels);
     const nextStatusEffects = saveEntry.status_effects && typeof saveEntry.status_effects === "object"
@@ -320,7 +334,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     const nextEnvelope = clone(state.saveEnvelope || store.createDefaultEnvelope());
     nextEnvelope.menu_state = nextMenuState;
     if (Array.isArray(nextEnvelope?.save?.party)) {
-      applyMagicSetupToSaveParty(nextEnvelope.save.party, equippedByMember);
+      applyMagicSetupToSaveParty(nextEnvelope.save.party, equippedByMember, party);
       syncSavePartyVitalsAndStatuses(nextEnvelope.save.party, party);
     }
     persist(nextMenuState, nextEnvelope);
