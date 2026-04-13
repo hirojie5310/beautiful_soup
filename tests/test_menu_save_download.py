@@ -36,6 +36,7 @@ def test_menu_save_persists_file_and_returns_download_url(monkeypatch):
     assert saved_calls[0][0] == Path("assets/data/ffiii_savedata.json")
     assert isinstance(saved_calls[0][1], dict)
     assert saved_calls[0][1]["version"] == 1
+    assert saved_calls[0][1]["save"]["schema_version"] == 1
     assert "saved_at" in saved_calls[0][1]
     assert "selected_location_group" in saved_calls[0][1]
     assert "selected_location" in saved_calls[0][1]
@@ -56,6 +57,7 @@ def test_menu_save_download_returns_json_attachment():
     payload = json.loads(resp.get_data(as_text=True))
     assert isinstance(payload, dict)
     assert payload["version"] == 1
+    assert payload["save"]["schema_version"] == 1
     assert "saved_at" in payload
     assert "selected_location_group" in payload
     assert "selected_location" in payload
@@ -127,6 +129,7 @@ def test_menu_save_persists_latest_progress_fields_after_victory_round(monkeypat
     assert saved_calls
     saved_payload = saved_calls[0][1]
     assert saved_payload["version"] == 1
+    assert saved_payload["save"]["schema_version"] == 1
     assert saved_payload["save"]["party"][0]["exp"] == 24680
     assert saved_payload["save"]["party"][0]["job_level"]["level"] == 23
     assert saved_payload["save"]["party"][0]["job_level"]["skill_point"] == 45

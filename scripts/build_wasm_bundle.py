@@ -10,6 +10,7 @@ DEFAULT_OUTPUT = REPO_ROOT / "web_wasm" / "python_bundle.zip"
 DEFAULT_INCLUDE_DIRS = (
     "combat",
     "assets/data",
+    "schemas",
     "system",
     "utils",
 )

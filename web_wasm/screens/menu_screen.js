@@ -4,14 +4,29 @@ import {
   resolveMemberJob,
 } from "../shared_party.js";
 import {
+  AUTO_SAVE_SLOT_ID,
   LOCAL_MENU_STORAGE_KEY,
+  deleteSaveSlotFromIndexedDB,
+  getLastUsedSaveSlotId,
+  listSaveSlotsFromIndexedDB,
+  loadSaveEnvelopeFromIndexedDB,
   makeSaveEnvelope,
   parseSaveEnvelope,
-  restoreSaveEnvelopeFromStorage,
+  persistSaveEnvelopeToIndexedDB,
+  restoreSaveEnvelopeFromStorageAsync,
 } from "../shared_storage.js";
 import { bindButtonHandlers } from "./screen_shared.js";
 
 const MENU_LABELS = ["アイテム", "まほう", "そうび", "ステータス", "ならびかえ", "ジョブ", "セーブ", "ロード"];
+const MANUAL_SLOT_IDS = ["slot-1", "slot-2", "slot-3"];
+const SLOT_DISPLAY_ROWS = [
+  { slotId: AUTO_SAVE_SLOT_ID, label: "AUTO SAVE", kind: "auto" },
+  ...MANUAL_SLOT_IDS.map((slotId, index) => ({
+    slotId,
+    label: `Slot ${index + 1}`,
+    kind: "manual",
+  })),
+];
 const MENU_ROUTE_BY_LABEL = {
   アイテム: "item",
   まほう: "magic",
@@ -43,6 +58,14 @@ function renderLayout() {
 
       <section class="frame">
         <div id="resourceRow" class="resource-row"></div>
+      </section>
+
+      <section class="frame">
+        <div class="toolbar">
+          <h2 class="title" style="margin:0;">BROWSER SLOTS</h2>
+          <div id="slotStatus" class="meta"></div>
+        </div>
+        <div id="slotList" class="slot-list"></div>
       </section>
     </div>
   `;
@@ -134,6 +157,32 @@ function patchSaveWithMenuState(saveObj, menuState) {
   return nextSave;
 }
 
+function buildEnvelopeForCurrentState(store, state) {
+  const currentState = store.getState();
+  const currentEnvelope = currentState.saveEnvelope || makeSaveEnvelope({}, {});
+  return {
+    ...currentEnvelope,
+    save: patchSaveWithMenuState(currentEnvelope.save || {}, state),
+    menu_state: state,
+    selected_location_group: currentState.selectedLocationGroup,
+    selected_location: currentState.selectedLocation,
+    saved_at: new Date().toISOString(),
+  };
+}
+
+function formatSavedAt(value) {
+  if (!value) return "未保存";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString("ja-JP", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 async function saveEnvelopeToLocalFile(envelope) {
   const payload = JSON.stringify(envelope, null, 2);
   const fileName = `ffiii_savedata_${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
@@ -196,15 +245,21 @@ export async function mountScreen({ mountNode, store, navigate }) {
   const partyList = mountNode.querySelector("#partyList");
   const menuButtons = mountNode.querySelector("#menuButtons");
   const resourceRow = mountNode.querySelector("#resourceRow");
+  const slotList = mountNode.querySelector("#slotList");
+  const slotStatus = mountNode.querySelector("#slotStatus");
   const backBtn = mountNode.querySelector("#backBtn");
   const modeHint = mountNode.querySelector("#modeHint");
   const menuLoadSaveInput = mountNode.querySelector("#menuLoadSaveInput");
 
   let isRowSwapMode = false;
   let state = normalizeMenuState(store.getState().menuState);
+  let slotSummariesById = {};
+  let highlightedSlotId = getLastUsedSaveSlotId() || MANUAL_SLOT_IDS[0];
+  let isSaveSlotSelectionMode = false;
+  let pendingLocalFileExport = false;
 
   if (!Array.isArray(state.party) || !state.party.length) {
-    const stored = restoreSaveEnvelopeFromStorage();
+    const stored = await restoreSaveEnvelopeFromStorageAsync();
     if (stored?.save) {
       state = extractMenuStateFromEnvelope(stored);
       store.updateMenuState(state);
@@ -218,7 +273,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   function persistMenuState(nextState) {
     state = normalizeMenuState(nextState);
     store.updateMenuState(state);
-    const currentEnvelope = store.getState().saveEnvelope || restoreSaveEnvelopeFromStorage();
+    const currentEnvelope = store.getState().saveEnvelope;
     if (!currentEnvelope?.save || typeof currentEnvelope.save !== "object") return true;
     return store.updateSaveEnvelope({
       ...currentEnvelope,
@@ -228,7 +283,77 @@ export async function mountScreen({ mountNode, store, navigate }) {
     });
   }
 
+  async function refreshSlotList() {
+    const slots = await listSaveSlotsFromIndexedDB();
+    slotSummariesById = Object.fromEntries(
+      slots.map((row) => [String(row.slot_id || ""), row]),
+    );
+    renderSlots();
+  }
+
+  function setSlotStatus(message) {
+    if (!slotStatus) return;
+    slotStatus.textContent = String(message || "");
+  }
+
+  function exitSaveSlotSelectionMode() {
+    isSaveSlotSelectionMode = false;
+    pendingLocalFileExport = false;
+    highlightedSlotId = getLastUsedSaveSlotId() || highlightedSlotId || MANUAL_SLOT_IDS[0];
+    updateModeHint();
+  }
+
+  async function saveToSlot(slotId, { exportLocalFile = false } = {}) {
+    persistMenuState(state);
+    const nextEnvelope = buildEnvelopeForCurrentState(store, state);
+    if (!store.updateSaveEnvelope(nextEnvelope)) {
+      setSlotStatus("保存失敗: 現在セーブの更新に失敗しました。");
+      return false;
+    }
+    const saved = await persistSaveEnvelopeToIndexedDB(nextEnvelope, {
+      slotId,
+      kind: "manual",
+      rememberSelection: true,
+    });
+    if (!saved) {
+      setSlotStatus(`${slotId} への保存に失敗しました。`);
+      return false;
+    }
+    highlightedSlotId = slotId;
+    exitSaveSlotSelectionMode();
+    await refreshSlotList();
+    setSlotStatus(`${SLOT_DISPLAY_ROWS.find((row) => row.slotId === slotId)?.label || slotId} に保存しました。`);
+
+    if (exportLocalFile) {
+      try {
+        await saveEnvelopeToLocalFile(nextEnvelope);
+        setSlotStatus(`${SLOT_DISPLAY_ROWS.find((row) => row.slotId === slotId)?.label || slotId} に保存し、ローカルファイルにも出力しました。`);
+      } catch (_error) {
+        setSlotStatus(`${SLOT_DISPLAY_ROWS.find((row) => row.slotId === slotId)?.label || slotId} に保存しました。ローカルファイル保存はキャンセルまたは失敗しました。`);
+      }
+    }
+    return true;
+  }
+
+  function enterSaveSlotSelectionMode() {
+    isSaveSlotSelectionMode = true;
+    pendingLocalFileExport = true;
+    highlightedSlotId = (
+      MANUAL_SLOT_IDS.includes(getLastUsedSaveSlotId())
+        ? getLastUsedSaveSlotId()
+        : MANUAL_SLOT_IDS[0]
+    );
+    updateModeHint();
+    renderSlots();
+    setSlotStatus("保存先スロットを選択してください。保存後にローカルファイルにも出力します。");
+  }
+
   function updateModeHint() {
+    if (isSaveSlotSelectionMode) {
+      modeHint.textContent = "保存先選択モード: 保存したい Slot をクリックしてください。もう一度「セーブ」でキャンセルできます。";
+      modeHint.classList.add("active");
+      return;
+    }
     if (isRowSwapMode) {
       modeHint.textContent = "ならびかえモード: キャラクターをクリックで front/back を切り替え";
       modeHint.classList.add("active");
@@ -317,6 +442,130 @@ export async function mountScreen({ mountNode, store, navigate }) {
     resourceRow.append(cp, gil);
   }
 
+  function renderSlots() {
+    if (!slotList) return;
+    slotList.innerHTML = "";
+
+    SLOT_DISPLAY_ROWS.forEach((slotRow) => {
+      const { slotId, label, kind } = slotRow;
+      const summaryRow = slotSummariesById[slotId];
+      const summary = summaryRow?.summary && typeof summaryRow.summary === "object"
+        ? summaryRow.summary
+        : {};
+
+      const card = document.createElement("article");
+      card.className = "slot-card";
+      if (kind === "auto") {
+        card.classList.add("slot-card-auto");
+      }
+      if (highlightedSlotId === slotId) {
+        card.classList.add("is-selected");
+      }
+      if (isSaveSlotSelectionMode && kind === "manual") {
+        card.classList.add("is-save-target");
+        card.tabIndex = 0;
+        const handleSelect = async () => {
+          highlightedSlotId = slotId;
+          renderSlots();
+          await saveToSlot(slotId, { exportLocalFile: pendingLocalFileExport });
+        };
+        card.addEventListener("click", handleSelect);
+        card.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          void handleSelect();
+        });
+      }
+
+      const title = document.createElement("div");
+      title.className = "slot-title";
+      title.textContent = label;
+
+      const meta = document.createElement("div");
+      meta.className = "slot-meta";
+      if (summaryRow) {
+        meta.innerHTML = [
+          `保存日時: ${formatSavedAt(summaryRow.saved_at)}`,
+          `先頭: ${String(summary.lead_name || "-")} Lv ${Number(summary.lead_level || 0)}`,
+          `GIL: ${Number(summary.gil || 0)}`,
+          `場所: ${String(summary.location_group || summary.location || "-")}`,
+        ].join("<br>");
+      } else {
+        meta.textContent = kind === "auto"
+          ? "まだオートセーブはありません。"
+          : "このスロットは空です。";
+      }
+
+      const actions = document.createElement("div");
+      actions.className = "slot-actions";
+
+      if (kind === "manual") {
+        const saveBtn = document.createElement("button");
+        saveBtn.className = "btn";
+        saveBtn.type = "button";
+        saveBtn.textContent = isSaveSlotSelectionMode && highlightedSlotId === slotId ? "ここに保存" : "保存";
+        saveBtn.addEventListener("click", async (event) => {
+          event.stopPropagation();
+          highlightedSlotId = slotId;
+          renderSlots();
+          await saveToSlot(slotId, { exportLocalFile: pendingLocalFileExport });
+        });
+        actions.append(saveBtn);
+      }
+
+      const loadBtn = document.createElement("button");
+      loadBtn.className = "btn";
+      loadBtn.type = "button";
+      loadBtn.textContent = "読込";
+      loadBtn.disabled = !summaryRow;
+      loadBtn.addEventListener("click", async (event) => {
+        event.stopPropagation();
+        const envelope = await loadSaveEnvelopeFromIndexedDB(slotId);
+        if (!envelope?.save) {
+          setSlotStatus(`${label} の読込に失敗しました。`);
+          return;
+        }
+        highlightedSlotId = slotId;
+        exitSaveSlotSelectionMode();
+        const loadedMenuState = extractMenuStateFromEnvelope(envelope);
+        state = loadedMenuState;
+        store.updateMenuState(loadedMenuState);
+        store.updateSaveEnvelope({ ...envelope, menu_state: loadedMenuState });
+        renderParty();
+        renderResources();
+        await refreshSlotList();
+        setSlotStatus(`${label} を読み込みました。`);
+      });
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "btn";
+      deleteBtn.type = "button";
+      deleteBtn.textContent = "削除";
+      deleteBtn.disabled = !summaryRow || kind === "auto";
+      deleteBtn.addEventListener("click", async (event) => {
+        event.stopPropagation();
+        if (kind === "auto") return;
+        const removed = await deleteSaveSlotFromIndexedDB(slotId);
+        if (!removed) {
+          setSlotStatus(`${label} の削除に失敗しました。`);
+          return;
+        }
+        if (highlightedSlotId === slotId) {
+          highlightedSlotId = MANUAL_SLOT_IDS[0];
+        }
+        await refreshSlotList();
+        setSlotStatus(`${label} を削除しました。`);
+      });
+
+      actions.append(loadBtn);
+      if (kind !== "auto") {
+        actions.append(deleteBtn);
+      }
+      card.append(title, meta, actions);
+      slotList.appendChild(card);
+    });
+  }
+
   function renderButtons() {
     menuButtons.innerHTML = "";
     MENU_LABELS.forEach((label) => {
@@ -336,27 +585,13 @@ export async function mountScreen({ mountNode, store, navigate }) {
         renderParty();
 
         if (label === "セーブ") {
-          persistMenuState(state);
-          const currentState = store.getState();
-          const currentEnvelope = currentState.saveEnvelope || makeSaveEnvelope({}, {});
-          const nextEnvelope = {
-            ...currentEnvelope,
-            save: patchSaveWithMenuState(currentEnvelope.save || {}, state),
-            menu_state: state,
-            selected_location_group: currentState.selectedLocationGroup,
-            selected_location: currentState.selectedLocation,
-            saved_at: new Date().toISOString(),
-          };
-          if (!store.updateSaveEnvelope(nextEnvelope)) {
-            window.alert("セーブ失敗: ブラウザ保存に失敗しました。");
+          if (isSaveSlotSelectionMode) {
+            exitSaveSlotSelectionMode();
+            renderSlots();
+            setSlotStatus("保存先選択をキャンセルしました。");
             return;
           }
-          try {
-            await saveEnvelopeToLocalFile(nextEnvelope);
-            window.alert("セーブ完了: ブラウザとローカルファイルに保存しました。");
-          } catch (_error) {
-            window.alert("ブラウザ保存は完了しました。ローカルファイル保存はキャンセルまたは失敗しました。");
-          }
+          enterSaveSlotSelectionMode();
           return;
         }
 
@@ -394,6 +629,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   renderParty();
   renderButtons();
   renderResources();
+  await refreshSlotList();
 
   return () => {
     unbindButtons();

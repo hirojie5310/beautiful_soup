@@ -38,21 +38,23 @@ def test_load_savedata_accepts_v1_envelope_format(tmp_path: Path) -> None:
     payload = {
         "version": 1,
         "saved_at": "2026-03-28T00:00:00Z",
-        "save": {"party": [{"name": "Refia"}], "inventory": []},
+        "save": {"schema_version": 1, "party": [{"name": "Refia"}], "inventory": {}, "gil": 0, "CP": 0},
     }
     path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
 
     loaded = load_savedata(path)
 
     assert loaded["party"][0]["name"] == "Refia"
+    assert loaded["schema_version"] == 1
     assert "save" not in loaded
 
 
 def test_load_savedata_accepts_legacy_flat_format(tmp_path: Path) -> None:
     path = tmp_path / "savedata_flat.json"
-    payload = {"party": [{"name": "Ingus"}], "inventory": []}
+    payload = {"schema_version": 1, "party": [{"name": "Ingus"}], "inventory": {}, "gil": 0, "CP": 0}
     path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
 
     loaded = load_savedata(path)
 
     assert loaded["party"][0]["name"] == "Ingus"
+    assert loaded["schema_version"] == 1

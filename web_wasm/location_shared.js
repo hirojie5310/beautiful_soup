@@ -3,10 +3,11 @@ import {
   makeSaveEnvelope,
   persistSaveEnvelopeToStorage,
   restoreSaveEnvelopeFromStorage,
+  restoreSaveEnvelopeFromStorageAsync,
 } from "./shared_storage.js";
 
 export const LOCAL_SAVE_STORAGE_KEY = "ff3_wasm_savedata_v1";
-export const PYTHON_BUNDLE_VERSION = "20260406c";
+export const PYTHON_BUNDLE_VERSION = "20260414a";
 export const INN_PRICE = 10;
 
 export function asObj(value) {
@@ -42,6 +43,12 @@ export function readStoredEnvelope() {
   return null;
 }
 
+export async function readStoredEnvelopeAsync() {
+  const envelope = await restoreSaveEnvelopeFromStorageAsync();
+  if (envelope?.save && typeof envelope.save === "object") return envelope;
+  return readStoredEnvelope();
+}
+
 export function currentGil(envelope = null) {
   const source = envelope?.save ? envelope : readStoredEnvelope();
   const menuGil = asNumber(source?.menu_state?.resources?.gil, NaN);
@@ -57,8 +64,27 @@ export function getStoredLocationSelection() {
   };
 }
 
+export async function getStoredLocationSelectionAsync() {
+  const envelope = await readStoredEnvelopeAsync();
+  return {
+    selected_location_group: String(envelope?.selected_location_group || ""),
+    selected_location: String(envelope?.selected_location || ""),
+  };
+}
+
 export function syncStoredLocationSelection(selectedLocationGroup, selectedLocation) {
   const originalEnvelope = readStoredEnvelope();
+  const nextEnvelope = originalEnvelope
+    ? clone(originalEnvelope)
+    : makeSaveEnvelope({ gil: 0, inventory: {}, party: [] }, {});
+  nextEnvelope.selected_location_group = String(selectedLocationGroup || "");
+  nextEnvelope.selected_location = String(selectedLocation || "");
+  nextEnvelope.saved_at = new Date().toISOString();
+  return persistSaveEnvelopeToStorage(nextEnvelope);
+}
+
+export async function syncStoredLocationSelectionAsync(selectedLocationGroup, selectedLocation) {
+  const originalEnvelope = await readStoredEnvelopeAsync();
   const nextEnvelope = originalEnvelope
     ? clone(originalEnvelope)
     : makeSaveEnvelope({ gil: 0, inventory: {}, party: [] }, {});

@@ -97,6 +97,29 @@ Flask 版の `flask_app.py` に相当する Wasm 版の起点は、次の 4 フ�
 
 この構成では、`wasm_app.py` はあくまで静的ファイル配信用であり、戦闘計算そのものはブラウザ内の Pyodide 上で完結します。
 
+### Save data / Slot design
+
+- 保存形式は `version: 1` の envelope と `save` 本体に分離しています。
+- `save.schema_version` はゲームデータの版です。Wasm 側の現在 schema は `2` です。
+- `schema_version: 2` では、各 party member に以下の追加項目を持てます。
+  - `current_job`
+  - `mp_levels`
+- `schema_version: 1` の旧 save は `web_wasm/bootstrap_runtime.py` の `migrate_save()` で v2 へ引き上げます。
+- ブラウザ保存は `IndexedDB` のスロット管理を使います。
+  - `AUTO SAVE`: 戦闘終了時に更新
+  - `Slot 1` - `Slot 3`: 手動保存用
+- 最後に使った手動スロットはブラウザ側で記憶し、メニュー画面で強調表示します。
+
+### JSON Schema / Validation
+
+- スキーマ定義は [schemas/ff3-save-envelope.schema.json](/Users/hirotaka/beautiful_soup/schemas/ff3-save-envelope.schema.json) にあります。
+- `assets/data/data_loader.py` では `jsonschema` を使って次を検証します。
+  - `validate_save_data(...)`
+  - `validate_save_envelope(...)`
+- `save_savedata(...)` は保存前に validation を行います。
+- `load_savedata(...)` はロード後の save 本体を validation します。
+- Wasm bundle にも `schemas/` を同梱するため、Pyodide 側でも同じスキーマを参照できます。
+
 ### Python side
 
 ```python

@@ -23,7 +23,7 @@ from flask import (
 )
 
 from adapters.flask_error_handlers import register_flask_error_handlers
-from assets.data.data_loader import load_explicit_groups
+from assets.data.data_loader import ensure_save_schema_version, load_explicit_groups
 from combat.dto import (
     ExecuteRoundInputDTO,
     parse_execute_round_input_dict,
@@ -1264,6 +1264,7 @@ def create_app(
     battle_start_resources = _build_resource_progress_snapshot(battle_session)
 
     def _build_save_envelope_payload() -> dict[str, Any]:
+        ensure_save_schema_version(battle_session.state.save)
         return {
             "version": 1,
             "saved_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),

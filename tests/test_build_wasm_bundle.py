@@ -21,5 +21,6 @@ def test_build_wasm_bundle_writes_expected_sources(tmp_path: Path) -> None:
     assert "combat/wasm_api.py" in names
     assert "combat/dto.py" in names
     assert "assets/data/ffiii_monsters.json" in names
+    assert "schemas/ff3-save-envelope.schema.json" in names
     assert "system/exp_system.py" in names
     assert "utils/safe_int_float.py" in names

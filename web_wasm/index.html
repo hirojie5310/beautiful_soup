@@ -154,6 +154,48 @@
         gap: 4px;
         font-size: 0.95rem;
       }
+      .slot-list {
+        display: grid;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .slot-card {
+        border: 1px solid rgba(255,255,255,0.35);
+        border-radius: 8px;
+        background: rgba(0,0,0,0.22);
+        padding: 10px;
+        display: grid;
+        gap: 8px;
+      }
+      .slot-card.is-selected {
+        border-color: rgba(255, 229, 136, 0.9);
+        box-shadow: 0 0 0 2px rgba(255, 229, 136, 0.18);
+      }
+      .slot-card.is-save-target {
+        cursor: pointer;
+      }
+      .slot-card.is-save-target:hover,
+      .slot-card.is-save-target:focus-visible {
+        outline: 2px solid rgba(255,255,255,0.75);
+        outline-offset: 1px;
+      }
+      .slot-card-auto {
+        background: rgba(39, 66, 36, 0.22);
+      }
+      .slot-title {
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .slot-meta {
+        color: var(--muted);
+        font-size: 0.82rem;
+        line-height: 1.45;
+      }
+      .slot-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
       .empty {
         border: 1px dashed rgba(255,255,255,0.4);
         border-radius: 8px;

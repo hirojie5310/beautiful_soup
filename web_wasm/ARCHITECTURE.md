@@ -22,7 +22,7 @@
   - 現在ルート、選択中 Location、選択中メンバー、`menu_state`、save envelope を持つアプリ内の状態管理です。
   - 必要な変更をブラウザストレージへ永続化します。
 - `shared_storage.js`
-  - save envelope の解析とローカル保存を担当します。
+  - save envelope の解析、`IndexedDB` スロット保存、last-used slot の保持を担当します。
 - `location_shared.js`
   - location、shop、inn、回復処理などで共有する補助処理を持ちます。
 
@@ -31,7 +31,7 @@
 - `screens/location_screen.js`
   - Location 選択と、battle / shop / inn / menu への入口です。
 - `screens/menu_screen.js`
-  - パーティ一覧、save / load、各サブ画面への遷移を担当します。
+  - パーティ一覧、manual save slot 選択、auto save 表示、各サブ画面への遷移を担当します。
 - `screens/item_screen.js`
 - `screens/magic_screen.js`
 - `screens/equip_screen.js`
@@ -55,6 +55,17 @@
    - `updateSaveEnvelope(...)`: save 更新
    - `persistMenuEnvelope(...)`: `menu_state` と save をまとめて更新
 4. battle や equip のようにゲームルール依存の再計算が必要な箇所は、JavaScript で再実装せず Pyodide 上の Python に委譲します。
+5. 戦闘終了時は `AUTO SAVE` スロットが更新され、手動保存は `Slot 1` - `Slot 3` をメニューから選びます。
+
+## Save schema
+
+- top-level envelope は JavaScript 側が管理します。
+- `save.schema_version` はゲームデータの版です。
+- 現在の Wasm runtime は `schema_version: 2` を前提にします。
+- `schema_version: 1` の旧 save は `bootstrap_runtime.py` の `migrate_save()` で v2 へ変換します。
+- v2 の追加項目:
+  - `current_job`
+  - `mp_levels`
 
 ## 今後の実装ルール
 

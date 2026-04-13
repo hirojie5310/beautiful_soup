@@ -6,7 +6,10 @@ from combat.wasm_api import WasmBattleEngine, build_session_status_snapshot
 from combat.runtime_state import init_runtime_state
 from combat.usecases import build_battle_session
 from random import Random
-from assets.data.data_loader import load_explicit_groups
+from assets.data.data_loader import (
+    ensure_save_schema_version,
+    load_explicit_groups,
+)
 from combat.enemy_selection import build_groups, build_location_index, pick_enemy_names
 from system.cp_system import compute_job_change_cp_cost, load_job_attribution
 from utils.name_normalize import normalize_name
@@ -54,6 +57,7 @@ _FIXED_PARTY_SLOT_KEYS = ["runeth", "arc", "refia", "ingus"]
 _PARTY_ALIAS_MAP = {
     "luneth": "runeth",
 }
+CURRENT_SAVE_SCHEMA_VERSION = 2
 
 
 def _merge_save_data(base, overlay):
@@ -266,6 +270,71 @@ def _normalize_loaded_save(save_data):
     return normalized
 
 
+def _normalize_save_for_runtime(save_data):
+    if not isinstance(save_data, dict):
+        return {}
+    normalized = _merge_save_data(None, save_data)
+    ensure_save_schema_version(normalized)
+    return normalized
+
+
+def _mp_levels_from_legacy_mp(entry):
+    if not isinstance(entry, dict):
+        return {}
+    if isinstance(entry.get("mp_levels"), dict):
+        return entry.get("mp_levels")
+    legacy_mp = entry.get("mp")
+    if not isinstance(legacy_mp, dict):
+        return {}
+    out = {}
+    for level in range(1, 9):
+        current = _safe_int(legacy_mp.get(f"L{level}MP"), 0)
+        out[str(level)] = {"current": current}
+    return out
+
+
+def _migrate_save_v1_to_v2(save_data):
+    normalized = _normalize_save_for_runtime(save_data)
+    party = normalized.get("party")
+    if isinstance(party, list):
+        for entry in party:
+            if not isinstance(entry, dict):
+                continue
+            current_job = str(entry.get("current_job") or entry.get("job") or "").strip()
+            if current_job:
+                entry["current_job"] = current_job
+            mp_levels = _mp_levels_from_legacy_mp(entry)
+            if mp_levels:
+                entry["mp_levels"] = mp_levels
+    normalized["schema_version"] = 2
+    return normalized
+
+
+def migrate_save(save_data):
+    if not isinstance(save_data, dict):
+        raise ValueError("save_data must be JSON object")
+
+    current = _merge_save_data(None, save_data)
+    ensure_save_schema_version(current)
+
+    version = _safe_int(current.get("schema_version", 1), 1)
+    if version > CURRENT_SAVE_SCHEMA_VERSION:
+        raise ValueError(
+            f"unsupported save schema_version: {version}"
+        )
+
+    while version < CURRENT_SAVE_SCHEMA_VERSION:
+        if version == 1:
+            current = _migrate_save_v1_to_v2(current)
+            version = 2
+            continue
+        raise ValueError(f"unsupported save schema_version: {version}")
+
+    current = _normalize_save_for_runtime(current)
+    current["schema_version"] = CURRENT_SAVE_SCHEMA_VERSION
+    return current
+
+
 def get_location_selection_json():
     payload = {
         "groups": groups_payload,
@@ -276,6 +345,9 @@ def get_location_selection_json():
 
 
 def boot_engine_for_location(location_group, location, seed=7):
+    global state
+    if isinstance(getattr(state, "save", None), dict):
+        state.save = migrate_save(state.save)
     selected_group = str(location_group or "")
     selected_location = str(location or "")
     entry = location_to_entry.get(selected_location)
@@ -868,6 +940,7 @@ def boot_engine_for_location_with_save_json(
     parsed = json.loads(save_json)
     if not isinstance(parsed, dict):
         raise ValueError("save_json must be JSON object")
+    parsed = migrate_save(parsed)
     parsed = _normalize_loaded_save(parsed)
     current_save = getattr(state, "save", {})
     base_save = current_save if isinstance(current_save, dict) else {}

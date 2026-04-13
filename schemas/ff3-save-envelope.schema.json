@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/ff3-save-envelope.schema.json",
+  "title": "FF3 Save Envelope",
+  "type": "object",
+  "required": ["version", "saved_at", "save"],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1
+    },
+    "saved_at": {
+      "type": "string"
+    },
+    "selected_location_group": {
+      "type": "string"
+    },
+    "selected_location": {
+      "type": "string"
+    },
+    "menu_state": {
+      "type": ["object", "null"]
+    },
+    "save": {
+      "$ref": "#/$defs/saveData"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "saveData": {
+      "type": "object",
+      "required": ["schema_version", "party", "inventory", "gil", "CP"],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "gil": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "CP": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "inventory": {
+          "type": "object"
+        },
+        "party": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/partyMember"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "partyMember": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "level": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "exp": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "job": {
+          "type": "string"
+        },
+        "current_job": {
+          "type": "string"
+        },
+        "job_level": {
+          "$ref": "#/$defs/jobProgress"
+        },
+        "job_levels": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/jobProgress"
+          }
+        },
+        "hp": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max_hp": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "mp": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "mp_levels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "current": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "max": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "equipment": {
+          "type": "object"
+        },
+        "Magic": {
+          "type": "object"
+        },
+        "status_effects": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          }
+        },
+        "row": {
+          "type": "string",
+          "enum": ["front", "back"]
+        },
+        "portrait_key": {
+          "type": "string"
+        },
+        "image_name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "jobProgress": {
+      "type": "object",
+      "required": ["level", "skill_point"],
+      "properties": {
+        "level": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "skill_point": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

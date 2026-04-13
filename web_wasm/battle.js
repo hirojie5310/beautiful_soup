@@ -6,9 +6,12 @@ import {
   resolveFaceImageCandidates,
 } from "./shared_party.js";
 import {
+  AUTO_SAVE_SLOT_ID,
   LOCAL_MENU_STORAGE_KEY,
   parseSaveEnvelope,
+  persistSaveEnvelopeToIndexedDB,
   restoreSaveEnvelopeFromStorage,
+  restoreSaveEnvelopeFromStorageAsync,
   parseMenuStateFromStorage,
   makeSaveEnvelope,
   persistSaveEnvelopeToStorage,
@@ -48,6 +51,7 @@ let latestMenuState = null;
 const locationMapImageCache = {};
 let activeLogPlaybackId = 0;
 let loadedSaveData = null;
+let cachedStoredEnvelope = null;
 let returnToLocationBound = false;
 let activeCombatPopups = {};
 let activeCombatEffects = {};
@@ -1624,7 +1628,7 @@ function syncNormalizedRuntimeSaveToStorage() {
   if (!saveJson) return false;
   try {
     const saveObj = JSON.parse(saveJson);
-    const storedEnvelope = restoreSaveEnvelopeFromStorage();
+    const storedEnvelope = appStore?.getState()?.saveEnvelope || cachedStoredEnvelope || restoreSaveEnvelopeFromStorage();
     const envelope = makeSaveEnvelope(saveObj, {
       selectedLocationGroup: currentBattleSelection?.selected_location_group || storedEnvelope?.selected_location_group || "",
       selectedLocation: currentBattleSelection?.selected_location || storedEnvelope?.selected_location || "",
@@ -1633,6 +1637,7 @@ function syncNormalizedRuntimeSaveToStorage() {
     if (appStore) {
       return appStore.updateSaveEnvelope(envelope);
     }
+    cachedStoredEnvelope = envelope;
     return persistSaveEnvelopeToStorage(envelope);
   } catch (_error) {
     return false;
@@ -2029,7 +2034,8 @@ async function bootEngine() {
   }
   currentBattleSelection = resolveBattleSelection(selectionPayload);
 
-  const storedEnvelope = appStore?.getState()?.saveEnvelope || restoreSaveEnvelopeFromStorage();
+  const storedEnvelope = appStore?.getState()?.saveEnvelope || await restoreSaveEnvelopeFromStorageAsync();
+  cachedStoredEnvelope = storedEnvelope;
   if (storedEnvelope?.save) {
     loadedSaveData = storedEnvelope.save;
     if (!hasSessionBattleStartSelection && storedEnvelope.selected_location_group) {
@@ -2075,7 +2081,7 @@ function resolveSaveDataForBoot() {
   if (loadedSaveData && typeof loadedSaveData === "object") {
     return loadedSaveData;
   }
-  const storedEnvelope = restoreSaveEnvelopeFromStorage();
+  const storedEnvelope = cachedStoredEnvelope || restoreSaveEnvelopeFromStorage();
   if (storedEnvelope?.save && typeof storedEnvelope.save === "object") {
     return mergeMenuStateIntoSave(storedEnvelope.save, storedEnvelope.menu_state);
   }
@@ -2200,8 +2206,15 @@ async function executeRound() {
         const persisted = appStore
           ? appStore.updateSaveEnvelope(envelope)
           : persistSaveEnvelopeToStorage(envelope);
+        const autosaved = await persistSaveEnvelopeToIndexedDB(envelope, {
+          slotId: AUTO_SAVE_SLOT_ID,
+          kind: "auto",
+          rememberSelection: false,
+        });
         if (persisted) {
-          statusLine.textContent = "戦闘終了データをブラウザに保存しました。";
+          statusLine.textContent = autosaved
+            ? "戦闘終了データをブラウザに保存し、オートセーブを更新しました。"
+            : "戦闘終了データをブラウザに保存しました。";
           setSaveButtonsEnabled(true);
         } else {
           statusLine.textContent = "ブラウザ保存に失敗しました。";
@@ -2276,6 +2289,7 @@ function attachBattleEventHandlers() {
       if (persisted) {
         setSaveButtonsEnabled(true);
       }
+      cachedStoredEnvelope = envelope;
       if (envelope?.menu_state && typeof envelope.menu_state === "object") {
         latestMenuState = parseMenuStateCandidate(envelope.menu_state) || latestMenuState;
         if (appStore) {
@@ -2303,7 +2317,7 @@ function attachBattleEventHandlers() {
 
   if (downloadSaveBtn) {
     downloadSaveBtn.addEventListener("click", () => {
-      const envelope = appStore?.getState()?.saveEnvelope || restoreSaveEnvelopeFromStorage();
+      const envelope = appStore?.getState()?.saveEnvelope || cachedStoredEnvelope || restoreSaveEnvelopeFromStorage();
       if (!envelope) {
         statusLine.textContent = "保存できるセーブデータがありません。";
         return;

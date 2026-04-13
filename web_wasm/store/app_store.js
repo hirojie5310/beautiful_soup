@@ -1,5 +1,6 @@
 import {
   getStoredLocationSelection,
+  getStoredLocationSelectionAsync,
   syncStoredLocationSelection,
 } from "../location_shared.js";
 import {
@@ -8,6 +9,7 @@ import {
   parseMenuStateFromStorage,
   persistSaveEnvelopeToStorage,
   restoreSaveEnvelopeFromStorage,
+  restoreSaveEnvelopeFromStorageAsync,
 } from "../shared_storage.js";
 import {
   normalizeMemberIndexedRows,
@@ -52,6 +54,7 @@ export function createAppStore() {
     menuState: { party: [], resources: { cp: 0, cp_max: 255, gil: 0 } },
     saveEnvelope: null,
   };
+  let initialized = false;
 
   const storedSelection = getStoredLocationSelection();
   const storedEnvelope = restoreSaveEnvelopeFromStorage();
@@ -78,6 +81,68 @@ export function createAppStore() {
   function notify() {
     const snapshot = getState();
     listeners.forEach((listener) => listener(snapshot));
+  }
+
+  async function initialize() {
+    if (initialized) return getState();
+    initialized = true;
+
+    const storedSelectionAsync = await getStoredLocationSelectionAsync();
+    const storedEnvelopeAsync = await restoreSaveEnvelopeFromStorageAsync();
+    const hasAsyncSelection = (
+      storedSelectionAsync
+      && typeof storedSelectionAsync === "object"
+      && (
+        storedSelectionAsync.selected_location_group
+        || storedSelectionAsync.selected_location
+      )
+    );
+    if (hasAsyncSelection) {
+      state = {
+        ...state,
+        selectedLocationGroup: String(storedSelectionAsync.selected_location_group || ""),
+        selectedLocation: String(storedSelectionAsync.selected_location || ""),
+      };
+    }
+    if (!storedEnvelopeAsync || typeof storedEnvelopeAsync !== "object") {
+      return getState();
+    }
+
+    const normalizedEnvelope = {
+      ...storedEnvelopeAsync,
+      selected_location_group: String(
+        storedEnvelopeAsync.selected_location_group || state.selectedLocationGroup || "",
+      ),
+      selected_location: String(
+        storedEnvelopeAsync.selected_location || state.selectedLocation || "",
+      ),
+    };
+    const nextMenuState = (
+      normalizedEnvelope.menu_state && typeof normalizedEnvelope.menu_state === "object"
+    )
+      ? normalizeMenuState(normalizedEnvelope.menu_state)
+      : state.menuState;
+
+    state = {
+      ...state,
+      saveEnvelope: normalizedEnvelope,
+      selectedLocationGroup: String(normalizedEnvelope.selected_location_group || ""),
+      selectedLocation: String(normalizedEnvelope.selected_location || ""),
+      menuState: nextMenuState,
+    };
+
+    if (normalizedEnvelope.menu_state && typeof normalizedEnvelope.menu_state === "object") {
+      try {
+        localStorage.setItem(
+          LOCAL_MENU_STORAGE_KEY,
+          JSON.stringify(nextMenuState),
+        );
+      } catch (_error) {
+        // noop
+      }
+    }
+
+    return getState();
   }
 
   function patch(partialState) {
@@ -168,6 +233,7 @@ export function createAppStore() {
 
   return {
     getState,
+    initialize,
     patch,
     updateMenuState,
     updateSaveEnvelope,

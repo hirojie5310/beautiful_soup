@@ -7,7 +7,11 @@ if (!mountNode) {
   throw new Error("SPA mount node #app was not found.");
 }
 
-const store = createAppStore();
-const router = createRouter({ mountNode, store });
+async function bootstrapApp() {
+  const store = createAppStore();
+  await store.initialize();
+  const router = createRouter({ mountNode, store });
+  router.start();
+}
 
-router.start();
+void bootstrapApp();

@@ -13,9 +13,11 @@
 # ============================================================
 
 import json
+from functools import lru_cache
 from pathlib import Path
 from typing import Dict, Any, Sequence, TypedDict
 from typing_extensions import NotRequired
+from jsonschema import Draft202012Validator
 
 from combat.models import Job, JobLevelStats, EquipmentSet, PartyMemberRuntime
 
@@ -24,6 +26,10 @@ class ExplicitGroupDef(TypedDict):
     locations: list[str]
     world: NotRequired[str]
     order: NotRequired[int]
+
+
+SAVE_SCHEMA_VERSION = 1
+SAVE_SCHEMA_FILENAME = "ff3-save-envelope.schema.json"
 
 
 # ============================================================
@@ -49,6 +55,53 @@ def _load_json_file(path: Path) -> Any:
         raise ValueError(
             f"JSON parse error in {path} (line {e.lineno}, column {e.colno}): {e.msg}"
         ) from e
+
+
+def _schema_root() -> Path:
+    return Path(__file__).resolve().parents[2] / "schemas"
+
+
+@lru_cache(maxsize=1)
+def load_save_envelope_schema() -> dict[str, Any]:
+    path = _schema_root() / SAVE_SCHEMA_FILENAME
+    raw = _load_json_file(path)
+    if not isinstance(raw, dict):
+        raise ValueError("save envelope schema must be an object")
+    return raw
+
+
+@lru_cache(maxsize=1)
+def _save_envelope_validator() -> Draft202012Validator:
+    return Draft202012Validator(load_save_envelope_schema())
+
+
+@lru_cache(maxsize=1)
+def _save_data_validator() -> Draft202012Validator:
+    schema = load_save_envelope_schema()
+    save_schema = schema.get("$defs", {}).get("saveData")
+    if not isinstance(save_schema, dict):
+        raise ValueError("saveData schema was not found")
+    save_schema_with_defs = {
+        **save_schema,
+        "$defs": schema.get("$defs", {}),
+    }
+    return Draft202012Validator(save_schema_with_defs)
+
+
+def validate_save_envelope(payload: dict[str, Any]) -> None:
+    if not isinstance(payload, dict):
+        raise ValueError("save envelope must be an object")
+    errors = sorted(_save_envelope_validator().iter_errors(payload), key=str)
+    if errors:
+        raise ValueError(f"save envelope validation failed: {errors[0].message}")
+
+
+def validate_save_data(save: dict[str, Any]) -> None:
+    if not isinstance(save, dict):
+        raise ValueError("save data must be an object")
+    errors = sorted(_save_data_validator().iter_errors(save), key=str)
+    if errors:
+        raise ValueError(f"save data validation failed: {errors[0].message}")
 
 
 def load_monsters(path: Path) -> Dict[str, Dict[str, Any]]:
@@ -118,8 +171,12 @@ def load_savedata(path: Path) -> dict:
     # 従来の生 savedata 形式（{"party":[...], ...}）の両方を受け入れる。
     inner_save = raw.get("save")
     if isinstance(inner_save, dict):
-        return inner_save
-    return raw
+        save = ensure_save_schema_version(inner_save)
+        validate_save_data(save)
+        return save
+    save = ensure_save_schema_version(raw)
+    validate_save_data(save)
+    return save
 
 
 def save_savedata(path: Path, save: dict) -> None:
@@ -128,9 +185,28 @@ def save_savedata(path: Path, save: dict) -> None:
     ensure_ascii=False：日本語が \\uXXXX" にならない
     indent=2：読みやすい
     """
+    ensure_save_schema_version(save)
+    if isinstance(save.get("save"), dict):
+        validate_save_envelope(save)
+    else:
+        validate_save_data(save)
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as f:
         json.dump(save, f, ensure_ascii=False, indent=2)
+
+
+def ensure_save_schema_version(payload: dict) -> dict:
+    """
+    生 save(dict) と envelope({"save": {...}}) の両方を受け取り、
+    save 本体に schema_version を補完する。
+    """
+    if not isinstance(payload, dict):
+        return payload
+
+    inner_save = payload.get("save")
+    target = inner_save if isinstance(inner_save, dict) else payload
+    target.setdefault("schema_version", SAVE_SCHEMA_VERSION)
+    return payload
 
 
 def apply_party_equipment_to_save(
