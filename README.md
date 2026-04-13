@@ -83,7 +83,7 @@ Flask 版の `flask_app.py` に相当する Wasm 版の起点は、次の 4 フ�
 - `wasm_app.py`
   - Flask サーバーの代わりに、`web_wasm/` をブラウザで確認するための静的サーバー起点。
 - `web_wasm/index.html` + `web_wasm/app.js` + `web_wasm/pyodide_runtime.js`
-  - ブラウザ側の起点。SPA ルータを起動し、`pyodide_runtime.js` 経由で Pyodide を 1 回だけ初期化し、`typing-extensions` を `loadPackage()` で読み込んだうえで `python_bundle.zip` を展開し、`WasmBattleEngine` を呼び出します。
+  - ブラウザ側の起点。SPA ルータを起動し、`pyodide_runtime.js` 経由で Pyodide を 1 回だけ初期化し、`typing-extensions` と `jsonschema` を `loadPackage()` で読み込んだうえで `python_bundle.zip` を展開し、`WasmBattleEngine` を呼び出します。
 - `web_wasm/ARCHITECTURE.md`
   - SPA 化後の `web_wasm` 構成と責務分担の簡易メモ。
 - `web_wasm/REGRESSION_CHECKLIST.md`
@@ -140,6 +140,7 @@ import { loadPyodide } from "https://cdn.jsdelivr.net/pyodide/v0.28.3/full/pyodi
 
 const pyodide = await loadPyodide();
 await pyodide.loadPackage("typing-extensions");
+await pyodide.loadPackage("jsonschema");
 await pyodide.runPythonAsync(`
 from combat.wasm_api import WasmBattleEngine
 engine = WasmBattleEngine.create_default(seed=7)

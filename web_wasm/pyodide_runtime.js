@@ -8,6 +8,7 @@ export function getPyodideRuntime() {
     runtimePromise = (async () => {
       const instance = await loadPyodide();
       await instance.loadPackage("typing-extensions");
+      await instance.loadPackage("jsonschema");
       await preparePythonBundle(instance);
       await prepareExplicitGroups(instance);
 
