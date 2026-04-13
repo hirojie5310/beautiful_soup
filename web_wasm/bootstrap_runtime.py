@@ -157,18 +157,26 @@ def _repair_party_entry_job(entry, base_entry=None):
     if not isinstance(entry, dict):
         return entry
     job_levels = _job_level_rows(entry)
-    current_job = str(entry.get("job") or "").strip()
+    current_job = str(entry.get("current_job") or entry.get("job") or "").strip()
     if current_job and (not job_levels or current_job in job_levels):
+        entry["job"] = current_job
+        entry["current_job"] = current_job
         return entry
 
-    base_job = str(base_entry.get("job") or "").strip() if isinstance(base_entry, dict) else ""
+    base_job = (
+        str(base_entry.get("current_job") or base_entry.get("job") or "").strip()
+        if isinstance(base_entry, dict)
+        else ""
+    )
     if base_job and (not job_levels or base_job in job_levels):
         entry["job"] = base_job
+        entry["current_job"] = base_job
         return entry
 
     highest_job = _highest_job_level_name(job_levels)
     if highest_job:
         entry["job"] = highest_job
+        entry["current_job"] = highest_job
     return entry
 
 

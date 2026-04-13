@@ -60,6 +60,20 @@ export function memberIdentityKeys(member, fallbackIndex = -1) {
   return keys;
 }
 
+function explicitMemberIdentityKeys(member) {
+  if (!member || typeof member !== "object") return [];
+  const keys = [];
+  [
+    normalizeFaceKey(member?.portrait_key),
+    normalizeFaceKey(member?.image_name),
+    normalizeFaceKey(member?.name),
+  ].forEach((rawKey) => {
+    const key = rawKey === "luneth" ? "runeth" : rawKey;
+    if (key && !keys.includes(key)) keys.push(key);
+  });
+  return keys;
+}
+
 export function normalizePartyIdentityOrder(party) {
   const source = Array.isArray(party) ? party.filter((member) => member && typeof member === "object") : [];
   if (!source.length) return [];
@@ -119,6 +133,26 @@ export function normalizeMemberIndexedRows(sourceParty, rows) {
     normalizedRows.push(sourceRows[matchIndex]);
   }
   return normalizedRows;
+}
+
+export function findPartyMemberIndex(party, member, fallbackIndex = -1) {
+  const sourceParty = Array.isArray(party) ? party : [];
+  const explicitWanted = explicitMemberIdentityKeys(member);
+  if (explicitWanted.length) {
+    const explicitWantedSet = new Set(explicitWanted);
+    const explicitMatchIndex = sourceParty.findIndex((entry) => (
+      explicitMemberIdentityKeys(entry).some((key) => explicitWantedSet.has(key))
+    ));
+    if (explicitMatchIndex >= 0) return explicitMatchIndex;
+  }
+
+  const wanted = memberIdentityKeys(member, fallbackIndex);
+  if (!wanted.length) return fallbackIndex;
+  const wantedSet = new Set(wanted);
+  const matchedIndex = sourceParty.findIndex((entry, index) => (
+    memberIdentityKeys(entry, index).some((key) => wantedSet.has(key))
+  ));
+  return matchedIndex >= 0 ? matchedIndex : fallbackIndex;
 }
 
 export function jobLevelRows(entry) {

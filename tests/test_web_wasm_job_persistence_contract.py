@@ -6,6 +6,7 @@ from web_wasm.bootstrap_runtime import _align_party_to_base, _repair_party_entry
 def test_repair_party_entry_job_reverts_unsynced_job_change() -> None:
     entry = {
         "job": "Onion Knight",
+        "current_job": "Onion Knight",
         "job_levels": {
             "Dragoon": {"level": 99, "skill_point": 99},
         },
@@ -14,6 +15,7 @@ def test_repair_party_entry_job_reverts_unsynced_job_change() -> None:
     repaired = _repair_party_entry_job(entry, {"job": "Dragoon"})
 
     assert repaired["job"] == "Dragoon"
+    assert repaired["current_job"] == "Dragoon"
 
 
 def test_repair_party_entry_job_keeps_job_when_job_levels_are_synced() -> None:
@@ -30,6 +32,7 @@ def test_repair_party_entry_job_keeps_job_when_job_levels_are_synced() -> None:
     repaired = _repair_party_entry_job(entry, {"job": "Dragoon"})
 
     assert repaired["job"] == "Onion Knight"
+    assert repaired["current_job"] == "Onion Knight"
 
 
 def test_align_party_to_base_keeps_synced_changed_job() -> None:
@@ -60,3 +63,4 @@ def test_align_party_to_base_keeps_synced_changed_job() -> None:
     aligned = _align_party_to_base(base_party, overlay_party)
 
     assert aligned[0]["job"] == "Onion Knight"
+    assert aligned[0]["current_job"] == "Onion Knight"

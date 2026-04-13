@@ -1,4 +1,5 @@
 import { applyJobChangeToSaveEntry } from "../job_persistence.js";
+import { findPartyMemberIndex } from "../shared_party.js";
 import { renderMenuSubpageShell } from "./menu_subpage_shell.js";
 import {
   bindButtonHandlers,
@@ -147,12 +148,14 @@ export async function mountScreen({ mountNode, store, navigate }) {
     nextEnvelope.menu_state = nextMenuState;
     if (nextEnvelope?.save) {
       nextEnvelope.save.CP = currentCp - requiredCp;
-      if (Array.isArray(nextEnvelope.save.party) && nextEnvelope.save.party[memberIndex]) {
-        nextEnvelope.save.party[memberIndex] = applyJobChangeToSaveEntry(nextEnvelope.save.party[memberIndex], {
+      const saveParty = Array.isArray(nextEnvelope.save.party) ? nextEnvelope.save.party : [];
+      const saveIndex = findPartyMemberIndex(saveParty, member, memberIndex);
+      if (saveIndex >= 0 && saveParty[saveIndex]) {
+        nextEnvelope.save.party[saveIndex] = applyJobChangeToSaveEntry(saveParty[saveIndex], {
           currentJob,
           nextJob: selectedName,
           currentJobLevel: currentRow?.saved_job_level ?? 1,
-          currentJobSkillPoint: nextEnvelope.save.party[memberIndex]?.job_level?.skill_point ?? 0,
+          currentJobSkillPoint: saveParty[saveIndex]?.job_level?.skill_point ?? 0,
           nextJobLevel: row?.saved_job_level ?? 1,
         });
       }

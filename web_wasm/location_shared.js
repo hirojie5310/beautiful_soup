@@ -5,6 +5,7 @@ import {
   restoreSaveEnvelopeFromStorage,
   restoreSaveEnvelopeFromStorageAsync,
 } from "./shared_storage.js";
+import { findPartyMemberIndex } from "./shared_party.js";
 
 export const LOCAL_SAVE_STORAGE_KEY = "ff3_wasm_savedata_v1";
 export const PYTHON_BUNDLE_VERSION = "20260414a";
@@ -252,7 +253,8 @@ function mpLevelsToSaveMp(mpLevels) {
 export function syncSavePartyRecovery(save, recoveredParty) {
   const saveParty = asArray(save?.party);
   recoveredParty.forEach((member, index) => {
-    const saveEntry = saveParty[index];
+    const saveIndex = findPartyMemberIndex(saveParty, member, index);
+    const saveEntry = saveParty[saveIndex];
     if (!saveEntry || typeof saveEntry !== "object") return;
     const hp = asNumber(member?.hp, asNumber(saveEntry.max_hp, asNumber(saveEntry.hp, 0)));
     const maxHp = asNumber(member?.max_hp, asNumber(saveEntry.max_hp, hp));
