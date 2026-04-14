@@ -7,6 +7,7 @@ import {
   syncMenuPartyRecovery,
   syncSavePartyRecovery,
 } from "../location_shared.js";
+import { mergeMenuStateIntoSave } from "../menu_save_sync.js";
 import { getPyodideRuntime } from "../pyodide_runtime.js";
 import { selectedLocationText } from "./screen_shared.js";
 
@@ -89,6 +90,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     }
     nextEnvelope.menu_state.resources.gil = nextEnvelope.save.gil;
     syncMenuPartyRecovery(nextEnvelope.menu_state, recoveredParty);
+    nextEnvelope.save = mergeMenuStateIntoSave(nextEnvelope.save, nextEnvelope.menu_state);
     nextEnvelope.saved_at = new Date().toISOString();
     nextEnvelope.selected_location_group = currentState.selectedLocationGroup;
     nextEnvelope.selected_location = currentState.selectedLocation;

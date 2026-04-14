@@ -1,4 +1,5 @@
 import { renderMenuSubpageShell } from "./menu_subpage_shell.js";
+import { mergeMenuStateIntoSave } from "../menu_save_sync.js";
 import { getPyodideRuntime } from "../pyodide_runtime.js";
 import {
   bindMenuSubpageNavigation,
@@ -458,8 +459,11 @@ export async function mountScreen({ mountNode, store, navigate }) {
         },
       };
     });
-    if (Array.isArray(nextEnvelope?.save?.party) && nextEnvelope.save.party[memberIndex]) {
-      nextEnvelope.save.party[memberIndex].equipment = { ...memberEquipment(changed.member) };
+    if (nextEnvelope?.save && typeof nextEnvelope.save === "object") {
+      nextEnvelope.save = mergeMenuStateIntoSave(nextEnvelope.save, {
+        ...(menuState && typeof menuState === "object" ? menuState : {}),
+        party: nextParty,
+      });
     }
     const rebuiltMenuState = await rebuildMenuStateFromRuntime(nextEnvelope, nextParty);
     const nextMenuState = {

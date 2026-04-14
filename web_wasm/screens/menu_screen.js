@@ -15,6 +15,7 @@ import {
   persistSaveEnvelopeToIndexedDB,
   restoreSaveEnvelopeFromStorageAsync,
 } from "../shared_storage.js";
+import { mergeMenuStateIntoSave } from "../menu_save_sync.js";
 import { bindButtonHandlers } from "./screen_shared.js";
 
 const MENU_LABELS = ["アイテム", "まほう", "そうび", "ステータス", "ならびかえ", "ジョブ", "セーブ", "ロード"];
@@ -143,18 +144,7 @@ function extractMenuStateFromEnvelope(envelope) {
 }
 
 function patchSaveWithMenuState(saveObj, menuState) {
-  const nextSave = saveObj && typeof saveObj === "object" ? { ...saveObj } : {};
-  nextSave.party = Array.isArray(menuState?.party)
-    ? menuState.party.map((member) => ({
-      ...(member && typeof member === "object" ? member : {}),
-      row: normalizeRow(member?.row),
-      hp: Number(member?.hp ?? 0),
-      max_hp: Number(member?.max_hp ?? 0),
-    }))
-    : [];
-  nextSave.CP = Number(menuState?.resources?.cp ?? nextSave?.CP ?? 0);
-  nextSave.gil = Number(menuState?.resources?.gil ?? nextSave?.gil ?? 0);
-  return nextSave;
+  return mergeMenuStateIntoSave(saveObj, menuState);
 }
 
 function buildEnvelopeForCurrentState(store, state) {

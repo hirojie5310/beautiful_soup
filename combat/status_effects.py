@@ -34,6 +34,15 @@ def _ff3_raze_level_threshold(attacker_level: int) -> int:
     return ((max(int(attacker_level), 0) // 2) * 3) // 2
 
 
+def _status_immunity_keys_for_char(char_stats: FinalCharacterStats) -> set[str]:
+    """キャラの装備由来ステータス異常無効を正規化して返す。"""
+    raw_immunities = getattr(char_stats, "status_immunities", ()) or ()
+    immune_set = {normalize_text_basic(x) for x in raw_immunities if isinstance(x, str)}
+    if "confusion" in immune_set:
+        immune_set.add("confuse")
+    return immune_set
+
+
 # <状態異常> =============================================================================
 
 
@@ -597,11 +606,8 @@ def apply_status_spell_to_char(
     if not ailments_list:
         return False  # 状態異常魔法ではない
 
-    # 4) キャラ側の「状態異常耐性」仕様を決める
-    # 　いまのコードではキャラのImmuneテーブルは無いので、
-    # 　とりあえず「耐性なし」として実装しておき、
-    # 　将来、防具やジョブに耐性を持たせたらここで参照する想定。
-    immune_set: set[str] = set()
+    # 4) キャラ側の状態異常無効（装備由来）を参照する
+    immune_set = _status_immunity_keys_for_char(char_stats)
 
     # 5) 命中率を決める（敵なので Mind ではなく、ひとまず BaseAccuracy のみで判定）
     acc = spell_json.get("BaseAccuracy")
@@ -627,6 +633,10 @@ def apply_status_spell_to_char(
         "paralysis": Status.PARALYZE,
         "petrification": Status.PETRIFY,
         "ko": Status.KO,
+        "partial petrification": Status.PARTIAL_PETRIFY,
+        "partial petrification (1/3)": Status.PARTIAL_PETRIFY,
+        "partial petrification (1/2)": Status.PARTIAL_PETRIFY,
+        "partial petrification (full)": Status.PETRIFY,
     }
 
     # 7) Erase / Toad / Mini のような「特別ルール」を先に処理
@@ -634,6 +644,10 @@ def apply_status_spell_to_char(
     if "erase" in ailments_list:
         target_lv = char_stats.level
         caster_lv = int(spell_json.get("AttackerLevel", 1) or 1)  # ★敵側から埋める
+
+        if "ko" in immune_set:
+            logs.append(f"{char_name}には《Erase》が効かなかった！（無効）")
+            return True
 
         if target_lv >= caster_lv * 0.75:
             hit_percent = 0.0
@@ -684,7 +698,10 @@ def apply_status_spell_to_char(
     # 8) 通常の状態異常（Poison / Blind…）も enemy版と同様に処理
     for ail in ailments_list:
         key = normalize_text_basic(ail)
-        if key in immune_set:
+        if key in immune_set or (
+            key.startswith("partial petrification")
+            and "partial petrification" in immune_set
+        ):
             logs.append(f"{char_name}には{key}が効かなかった！（無効）")
             continue
 
@@ -695,11 +712,24 @@ def apply_status_spell_to_char(
 
         roll = rng.random() * 100.0
         if roll < hit_percent:
-            char_state.statuses.add(st)
-            logs.append(
-                f"{char_name}は{st.name}状態になった！（魔法："
-                f"命中率{hit_percent:.1f}% 判定{roll:.1f}）"
-            )
+            if st == Status.PARTIAL_PETRIFY:
+                amount = partial_petrify_amount_from_name(ail)
+                apply_partial_petrification(
+                    target_state=char_state,
+                    amount=amount,
+                    target_name=char_name,
+                    logs=logs,
+                )
+                logs.append(
+                    f"{char_name}は部分石化した！（魔法："
+                    f"命中率{hit_percent:.1f}% 判定{roll:.1f}）"
+                )
+            else:
+                char_state.statuses.add(st)
+                logs.append(
+                    f"{char_name}は{st.name}状態になった！（魔法："
+                    f"命中率{hit_percent:.1f}% 判定{roll:.1f}）"
+                )
         else:
             logs.append(
                 f"{char_name}は{ail}を回避した！（魔法："

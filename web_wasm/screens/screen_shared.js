@@ -1,3 +1,5 @@
+import { mergeMenuStateIntoSave } from "../menu_save_sync.js";
+
 export function syncMenuMemberSelection(store, requestedIndex) {
   const state = store.getState();
   const party = Array.isArray(state.menuState?.party) ? state.menuState.party : [];
@@ -42,6 +44,9 @@ export function persistMenuEnvelope(store, nextMenuState, nextEnvelope) {
   store.updateMenuState(nextMenuState);
   if (!nextEnvelope || typeof nextEnvelope !== "object") {
     return true;
+  }
+  if (nextEnvelope.save && typeof nextEnvelope.save === "object") {
+    nextEnvelope.save = mergeMenuStateIntoSave(nextEnvelope.save, nextMenuState);
   }
   nextEnvelope.menu_state = nextMenuState;
   return store.updateSaveEnvelope(nextEnvelope);

@@ -9,6 +9,7 @@ import {
   persistMenuStateFromEnvelope,
   syncMenuStateAfterPurchase,
 } from "../location_shared.js";
+import { mergeMenuStateIntoSave } from "../menu_save_sync.js";
 import { selectedLocationText } from "./screen_shared.js";
 
 function renderLayout() {
@@ -172,6 +173,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     }
 
     syncMenuStateAfterPurchase(nextEnvelope, masterData.spellLevelByName, goods.name, bucketName);
+    nextEnvelope.save = mergeMenuStateIntoSave(nextEnvelope.save, nextEnvelope.menu_state);
     nextEnvelope.saved_at = new Date().toISOString();
     nextEnvelope.selected_location_group = currentState.selectedLocationGroup;
     nextEnvelope.selected_location = currentState.selectedLocation;
