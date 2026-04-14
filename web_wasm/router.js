@@ -1,4 +1,4 @@
-const DEFAULT_ROUTE = "location";
+const DEFAULT_ROUTE = "title";
 
 function normalizeRoute(rawRoute) {
   const route = String(rawRoute || "")
@@ -10,6 +10,8 @@ function normalizeRoute(rawRoute) {
 
 async function loadScreenModule(routeName) {
   switch (routeName) {
+    case "title":
+      return import("./screens/title_screen.js");
     case "location":
       return import("./screens/location_screen.js");
     case "menu":
@@ -31,7 +33,7 @@ async function loadScreenModule(routeName) {
     case "job":
       return import("./screens/job_screen.js");
     default:
-      return import("./screens/location_screen.js");
+      return import("./screens/title_screen.js");
   }
 }
 

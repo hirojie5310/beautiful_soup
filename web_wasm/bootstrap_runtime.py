@@ -67,6 +67,9 @@ def _merge_save_data(base, overlay):
             for key, value in base.items()
         }
         for key, value in overlay.items():
+            if value is None:
+                merged[key] = None
+                continue
             merged[key] = _merge_save_data(base.get(key), value)
         return merged
     if isinstance(base, list) and isinstance(overlay, list):
@@ -228,6 +231,21 @@ def _align_party_to_base(base_party, overlay_party):
                     merged_entry["portrait_key"] = base_entry.get("portrait_key")
                 if base_entry.get("image_name") is not None:
                     merged_entry["image_name"] = base_entry.get("image_name")
+            overlay_equipment = (
+                overlay_entry.get("equipment")
+                if isinstance(overlay_entry, dict)
+                else None
+            )
+            if isinstance(overlay_equipment, dict):
+                base_equipment = (
+                    base_entry.get("equipment")
+                    if isinstance(base_entry, dict) and isinstance(base_entry.get("equipment"), dict)
+                    else {}
+                )
+                merged_entry["equipment"] = {
+                    **base_equipment,
+                    **overlay_equipment,
+                }
             merged_entry = _repair_party_entry_job(merged_entry, base_entry)
         aligned.append(merged_entry)
 
