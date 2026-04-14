@@ -8,6 +8,7 @@ import {
 import { findPartyMemberIndex } from "./shared_party.js";
 
 export const LOCAL_SAVE_STORAGE_KEY = "ff3_wasm_savedata_v1";
+export const LOCAL_LOCATION_SELECTION_KEY = "ff3_wasm_location_selection_v1";
 export const PYTHON_BUNDLE_VERSION = "20260414a";
 export const INN_PRICE = 10;
 
@@ -57,7 +58,37 @@ export function currentGil(envelope = null) {
   return asNumber(source?.save?.gil, 0);
 }
 
+function readStoredLocationSelectionFromLocal() {
+  try {
+    const raw = localStorage.getItem(LOCAL_LOCATION_SELECTION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    return {
+      selected_location_group: String(parsed.selected_location_group || ""),
+      selected_location: String(parsed.selected_location || ""),
+    };
+  } catch (_error) {
+    return null;
+  }
+}
+
+function persistStoredLocationSelectionToLocal(selectedLocationGroup, selectedLocation) {
+  const payload = {
+    selected_location_group: String(selectedLocationGroup || ""),
+    selected_location: String(selectedLocation || ""),
+  };
+  try {
+    localStorage.setItem(LOCAL_LOCATION_SELECTION_KEY, JSON.stringify(payload));
+    return true;
+  } catch (_error) {
+    return false;
+  }
+}
+
 export function getStoredLocationSelection() {
+  const localSelection = readStoredLocationSelectionFromLocal();
+  if (localSelection) return localSelection;
   const envelope = readStoredEnvelope();
   return {
     selected_location_group: String(envelope?.selected_location_group || ""),
@@ -66,6 +97,8 @@ export function getStoredLocationSelection() {
 }
 
 export async function getStoredLocationSelectionAsync() {
+  const localSelection = readStoredLocationSelectionFromLocal();
+  if (localSelection) return localSelection;
   const envelope = await readStoredEnvelopeAsync();
   return {
     selected_location_group: String(envelope?.selected_location_group || ""),
@@ -75,24 +108,30 @@ export async function getStoredLocationSelectionAsync() {
 
 export function syncStoredLocationSelection(selectedLocationGroup, selectedLocation) {
   const originalEnvelope = readStoredEnvelope();
-  const nextEnvelope = originalEnvelope
-    ? clone(originalEnvelope)
-    : makeSaveEnvelope({ gil: 0, inventory: {}, party: [] }, {});
+  const mirrored = persistStoredLocationSelectionToLocal(
+    selectedLocationGroup,
+    selectedLocation,
+  );
+  if (!originalEnvelope) return mirrored;
+  const nextEnvelope = clone(originalEnvelope);
   nextEnvelope.selected_location_group = String(selectedLocationGroup || "");
   nextEnvelope.selected_location = String(selectedLocation || "");
   nextEnvelope.saved_at = new Date().toISOString();
-  return persistSaveEnvelopeToStorage(nextEnvelope);
+  return persistSaveEnvelopeToStorage(nextEnvelope) || mirrored;
 }
 
 export async function syncStoredLocationSelectionAsync(selectedLocationGroup, selectedLocation) {
   const originalEnvelope = await readStoredEnvelopeAsync();
-  const nextEnvelope = originalEnvelope
-    ? clone(originalEnvelope)
-    : makeSaveEnvelope({ gil: 0, inventory: {}, party: [] }, {});
+  const mirrored = persistStoredLocationSelectionToLocal(
+    selectedLocationGroup,
+    selectedLocation,
+  );
+  if (!originalEnvelope) return mirrored;
+  const nextEnvelope = clone(originalEnvelope);
   nextEnvelope.selected_location_group = String(selectedLocationGroup || "");
   nextEnvelope.selected_location = String(selectedLocation || "");
   nextEnvelope.saved_at = new Date().toISOString();
-  return persistSaveEnvelopeToStorage(nextEnvelope);
+  return persistSaveEnvelopeToStorage(nextEnvelope) || mirrored;
 }
 
 export function persistMenuStateFromEnvelope(envelope) {
