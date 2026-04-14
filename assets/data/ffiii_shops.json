@@ -118,6 +118,61 @@
     ]
   },
   {
+    "map": "Tozus",
+    "shops": [
+      {
+        "type": "Items",
+        "goods": [
+          { "name": "Potion", "price": 150 },
+          { "name": "Eye Drops", "price": 40 },
+          { "name": "Antidote", "price": 80 }
+        ]
+      },
+      {
+        "type": "Magic",
+        "goods": [
+          { "name": "Fire", "price": 100 },
+          { "name": "Blizzard", "price": 100 },
+          { "name": "Sleep", "price": 100 },
+          { "name": "Thunder", "price": 700 },
+          { "name": "Poison", "price": 700 },
+          { "name": "Blind", "price": 700 },
+          { "name": "Aero", "price": 700 }
+        ]
+      },
+      {
+        "type": "Gnomish Bread",
+        "goods": [
+          { "name": "Gnomish Bread", "price": 200 }
+        ]
+      }
+    ]
+  },
+  {
+    "map": "Vikings' Cove",
+    "shops": [
+      {
+        "type": "Magic",
+        "goods": [
+          { "name": "Fire", "price": 100 },
+          { "name": "Blizzard", "price": 100 },
+          { "name": "Sleep", "price": 100 },
+          { "name": "Thunder", "price": 700 },
+          { "name": "Poison", "price": 700 },
+          { "name": "Blind", "price": 700 }
+        ]
+      },
+      {
+        "type": "Items",
+        "goods": [
+          { "name": "Potion", "price": 150 },
+          { "name": "Eye Drops", "price": 40 },
+          { "name": "Antidote", "price": 80 }
+        ]
+      }
+    ]
+  },
+  {
     "map": "Village of the Ancients",
     "shops": [
       {
@@ -141,6 +196,19 @@
           { "name": "Headband", "price": 1200 },
           { "name": "Kenpo Gi", "price": 2000 },
           { "name": "Mage Robe", "price": 2000 }
+        ]
+      },
+      {
+        "type": "Items",
+        "goods": [
+          { "name": "Potion", "price": 150 },
+          { "name": "Hi Potion", "price": 1200 },
+          { "name": "Gold Needle", "price": 300 },
+          { "name": "Maiden's Kiss", "price": 100 },
+          { "name": "Echo Herbs", "price": 100 },
+          { "name": "Mallet", "price": 100 },
+          { "name": "Eye Drops", "price": 40 },
+          { "name": "Antidote", "price": 80 }
         ]
       },
       {
@@ -231,6 +299,19 @@
         ]
       },
       {
+        "type": "Items",
+        "goods": [
+          { "name": "Hi Potion", "price": 1200 },
+          { "name": "Gold Needle", "price": 300 },
+          { "name": "Maiden's Kiss", "price": 100 },
+          { "name": "Echo Herbs", "price": 100 },
+          { "name": "Mallet", "price": 100 },
+          { "name": "Eye Drops", "price": 40 },
+          { "name": "Antidote", "price": 80 },
+          { "name": "Gysahl Greens", "price": 150 }
+        ]
+      },
+      {
         "type": "Weapons",
         "goods": [
           { "name": "Battleaxe", "price": 5500 },
@@ -243,8 +324,258 @@
     ]
   },
   {
+    "map": "Duster",
+    "shops": [
+      {
+        "type": "Items",
+        "goods": [
+          { "name": "Hi Potion", "price": 1200 },
+          { "name": "Gold Needle", "price": 300 },
+          { "name": "Maiden's Kiss", "price": 100 },
+          { "name": "Echo Herbs", "price": 100 },
+          { "name": "Mallet", "price": 100 },
+          { "name": "Eye Drops", "price": 40 },
+          { "name": "Antidote", "price": 80 },
+          { "name": "Gysahl Greens", "price": 150 }
+        ]
+      },
+      {
+        "type": "Armor",
+        "goods": [
+          { "name": "Gaia Vest", "price": 4200 },
+          { "name": "Bard Vest", "price": 5500 },
+          { "name": "Feathered Hat", "price": 8000 },
+          { "name": "Rune Bracelet", "price": 5000 }
+        ]
+      },
+      {
+        "type": "Weapons",
+        "goods": [
+          { "name": "Diamond Bell", "price": 4500 },
+          { "name": "Madhura Harp", "price": 8000 }
+        ]
+      }
+    ]
+  },
+  {
+    "map": "Replito",
+    "shops": [
+      {
+        "type": "Items",
+        "goods": [
+          { "name": "Hi Potion", "price": 1200 },
+          { "name": "Gold Needle", "price": 300 },
+          { "name": "Echo Herbs", "price": 100 },
+          { "name": "Eye Drops", "price": 40 },
+          { "name": "Antidote", "price": 80 },
+          { "name": "Ottershroom", "price": 2000 },
+          { "name": "Gysahl Greens", "price": 150 },
+          { "name": "Gnomish Bread", "price": 200 }
+        ]
+      },
+      {
+        "type": "Magic",
+        "goods": [
+          { "name": "Chocobo", "price": 100 },
+          { "name": "Shiva", "price": 700 },
+          { "name": "Ramuh", "price": 1500 },
+          { "name": "Ifrit", "price": 3000 },
+          { "name": "Titan", "price": 5000 }
+        ]
+      }
+    ]
+  },
+  {
+    "map": "Northwest Saronia",
+    "shops": [
+      {
+        "type": "Items",
+        "goods": [
+          { "name": "Hi Potion", "price": 1200 },
+          { "name": "Gold Needle", "price": 300 },
+          { "name": "Maiden's Kiss", "price": 100 },
+          { "name": "Echo Herbs", "price": 100 },
+          { "name": "Mallet", "price": 100 },
+          { "name": "Eye Drops", "price": 40 },
+          { "name": "Antidote", "price": 80 },
+          { "name": "Gysahl Greens", "price": 150 }
+        ]
+      },
+      {
+        "type": "Magic",
+        "goods": [
+          { "name": "Fira", "price": 1500 },
+          { "name": "Blizzara", "price": 1500 },
+          { "name": "Thundara", "price": 1500 },
+          { "name": "Cura", "price": 1500 },
+          { "name": "Teleport", "price": 1500 },
+          { "name": "Blindna", "price": 1500 }
+        ]
+      }
+    ]
+  },
+  {
+    "map": "Southwest Saronia",
+    "shops": [
+      {
+        "type": "Armor",
+        "goods": [
+          { "name": "White Robe", "price": 7000 },
+          { "name": "Black Robe", "price": 7000 },
+          { "name": "Rune Bracelet", "price": 5500 },
+          { "name": "Gaia Vest", "price": 4200 },
+          { "name": "Scholar's Robe", "price": 5500 },
+          { "name": "Scholar's Hat", "price": 7500 }
+        ]
+      },
+      {
+        "type": "Items",
+        "goods": [
+          { "name": "Hi Potion", "price": 1200 },
+          { "name": "Gold Needle", "price": 300 },
+          { "name": "Echo Herbs", "price": 100 },
+          { "name": "Eye Drops", "price": 40 },
+          { "name": "Antidote", "price": 80 },
+          { "name": "Ottershroom", "price": 2000 },
+          { "name": "Gysahl Greens", "price": 150 },
+          { "name": "Gnomish Bread", "price": 200 }
+        ]
+      },
+      {
+        "type": "LV.5 Magic",
+        "goods": [
+          { "name": "Thundaga", "price": 5000 },
+          { "name": "Raze", "price": 5000 },
+          { "name": "Erase", "price": 5000 },
+          { "name": "Curaga", "price": 5000 },
+          { "name": "Raise", "price": 5000 },
+          { "name": "Protect", "price": 5000 }
+        ]
+      },
+      {
+        "type": "LV.4 Magic",
+        "goods": [
+          { "name": "Break", "price": 3000 },
+          { "name": "Blizzaga", "price": 3000 },
+          { "name": "Shade", "price": 3000 },
+          { "name": "Libra", "price": 3000 },
+          { "name": "Confuse", "price": 3000 },
+          { "name": "Silence", "price": 3000 }
+        ]
+      },
+      {
+        "type": "Spears",
+        "goods": [
+          { "name": "Thunder Spear", "price": 8000 },
+          { "name": "Wind Spear", "price": 10000 }
+        ]
+      },
+      {
+        "type": "Weapons",
+        "goods": [
+          { "name": "Fire Staff", "price": 3500 },
+          { "name": "Ice Staff", "price": 3500 },
+          { "name": "Light Staff", "price": 3500 },
+          { "name": "Golem Staff", "price": 13500 },
+          { "name": "Rune Staff", "price": 18000 },
+          { "name": "Fire Rod", "price": 3000 },
+          { "name": "Ice Rod", "price": 3000 },
+          { "name": "Light Rod", "price": 3000 }
+        ]
+      }
+    ]
+  },
+  {
+    "map": "Doga's Manor",
+    "shops": [
+      {
+        "type": "Items",
+        "goods": [
+          { "name": "Hi Potion", "price": 1200 },
+          { "name": "Gold Needle", "price": 300 },
+          { "name": "Maiden's Kiss", "price": 100 },
+          { "name": "Echo Herbs", "price": 100 },
+          { "name": "Mallet", "price": 100 },
+          { "name": "Eye Drops", "price": 40 },
+          { "name": "Antidote", "price": 80 },
+          { "name": "Gysahl Greens", "price": 150 }
+        ]
+      },
+      {
+        "type": "Magic",
+        "goods": [
+          { "name": "Firaga", "price": 10000 },
+          { "name": "Bio", "price": 10000 },
+          { "name": "Warp", "price": 10000 },
+          { "name": "Aeroga", "price": 10000 },
+          { "name": "Stona", "price": 10000 },
+          { "name": "Haste", "price": 10000 },
+          { "name": "Curaga", "price": 5000 },
+          { "name": "Raise", "price": 5000 }
+        ]
+      }
+    ]
+  },
+  {
     "map": "Doga's Village",
     "shops": [
+      {
+        "type": "LV.3 Magic",
+        "goods": [
+          { "name": "Fira", "price": 1500 },
+          { "name": "Blizzara", "price": 1500 },
+          { "name": "Thundara", "price": 1500 },
+          { "name": "Cura", "price": 1500 },
+          { "name": "Teleport", "price": 1500 }
+        ]
+      },
+      {
+        "type": "LV.4 Magic",
+        "goods": [
+          { "name": "Break", "price": 3000 },
+          { "name": "Blizzaga", "price": 3000 },
+          { "name": "Shade", "price": 3000 },
+          { "name": "Libra", "price": 3000 },
+          { "name": "Confuse", "price": 3000 },
+          { "name": "Blindna", "price": 1500 },
+          { "name": "Silence", "price": 3000 }
+        ]
+      },
+      {
+        "type": "LV.5 Magic",
+        "goods": [
+          { "name": "Thundaga", "price": 5000 },
+          { "name": "Raze", "price": 5000 },
+          { "name": "Erase", "price": 5000 },
+          { "name": "Curaga", "price": 5000 },
+          { "name": "Raise", "price": 5000 },
+          { "name": "Protect", "price": 5000 }
+        ]
+      },
+      {
+        "type": "LV.6 Magic",
+        "goods": [
+          { "name": "Firaga", "price": 10000 },
+          { "name": "Bio", "price": 10000 },
+          { "name": "Warp", "price": 10000 },
+          { "name": "Aeroga", "price": 10000 },
+          { "name": "Break", "price": 3000 },
+          { "name": "Haste", "price": 10000 },
+          { "name": "Curaga", "price": 5000 },
+          { "name": "Raise", "price": 5000 }
+        ]
+      },
+      {
+        "type": "LV.7 Magic",
+        "goods": [
+          { "name": "Quake", "price": 20000 },
+          { "name": "Breakga", "price": 20000 },
+          { "name": "Drain", "price": 20000 },
+          { "name": "Curaja", "price": 20000 },
+          { "name": "Esuna", "price": 20000 },
+          { "name": "Reflect", "price": 20000 }
+        ]
+      },
       {
         "type": "Summon Magic",
         "goods": [
@@ -253,6 +584,138 @@
           { "name": "Ramuh", "price": 1500 },
           { "name": "Ifrit", "price": 3000 },
           { "name": "Titan", "price": 5000 }
+        ]
+      }
+    ]
+  },
+  {
+    "map": "Ancient's Ruins B1",
+    "shops": [
+      {
+        "type": "Items",
+        "goods": [
+          { "name": "Hi Potion", "price": 1200 },
+          { "name": "Gold Needle", "price": 300 },
+          { "name": "Maiden's Kiss", "price": 100 },
+          { "name": "Echo Herbs", "price": 100 },
+          { "name": "Mallet", "price": 100 },
+          { "name": "Eye Drops", "price": 40 },
+          { "name": "Antidote", "price": 80 },
+          { "name": "Gysahl Greens", "price": 150 }
+        ]
+      },
+      {
+        "type": "Weapons",
+        "goods": [
+          { "name": "Blood Sword", "price": 16500 },
+          { "name": "Defender", "price": 16500 },
+          { "name": "Triton Hammer", "price": 20000 },
+          { "name": "Dual Tomahawk", "price": 20000 },
+          { "name": "Ancient Sword", "price": 16500 }
+        ]
+      },
+      {
+        "type": "Armor",
+        "goods": [
+          { "name": "Diamond Shield", "price": 18000 },
+          { "name": "Diamond Helm", "price": 20000 },
+          { "name": "Diamond Mail", "price": 33000 },
+          { "name": "Diamond Bracers", "price": 10000 },
+          { "name": "Diamond Gloves", "price": 15000 }
+        ]
+      }
+    ]
+  },
+  {
+    "map": "The Invincible",
+    "shops": [
+      {
+        "type": "Items",
+        "goods": [
+          { "name": "Hi Potion", "price": 1200 },
+          { "name": "Gold Needle", "price": 300 },
+          { "name": "Echo Herbs", "price": 100 },
+          { "name": "Eye Drops", "price": 40 },
+          { "name": "Antidote", "price": 80 },
+          { "name": "Ottershroom", "price": 2000 },
+          { "name": "Gysahl Greens", "price": 150 },
+          { "name": "Gnomish Bread", "price": 200 }
+        ]
+      },
+      {
+        "type": "Armor",
+        "goods": [
+          { "name": "Diamond Shield", "price": 18000 },
+          { "name": "Diamond Helm", "price": 20000 },
+          { "name": "Diamond Mail", "price": 33000 },
+          { "name": "Diamond Bracers", "price": 10000 },
+          { "name": "Diamond Gloves", "price": 15000 },
+          { "name": "White Robe", "price": 7000 },
+          { "name": "Black Robe", "price": 7000 },
+          { "name": "Gaia Vest", "price": 4200 }
+        ]
+      },
+      {
+        "type": "Weapons",
+        "goods": [
+          { "name": "Defender", "price": 16500 },
+          { "name": "Great Axe", "price": 14000 },
+          { "name": "Tome of Fire", "price": 15000 },
+          { "name": "Tome of Light", "price": 15000 },
+          { "name": "Tome of Ice", "price": 15000 },
+          { "name": "Yoichi Arrow", "price": 200 },
+          { "name": "Loki Harp", "price": 40000 },
+          { "name": "Rune Bell", "price": 5500 }
+        ]
+      },
+      {
+        "type": "Magic",
+        "goods": [
+          { "name": "Quake", "price": 20000 },
+          { "name": "Breakga", "price": 20000 },
+          { "name": "Drain", "price": 20000 },
+          { "name": "Curaja", "price": 20000 },
+          { "name": "Esuna", "price": 20000 },
+          { "name": "Reflect", "price": 20000 }
+        ]
+      }
+    ]
+  },
+  {
+    "map": "Falgabard",
+    "shops": [
+      {
+        "type": "Items",
+        "goods": [
+          { "name": "Hi Potion", "price": 1200 },
+          { "name": "Gysahl Greens", "price": 150 },
+          { "name": "Gnomish Bread", "price": 200 }
+        ]
+      },
+      {
+        "type": "Weapons",
+        "goods": [
+          { "name": "Ashura", "price": 20000 },
+          { "name": "Yoichi Bow", "price": 42000 },
+          { "name": "Yoichi Arrow", "price": 200 }
+        ]
+      },
+      {
+        "type": "Armor",
+        "goods": [
+          { "name": "Diamond Mail", "price": 25000 },
+          { "name": "Diamond Shield", "price": 12500 }
+        ]
+      },
+      {
+        "type": "Magic",
+        "goods": [
+          { "name": "Fira", "price": 1500 },
+          { "name": "Blizzara", "price": 1500 },
+          { "name": "Thundara", "price": 1500 },
+          { "name": "Cura", "price": 1500 },
+          { "name": "Teleport", "price": 1500 },
+          { "name": "Blindna", "price": 1500 }
         ]
       }
     ]
