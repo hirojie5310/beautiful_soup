@@ -236,7 +236,7 @@
           { "name": "Wightslayer", "price": 1000 },
           { "name": "Tyrfing", "price": 2800 },
           { "name": "Tonfa", "price": 500 },
-          { "name": "Three-Section Staff", "price": 3000 },
+          { "name": "Three Section Staff", "price": 3000 },
           { "name": "Light Staff", "price": 3500 }
         ]
       },
@@ -345,7 +345,7 @@
           { "name": "Gaia Vest", "price": 4200 },
           { "name": "Bard Vest", "price": 5500 },
           { "name": "Feathered Hat", "price": 8000 },
-          { "name": "Rune Bracelet", "price": 5000 }
+          { "name": "Rune Bracers", "price": 5000 }
         ]
       },
       {
@@ -422,10 +422,10 @@
         "goods": [
           { "name": "White Robe", "price": 7000 },
           { "name": "Black Robe", "price": 7000 },
-          { "name": "Rune Bracelet", "price": 5500 },
+          { "name": "Rune Bracers", "price": 5500 },
           { "name": "Gaia Vest", "price": 4200 },
-          { "name": "Scholar's Robe", "price": 5500 },
-          { "name": "Scholar's Hat", "price": 7500 }
+          { "name": "Scholar Robe", "price": 5500 },
+          { "name": "Scholar Hat", "price": 7500 }
         ]
       },
       {
@@ -660,9 +660,9 @@
         "goods": [
           { "name": "Defender", "price": 16500 },
           { "name": "Great Axe", "price": 14000 },
-          { "name": "Tome of Fire", "price": 15000 },
-          { "name": "Tome of Light", "price": 15000 },
-          { "name": "Tome of Ice", "price": 15000 },
+          { "name": "Tome Of Fire", "price": 15000 },
+          { "name": "Tome Of Light", "price": 15000 },
+          { "name": "Tome Of Ice", "price": 15000 },
           { "name": "Yoichi Arrow", "price": 200 },
           { "name": "Loki Harp", "price": 40000 },
           { "name": "Rune Bell", "price": 5500 }
@@ -703,8 +703,8 @@
       {
         "type": "Armor",
         "goods": [
-          { "name": "Diamond Mail", "price": 25000 },
-          { "name": "Diamond Shield", "price": 12500 }
+          { "name": "Demon Mail", "price": 25000 },
+          { "name": "Demon Shield", "price": 12500 }
         ]
       },
       {
