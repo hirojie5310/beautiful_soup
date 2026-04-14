@@ -10,6 +10,7 @@
 # simulate_battle_multi_party	複数キャラvs複数敵の戦闘を、バトル終了（全滅・逃走・敵殲滅など）まで自動で進める高レベル関数
 # ============================================================
 
+import re
 from random import Random
 from typing import Optional, Literal, Dict, Any, Tuple, List
 
@@ -553,6 +554,8 @@ def _append_enemy_diff_events(
                 "target_side": "enemy",
                 "target_index": i,
                 "value": delta,
+                "old_hp": old_hp,
+                "new_hp": new_hp,
                 "actor_side": actor_side,
                 "actor_index": actor_index,
             }
@@ -567,6 +570,8 @@ def _append_enemy_diff_events(
                 "target_side": "enemy",
                 "target_index": i,
                 "value": 0,
+                "old_hp": old_hp,
+                "new_hp": new_hp,
                 "actor_side": actor_side,
                 "actor_index": actor_index,
             }
@@ -624,6 +629,8 @@ def _append_party_diff_events(
                 "target_side": "char",
                 "target_index": i,
                 "value": delta,
+                "old_hp": old_hp_map[i],
+                "new_hp": new_hp,
                 "actor_side": actor_side,
                 "actor_index": actor_index,
             }
@@ -638,6 +645,8 @@ def _append_party_diff_events(
                 "target_side": "char",
                 "target_index": i,
                 "value": 0,
+                "old_hp": old_hp_map[i],
+                "new_hp": new_hp,
                 "actor_side": actor_side,
                 "actor_index": actor_index,
             }
@@ -658,6 +667,85 @@ def _append_party_diff_events(
             events.append(event)
             if block_events is not None:
                 block_events.append(dict(event))
+
+
+def _extract_display_damage_from_logs(
+    *,
+    logs: list[str],
+    target_name: str,
+) -> int | None:
+    if not target_name:
+        return None
+    escaped = re.escape(str(target_name))
+    patterns = [
+        re.compile(rf"{escaped}に(\d+)のダメージ"),
+        re.compile(rf"{escaped}は(\d+)のダメージを受けた"),
+        re.compile(rf"{escaped}は(\d+)のダメージ"),
+    ]
+    for line in reversed(logs):
+        text = str(line or "")
+        for pattern in patterns:
+            match = pattern.search(text)
+            if match:
+                return int(match.group(1))
+    return None
+
+
+def _annotate_block_damage_display_values(
+    *,
+    block_events: list[dict] | None,
+    all_events: list[dict],
+    logs: list[str],
+    party_members: list[PartyMemberRuntime],
+    enemies: list[EnemyRuntime],
+) -> None:
+    if not block_events:
+        return
+
+    def resolve_target_name(event: dict) -> str:
+        target_side = str(event.get("target_side") or "")
+        target_index = int(event.get("target_index", -1))
+        if target_side == "enemy" and 0 <= target_index < len(enemies):
+            return str(getattr(enemies[target_index], "label", enemies[target_index].name))
+        if target_side == "char" and 0 <= target_index < len(party_members):
+            return str(getattr(party_members[target_index], "name", ""))
+        return ""
+
+    annotated_keys: list[tuple[str, int, int, int]] = []
+    for event in block_events:
+        if str(event.get("type") or "") != "damage":
+            continue
+        target_name = resolve_target_name(event)
+        # Popup uses display_value when present so overkill still shows the
+        # raw/logged damage amount, while value remains the actual HP delta.
+        display_value = _extract_display_damage_from_logs(logs=logs, target_name=target_name)
+        if display_value is None:
+            continue
+        event["display_value"] = int(display_value)
+        annotated_keys.append(
+            (
+                str(event.get("target_side") or ""),
+                int(event.get("target_index", -1)),
+                int(event.get("actor_index", -1)),
+                int(event.get("value", 0)),
+            )
+        )
+
+    for event in all_events:
+        if str(event.get("type") or "") != "damage":
+            continue
+        event_key = (
+            str(event.get("target_side") or ""),
+            int(event.get("target_index", -1)),
+            int(event.get("actor_index", -1)),
+            int(event.get("value", 0)),
+        )
+        if event_key not in annotated_keys:
+            continue
+        target_name = resolve_target_name(event)
+        display_value = _extract_display_damage_from_logs(logs=logs, target_name=target_name)
+        if display_value is not None:
+            event["display_value"] = int(display_value)
 
 
 def simulate_one_round_multi_party(
@@ -899,6 +987,7 @@ def simulate_one_round_multi_party(
             ]
 
             # --- 実行 ---
+            log_start_index = len(logs)
             dmg_to_enemy, char_result = run_character_turn(
                 char_name=pm.name,
                 enemy_name=em.label,
@@ -992,6 +1081,13 @@ def simulate_one_round_multi_party(
                 ),
                 block_events=current_block_events,
             )
+            _annotate_block_damage_display_values(
+                block_events=current_block_events,
+                all_events=events,
+                logs=logs[log_start_index:],
+                party_members=party_members,
+                enemies=enemies,
+            )
 
             # ★ 行動後：戦闘終了チェック
             if all_enemies_defeated(enemies):
@@ -1060,6 +1156,7 @@ def simulate_one_round_multi_party(
                 set(getattr(m.state, "statuses", set())) for m in party_members
             ]
 
+            log_start_index = len(logs)
             enemy_result = run_enemy_turn(
                 char_name=pm.name,
                 enemy_name=em.label,
@@ -1089,6 +1186,13 @@ def simulate_one_round_multi_party(
                 actor_index=idx,
                 focus_target_index=target_idx,
                 block_events=current_block_events,
+            )
+            _annotate_block_damage_display_values(
+                block_events=current_block_events,
+                all_events=events,
+                logs=logs[log_start_index:],
+                party_members=party_members,
+                enemies=enemies,
             )
 
             if all_enemies_defeated(enemies):

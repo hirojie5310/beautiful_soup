@@ -60,12 +60,37 @@ export function mergeMenuStateIntoSave(saveData, menuState) {
       ...asPlainObject(saveParty[saveIndex]),
       ...asPlainObject(member),
     };
+    const status = asPlainObject(member?.status);
     const mpLevels = asPlainObject(member?.mp_levels);
     const nextStatusEffects = asPlainObject(saveEntry.status_effects);
     const nextJob = String(
       member?.current_job || member?.job || saveEntry.current_job || saveEntry.job || "",
     ).trim();
     const jobLevels = asPlainObject(saveEntry.job_levels);
+    const rawMemberJobLevel = member?.job_level;
+    const memberJobLevel = rawMemberJobLevel && typeof rawMemberJobLevel === "object"
+      ? rawMemberJobLevel
+      : {};
+    const normalizedJobLevel = {
+      level: Math.max(
+        1,
+        Number(
+          status?.job_level
+          ?? memberJobLevel.level
+          ?? saveEntry?.job_level?.level
+          ?? 1,
+        ) || 1,
+      ),
+      skill_point: Math.max(
+        0,
+        Number(
+          memberJobLevel.skill_point
+          ?? member?.job_skill_point
+          ?? saveEntry?.job_level?.skill_point
+          ?? 0,
+        ) || 0,
+      ),
+    };
 
     Object.keys(nextStatusEffects).forEach((key) => {
       nextStatusEffects[key] = false;
@@ -77,6 +102,8 @@ export function mergeMenuStateIntoSave(saveData, menuState) {
 
     saveEntry.job = nextJob;
     saveEntry.current_job = nextJob;
+    saveEntry.level = Number(status?.level ?? member?.level ?? saveEntry.level ?? 0);
+    saveEntry.exp = Number(status?.exp ?? member?.exp ?? saveEntry.exp ?? 0);
     saveEntry.row = String(member?.row || saveEntry.row || "front");
     saveEntry.hp = Number(member?.hp ?? saveEntry.hp ?? 0);
     saveEntry.max_hp = Number(member?.max_hp ?? saveEntry.max_hp ?? 0);
@@ -93,15 +120,11 @@ export function mergeMenuStateIntoSave(saveData, menuState) {
       saveEntry.equipment = cloneJsonValue(member.equipment);
     }
     if (nextJob) {
-      const currentJobLevel = asPlainObject(saveEntry.job_level);
       const nextJobProgress = jobLevels[nextJob] && typeof jobLevels[nextJob] === "object"
         ? { ...jobLevels[nextJob] }
-        : {
-          level: Number(currentJobLevel.level ?? 1) || 1,
-          skill_point: Number(currentJobLevel.skill_point ?? 0) || 0,
-        };
-      nextJobProgress.level = Math.max(1, Number(nextJobProgress.level ?? 1) || 1);
-      nextJobProgress.skill_point = Math.max(0, Number(nextJobProgress.skill_point ?? 0) || 0);
+        : { ...normalizedJobLevel };
+      nextJobProgress.level = normalizedJobLevel.level;
+      nextJobProgress.skill_point = normalizedJobLevel.skill_point;
       jobLevels[nextJob] = nextJobProgress;
       saveEntry.job_levels = jobLevels;
       saveEntry.job_level = nextJobProgress;

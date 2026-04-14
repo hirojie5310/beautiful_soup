@@ -1,4 +1,5 @@
 import { getPyodideRuntime } from "./pyodide_runtime.js";
+import { applyEventToPlaybackStatus } from "./battle_playback.js";
 import {
   normalizeMemberIndexedRows,
   normalizePartyIdentityOrder,
@@ -540,53 +541,6 @@ function normalizeStatusIconKey(raw) {
   return String(raw || "").trim().toLowerCase().replace(/^status\./, "");
 }
 
-function applyEventToPlaybackStatus(playbackStatus, event) {
-  if (!playbackStatus || typeof playbackStatus !== "object" || !event || typeof event !== "object") {
-    return null;
-  }
-  const targetSide = String(event?.target_side || "");
-  const collection = targetSide === "enemy" ? playbackStatus.enemies : playbackStatus.party;
-  if (!Array.isArray(collection)) return null;
-  const targetIndex = Number(event?.target_index ?? -1);
-  if (targetIndex < 0 || targetIndex >= collection.length) return null;
-  const target = collection[targetIndex];
-  if (!target || typeof target !== "object") return null;
-
-  if (event.type === "damage") {
-    const amount = Number(event?.value ?? 0);
-    const currentHp = Number(target?.hp ?? 0);
-    const nextHp = Math.max(0, currentHp - amount);
-    target.hp = nextHp;
-    target.out_of_battle = nextHp <= 0 ? true : Boolean(target.out_of_battle);
-    if (target?.status && typeof target.status === "object") {
-      target.status.hp = nextHp;
-    }
-    return {
-      side: targetSide,
-      index: targetIndex,
-      effect: amount > 0
-        ? {
-          kind: "slash",
-          sheetName: ATTACK_EFFECT_SHEET_NAME,
-        }
-        : null,
-      popup: {
-        kind: amount > 0 ? "damage" : "miss",
-        value: amount,
-      },
-    };
-  }
-
-  if (event.type === "status") {
-    const existing = Array.isArray(target.status_icons) ? target.status_icons : [];
-    const additions = Array.isArray(event?.names)
-      ? event.names.map((name) => normalizeStatusIconKey(name)).filter(Boolean)
-      : [];
-    target.status_icons = Array.from(new Set([...existing, ...additions]));
-  }
-  return null;
-}
-
 function parseActionHeaderMeta(line, actorOccurrenceMap) {
   const header = String(line || "").trim();
   let match = header.match(/^▶\s(.+?)\sの行動/);
@@ -760,6 +714,26 @@ function buildNamedCombatEffects(block, playbackStatus) {
   });
 
   return effects;
+}
+
+function applyNamedPopupOverrides(activePopups, effects) {
+  const nextPopups = activePopups && typeof activePopups === "object"
+    ? activePopups
+    : {};
+  asArrayValue(effects).forEach((effect) => {
+    const side = String(effect?.side || "");
+    const index = Number(effect?.index ?? -1);
+    if (!side || index < 0) return;
+    const key = combatPopupKey(side, index);
+    const current = nextPopups[key];
+    if (!current || typeof current !== "object") return;
+    nextPopups[key] = {
+      ...current,
+      kind: String(effect?.kind || current.kind || "damage"),
+      value: Number(effect?.value ?? current.value ?? 0),
+    };
+  });
+  return nextPopups;
 }
 
 function applyNamedCombatEffect(playbackStatus, effect) {
@@ -1344,31 +1318,35 @@ function buildMenuViewState() {
     ? menuState.equipment_by_member
     : [];
   const party = Array.isArray(sessionStatus?.party)
-    ? sessionStatus.party.map((member, index) => ({
-      index: Number(member?.index ?? index),
-      name: String(member?.name || ""),
-      portrait_key: member?.portrait_key ?? null,
-      image_name: member?.image_name ?? null,
-      job: String(member?.job || "Unknown"),
-      level: Number(member?.level ?? 0),
-      row: String(member?.row || "front"),
-      hp: Number(member?.hp ?? 0),
-      max_hp: Number(member?.max_hp ?? 0),
-      mp_levels: member?.mp_levels && typeof member.mp_levels === "object"
-        ? member.mp_levels
-        : {},
-      status: member?.status && typeof member.status === "object"
+    ? sessionStatus.party.map((member, index) => {
+      const status = member?.status && typeof member.status === "object"
         ? member.status
-        : {},
-      status_icons: Array.isArray(member?.status_icons)
-        ? member.status_icons
-        : [],
-      equipment: member?.equipment && typeof member.equipment === "object"
-        ? member.equipment
-        : (equipmentByMember[index] && typeof equipmentByMember[index] === "object"
-          ? equipmentByMember[index]
-          : {}),
-    }))
+        : {};
+      return {
+        index: Number(member?.index ?? index),
+        name: String(member?.name || ""),
+        portrait_key: member?.portrait_key ?? null,
+        image_name: member?.image_name ?? null,
+        job: String(member?.job || "Unknown"),
+        level: Number(status?.level ?? member?.level ?? 0),
+        exp: Number(status?.exp ?? member?.exp ?? 0),
+        row: String(member?.row || "front"),
+        hp: Number(member?.hp ?? 0),
+        max_hp: Number(member?.max_hp ?? 0),
+        mp_levels: member?.mp_levels && typeof member.mp_levels === "object"
+          ? member.mp_levels
+          : {},
+        status,
+        status_icons: Array.isArray(member?.status_icons)
+          ? member.status_icons
+          : [],
+        equipment: member?.equipment && typeof member.equipment === "object"
+          ? member.equipment
+          : (equipmentByMember[index] && typeof equipmentByMember[index] === "object"
+            ? equipmentByMember[index]
+            : {}),
+      };
+    })
     : [];
   const resources = sessionStatus?.resources && typeof sessionStatus.resources === "object"
     ? sessionStatus.resources
@@ -1703,16 +1681,23 @@ async function playBattleLogBlocks(logs, payload) {
           activeCombatEffects[key] = applied.effect;
         }
       });
-      const namedEffects = buildNamedCombatEffects(block, playbackStatus);
-      namedEffects.forEach((effect) => {
-        const applied = applyNamedCombatEffect(playbackStatus, effect);
-        if (!applied) return;
-        const key = combatPopupKey(applied.side, applied.index);
-        activeCombatPopups[key] = applied.popup;
-        if (applied.effect) {
-          activeCombatEffects[key] = applied.effect;
-        }
-      });
+      if (eventsForBlock.length === 0) {
+        const namedEffects = buildNamedCombatEffects(block, playbackStatus);
+        namedEffects.forEach((effect) => {
+          const applied = applyNamedCombatEffect(playbackStatus, effect);
+          if (!applied) return;
+          const key = combatPopupKey(applied.side, applied.index);
+          activeCombatPopups[key] = applied.popup;
+          if (applied.effect) {
+            activeCombatEffects[key] = applied.effect;
+          }
+        });
+      } else {
+        activeCombatPopups = applyNamedPopupOverrides(
+          activeCombatPopups,
+          buildNamedCombatEffects(block, playbackStatus),
+        );
+      }
       rerenderAll();
       logView.textContent = block.lines.join("\n");
       if (block.type === "reward") {
@@ -2242,6 +2227,6 @@ export async function initializeBattleApp({ root = document, store = null, navig
   }
 }
 
-if (document.getElementById("battlePhase")) {
+if (typeof document !== "undefined" && document.getElementById("battlePhase")) {
   initializeBattleApp().catch(() => {});
 }

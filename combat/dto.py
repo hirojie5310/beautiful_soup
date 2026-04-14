@@ -136,7 +136,7 @@ def to_json_ready_dict(dto: ExecuteRoundOutputDTO) -> dict[str, Any]:
         "escaped": dto.escaped,
         "enemy_was_physically_hit": dto.enemy_was_physically_hit,
         "events": dto.events,
-        "event_blocks": dto.event_blocks,
+        "event_blocks": getattr(dto, "event_blocks", []),
         "lifecycle": {
             "before": dto.lifecycle.before,
             "after": dto.lifecycle.after,

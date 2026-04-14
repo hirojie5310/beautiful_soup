@@ -249,6 +249,74 @@ console.log(JSON.stringify(merged));
     assert merged["party"][0]["row"] == "back"
 
 
+def test_merge_menu_state_into_save_prefers_status_progress_over_stale_top_level_fields() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    script = """
+import { mergeMenuStateIntoSave } from "./web_wasm/menu_save_sync.js";
+
+const merged = mergeMenuStateIntoSave(
+  {
+    party: [
+      {
+        name: "Refia",
+        portrait_key: "refia",
+        level: 1,
+        exp: 0,
+        job: "Onion Knight",
+        current_job: "Onion Knight",
+        job_level: { level: 1, skill_point: 0 },
+        job_levels: {
+          "Onion Knight": { level: 1, skill_point: 0 },
+        },
+        hp: 20,
+        max_hp: 20,
+        status_effects: { Poison: false },
+      },
+    ],
+  },
+  {
+    party: [
+      {
+        index: 0,
+        name: "Refia",
+        portrait_key: "refia",
+        level: 1,
+        exp: 0,
+        job: "Onion Knight",
+        current_job: "Onion Knight",
+        hp: 22,
+        max_hp: 22,
+        mp_levels: {},
+        status_icons: [],
+        status: {
+          level: 2,
+          exp: 35,
+          job_level: 3,
+        },
+      },
+    ],
+    resources: { gil: 0, cp: 0 },
+  },
+);
+
+console.log(JSON.stringify(merged));
+"""
+    completed = subprocess.run(
+        ["node", "--input-type=module", "-e", script],
+        cwd=repo_root,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    merged = json.loads(completed.stdout)
+    entry = merged["party"][0]
+
+    assert entry["level"] == 2
+    assert entry["exp"] == 35
+    assert entry["job_level"]["level"] == 3
+    assert entry["job_levels"]["Onion Knight"]["level"] == 3
+
+
 def test_merge_menu_state_into_save_preserves_equipment_change_with_inventory_delta() -> None:
     repo_root = Path(__file__).resolve().parents[1]
     script = """
