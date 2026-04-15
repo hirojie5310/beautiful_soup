@@ -86,6 +86,15 @@ function persistStoredLocationSelectionToLocal(selectedLocationGroup, selectedLo
   }
 }
 
+export function clearStoredLocationSelection() {
+  try {
+    localStorage.removeItem(LOCAL_LOCATION_SELECTION_KEY);
+    return true;
+  } catch (_error) {
+    return false;
+  }
+}
+
 export function getStoredLocationSelection() {
   const localSelection = readStoredLocationSelectionFromLocal();
   if (localSelection) return localSelection;

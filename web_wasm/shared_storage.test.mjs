@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 
 import {
   AUTO_SAVE_SLOT_ID,
+  clearMenuStateFromStorage,
+  clearSaveEnvelopeFromStorage,
   DEFAULT_SAVE_SLOT_ID,
   getLastUsedSaveSlotId,
   listSaveSlotsFromIndexedDB,
@@ -182,4 +184,27 @@ test("shared_storage tracks last used manual slot but ignores auto-save writes",
     rememberSelection: false,
   });
   assert.equal(getLastUsedSaveSlotId(), "slot-2");
+});
+
+test("shared_storage can clear local save and menu mirrors", () => {
+  globalThis.localStorage = createFakeLocalStorage();
+
+  const envelope = makeSaveEnvelope(
+    {
+      schema_version: 3,
+      gil: 50,
+      CP: 1,
+      inventory: {},
+      party: [],
+    },
+    {},
+  );
+
+  assert.equal(persistSaveEnvelopeToStorage(envelope), true);
+  globalThis.localStorage.setItem("ff3_wasm_menu_state_v1", JSON.stringify({ party: [] }));
+
+  assert.equal(clearSaveEnvelopeFromStorage(), true);
+  assert.equal(clearMenuStateFromStorage(), true);
+  assert.equal(restoreSaveEnvelopeFromStorage(), null);
+  assert.equal(globalThis.localStorage.getItem("ff3_wasm_menu_state_v1"), null);
 });

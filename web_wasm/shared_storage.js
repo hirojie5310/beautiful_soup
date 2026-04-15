@@ -162,6 +162,15 @@ export function restoreSaveEnvelopeFromStorage() {
   }
 }
 
+export function clearSaveEnvelopeFromStorage() {
+  try {
+    localStorage.removeItem(LOCAL_SAVE_STORAGE_KEY);
+    return true;
+  } catch (_error) {
+    return false;
+  }
+}
+
 export function parseMenuStateFromStorage() {
   try {
     const text = localStorage.getItem(LOCAL_MENU_STORAGE_KEY);
@@ -170,6 +179,15 @@ export function parseMenuStateFromStorage() {
     return parsed && typeof parsed === "object" ? parsed : {};
   } catch (_error) {
     return {};
+  }
+}
+
+export function clearMenuStateFromStorage() {
+  try {
+    localStorage.removeItem(LOCAL_MENU_STORAGE_KEY);
+    return true;
+  } catch (_error) {
+    return false;
   }
 }
 

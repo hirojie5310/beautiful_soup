@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  clearStoredLocationSelection,
   LOCAL_LOCATION_SELECTION_KEY,
   LOCAL_SAVE_STORAGE_KEY,
   getStoredLocationSelection,
@@ -72,4 +73,22 @@ test("syncStoredLocationSelection updates envelope metadata when a save already 
     restoreSaveEnvelopeFromStorage()?.selected_location,
     "Bahamut's Lair",
   );
+});
+
+test("clearStoredLocationSelection removes persisted location choice", () => {
+  globalThis.localStorage = createFakeLocalStorage();
+  delete globalThis.indexedDB;
+
+  assert.equal(syncStoredLocationSelection("Floating Continent", "Bahamut's Lair"), true);
+  assert.deepEqual(getStoredLocationSelection(), {
+    selected_location_group: "Floating Continent",
+    selected_location: "Bahamut's Lair",
+  });
+
+  assert.equal(clearStoredLocationSelection(), true);
+  assert.equal(localStorage.getItem(LOCAL_LOCATION_SELECTION_KEY), null);
+  assert.deepEqual(getStoredLocationSelection(), {
+    selected_location_group: "",
+    selected_location: "",
+  });
 });

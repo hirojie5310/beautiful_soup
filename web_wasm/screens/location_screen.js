@@ -18,6 +18,7 @@ function renderLayout() {
 
         <div class="buttons">
           <button id="startBattleBtn" class="btn" type="button" disabled>戦闘開始</button>
+          <button id="titleBtn" class="btn" type="button">タイトルへ戻る</button>
           <button id="shopBtn" class="btn" type="button">Shop</button>
           <button id="innBtn" class="btn" type="button">Inn</button>
           <button id="menuBtn" class="btn" type="button">メニュー</button>
@@ -71,6 +72,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   const locationGroupSelect = mountNode.querySelector("#locationGroupSelect");
   const locationSelect = mountNode.querySelector("#locationSelect");
   const startBattleBtn = mountNode.querySelector("#startBattleBtn");
+  const titleBtn = mountNode.querySelector("#titleBtn");
   const shopBtn = mountNode.querySelector("#shopBtn");
   const innBtn = mountNode.querySelector("#innBtn");
   const menuBtn = mountNode.querySelector("#menuBtn");
@@ -104,6 +106,10 @@ export async function mountScreen({ mountNode, store, navigate }) {
     });
     navigate("battle");
   };
+  const handleGoTitle = () => {
+    store.resetForTitle();
+    navigate("title");
+  };
   const handleGoShop = () => {
     syncStoreSelection(store, locationGroupSelect, locationSelect);
     navigate("shop");
@@ -120,6 +126,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   locationGroupSelect.addEventListener("change", handleGroupChange);
   locationSelect.addEventListener("change", handleLocationChange);
   startBattleBtn.addEventListener("click", handleStartBattle);
+  titleBtn.addEventListener("click", handleGoTitle);
   shopBtn.addEventListener("click", handleGoShop);
   innBtn.addEventListener("click", handleGoInn);
   menuBtn.addEventListener("click", handleGoMenu);
@@ -156,6 +163,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     locationGroupSelect.removeEventListener("change", handleGroupChange);
     locationSelect.removeEventListener("change", handleLocationChange);
     startBattleBtn.removeEventListener("click", handleStartBattle);
+    titleBtn.removeEventListener("click", handleGoTitle);
     shopBtn.removeEventListener("click", handleGoShop);
     innBtn.removeEventListener("click", handleGoInn);
     menuBtn.removeEventListener("click", handleGoMenu);

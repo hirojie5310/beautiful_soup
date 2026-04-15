@@ -28,6 +28,14 @@ def test_phase1_spa_shell_files_exist() -> None:
     assert Path("web_wasm/screens/job_screen.js").exists()
 
 
+def test_location_screen_includes_title_return_button() -> None:
+    source = Path("web_wasm/screens/location_screen.js").read_text(encoding="utf-8")
+
+    assert 'id="titleBtn"' in source
+    assert 'タイトルへ戻る' in source
+    assert 'navigate("title")' in source
+
+
 def test_legacy_shop_and_inn_pages_redirect_to_spa_routes() -> None:
     shop_html = Path("web_wasm/shop.html").read_text(encoding="utf-8")
     inn_html = Path("web_wasm/inn.html").read_text(encoding="utf-8")

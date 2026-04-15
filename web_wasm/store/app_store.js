@@ -1,9 +1,12 @@
 import {
+  clearStoredLocationSelection,
   getStoredLocationSelection,
   getStoredLocationSelectionAsync,
   syncStoredLocationSelection,
 } from "../location_shared.js";
 import {
+  clearMenuStateFromStorage,
+  clearSaveEnvelopeFromStorage,
   LOCAL_MENU_STORAGE_KEY,
   makeSaveEnvelope,
   parseMenuStateFromStorage,
@@ -224,6 +227,21 @@ export function createAppStore() {
     });
   }
 
+  function resetForTitle() {
+    clearStoredLocationSelection();
+    clearSaveEnvelopeFromStorage();
+    clearMenuStateFromStorage();
+    state = {
+      ...state,
+      selectedLocationGroup: "",
+      selectedLocation: "",
+      menuMemberIndex: 0,
+      menuState: { party: [], resources: { cp: 0, cp_max: 255, gil: 0 } },
+      saveEnvelope: null,
+    };
+    notify();
+  }
+
   function subscribe(listener) {
     listeners.add(listener);
     return () => {
@@ -238,6 +256,7 @@ export function createAppStore() {
     updateMenuState,
     updateSaveEnvelope,
     createDefaultEnvelope,
+    resetForTitle,
     subscribe,
   };
 }
