@@ -7,6 +7,7 @@ import {
   loadShopMasterData,
   normalizeShopTypeToInventoryBucket,
   persistMenuStateFromEnvelope,
+  shopRowLabel,
   syncMenuStateAfterPurchase,
 } from "../location_shared.js";
 import { mergeMenuStateIntoSave } from "../menu_save_sync.js";
@@ -81,7 +82,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   function selectedShopTypeRow() {
     const entry = selectedShopEntry();
     return asArray(entry?.shops).find(
-      (row) => String(row?.type || "") === String(shopTypeSelect.value || ""),
+      (row) => shopRowLabel(row) === String(shopTypeSelect.value || ""),
     ) || null;
   }
 
@@ -121,7 +122,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     const shops = asArray(entry?.shops);
     setSelectOptions(
       shopTypeSelect,
-      shops.map((row) => String(row?.type || "")).filter(Boolean),
+      shops.map((row) => shopRowLabel(row)).filter(Boolean),
       shopTypeSelect.value || "",
     );
     renderShopGoods();
@@ -165,7 +166,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     if (!nextEnvelope.menu_state || typeof nextEnvelope.menu_state !== "object") {
       nextEnvelope.menu_state = { party: [], resources: { cp: 0, cp_max: 255, gil } };
     }
-    const bucketName = normalizeShopTypeToInventoryBucket(masterData, typeRow.type, goods.name);
+    const bucketName = normalizeShopTypeToInventoryBucket(masterData, typeRow, goods.name);
     nextEnvelope.save.gil = Math.max(0, gil - price);
     if (!addPurchasedItemToInventory(nextEnvelope.save, masterData.spellLevelByName, bucketName, goods.name, 1)) {
       shopStatusLine.textContent = `${goods.name} の保存先を解決できませんでした。`;

@@ -442,7 +442,9 @@
         ]
       },
       {
-        "type": "LV.5 Magic",
+        "type": "Magic",
+        "display_type": "LV.5 Magic",
+        "inventory_bucket": "Magic",
         "goods": [
           { "name": "Thundaga", "price": 5000 },
           { "name": "Raze", "price": 5000 },
@@ -453,7 +455,9 @@
         ]
       },
       {
-        "type": "LV.4 Magic",
+        "type": "Magic",
+        "display_type": "LV.4 Magic",
+        "inventory_bucket": "Magic",
         "goods": [
           { "name": "Break", "price": 3000 },
           { "name": "Blizzaga", "price": 3000 },
@@ -520,7 +524,9 @@
     "map": "Doga's Village",
     "shops": [
       {
-        "type": "LV.3 Magic",
+        "type": "Magic",
+        "display_type": "LV.3 Magic",
+        "inventory_bucket": "Magic",
         "goods": [
           { "name": "Fira", "price": 1500 },
           { "name": "Blizzara", "price": 1500 },
@@ -530,7 +536,9 @@
         ]
       },
       {
-        "type": "LV.4 Magic",
+        "type": "Magic",
+        "display_type": "LV.4 Magic",
+        "inventory_bucket": "Magic",
         "goods": [
           { "name": "Break", "price": 3000 },
           { "name": "Blizzaga", "price": 3000 },
@@ -542,7 +550,9 @@
         ]
       },
       {
-        "type": "LV.5 Magic",
+        "type": "Magic",
+        "display_type": "LV.5 Magic",
+        "inventory_bucket": "Magic",
         "goods": [
           { "name": "Thundaga", "price": 5000 },
           { "name": "Raze", "price": 5000 },
@@ -553,7 +563,9 @@
         ]
       },
       {
-        "type": "LV.6 Magic",
+        "type": "Magic",
+        "display_type": "LV.6 Magic",
+        "inventory_bucket": "Magic",
         "goods": [
           { "name": "Firaga", "price": 10000 },
           { "name": "Bio", "price": 10000 },
@@ -566,7 +578,9 @@
         ]
       },
       {
-        "type": "LV.7 Magic",
+        "type": "Magic",
+        "display_type": "LV.7 Magic",
+        "inventory_bucket": "Magic",
         "goods": [
           { "name": "Quake", "price": 20000 },
           { "name": "Breakga", "price": 20000 },
@@ -578,6 +592,7 @@
       },
       {
         "type": "Summon Magic",
+        "inventory_bucket": "Magic",
         "goods": [
           { "name": "Chocobo", "price": 100 },
           { "name": "Shiva", "price": 700 },
@@ -736,6 +751,7 @@
       },
       {
         "type": "Summon Magic",
+        "inventory_bucket": "Magic",
         "goods": [
           { "name": "Odin", "price": 45000 },
           { "name": "Leviathan", "price": 55000 },

@@ -216,8 +216,13 @@ export async function loadShopMasterData() {
   };
 }
 
-export function normalizeShopTypeToInventoryBucket(masterData, type, itemName) {
-  const rawType = String(type || "");
+export function normalizeShopTypeToInventoryBucket(masterData, shopRowOrType, itemName) {
+  const shopRow = shopRowOrType && typeof shopRowOrType === "object"
+    ? shopRowOrType
+    : { type: shopRowOrType };
+  const inventoryBucket = String(shopRow?.inventory_bucket || "");
+  if (inventoryBucket) return inventoryBucket;
+  const rawType = String(shopRow?.type || "");
   if (rawType === "Armor") return "Armor";
   if (rawType === "Weapons") return "Weapon";
   if (rawType === "Weapons & Armor") {
@@ -230,6 +235,10 @@ export function normalizeShopTypeToInventoryBucket(masterData, type, itemName) {
   if (masterData.weaponNameSet.has(itemName)) return "Weapon";
   if (masterData.armorNameSet.has(itemName)) return "Armor";
   return "Anywhere";
+}
+
+export function shopRowLabel(shopRow) {
+  return String(shopRow?.display_type || shopRow?.type || "");
 }
 
 export function addPurchasedItemToInventory(save, spellLevelByName, bucketName, itemName, quantity = 1) {
