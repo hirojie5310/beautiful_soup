@@ -1,4 +1,4 @@
-import { applyJobChangeToSaveEntry } from "../job_persistence.js";
+import { applyJobChangeToSaveEntry, returnEquipmentToInventory } from "../job_persistence.js";
 import { mergeMenuStateIntoSave } from "../menu_save_sync.js";
 import { renderMenuSubpageShell } from "./menu_subpage_shell.js";
 import {
@@ -116,7 +116,10 @@ export async function mountScreen({ mountNode, store, navigate }) {
     const requiredCp = asNum(row?.cp_cost, 0);
     const currentCp = asNum(menuState?.resources?.cp, 0);
     if (currentCp < requiredCp) return window.alert(`CPが足りません。必要 ${requiredCp} / 現在 ${currentCp}`);
-    if (!window.confirm(`${member?.name || "このキャラ"}を ${selectedName} に変更しますか？\n必要CP: ${requiredCp}`)) return;
+    if (!window.confirm(`${member?.name || "このキャラ"}を ${selectedName} に変更しますか？\n必要CP: ${requiredCp}\nジョブチェンジ後は装備がすべて解除されます。`)) return;
+    const previousEquipment = member?.equipment && typeof member.equipment === "object"
+      ? structuredClone(member.equipment)
+      : {};
 
     const nextParty = party.map((rowMember, idx) => {
       if (idx !== memberIndex) return rowMember;
@@ -148,6 +151,11 @@ export async function mountScreen({ mountNode, store, navigate }) {
     nextEnvelope.menu_state = nextMenuState;
     if (nextEnvelope?.save) {
       nextEnvelope.save = mergeMenuStateIntoSave(nextEnvelope.save, nextMenuState);
+      returnEquipmentToInventory(
+        nextEnvelope.save,
+        previousEquipment,
+        menuState?.inventory_catalog,
+      );
     }
     persistMenuEnvelope(store, nextMenuState, nextEnvelope);
     selectedJobNameByMember[memberIndex] = selectedName;

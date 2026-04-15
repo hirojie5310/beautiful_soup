@@ -324,7 +324,7 @@
           jobMessage.className = "message muted";
           return;
         }
-        if (!window.confirm(`${row.job_name}にジョブチェンジしますか？`)) {
+        if (!window.confirm(`${row.job_name}にジョブチェンジしますか？\nジョブチェンジ後は装備がすべて解除されます。`)) {
           jobMessage.textContent = "ジョブチェンジをやめた。";
           jobMessage.className = "message muted";
           return;

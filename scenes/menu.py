@@ -1816,16 +1816,8 @@ def open_job_pygame(
                     a.base.job_level = max(1, int(new_level))
                     a.base.job_skill_point = max(0, min(99, int(new_spv)))
 
-                    # 4) 装備制限チェック → 外す
-                    if a.equipment is None:
-                        a.equipment = EquipmentSet()
-                    new_eq, removed = strip_illegal_equipment_for_job(
-                        a.equipment,
-                        a.job,
-                        weapons_by_name=weapons_by_name,
-                        armors_by_name=armors_by_name,
-                    )
-                    a.equipment = new_eq
+                    # 4) ジョブチェンジ後は装備を全て外す
+                    a.equipment = EquipmentSet()
 
                     # 5) 再計算
                     a.stats = recalc_stats_fn(a, weapons_by_name, armors_by_name)
@@ -1833,22 +1825,13 @@ def open_job_pygame(
                     # 6) save_dict を現在状態で同期
                     update_save_for_actor(a)
 
-                    # 7) 装備が外れたら装備画面へ誘導
-                    if removed:
-                        msg = "Removed: " + ", ".join(removed[:2])
-                        if len(removed) > 2:
-                            msg += "..."
-                        show_toast_message(screen, font, msg, duration=1.2)
-
-                        open_equip_pygame(
-                            screen,
-                            font,
-                            party,
-                            weapons_by_name=weapons_by_name,
-                            armors_by_name=armors_by_name,
-                            portrait_cache=portrait_cache,
-                            status_icon_cache=status_icon_cache,
-                        )
+                    # 7) フィードバック表示
+                    show_toast_message(
+                        screen,
+                        font,
+                        "All equipment removed",
+                        duration=1.2,
+                    )
 
         # ---- draw ----
         screen.fill((0, 0, 0))

@@ -1964,7 +1964,40 @@ def create_app(
 
         save["CP"] = max(0, current_cp - required_cp)
         party_entry = save["party"][member_index]
+        before_equipment = deepcopy(
+            member.equipment if member.equipment is not None else EquipmentSet()
+        )
+        job_levels = party_entry.get("job_levels")
+        if not isinstance(job_levels, dict):
+            job_levels = {}
+            party_entry["job_levels"] = job_levels
+        if from_job:
+            job_levels[from_job] = {
+                "level": _safe_int(getattr(member.base, "job_level", 1), 1),
+                "skill_point": _safe_int(getattr(member.base, "job_skill_point", 0), 0),
+            }
+        next_progress = job_levels.get(job_name)
+        if not isinstance(next_progress, dict):
+            next_progress = {"level": int(to_job_level), "skill_point": 0}
+            job_levels[job_name] = next_progress
         party_entry["job"] = job_name
+        party_entry["current_job"] = job_name
+        party_entry["job_level"] = {
+            "level": _safe_int(next_progress.get("level", to_job_level), 1),
+            "skill_point": _safe_int(next_progress.get("skill_point", 0), 0),
+        }
+        party_entry["equipment"] = {
+            "main_hand": None,
+            "off_hand": None,
+            "head": None,
+            "body": None,
+            "arms": None,
+        }
+        _apply_equipment_inventory_delta(
+            battle_session,
+            before=before_equipment,
+            after=EquipmentSet(),
+        )
         _refresh_session_party(battle_session)
         return (
             jsonify(

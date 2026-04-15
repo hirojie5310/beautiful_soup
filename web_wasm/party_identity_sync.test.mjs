@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 
 import { findPartyMemberIndex } from "./shared_party.js";
 import { syncSavePartyRecovery } from "./location_shared.js";
-import { applyJobChangeToSaveEntry } from "./job_persistence.js";
+import { applyJobChangeToSaveEntry, returnEquipmentToInventory } from "./job_persistence.js";
 
 test("findPartyMemberIndex matches members by identity instead of display order", () => {
   const saveParty = [
@@ -95,4 +95,65 @@ test("job persistence updates the matched save entry when save order differs", (
   assert.equal(saveParty[0].job, "White Mage");
   assert.equal(saveParty[1].job, "Dragoon");
   assert.equal(saveParty[1].current_job, "Dragoon");
+});
+
+test("job persistence clears equipment after job change", () => {
+  const updated = applyJobChangeToSaveEntry(
+    {
+      job: "Monk",
+      current_job: "Monk",
+      job_level: { level: 7, skill_point: 0 },
+      job_levels: {
+        Monk: { level: 7, skill_point: 0 },
+        Dragoon: { level: 3, skill_point: 0 },
+      },
+      equipment: {
+        main_hand: "Knife",
+        off_hand: "Buckler",
+        head: "Leather Cap",
+        body: null,
+        arms: null,
+      },
+    },
+    {
+      currentJob: "Monk",
+      nextJob: "Dragoon",
+      currentJobLevel: 7,
+      currentJobSkillPoint: 0,
+      nextJobLevel: 3,
+      nextJobSkillPoint: 0,
+    },
+  );
+
+  assert.deepEqual(updated.equipment, {
+    main_hand: null,
+    off_hand: null,
+    head: null,
+    body: null,
+    arms: null,
+  });
+});
+
+test("job persistence returns removed equipment to inventory when catalogs are available", () => {
+  const save = { inventory: { Weapon: {}, Armor: {} } };
+
+  const changed = returnEquipmentToInventory(
+    save,
+    {
+      main_hand: "Knife",
+      off_hand: "Buckler",
+      head: "Leather Cap",
+      body: null,
+      arms: null,
+    },
+    {
+      weapons: ["Knife"],
+      armors: ["Buckler", "Leather Cap"],
+    },
+  );
+
+  assert.equal(changed, true);
+  assert.equal(save.inventory.Weapon.Knife, 1);
+  assert.equal(save.inventory.Armor.Buckler, 1);
+  assert.equal(save.inventory.Armor["Leather Cap"], 1);
 });
