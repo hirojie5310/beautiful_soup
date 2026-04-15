@@ -819,6 +819,12 @@ def get_menu_state_json():
         return json.dumps({}, ensure_ascii=False)
     runtime_state = getattr(engine.session, "state", None)
     save = getattr(runtime_state, "save", {})
+    session_status = build_session_status_snapshot(engine.session)
+    party = (
+        session_status.get("party", [])
+        if isinstance(session_status, dict)
+        else []
+    )
     jobs_by_name = getattr(runtime_state, "jobs_by_name", {})
     job_names = sorted(
         [
@@ -897,6 +903,7 @@ def get_menu_state_json():
     if not isinstance(armors_by_name, dict):
         armors_by_name = {}
     payload = {
+        "party": party,
         "jobs": job_names,
         "job_candidates_by_member": by_member,
         "equip_candidates_by_member": _build_equip_candidates_by_member(engine.session),
