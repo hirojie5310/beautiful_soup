@@ -16,7 +16,6 @@ const STATUS_EFFECT_KEY_BY_ICON = {
   "partial petrification": "Partial Petrification",
   partial_petrify: "Partial Petrification",
 };
-const MENU_SAVE_SYNC_DEBUG_TAG = "[menu-save-sync-debug]";
 
 function cloneJsonValue(value) {
   if (typeof structuredClone === "function") {
@@ -47,54 +46,6 @@ function findSavePartyIndex(saveParty, member, fallbackIndex) {
   return matchedIndex >= 0 ? matchedIndex : fallbackIndex;
 }
 
-function summarizePartyMemberForSync(member, index) {
-  if (!member || typeof member !== "object") {
-    return { index, raw: member };
-  }
-  const jobLevels = member?.job_levels && typeof member.job_levels === "object"
-    ? Object.fromEntries(
-      Object.entries(member.job_levels).map(([jobName, row]) => [
-        String(jobName || ""),
-        {
-          level: Number(row?.level ?? row ?? 0),
-          skill_point: Number(row?.skill_point ?? 0),
-        },
-      ]),
-    )
-    : {};
-  return {
-    index,
-    name: String(member?.name || ""),
-    job: String(member?.job || ""),
-    current_job: String(member?.current_job || ""),
-    job_level: member?.job_level && typeof member.job_level === "object"
-      ? {
-        level: Number(member.job_level.level ?? 0),
-        skill_point: Number(member.job_level.skill_point ?? 0),
-      }
-      : member?.job_level ?? null,
-    job_levels: jobLevels,
-    equipment: member?.equipment && typeof member.equipment === "object"
-      ? cloneJsonValue(member.equipment)
-      : null,
-    Magic: member?.Magic && typeof member.Magic === "object"
-      ? cloneJsonValue(member.Magic)
-      : null,
-  };
-}
-
-function logMenuSaveSyncDebug(label, payload) {
-  try {
-    console.info(
-      MENU_SAVE_SYNC_DEBUG_TAG,
-      label,
-      JSON.stringify(payload, null, 2),
-    );
-  } catch (_error) {
-    // ignore debug logging failure
-  }
-}
-
 export function mergeMenuStateIntoSave(saveData, menuState) {
   const nextSave = cloneJsonValue(saveData || {});
   const nextMenuState = menuState && typeof menuState === "object" ? menuState : {};
@@ -105,12 +56,6 @@ export function mergeMenuStateIntoSave(saveData, menuState) {
 
   menuParty.forEach((member, index) => {
     const saveIndex = findSavePartyIndex(saveParty, member, index);
-    logMenuSaveSyncDebug("mergeMenuStateIntoSave.before_member", {
-      menuIndex: index,
-      saveIndex,
-      menuMember: summarizePartyMemberForSync(member, index),
-      saveMember: summarizePartyMemberForSync(saveParty[saveIndex], saveIndex),
-    });
     const saveEntry = {
       ...asPlainObject(saveParty[saveIndex]),
       ...asPlainObject(member),
@@ -200,11 +145,6 @@ export function mergeMenuStateIntoSave(saveData, menuState) {
     }
 
     saveParty[saveIndex] = saveEntry;
-    logMenuSaveSyncDebug("mergeMenuStateIntoSave.after_member", {
-      menuIndex: index,
-      saveIndex,
-      mergedMember: summarizePartyMemberForSync(saveEntry, saveIndex),
-    });
   });
 
   nextSave.party = saveParty;

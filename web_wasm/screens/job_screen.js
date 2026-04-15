@@ -10,49 +10,6 @@ import {
 } from "./screen_shared.js";
 
 function asNum(v, d = 0) { const n = Number(v); return Number.isFinite(n) ? n : d; }
-const JOB_CHANGE_DEBUG_TAG = "[job-change-debug]";
-
-function summarizeJobMember(member, index) {
-  if (!member || typeof member !== "object") {
-    return { index, raw: member };
-  }
-  const jobLevels = member?.job_levels && typeof member.job_levels === "object"
-    ? Object.fromEntries(
-      Object.entries(member.job_levels).map(([jobName, row]) => [
-        String(jobName || ""),
-        {
-          level: Number(row?.level ?? row ?? 0),
-          skill_point: Number(row?.skill_point ?? 0),
-        },
-      ]),
-    )
-    : {};
-  return {
-    index,
-    name: String(member?.name || ""),
-    job: String(member?.job || ""),
-    current_job: String(member?.current_job || ""),
-    job_level: member?.job_level && typeof member.job_level === "object"
-      ? {
-        level: Number(member.job_level.level ?? 0),
-        skill_point: Number(member.job_level.skill_point ?? 0),
-      }
-      : member?.job_level ?? null,
-    job_levels: jobLevels,
-  };
-}
-
-function logJobChangeDebug(label, payload) {
-  try {
-    console.info(
-      JOB_CHANGE_DEBUG_TAG,
-      label,
-      JSON.stringify(payload, null, 2),
-    );
-  } catch (_error) {
-    // ignore debug logging failure
-  }
-}
 
 function renderLayout() {
   return renderMenuSubpageShell({
@@ -163,12 +120,6 @@ export async function mountScreen({ mountNode, store, navigate }) {
     const previousEquipment = member?.equipment && typeof member.equipment === "object"
       ? structuredClone(member.equipment)
       : {};
-    logJobChangeDebug("applyJobChange.before", {
-      memberIndex,
-      selectedName,
-      member: summarizeJobMember(member, memberIndex),
-    });
-
     const nextParty = party.map((rowMember, idx) => {
       if (idx !== memberIndex) return rowMember;
       const syncedJobState = applyJobChangeToSaveEntry(
@@ -184,11 +135,6 @@ export async function mountScreen({ mountNode, store, navigate }) {
       );
       return { ...rowMember, ...syncedJobState, job: selectedName, current_job: selectedName };
     });
-    logJobChangeDebug("applyJobChange.nextPartyMember", {
-      memberIndex,
-      selectedName,
-      member: summarizeJobMember(nextParty[memberIndex], memberIndex),
-    });
     const nextResources = { ...(menuState?.resources || {}), cp: currentCp - requiredCp };
     const nextJobCandidatesByMember = (menuState?.job_candidates_by_member || menuState?.jobCandidatesByMember || []).map((memberRows, idx) => {
       if (idx !== memberIndex || !Array.isArray(memberRows)) return memberRows;
@@ -200,11 +146,6 @@ export async function mountScreen({ mountNode, store, navigate }) {
       resources: nextResources,
       job_candidates_by_member: nextJobCandidatesByMember,
     };
-    logJobChangeDebug("applyJobChange.nextMenuStatePartyMember", {
-      memberIndex,
-      selectedName,
-      member: summarizeJobMember(nextMenuState.party?.[memberIndex], memberIndex),
-    });
     const nextEnvelope = structuredClone(state.saveEnvelope || store.createDefaultEnvelope());
     nextEnvelope.menu_state = nextMenuState;
     if (nextEnvelope?.save) {
@@ -214,11 +155,6 @@ export async function mountScreen({ mountNode, store, navigate }) {
         previousEquipment,
         menuState?.inventory_catalog,
       );
-      logJobChangeDebug("applyJobChange.nextEnvelopeSavePartyMember", {
-        memberIndex,
-        selectedName,
-        member: summarizeJobMember(nextEnvelope.save?.party?.[memberIndex], memberIndex),
-      });
     }
     persistMenuEnvelope(store, nextMenuState, nextEnvelope);
     selectedJobNameByMember[memberIndex] = selectedName;

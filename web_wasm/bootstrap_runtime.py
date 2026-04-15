@@ -425,7 +425,6 @@ def boot_engine_for_location(location_group, location, seed=7):
     global state
     if isinstance(getattr(state, "save", None), dict):
         state.save = migrate_save(state.save)
-        _debug_log_party("python.state.save.party.before_session_build", state.save.get("party"))
     selected_group = str(location_group or "")
     selected_location = str(location or "")
     entry = location_to_entry.get(selected_location)
@@ -1035,10 +1034,7 @@ def boot_engine_for_location_with_save_json(
         base_party = base_save.get("party", []) if isinstance(base_save, dict) else []
         if isinstance(parsed_party, list):
             parsed["party"] = _align_party_to_base(base_party, parsed_party)
-            _debug_log_party("python.parsed.party.after_align_to_base", parsed.get("party"))
     state.save = _merge_save_data(base_save, parsed)
-    if isinstance(state.save, dict):
-        _debug_log_party("python.state.save.party.after_merge", state.save.get("party"))
     return boot_engine_for_location(location_group, location, seed=seed)
 
 

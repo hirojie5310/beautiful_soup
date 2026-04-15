@@ -21,3 +21,5 @@ build/main/localpycs/
 
 *.exe
 desktop.ini
+.DS_Store
+tmp/

@@ -5,7 +5,6 @@ import {
   normalizePartyIdentityOrder,
   resolveFaceImageCandidates,
 } from "./shared_party.js";
-import { mergeMenuStateIntoSave } from "./menu_save_sync.js";
 import {
   AUTO_SAVE_SLOT_ID,
   LOCAL_MENU_STORAGE_KEY,
@@ -114,14 +113,6 @@ function logBattleBootDebug(label, party) {
   } catch (_error) {
     // ignore debug logging failure
   }
-}
-
-function hasPartyMembers(party) {
-  return Array.isArray(party) && party.length > 0;
-}
-
-function hasUsableMenuState(menuState) {
-  return Boolean(menuState && typeof menuState === "object" && hasPartyMembers(menuState.party));
 }
 
 function bindDom(root = document) {
@@ -2013,22 +2004,16 @@ function applyFullRecoverParty() {
 
 function resolveSaveDataForBoot() {
   if (appStore?.getState()?.saveEnvelope?.save && typeof appStore.getState().saveEnvelope.save === "object") {
-    const currentState = appStore.getState();
-    logBattleBootDebug("store.menuState.party.before_merge", currentState.menuState?.party);
     // Battle boot trusts saveEnvelope.save as the source of truth.
     // Menu actions already persist into saveEnvelope.save, while menuState can lag
     // behind and accidentally overwrite newer job changes during a boot-time merge.
-    logBattleBootDebug("store.save.party.without_menu_merge", currentState.saveEnvelope.save?.party);
-    return currentState.saveEnvelope.save;
+    return appStore.getState().saveEnvelope.save;
   }
   if (loadedSaveData && typeof loadedSaveData === "object") {
-    logBattleBootDebug("loadedSaveData.party", loadedSaveData?.party);
     return loadedSaveData;
   }
   const storedEnvelope = cachedStoredEnvelope || restoreSaveEnvelopeFromStorage();
   if (storedEnvelope?.save && typeof storedEnvelope.save === "object") {
-    logBattleBootDebug("storedEnvelope.menu_state.party.before_merge", storedEnvelope.menu_state?.party);
-    logBattleBootDebug("storedEnvelope.save.party.without_menu_merge", storedEnvelope.save?.party);
     return storedEnvelope.save;
   }
   return null;
