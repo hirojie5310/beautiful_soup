@@ -1,5 +1,5 @@
 import { FIXED_PARTY_SLOT_KEYS, FIXED_PARTY_SLOT_LABELS } from "./shared_party.js";
-import { makeSaveEnvelope, persistSaveEnvelopeToIndexedDB } from "./shared_storage.js";
+import { makeSaveEnvelope, persistAutoSaveEnvelope } from "./shared_storage.js";
 
 export const MANUAL_SAVE_SLOT_IDS = ["slot-1", "slot-2", "slot-3"];
 
@@ -115,9 +115,5 @@ export async function hydrateEnvelopeWithRuntime(pyodide, envelope) {
 }
 
 export async function persistAutoSave(envelope) {
-  return persistSaveEnvelopeToIndexedDB(envelope, {
-    slotId: "auto-1",
-    kind: "auto",
-    rememberSelection: false,
-  });
+  return persistAutoSaveEnvelope(envelope);
 }

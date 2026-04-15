@@ -58,6 +58,57 @@ _PARTY_ALIAS_MAP = {
     "luneth": "runeth",
 }
 CURRENT_SAVE_SCHEMA_VERSION = 2
+_BATTLE_BOOT_DEBUG_TAG = "[battle-boot-debug]"
+
+
+def _summarize_party_for_debug(party):
+    if not isinstance(party, list):
+        return []
+    summary = []
+    for idx, entry in enumerate(party):
+        if not isinstance(entry, dict):
+            summary.append({"index": idx, "raw": entry})
+            continue
+        job_level = entry.get("job_level")
+        if isinstance(job_level, dict):
+            normalized_job_level = {
+                "level": _safe_int(job_level.get("level", 0), 0),
+                "skill_point": _safe_int(job_level.get("skill_point", 0), 0),
+            }
+        else:
+            normalized_job_level = job_level
+        job_levels = entry.get("job_levels")
+        normalized_job_levels = {}
+        if isinstance(job_levels, dict):
+            for job_name, row in job_levels.items():
+                if isinstance(row, dict):
+                    normalized_job_levels[str(job_name)] = {
+                        "level": _safe_int(row.get("level", 0), 0),
+                        "skill_point": _safe_int(row.get("skill_point", 0), 0),
+                    }
+                else:
+                    normalized_job_levels[str(job_name)] = _safe_int(row, 0)
+        equipment = entry.get("equipment")
+        summary.append(
+            {
+                "index": idx,
+                "name": str(entry.get("name") or ""),
+                "job": str(entry.get("job") or ""),
+                "current_job": str(entry.get("current_job") or ""),
+                "job_level": normalized_job_level,
+                "job_levels": normalized_job_levels,
+                "equipment": equipment if isinstance(equipment, dict) else None,
+                "Magic": entry.get("Magic") if isinstance(entry.get("Magic"), dict) else None,
+            }
+        )
+    return summary
+
+
+def _debug_log_party(label, party):
+    try:
+        print(_BATTLE_BOOT_DEBUG_TAG, label, json.dumps(_summarize_party_for_debug(party), ensure_ascii=False))
+    except Exception as exc:
+        print(_BATTLE_BOOT_DEBUG_TAG, label, f"<debug log failed: {exc}>")
 
 
 def _merge_save_data(base, overlay):
@@ -374,6 +425,7 @@ def boot_engine_for_location(location_group, location, seed=7):
     global state
     if isinstance(getattr(state, "save", None), dict):
         state.save = migrate_save(state.save)
+        _debug_log_party("python.state.save.party.before_session_build", state.save.get("party"))
     selected_group = str(location_group or "")
     selected_location = str(location or "")
     entry = location_to_entry.get(selected_location)
@@ -978,11 +1030,15 @@ def boot_engine_for_location_with_save_json(
     current_save = getattr(state, "save", {})
     base_save = current_save if isinstance(current_save, dict) else {}
     if isinstance(parsed, dict):
+        _debug_log_party("python.parsed.party.received_from_js", parsed.get("party"))
         parsed_party = parsed.get("party")
         base_party = base_save.get("party", []) if isinstance(base_save, dict) else []
         if isinstance(parsed_party, list):
             parsed["party"] = _align_party_to_base(base_party, parsed_party)
+            _debug_log_party("python.parsed.party.after_align_to_base", parsed.get("party"))
     state.save = _merge_save_data(base_save, parsed)
+    if isinstance(state.save, dict):
+        _debug_log_party("python.state.save.party.after_merge", state.save.get("party"))
     return boot_engine_for_location(location_group, location, seed=seed)
 
 

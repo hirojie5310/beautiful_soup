@@ -61,6 +61,68 @@ const PYTHON_BUNDLE_VERSION = "20260406c";
 const ATTACK_EFFECT_SHEET_NAME = "ef_slash_frames.png";
 
 const BATTLE_START_SELECTION_KEY = "ff3_wasm_battle_start_selection_v1";
+const BATTLE_BOOT_DEBUG_TAG = "[battle-boot-debug]";
+
+function summarizePartyForBattleBoot(party) {
+  if (!Array.isArray(party)) return [];
+  return party.map((member, index) => {
+    const jobLevels = member?.job_levels && typeof member.job_levels === "object"
+      ? Object.fromEntries(
+        Object.entries(member.job_levels).map(([jobName, row]) => [
+          String(jobName || ""),
+          {
+            level: Number(row?.level ?? row ?? 0),
+            skill_point: Number(row?.skill_point ?? 0),
+          },
+        ]),
+      )
+      : {};
+    return {
+      index,
+      name: String(member?.name || ""),
+      job: String(member?.job || ""),
+      current_job: String(member?.current_job || ""),
+      job_level: member?.job_level && typeof member.job_level === "object"
+        ? {
+          level: Number(member.job_level.level ?? 0),
+          skill_point: Number(member.job_level.skill_point ?? 0),
+        }
+        : member?.job_level ?? null,
+      job_levels: jobLevels,
+      equipment: member?.equipment && typeof member.equipment === "object"
+        ? {
+          main_hand: member.equipment.main_hand ?? null,
+          off_hand: member.equipment.off_hand ?? null,
+          head: member.equipment.head ?? null,
+          body: member.equipment.body ?? null,
+          arms: member.equipment.arms ?? null,
+        }
+        : null,
+      Magic: member?.Magic && typeof member.Magic === "object"
+        ? member.Magic
+        : null,
+      magic_setup: member?.magic_setup && typeof member.magic_setup === "object"
+        ? member.magic_setup
+        : null,
+    };
+  });
+}
+
+function logBattleBootDebug(label, party) {
+  try {
+    console.info(BATTLE_BOOT_DEBUG_TAG, label, summarizePartyForBattleBoot(party));
+  } catch (_error) {
+    // ignore debug logging failure
+  }
+}
+
+function hasPartyMembers(party) {
+  return Array.isArray(party) && party.length > 0;
+}
+
+function hasUsableMenuState(menuState) {
+  return Boolean(menuState && typeof menuState === "object" && hasPartyMembers(menuState.party));
+}
 
 function bindDom(root = document) {
   battlePhase = root.querySelector("#battlePhase");
@@ -1952,14 +2014,22 @@ function applyFullRecoverParty() {
 function resolveSaveDataForBoot() {
   if (appStore?.getState()?.saveEnvelope?.save && typeof appStore.getState().saveEnvelope.save === "object") {
     const currentState = appStore.getState();
-    return mergeMenuStateIntoSave(currentState.saveEnvelope.save, currentState.menuState);
+    logBattleBootDebug("store.menuState.party.before_merge", currentState.menuState?.party);
+    // Battle boot trusts saveEnvelope.save as the source of truth.
+    // Menu actions already persist into saveEnvelope.save, while menuState can lag
+    // behind and accidentally overwrite newer job changes during a boot-time merge.
+    logBattleBootDebug("store.save.party.without_menu_merge", currentState.saveEnvelope.save?.party);
+    return currentState.saveEnvelope.save;
   }
   if (loadedSaveData && typeof loadedSaveData === "object") {
+    logBattleBootDebug("loadedSaveData.party", loadedSaveData?.party);
     return loadedSaveData;
   }
   const storedEnvelope = cachedStoredEnvelope || restoreSaveEnvelopeFromStorage();
   if (storedEnvelope?.save && typeof storedEnvelope.save === "object") {
-    return mergeMenuStateIntoSave(storedEnvelope.save, storedEnvelope.menu_state);
+    logBattleBootDebug("storedEnvelope.menu_state.party.before_merge", storedEnvelope.menu_state?.party);
+    logBattleBootDebug("storedEnvelope.save.party.without_menu_merge", storedEnvelope.save?.party);
+    return storedEnvelope.save;
   }
   return null;
 }
@@ -1969,6 +2039,7 @@ function bootLocationAndSyncSession() {
   const bootForLocation = pyodide.globals.get("boot_engine_for_location");
   const bootWithSave = pyodide.globals.get("boot_engine_for_location_with_save_json");
   const saveDataForBoot = resolveSaveDataForBoot();
+  logBattleBootDebug("saveDataForBoot.party.before_python_boot", saveDataForBoot?.party);
   const selectedGroup = String(currentBattleSelection.selected_location_group || "");
   const selectedLocation = String(currentBattleSelection.selected_location || "");
   const payload = JSON.parse(saveDataForBoot

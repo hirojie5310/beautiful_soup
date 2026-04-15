@@ -240,6 +240,14 @@ export async function persistSaveEnvelopeToIndexedDB(
   }
 }
 
+export async function persistAutoSaveEnvelope(envelope) {
+  return persistSaveEnvelopeToIndexedDB(envelope, {
+    slotId: AUTO_SAVE_SLOT_ID,
+    kind: "auto",
+    rememberSelection: false,
+  });
+}
+
 export async function deleteSaveSlotFromIndexedDB(slotId = DEFAULT_SAVE_SLOT_ID) {
   try {
     await runStoreRequest("readwrite", (store) => store.delete(String(slotId)));

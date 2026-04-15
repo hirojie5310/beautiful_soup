@@ -16,7 +16,7 @@ import {
   restoreSaveEnvelopeFromStorageAsync,
 } from "../shared_storage.js";
 import { mergeMenuStateIntoSave } from "../menu_save_sync.js";
-import { bindButtonHandlers } from "./screen_shared.js";
+import { bindButtonHandlers, triggerAutoSaveFromEnvelope } from "./screen_shared.js";
 
 const MENU_LABELS = ["アイテム", "まほう", "そうび", "ステータス", "ならびかえ", "ジョブ", "セーブ", "ロード"];
 const MANUAL_SLOT_IDS = ["slot-1", "slot-2", "slot-3"];
@@ -265,12 +265,17 @@ export async function mountScreen({ mountNode, store, navigate }) {
     store.updateMenuState(state);
     const currentEnvelope = store.getState().saveEnvelope;
     if (!currentEnvelope?.save || typeof currentEnvelope.save !== "object") return true;
-    return store.updateSaveEnvelope({
+    const nextEnvelope = {
       ...currentEnvelope,
       save: patchSaveWithMenuState(currentEnvelope.save, state),
       menu_state: state,
       saved_at: new Date().toISOString(),
-    });
+    };
+    const persisted = store.updateSaveEnvelope(nextEnvelope);
+    if (persisted) {
+      triggerAutoSaveFromEnvelope(nextEnvelope);
+    }
+    return persisted;
   }
 
   async function refreshSlotList() {
