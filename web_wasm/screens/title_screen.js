@@ -11,22 +11,89 @@ import {
   persistAutoSave,
 } from "../title_screen_state.js";
 
+const TITLE_THEME_URL = new URL("../../assets/images/ffiii_theme.jpg", import.meta.url).href;
+
 function renderLayout() {
   return `
     <div class="screen narrow" data-screen="title">
-      <section class="frame" style="padding:22px 18px; overflow:hidden;">
-        <div style="display:grid; gap:14px;">
+      <style>
+        .title-hero-frame {
+          position: relative;
+          min-height: min(78vh, 760px);
+          padding: 22px 18px 18px;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          background-image:
+            linear-gradient(135deg, rgba(7, 10, 26, 0.22), rgba(7, 10, 26, 0.74)),
+            linear-gradient(180deg, rgba(8, 12, 30, 0.02), rgba(8, 12, 30, 0.52)),
+            url("${TITLE_THEME_URL}");
+          background-size: 100% auto;
+          background-position: center top;
+          background-repeat: no-repeat;
+        }
+        .title-hero-frame::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background:
+            radial-gradient(circle at top right, rgba(255, 229, 136, 0.18), transparent 36%),
+            linear-gradient(180deg, rgba(12, 18, 44, 0.12), rgba(12, 18, 44, 0.6));
+          pointer-events: none;
+        }
+        .title-hero-content {
+          position: relative;
+          z-index: 1;
+          text-shadow: 0 2px 10px rgba(0, 0, 0, 0.72);
+        }
+        .title-bottom-panel {
+          position: relative;
+          z-index: 1;
+          display: grid;
+          gap: 10px;
+          margin-top: auto;
+          padding: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.28);
+          border-radius: 10px;
+          background: linear-gradient(180deg, rgba(9, 13, 31, 0.48), rgba(9, 13, 31, 0.78));
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+        .title-menu-list {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 8px;
+        }
+        .title-menu-btn {
+          display: block;
+          padding: 8px 12px;
+          text-align: center;
+          background: linear-gradient(180deg, rgba(68, 89, 191, 0.9), rgba(32, 49, 126, 0.88));
+          backdrop-filter: blur(2px);
+        }
+        .title-menu-btn-label {
+          font-size: 0.88rem;
+          font-weight: 700;
+          line-height: 1.2;
+        }
+        @media (max-width: 420px) {
+          .title-menu-list {
+            grid-template-columns: 1fr;
+          }
+        }
+      </style>
+      <section class="frame title-hero-frame">
+        <div class="title-hero-content" style="display:grid; gap:14px;">
           <div>
             <div style="color:#acb6d7; letter-spacing:.22em; font-size:.8rem;">BATTLE WASM RUNNER</div>
             <h1 style="margin:6px 0 0; color:#ffe588; font-size:2rem; line-height:1.15;">FINAL FANTASY III<br>Title Screen</h1>
           </div>
           <div style="height:1px; background:linear-gradient(90deg, rgba(255,229,136,.9), rgba(255,229,136,0));"></div>
-          <div id="titleStatus" class="status">開始メニューを選択してください。</div>
         </div>
-      </section>
-
-      <section class="frame">
-        <div id="menuList" style="display:grid; gap:10px;"></div>
+        <div class="title-bottom-panel">
+          <div id="titleStatus" class="status" style="margin-bottom:0;">開始メニューを選択してください。</div>
+          <div id="menuList" class="title-menu-list"></div>
+        </div>
       </section>
 
       <section id="loadPanel" class="frame" style="display:none;">
@@ -85,13 +152,9 @@ function renderMenuButtons(menuList, handlers, slotInfo) {
   definitions.forEach((definition) => {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "btn";
+    button.className = "btn title-menu-btn";
     button.disabled = definition.disabled;
-    button.style.display = "grid";
-    button.style.gap = "4px";
-    button.style.padding = "14px";
-    button.style.textAlign = "left";
-    button.innerHTML = `<span style="font-size:1rem; font-weight:700;">${definition.label}</span><span style="font-size:.82rem; color:#d7ddf8;">${definition.description}</span>`;
+    button.innerHTML = `<span class="title-menu-btn-label">${definition.label}</span>`;
     button.addEventListener("click", () => handlers[definition.id]?.());
     menuList.appendChild(button);
   });
@@ -232,4 +295,3 @@ export async function mountScreen({ mountNode, store, navigate }) {
     closeLoadBtn.removeEventListener("click", closeLoadPanel);
   };
 }
-
