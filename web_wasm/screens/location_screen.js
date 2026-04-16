@@ -1,11 +1,34 @@
 import { getPyodideRuntime } from "../pyodide_runtime.js";
+import { resolveLocationMapImageUrl } from "../map_images.js";
 
 const BATTLE_START_SELECTION_KEY = "ff3_wasm_battle_start_selection_v1";
 
 function renderLayout() {
   return `
+    <style>
+      [data-screen="location"] .frame.location-frame {
+        position: relative;
+        overflow: hidden;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        isolation: isolate;
+      }
+      [data-screen="location"] .frame.location-frame::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background: linear-gradient(rgba(8,14,34,0.42), rgba(8,14,34,0.42));
+      }
+      [data-screen="location"] .frame.location-frame > * {
+        position: relative;
+        z-index: 1;
+      }
+    </style>
     <div class="screen medium" data-screen="location">
-      <section class="frame">
+      <section id="locationFrame" class="frame location-frame">
         <h1 class="title">Battle Wasm Runner / Location選択</h1>
         <div id="statusLine" class="status">起動中...</div>
 
@@ -69,6 +92,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   mountNode.innerHTML = renderLayout();
 
   const statusLine = mountNode.querySelector("#statusLine");
+  const locationFrame = mountNode.querySelector("#locationFrame");
   const locationGroupSelect = mountNode.querySelector("#locationGroupSelect");
   const locationSelect = mountNode.querySelector("#locationSelect");
   const startBattleBtn = mountNode.querySelector("#startBattleBtn");
@@ -78,6 +102,18 @@ export async function mountScreen({ mountNode, store, navigate }) {
   const menuBtn = mountNode.querySelector("#menuBtn");
 
   let locationGroups = [];
+
+  const applyLocationFrameBackground = (locationGroupName) => {
+    const mapImageUrl = resolveLocationMapImageUrl(locationGroupName, () => {
+      applyLocationFrameBackground(locationGroupName);
+    });
+    if (!locationFrame) return;
+    if (mapImageUrl) {
+      locationFrame.style.backgroundImage = `linear-gradient(rgba(8,14,34,0.42), rgba(8,14,34,0.42)), url("${mapImageUrl}")`;
+      return;
+    }
+    locationFrame.style.backgroundImage = "none";
+  };
 
   const handleGroupChange = () => {
     renderLocationOptions({
@@ -90,6 +126,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       },
     });
     syncStoreSelection(store, locationGroupSelect, locationSelect);
+    applyLocationFrameBackground(locationGroupSelect.value);
   };
   const handleLocationChange = () => {
     syncStoreSelection(store, locationGroupSelect, locationSelect);
@@ -152,6 +189,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       },
     });
     syncStoreSelection(store, locationGroupSelect, locationSelect);
+    applyLocationFrameBackground(locationGroupSelect.value);
 
     startBattleBtn.disabled = false;
     statusLine.textContent = "Locationを選択して「戦闘開始」を押してください。";

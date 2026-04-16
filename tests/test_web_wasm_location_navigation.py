@@ -36,6 +36,17 @@ def test_location_screen_includes_title_return_button() -> None:
     assert 'navigate("title")' in source
 
 
+def test_location_screen_uses_shared_location_map_background_resolver() -> None:
+    source = Path("web_wasm/screens/location_screen.js").read_text(encoding="utf-8")
+    shared = Path("web_wasm/map_images.js").read_text(encoding="utf-8")
+
+    assert 'import { resolveLocationMapImageUrl } from "../map_images.js"' in source
+    assert 'id="locationFrame"' in source
+    assert "applyLocationFrameBackground(locationGroupSelect.value);" in source
+    assert "function resolveLocationMapImageUrl" not in source
+    assert "function locationGroupToMapKey" in shared
+
+
 def test_legacy_shop_and_inn_pages_redirect_to_spa_routes() -> None:
     shop_html = Path("web_wasm/shop.html").read_text(encoding="utf-8")
     inn_html = Path("web_wasm/inn.html").read_text(encoding="utf-8")
