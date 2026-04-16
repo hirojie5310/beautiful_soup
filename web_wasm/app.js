@@ -1,5 +1,5 @@
-import { createRouter } from "./router.js";
-import { createAppStore } from "./store/app_store.js";
+import { createRouter } from "./router.js?v=20260417-mapfix1";
+import { createAppStore } from "./store/app_store.js?v=20260417-mapfix1";
 
 const mountNode = document.getElementById("app");
 
