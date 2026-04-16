@@ -4,6 +4,11 @@ import {
   resolveMemberJob,
 } from "../shared_party.js";
 import {
+  DEFAULT_MAP_ID,
+  isMapSelectionCompatible,
+  loadMapDefinition,
+} from "../map_data.js";
+import {
   AUTO_SAVE_SLOT_ID,
   LOCAL_MENU_STORAGE_KEY,
   deleteSaveSlotFromIndexedDB,
@@ -18,7 +23,7 @@ import {
 import { mergeMenuStateIntoSave } from "../menu_save_sync.js";
 import { bindButtonHandlers, triggerAutoSaveFromEnvelope } from "./screen_shared.js";
 
-const MENU_LABELS = ["アイテム", "まほう", "そうび", "ステータス", "ならびかえ", "ジョブ", "セーブ", "ロード"];
+const MENU_LABELS = ["アイテム", "まほう", "そうび", "ステータス", "ならびかえ", "ジョブ", "マップ", "セーブ", "ロード"];
 const MANUAL_SLOT_IDS = ["slot-1", "slot-2", "slot-3"];
 const SLOT_DISPLAY_ROWS = [
   { slotId: AUTO_SAVE_SLOT_ID, label: "AUTO SAVE", kind: "auto" },
@@ -34,6 +39,7 @@ const MENU_ROUTE_BY_LABEL = {
   そうび: "equip",
   ステータス: "status",
   ジョブ: "job",
+  マップ: "map",
 };
 
 function renderLayout() {
@@ -606,6 +612,25 @@ export async function mountScreen({ mountNode, store, navigate }) {
             window.alert("ロード完了: セーブデータを復元しました。");
           } catch (_error) {
             window.alert("ロード失敗: ファイル選択がキャンセルされたか、読み込みに失敗しました。");
+          }
+          return;
+        }
+
+        if (label === "マップ") {
+          try {
+            const mapDefinition = await loadMapDefinition(DEFAULT_MAP_ID);
+            const currentState = store.getState();
+            const selection = {
+              selected_location_group: currentState.selectedLocationGroup,
+              selected_location: currentState.selectedLocation,
+            };
+            if (!isMapSelectionCompatible(mapDefinition, selection)) {
+              setSlotStatus("現在のLocationでは対応するマップへ移動できません。");
+              return;
+            }
+            navigate("map");
+          } catch (error) {
+            setSlotStatus(`マップ確認失敗: ${String(error)}`);
           }
           return;
         }

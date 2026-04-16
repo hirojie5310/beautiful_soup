@@ -249,6 +249,49 @@ console.log(JSON.stringify(merged));
     assert merged["party"][0]["row"] == "back"
 
 
+def test_merge_menu_state_into_save_updates_map_position() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    script = """
+import { mergeMenuStateIntoSave } from "./web_wasm/menu_save_sync.js";
+
+const merged = mergeMenuStateIntoSave(
+  {
+    map: {
+      map: "grassland",
+      surface: "Grassland",
+      x: 14,
+      y: 32,
+    },
+    party: [],
+  },
+  {
+    party: [],
+    map_state: {
+      current_map_id: "Alter_Cave_B1",
+      tile_x: 8,
+      tile_y: 31,
+    },
+    resources: { gil: 0 },
+  },
+);
+
+console.log(JSON.stringify(merged));
+"""
+    completed = subprocess.run(
+        ["node", "--input-type=module", "-e", script],
+        cwd=repo_root,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    merged = json.loads(completed.stdout)
+
+    assert merged["map"]["map"] == "Alter_Cave_B1"
+    assert merged["map"]["surface"] == "Alter_Cave_B1"
+    assert merged["map"]["x"] == 8
+    assert merged["map"]["y"] == 31
+
+
 def test_merge_menu_state_into_save_prefers_status_progress_over_stale_top_level_fields() -> None:
     repo_root = Path(__file__).resolve().parents[1]
     script = """

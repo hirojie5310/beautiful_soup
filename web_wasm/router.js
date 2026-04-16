@@ -16,6 +16,8 @@ async function loadScreenModule(routeName) {
       return import("./screens/location_screen.js");
     case "menu":
       return import("./screens/menu_screen.js");
+    case "map":
+      return import("./screens/map_screen.js");
     case "shop":
       return import("./screens/shop_screen.js");
     case "inn":

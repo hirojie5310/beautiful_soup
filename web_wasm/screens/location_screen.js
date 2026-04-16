@@ -1,7 +1,13 @@
 import { getPyodideRuntime } from "../pyodide_runtime.js";
+import {
+  DEFAULT_MAP_ID,
+  isMapSelectionCompatible,
+  loadMapDefinition,
+} from "../map_data.js";
 import { resolveLocationMapImageUrl } from "../map_images.js";
 
 const BATTLE_START_SELECTION_KEY = "ff3_wasm_battle_start_selection_v1";
+const BATTLE_RETURN_CONTEXT_KEY = "ff3_wasm_battle_return_context_v1";
 
 function renderLayout() {
   return `
@@ -41,6 +47,7 @@ function renderLayout() {
 
         <div class="buttons">
           <button id="startBattleBtn" class="btn" type="button" disabled>戦闘開始</button>
+          <button id="mapBtn" class="btn" type="button">マップ</button>
           <button id="titleBtn" class="btn" type="button">タイトルへ戻る</button>
           <button id="shopBtn" class="btn" type="button">Shop</button>
           <button id="innBtn" class="btn" type="button">Inn</button>
@@ -96,6 +103,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   const locationGroupSelect = mountNode.querySelector("#locationGroupSelect");
   const locationSelect = mountNode.querySelector("#locationSelect");
   const startBattleBtn = mountNode.querySelector("#startBattleBtn");
+  const mapBtn = mountNode.querySelector("#mapBtn");
   const titleBtn = mountNode.querySelector("#titleBtn");
   const shopBtn = mountNode.querySelector("#shopBtn");
   const innBtn = mountNode.querySelector("#innBtn");
@@ -137,6 +145,10 @@ export async function mountScreen({ mountNode, store, navigate }) {
       selected_location: String(locationSelect.value || ""),
     };
     sessionStorage.setItem(BATTLE_START_SELECTION_KEY, JSON.stringify(payload));
+    sessionStorage.setItem(BATTLE_RETURN_CONTEXT_KEY, JSON.stringify({
+      return_route: "location",
+      resume_map: false,
+    }));
     store.patch({
       selectedLocationGroup: payload.selected_location_group,
       selectedLocation: payload.selected_location,
@@ -146,6 +158,26 @@ export async function mountScreen({ mountNode, store, navigate }) {
   const handleGoTitle = () => {
     store.resetForTitle();
     navigate("title");
+  };
+  const handleGoMap = () => {
+    syncStoreSelection(store, locationGroupSelect, locationSelect);
+    statusLine.textContent = "マップ整合性を確認中...";
+    void loadMapDefinition(DEFAULT_MAP_ID)
+      .then((mapDefinition) => {
+        const selection = {
+          selected_location_group: String(locationGroupSelect.value || ""),
+          selected_location: String(locationSelect.value || ""),
+        };
+        if (!isMapSelectionCompatible(mapDefinition, selection)) {
+          statusLine.textContent = "このLocationでは対応するマップへ移動できません。";
+          return;
+        }
+        statusLine.textContent = "マップへ移動します。";
+        navigate("map");
+      })
+      .catch((error) => {
+        statusLine.textContent = `マップ確認失敗: ${String(error)}`;
+      });
   };
   const handleGoShop = () => {
     syncStoreSelection(store, locationGroupSelect, locationSelect);
@@ -163,6 +195,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   locationGroupSelect.addEventListener("change", handleGroupChange);
   locationSelect.addEventListener("change", handleLocationChange);
   startBattleBtn.addEventListener("click", handleStartBattle);
+  mapBtn.addEventListener("click", handleGoMap);
   titleBtn.addEventListener("click", handleGoTitle);
   shopBtn.addEventListener("click", handleGoShop);
   innBtn.addEventListener("click", handleGoInn);
@@ -201,6 +234,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     locationGroupSelect.removeEventListener("change", handleGroupChange);
     locationSelect.removeEventListener("change", handleLocationChange);
     startBattleBtn.removeEventListener("click", handleStartBattle);
+    mapBtn.removeEventListener("click", handleGoMap);
     titleBtn.removeEventListener("click", handleGoTitle);
     shopBtn.removeEventListener("click", handleGoShop);
     innBtn.removeEventListener("click", handleGoInn);

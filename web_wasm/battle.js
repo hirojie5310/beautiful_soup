@@ -60,6 +60,7 @@ const PYTHON_BUNDLE_VERSION = "20260406c";
 const ATTACK_EFFECT_SHEET_NAME = "ef_slash_frames.png";
 
 const BATTLE_START_SELECTION_KEY = "ff3_wasm_battle_start_selection_v1";
+const BATTLE_RETURN_CONTEXT_KEY = "ff3_wasm_battle_return_context_v1";
 const BATTLE_BOOT_DEBUG_TAG = "[battle-boot-debug]";
 
 function summarizePartyForBattleBoot(party) {
@@ -151,6 +152,17 @@ function readBattleStartSelectionFromSession() {
   return null;
 }
 
+function readBattleReturnContextFromSession() {
+  try {
+    const raw = sessionStorage.getItem(BATTLE_RETURN_CONTEXT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch (_error) {
+    return null;
+  }
+}
+
 function readBattleSelectionFromStore() {
   if (!appStore) return null;
   const state = appStore.getState();
@@ -169,6 +181,10 @@ const hasSessionBattleStartSelection = Boolean(
 let currentBattleSelection = sessionBattleStartSelection || storeBattleStartSelection || {
   selected_location_group: "",
   selected_location: "",
+};
+let battleReturnContext = readBattleReturnContextFromSession() || {
+  return_route: "location",
+  resume_map: false,
 };
 
 const COMMAND_LABELS = {
@@ -1540,11 +1556,12 @@ function bindReturnToLocationOnClick() {
   returnToLocationBound = true;
   battleLogFrame.classList.add("is-clickable-next");
   const onClick = () => {
+    const returnRoute = String(battleReturnContext?.return_route || "location");
     if (appNavigate) {
-      appNavigate("location");
+      appNavigate(returnRoute === "map" ? "map" : "location");
       return;
     }
-    window.location.href = "./index.html";
+    window.location.href = returnRoute === "map" ? "./index.html#/map" : "./index.html";
   };
   battleLogFrame.addEventListener("click", onClick, { once: true });
 }

@@ -150,5 +150,16 @@ export function mergeMenuStateIntoSave(saveData, menuState) {
   nextSave.party = saveParty;
   nextSave.CP = Number(nextMenuState?.resources?.cp ?? nextSave.CP ?? 0);
   nextSave.gil = Number(nextMenuState?.resources?.gil ?? nextSave.gil ?? 0);
+  if (nextMenuState?.map_state && typeof nextMenuState.map_state === "object") {
+    const rawMapState = nextMenuState.map_state;
+    const currentMap = asPlainObject(nextSave.map);
+    nextSave.map = {
+      ...currentMap,
+      map: String(rawMapState.current_map_id || currentMap.map || ""),
+      surface: String(rawMapState.surface || rawMapState.current_map_id || currentMap.surface || ""),
+      x: Number(rawMapState.tile_x ?? currentMap.x ?? 0),
+      y: Number(rawMapState.tile_y ?? currentMap.y ?? 0),
+    };
+  }
   return nextSave;
 }
