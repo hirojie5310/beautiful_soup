@@ -25,70 +25,107 @@ function renderLayout() {
           display: flex;
           flex-direction: column;
           justify-content: space-between;
-          background-image:
-            linear-gradient(135deg, rgba(7, 10, 26, 0.22), rgba(7, 10, 26, 0.74)),
-            linear-gradient(180deg, rgba(8, 12, 30, 0.02), rgba(8, 12, 30, 0.52)),
-            url("${TITLE_THEME_URL}");
-          background-size: 100% auto;
-          background-position: center top;
-          background-repeat: no-repeat;
+          background: linear-gradient(180deg, rgba(8, 12, 30, 0.32), rgba(8, 12, 30, 0.82));
         }
         .title-hero-frame::before {
           content: "";
           position: absolute;
           inset: 0;
           background:
-            radial-gradient(circle at top right, rgba(255, 229, 136, 0.18), transparent 36%),
-            linear-gradient(180deg, rgba(12, 18, 44, 0.12), rgba(12, 18, 44, 0.6));
+            linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(10, 15, 38, 0.06) 28%, rgba(10, 15, 38, 0.58) 78%, rgba(10, 15, 38, 0.86)),
+            radial-gradient(circle at top center, rgba(255, 255, 255, 0.14), transparent 38%);
           pointer-events: none;
+          z-index: 1;
+        }
+        .title-hero-frame::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background-image: url("${TITLE_THEME_URL}");
+          background-size: 100% auto;
+          background-position: center bottom;
+          background-repeat: no-repeat;
+          animation: title-hero-pan 30s ease-in-out infinite;
+          transform-origin: center center;
+          pointer-events: none;
+          z-index: 0;
         }
         .title-hero-content {
           position: relative;
-          z-index: 1;
-          text-shadow: 0 2px 10px rgba(0, 0, 0, 0.72);
+          z-index: 2;
+          color: rgba(18, 24, 46, 0.92);
+          text-shadow: 0 1px 0 rgba(255, 255, 255, 0.28);
         }
         .title-bottom-panel {
           position: relative;
-          z-index: 1;
+          z-index: 2;
           display: grid;
           gap: 10px;
           margin-top: auto;
           padding: 12px;
           border: 1px solid rgba(255, 255, 255, 0.28);
           border-radius: 10px;
-          background: linear-gradient(180deg, rgba(9, 13, 31, 0.48), rgba(9, 13, 31, 0.78));
+          background: linear-gradient(180deg, rgba(9, 13, 31, 0.42), rgba(9, 13, 31, 0.76));
           box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
         }
         .title-menu-list {
           display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          justify-content: center;
           gap: 8px;
         }
         .title-menu-btn {
           display: block;
-          padding: 8px 12px;
+          padding: 8px 8px;
           text-align: center;
           background: linear-gradient(180deg, rgba(68, 89, 191, 0.9), rgba(32, 49, 126, 0.88));
           backdrop-filter: blur(2px);
         }
         .title-menu-btn-label {
-          font-size: 0.88rem;
+          font-size: 0.8rem;
           font-weight: 700;
           line-height: 1.2;
         }
+        @keyframes title-hero-pan {
+          0% {
+            background-position: center bottom;
+            opacity: 0.96;
+            transform: scale(1);
+          }
+          80% {
+            background-position: center top;
+            opacity: 0.96;
+            transform: scale(1.02);
+          }
+          100% {
+            background-position: center top;
+            opacity: 0;
+            transform: scale(1.02);
+          }
+        }
         @media (max-width: 420px) {
           .title-menu-list {
-            grid-template-columns: 1fr;
+            gap: 6px;
+          }
+          .title-menu-btn {
+            padding: 7px 6px;
+          }
+          .title-menu-btn-label {
+            font-size: 0.75rem;
+          }
+        }
+        @media (max-width: 360px) {
+          .title-menu-list {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
           }
         }
       </style>
       <section class="frame title-hero-frame">
         <div class="title-hero-content" style="display:grid; gap:14px;">
           <div>
-            <div style="color:#acb6d7; letter-spacing:.22em; font-size:.8rem;">BATTLE WASM RUNNER</div>
-            <h1 style="margin:6px 0 0; color:#ffe588; font-size:2rem; line-height:1.15;">FINAL FANTASY III<br>Title Screen</h1>
+            <div style="color:rgba(18,24,46,.78); letter-spacing:.22em; font-size:.8rem; font-weight:700;">BATTLE WASM RUNNER</div>
           </div>
-          <div style="height:1px; background:linear-gradient(90deg, rgba(255,229,136,.9), rgba(255,229,136,0));"></div>
+          <div style="height:1px; background:linear-gradient(90deg, rgba(24,34,68,.72), rgba(24,34,68,0));"></div>
         </div>
         <div class="title-bottom-panel">
           <div id="titleStatus" class="status" style="margin-bottom:0;">開始メニューを選択してください。</div>
@@ -124,26 +161,17 @@ function renderMenuButtons(menuList, handlers, slotInfo) {
   const definitions = [
     {
       id: "new-game",
-      label: "ニューゲーム",
-      description: "全員 Lv1 / Onion Knight / Gil 0 / CP 0 / アイテムなし で開始",
+      label: "はじめから",
       disabled: false,
     },
     {
       id: "continue",
-      label: "コンテニュー",
-      description: "前回の AUTO SAVE から再開",
+      label: "つづきから",
       disabled: !slotInfo.auto,
     },
     {
       id: "load",
-      label: "ロード",
-      description: "3 つのセーブスロットから選んで再開",
-      disabled: false,
-    },
-    {
-      id: "config",
-      label: "コンフィグ",
-      description: "今後実装予定",
+      label: "読込",
       disabled: false,
     },
   ];
@@ -281,9 +309,6 @@ export async function mountScreen({ mountNode, store, navigate }) {
       },
       load: () => {
         openLoadPanel();
-      },
-      config: () => {
-        titleStatus.textContent = "コンフィグは今後実装予定です。";
       },
     },
     { auto: autoSlot },
