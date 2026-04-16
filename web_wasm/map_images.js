@@ -4,6 +4,7 @@ export function locationGroupToMapKey(name) {
   return String(name || "")
     .trim()
     .toLowerCase()
+    .replace(/'/g, "")
     .replace(/\s+/g, "_");
 }
 
