@@ -304,10 +304,14 @@ function objectLabel(type) {
   return "OBJ";
 }
 
-function describeStandingObject(mapDefinition, mapState) {
-  const hit = (mapDefinition?.objects || []).find((row) => (
+export function findStandingObject(mapDefinition, mapState) {
+  return (mapDefinition?.objects || []).find((row) => (
     Number(row?.x) === Number(mapState?.tile_x) && Number(row?.y) === Number(mapState?.tile_y)
   ));
+}
+
+function describeStandingObject(mapDefinition, mapState) {
+  const hit = findStandingObject(mapDefinition, mapState);
   if (!hit) return "";
   if (hit.type === "exit") {
     return `出口: ${hit.name || hit.target_map || "-"}`;
@@ -408,6 +412,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   let mapState = null;
   let resizeObserver = null;
   let encounterLocked = false;
+  let mapTransitionLocked = false;
 
   function persistCurrentMapState(nextMapState) {
     if (!mapDefinition) return false;
@@ -424,6 +429,43 @@ export async function mountScreen({ mountNode, store, navigate }) {
     if (!mapDefinition || !mapState) return;
     updateViewportTransform(mapViewport, mapLayer, mapDefinition, mapState);
     updateMeta(mapMeta, mapDefinition, mapState);
+  }
+
+  async function applyMapTransition(targetMapId, targetSpawn = null) {
+    if (!targetMapId || mapTransitionLocked) return false;
+    mapTransitionLocked = true;
+    try {
+      const nextMapDefinition = await loadMapDefinition(String(targetMapId));
+      const storeState = store.getState();
+      const nextSelection = buildEncounterSelection(nextMapDefinition, {
+        selected_location_group: storeState.selectedLocationGroup,
+        selected_location: storeState.selectedLocation,
+      });
+      store.patch({
+        selectedLocationGroup: nextSelection.selected_location_group,
+        selectedLocation: nextSelection.selected_location,
+      });
+      mapDefinition = nextMapDefinition;
+      mapState = {
+        current_map_id: nextMapDefinition.id,
+        tile_x: asNumber(targetSpawn?.x, asNumber(nextMapDefinition.spawn?.x, 0)),
+        tile_y: asNumber(targetSpawn?.y, asNumber(nextMapDefinition.spawn?.y, 0)),
+      };
+      if (!canOccupyTile(mapDefinition, mapState.tile_x, mapState.tile_y)) {
+        mapState = {
+          current_map_id: nextMapDefinition.id,
+          tile_x: asNumber(nextMapDefinition.spawn?.x, 0),
+          tile_y: asNumber(nextMapDefinition.spawn?.y, 0),
+        };
+      }
+      renderMapTiles(mapLayer, mapDefinition);
+      persistCurrentMapState(mapState);
+      redraw();
+      mapStatus.textContent = `${mapDefinition.name} に移動しました。`;
+      return true;
+    } finally {
+      mapTransitionLocked = false;
+    }
   }
 
   function navigateToEncounter() {
@@ -447,8 +489,8 @@ export async function mountScreen({ mountNode, store, navigate }) {
     navigate("battle");
   }
 
-  function tryMove(direction) {
-    if (!mapDefinition || !mapState) return;
+  async function tryMove(direction) {
+    if (!mapDefinition || !mapState || mapTransitionLocked) return;
     const result = moveMapPosition(mapDefinition, mapState, direction);
     if (!result.moved) {
       mapStatus.textContent = result.reason === "blocked"
@@ -459,6 +501,17 @@ export async function mountScreen({ mountNode, store, navigate }) {
     mapState = result.nextState;
     persistCurrentMapState(mapState);
     redraw();
+    const standingObject = findStandingObject(mapDefinition, mapState);
+    if (standingObject?.type === "exit" && standingObject?.target_map) {
+      const moved = await applyMapTransition(
+        String(standingObject.target_map),
+        standingObject.target_spawn,
+      );
+      if (!moved) {
+        mapStatus.textContent = "出入口の移動に失敗しました。";
+      }
+      return;
+    }
     const standing = describeStandingObject(mapDefinition, mapState);
     if (shouldTriggerEncounter(mapDefinition)) {
       mapStatus.textContent = "敵が現れた！ 戦闘へ移行します。";
@@ -478,7 +531,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     const direction = keyMap[event.key];
     if (!direction) return;
     event.preventDefault();
-    tryMove(direction);
+    void tryMove(direction);
   };
 
   const onGoLocation = () => navigate("location");
@@ -491,7 +544,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   battleBtn.addEventListener("click", onGoBattle);
   padButtons.forEach((button) => {
     const onClick = () => {
-      tryMove(String(button.dataset.dir || ""));
+      void tryMove(String(button.dataset.dir || ""));
     };
     padHandlers.set(button, onClick);
     button.addEventListener("click", onClick);

@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   canOccupyTile,
   deriveInitialMapState,
+  findStandingObject,
   moveMapPosition,
 } from "./map_screen.js";
 import {
@@ -98,6 +99,28 @@ test("moveMapPosition advances only onto passable tiles", () => {
   const blocked = moveMapPosition(stubMap, moved.nextState, "left");
   assert.equal(blocked.moved, false);
   assert.equal(blocked.reason, "blocked");
+});
+
+test("findStandingObject returns exit on matching tile", () => {
+  const mapWithExit = {
+    ...stubMap,
+    objects: [
+      {
+        type: "exit",
+        name: "Alter Cave B2",
+        x: 1,
+        y: 2,
+        target_map: "Alter_Cave_B2",
+        target_spawn: { x: 7, y: 4 },
+      },
+    ],
+  };
+
+  assert.deepEqual(findStandingObject(mapWithExit, {
+    current_map_id: "Alter_Cave_B1",
+    tile_x: 1,
+    tile_y: 2,
+  }), mapWithExit.objects[0]);
 });
 
 test("isMapSelectionCompatible requires matching location", () => {

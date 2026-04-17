@@ -2,6 +2,8 @@ export const DEFAULT_MAP_ID = "Alter_Cave_B1";
 
 const MAP_MANIFEST = {
   Alter_Cave_B1: new URL("../assets/maps/Alter_Cave_B1.json", import.meta.url).href,
+  Alter_Cave_B2: new URL("../assets/maps/Alter_Cave_B2.json", import.meta.url).href,
+  Alter_Cave_B3: new URL("../assets/maps/Alter_Cave_B3.json", import.meta.url).href,
 };
 
 const mapCache = new Map();
