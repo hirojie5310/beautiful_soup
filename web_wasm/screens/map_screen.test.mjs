@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   applySwitchStateToMap,
+  createDirectionalHoldRepeater,
   deriveMapLaunchContext,
   canOccupyTile,
   deriveInitialMapState,
@@ -161,6 +162,61 @@ test("moveMapPosition advances only onto passable tiles", () => {
   const blocked = moveMapPosition(stubMap, moved.nextState, "left");
   assert.equal(blocked.moved, false);
   assert.equal(blocked.reason, "blocked");
+});
+
+test("createDirectionalHoldRepeater runs immediately, repeats while held, and stops cleanly", () => {
+  const steps = [];
+  const timeouts = [];
+  const intervals = [];
+  let nextId = 1;
+  const scheduler = {
+    setTimeout(callback, delay) {
+      const id = nextId += 1;
+      timeouts.push({ id, callback, delay });
+      return id;
+    },
+    clearTimeout(id) {
+      const hit = timeouts.find((entry) => entry.id === id);
+      if (hit) hit.cleared = true;
+    },
+    setInterval(callback, delay) {
+      const id = nextId += 1;
+      intervals.push({ id, callback, delay });
+      return id;
+    },
+    clearInterval(id) {
+      const hit = intervals.find((entry) => entry.id === id);
+      if (hit) hit.cleared = true;
+    },
+  };
+  const repeater = createDirectionalHoldRepeater((direction) => {
+    steps.push(direction);
+  }, scheduler, {
+    initialDelay: 200,
+    repeatInterval: 90,
+  });
+
+  assert.equal(repeater.start("right"), true);
+  assert.deepEqual(steps, ["right"]);
+  assert.equal(timeouts.length, 1);
+  assert.equal(timeouts[0].delay, 200);
+
+  timeouts[0].callback();
+  assert.equal(intervals.length, 1);
+  assert.equal(intervals[0].delay, 90);
+
+  intervals[0].callback();
+  intervals[0].callback();
+  assert.deepEqual(steps, ["right", "right", "right"]);
+  assert.equal(repeater.isActive("right"), true);
+
+  assert.equal(repeater.stop("right"), true);
+  assert.equal(timeouts[0].cleared, true);
+  assert.equal(intervals[0].cleared, true);
+  assert.equal(repeater.isActive(), false);
+
+  intervals[0].callback();
+  assert.deepEqual(steps, ["right", "right", "right"]);
 });
 
 test("findStandingObject returns exit on matching tile", () => {

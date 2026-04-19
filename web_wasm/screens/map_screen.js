@@ -9,12 +9,70 @@ import {
 import { triggerAutoSaveFromEnvelope } from "./screen_shared.js";
 
 const DISPLAY_TILE_SIZE = 22;
+const HOLD_MOVE_INITIAL_DELAY_MS = 220;
+const HOLD_MOVE_REPEAT_MS = 110;
 const BATTLE_START_SELECTION_KEY = "ff3_wasm_battle_start_selection_v1";
 const BATTLE_RETURN_CONTEXT_KEY = "ff3_wasm_battle_return_context_v1";
 const MAP_ENTRY_CONTEXT_KEY = "ff3_wasm_map_entry_context_v1";
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
+}
+
+export function createDirectionalHoldRepeater(
+  runStep,
+  scheduler = globalThis,
+  options = {},
+) {
+  const initialDelay = Math.max(0, Number(options.initialDelay ?? HOLD_MOVE_INITIAL_DELAY_MS));
+  const repeatInterval = Math.max(1, Number(options.repeatInterval ?? HOLD_MOVE_REPEAT_MS));
+  let timeoutId = null;
+  let intervalId = null;
+  let activeDirection = "";
+
+  function clearTimers() {
+    if (timeoutId !== null) {
+      scheduler.clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+    if (intervalId !== null) {
+      scheduler.clearInterval(intervalId);
+      intervalId = null;
+    }
+  }
+
+  function stop(direction = "") {
+    if (direction && direction !== activeDirection) return false;
+    const hadActiveDirection = Boolean(activeDirection);
+    activeDirection = "";
+    clearTimers();
+    return hadActiveDirection;
+  }
+
+  function start(direction) {
+    const normalizedDirection = String(direction || "");
+    if (!normalizedDirection) return false;
+    if (normalizedDirection === activeDirection) return false;
+    stop();
+    activeDirection = normalizedDirection;
+    void runStep(normalizedDirection);
+    timeoutId = scheduler.setTimeout(() => {
+      if (activeDirection !== normalizedDirection) return;
+      intervalId = scheduler.setInterval(() => {
+        if (activeDirection !== normalizedDirection) return;
+        void runStep(normalizedDirection);
+      }, repeatInterval);
+    }, initialDelay);
+    return true;
+  }
+
+  return {
+    start,
+    stop,
+    isActive(direction = "") {
+      return direction ? activeDirection === direction : Boolean(activeDirection);
+    },
+  };
 }
 
 function asNumber(value, fallback = 0) {
@@ -301,6 +359,9 @@ function renderLayout() {
         min-height: 54px;
         font-size: 1rem;
         font-weight: 700;
+        touch-action: manipulation;
+        user-select: none;
+        -webkit-user-select: none;
       }
       [data-screen="map"] .map-pad-confirm {
         min-width: 88px;
@@ -658,6 +719,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   let resizeObserver = null;
   let encounterLocked = false;
   let mapTransitionLocked = false;
+  const holdRepeater = createDirectionalHoldRepeater((direction) => tryMove(direction));
 
   function patchMapMenuState(partialMenuState) {
     const currentState = store.getState();
@@ -887,11 +949,27 @@ export async function mountScreen({ mountNode, store, navigate }) {
   menuBtn.addEventListener("click", onGoMenu);
   battleBtn.addEventListener("click", onGoBattle);
   padButtons.forEach((button) => {
-    const onClick = () => {
-      void tryMove(String(button.dataset.dir || ""));
+    const direction = String(button.dataset.dir || "");
+    const onPointerDown = (event) => {
+      event.preventDefault();
+      holdRepeater.start(direction);
     };
-    padHandlers.set(button, onClick);
-    button.addEventListener("click", onClick);
+    const onPointerUp = (event) => {
+      event.preventDefault();
+      holdRepeater.stop(direction);
+    };
+    const onPointerLeave = () => {
+      holdRepeater.stop(direction);
+    };
+    padHandlers.set(button, {
+      onPointerDown,
+      onPointerUp,
+      onPointerLeave,
+    });
+    button.addEventListener("pointerdown", onPointerDown);
+    button.addEventListener("pointerup", onPointerUp);
+    button.addEventListener("pointercancel", onPointerUp);
+    button.addEventListener("pointerleave", onPointerLeave);
   });
   window.addEventListener("keydown", onKeyDown);
 
@@ -930,9 +1008,14 @@ export async function mountScreen({ mountNode, store, navigate }) {
         menuBtn.removeEventListener("click", onGoMenu);
         battleBtn.removeEventListener("click", onGoBattle);
         padButtons.forEach((button) => {
-          const onClick = padHandlers.get(button);
-          if (onClick) button.removeEventListener("click", onClick);
+          const handlers = padHandlers.get(button);
+          if (!handlers) return;
+          button.removeEventListener("pointerdown", handlers.onPointerDown);
+          button.removeEventListener("pointerup", handlers.onPointerUp);
+          button.removeEventListener("pointercancel", handlers.onPointerUp);
+          button.removeEventListener("pointerleave", handlers.onPointerLeave);
         });
+        holdRepeater.stop();
         window.removeEventListener("keydown", onKeyDown);
       };
     }
@@ -990,11 +1073,14 @@ export async function mountScreen({ mountNode, store, navigate }) {
     menuBtn.removeEventListener("click", onGoMenu);
     battleBtn.removeEventListener("click", onGoBattle);
     padButtons.forEach((button) => {
-      const onClick = padHandlers.get(button);
-      if (onClick) {
-        button.removeEventListener("click", onClick);
-      }
+      const handlers = padHandlers.get(button);
+      if (!handlers) return;
+      button.removeEventListener("pointerdown", handlers.onPointerDown);
+      button.removeEventListener("pointerup", handlers.onPointerUp);
+      button.removeEventListener("pointercancel", handlers.onPointerUp);
+      button.removeEventListener("pointerleave", handlers.onPointerLeave);
     });
+    holdRepeater.stop();
     window.removeEventListener("keydown", onKeyDown);
     if (resizeObserver) {
       resizeObserver.disconnect();
