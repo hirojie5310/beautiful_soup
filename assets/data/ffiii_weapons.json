@@ -131,7 +131,7 @@
       "Treasures": [
         {
           "Treasure": "Nunchaku",
-          "Map": "Altar Cave B2",
+          "Map": "Altar Cave B4",
           "Notes": "Southwest chest in pit room",
           "Guarded By": "-"
         }
@@ -1074,13 +1074,13 @@
       "Treasures": [
         {
           "Treasure": "Longsword",
-          "Map": "Altar Cave B2",
+          "Map": "Altar Cave B4",
           "Notes": "Southeast chest in pit room",
           "Guarded By": "-"
         },
         {
           "Treasure": "Longsword",
-          "Map": "Altar Cave B2",
+          "Map": "Altar Cave B4",
           "Notes": "West chest in pit room",
           "Guarded By": "-"
         },

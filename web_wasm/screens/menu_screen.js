@@ -23,7 +23,7 @@ import {
 import { mergeMenuStateIntoSave } from "../menu_save_sync.js";
 import { bindButtonHandlers, triggerAutoSaveFromEnvelope } from "./screen_shared.js";
 
-const MENU_LABELS = ["アイテム", "まほう", "そうび", "ステータス", "ならびかえ", "ジョブ", "マップ", "セーブ", "ロード"];
+const MENU_LABELS = ["アイテム", "まほう", "そうび", "ステータス", "ならびかえ", "ジョブ", "セーブ", "ロード"];
 const MANUAL_SLOT_IDS = ["slot-1", "slot-2", "slot-3"];
 const SLOT_DISPLAY_ROWS = [
   { slotId: AUTO_SAVE_SLOT_ID, label: "AUTO SAVE", kind: "auto" },
@@ -48,7 +48,10 @@ function renderLayout() {
       <section class="frame">
         <div class="toolbar">
           <h1 class="title" style="margin:0;">MENU</h1>
-          <button id="backBtn" class="btn" type="button">Location選択へ戻る</button>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+            <button id="mapBtn" class="btn" type="button">マップ</button>
+            <button id="backBtn" class="btn" type="button">Location選択へ戻る</button>
+          </div>
         </div>
       </section>
 
@@ -243,6 +246,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   const resourceRow = mountNode.querySelector("#resourceRow");
   const slotList = mountNode.querySelector("#slotList");
   const slotStatus = mountNode.querySelector("#slotStatus");
+  const mapBtn = mountNode.querySelector("#mapBtn");
   const backBtn = mountNode.querySelector("#backBtn");
   const modeHint = mountNode.querySelector("#modeHint");
   const menuLoadSaveInput = mountNode.querySelector("#menuLoadSaveInput");
@@ -616,25 +620,6 @@ export async function mountScreen({ mountNode, store, navigate }) {
           return;
         }
 
-        if (label === "マップ") {
-          try {
-            const mapDefinition = await loadMapDefinition(DEFAULT_MAP_ID);
-            const currentState = store.getState();
-            const selection = {
-              selected_location_group: currentState.selectedLocationGroup,
-              selected_location: currentState.selectedLocation,
-            };
-            if (!isMapSelectionCompatible(mapDefinition, selection)) {
-              setSlotStatus("現在のLocationでは対応するマップへ移動できません。");
-              return;
-            }
-            navigate("map");
-          } catch (error) {
-            setSlotStatus(`マップ確認失敗: ${String(error)}`);
-          }
-          return;
-        }
-
         const routeName = MENU_ROUTE_BY_LABEL[label];
         if (routeName) navigate(routeName);
       });
@@ -642,8 +627,33 @@ export async function mountScreen({ mountNode, store, navigate }) {
     });
   }
 
+  const handleMapOpen = async () => {
+    try {
+      const currentState = store.getState();
+      const requestedMapId = String(
+        currentState.menuState?.map_state?.current_map_id
+        || currentState.saveEnvelope?.save?.map?.map
+        || DEFAULT_MAP_ID,
+      );
+      const mapDefinition = await loadMapDefinition(requestedMapId);
+      const selection = {
+        selected_location_group: currentState.selectedLocationGroup,
+        selected_location: currentState.selectedLocation,
+      };
+      if (!isMapSelectionCompatible(mapDefinition, selection)) {
+        setSlotStatus("現在のLocationでは対応するマップへ移動できません。");
+        return;
+      }
+      navigate("map");
+    } catch (error) {
+      setSlotStatus(`マップ確認失敗: ${String(error)}`);
+    }
+  };
   const handleBack = () => navigate("location");
-  const unbindButtons = bindButtonHandlers([{ target: backBtn, handler: handleBack }]);
+  const unbindButtons = bindButtonHandlers([
+    { target: mapBtn, handler: handleMapOpen },
+    { target: backBtn, handler: handleBack },
+  ]);
 
   updateModeHint();
   renderParty();

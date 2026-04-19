@@ -8,6 +8,7 @@ import { resolveLocationMapImageUrl } from "../map_images.js";
 
 const BATTLE_START_SELECTION_KEY = "ff3_wasm_battle_start_selection_v1";
 const BATTLE_RETURN_CONTEXT_KEY = "ff3_wasm_battle_return_context_v1";
+const MAP_ENTRY_CONTEXT_KEY = "ff3_wasm_map_entry_context_v1";
 
 function renderLayout() {
   return `
@@ -111,6 +112,25 @@ export async function mountScreen({ mountNode, store, navigate }) {
 
   let locationGroups = [];
 
+  const clearMapReturnPending = () => {
+    const currentState = store.getState();
+    if (!currentState.menuState?.map_return_pending) return;
+    const nextMenuState = {
+      ...(currentState.menuState && typeof currentState.menuState === "object" ? currentState.menuState : {}),
+      map_return_pending: false,
+    };
+    store.updateMenuState(nextMenuState);
+    if (currentState.saveEnvelope && typeof currentState.saveEnvelope === "object") {
+      store.updateSaveEnvelope({
+        ...currentState.saveEnvelope,
+        menu_state: nextMenuState,
+        selected_location_group: currentState.selectedLocationGroup,
+        selected_location: currentState.selectedLocation,
+        saved_at: new Date().toISOString(),
+      });
+    }
+  };
+
   const applyLocationFrameBackground = (locationGroupName) => {
     const mapImageUrl = resolveLocationMapImageUrl(locationGroupName, () => {
       applyLocationFrameBackground(locationGroupName);
@@ -172,6 +192,11 @@ export async function mountScreen({ mountNode, store, navigate }) {
           statusLine.textContent = "このLocationでは対応するマップへ移動できません。";
           return;
         }
+        sessionStorage.setItem(MAP_ENTRY_CONTEXT_KEY, JSON.stringify({
+          entry_route: "location",
+          fresh_start: true,
+          map_id: DEFAULT_MAP_ID,
+        }));
         statusLine.textContent = "マップへ移動します。";
         navigate("map");
       })
@@ -202,6 +227,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   menuBtn.addEventListener("click", handleGoMenu);
 
   try {
+    clearMapReturnPending();
     statusLine.textContent = "Pyodide 起動中...";
     const pyodide = await getPyodideRuntime();
     const getSelectionJson = pyodide.globals.get("get_location_selection_json");

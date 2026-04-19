@@ -56,7 +56,6 @@
         }
       ],
       "Maps": [
-        "Altar Cave B1",
         "Altar Cave B3",
         "Sewers B3"
       ],
@@ -127,6 +126,7 @@
       "Maps": [
         "Altar Cave B1",
         "Altar Cave B2",
+        "Altar Cave B4",
         "Altar Cave B3"
       ]
     },
@@ -164,6 +164,7 @@
       "Maps": [
         "Altar Cave B1",
         "Altar Cave B2",
+        "Altar Cave B4",
         "Altar Cave B3"
       ]
     },
@@ -227,6 +228,7 @@
       "Maps": [
         "Altar Cave B1",
         "Altar Cave B2",
+        "Altar Cave B4",
         "Altar Cave B3"
       ]
     },

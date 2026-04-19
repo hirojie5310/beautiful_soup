@@ -1,4 +1,5 @@
 import {
+  buildRenderRows,
   buildEncounterSelection,
   DEFAULT_MAP_ID,
   isMapSelectionCompatible,
@@ -10,6 +11,7 @@ import { triggerAutoSaveFromEnvelope } from "./screen_shared.js";
 const DISPLAY_TILE_SIZE = 22;
 const BATTLE_START_SELECTION_KEY = "ff3_wasm_battle_start_selection_v1";
 const BATTLE_RETURN_CONTEXT_KEY = "ff3_wasm_battle_return_context_v1";
+const MAP_ENTRY_CONTEXT_KEY = "ff3_wasm_map_entry_context_v1";
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
@@ -18,6 +20,41 @@ function clamp(value, min, max) {
 function asNumber(value, fallback = 0) {
   const num = Number(value);
   return Number.isFinite(num) ? num : fallback;
+}
+
+function normalizeSwitchStates(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value)
+      .map(([key, enabled]) => [String(key || ""), Boolean(enabled)])
+      .filter(([key]) => Boolean(key)),
+  );
+}
+
+function normalizeTreasureStates(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value)
+      .map(([key, opened]) => [String(key || ""), Boolean(opened)])
+      .filter(([key]) => Boolean(key)),
+  );
+}
+
+function treasureKey(row) {
+  return String(row?.treasure_id || row?.name || `${row?.x},${row?.y}`);
+}
+
+function addItemToInventory(save, bucketName, itemName, quantity = 1) {
+  if (!save || typeof save !== "object") return false;
+  if (!save.inventory || typeof save.inventory !== "object") {
+    save.inventory = {};
+  }
+  if (!save.inventory[bucketName] || typeof save.inventory[bucketName] !== "object") {
+    save.inventory[bucketName] = {};
+  }
+  const current = asNumber(save.inventory[bucketName][itemName], 0);
+  save.inventory[bucketName][itemName] = current + quantity;
+  return true;
 }
 
 function normalizeMapSaveShape(mapState, mapDefinition) {
@@ -51,12 +88,18 @@ export function deriveInitialMapState(appState, mapDefinition, options = {}) {
       current_map_id: wantedMapId,
       tile_x: asNumber(menuMapState.tile_x, asNumber(envelopeMap.x, asNumber(mapDefinition?.spawn?.x, 0))),
       tile_y: asNumber(menuMapState.tile_y, asNumber(envelopeMap.y, asNumber(mapDefinition?.spawn?.y, 0))),
+      steps_since_reset: asNumber(menuMapState.steps_since_reset, 0),
+      switch_states: normalizeSwitchStates(menuMapState.switch_states),
+      opened_treasures: normalizeTreasureStates(menuMapState.opened_treasures),
     };
   }
   return {
     current_map_id: wantedMapId,
     tile_x: asNumber(mapDefinition?.spawn?.x, 0),
     tile_y: asNumber(mapDefinition?.spawn?.y, 0),
+    steps_since_reset: 0,
+    switch_states: {},
+    opened_treasures: {},
   };
 }
 
@@ -90,6 +133,7 @@ export function moveMapPosition(mapDefinition, mapState, direction) {
       ...mapState,
       tile_x: nextX,
       tile_y: nextY,
+      steps_since_reset: asNumber(mapState?.steps_since_reset, 0) + 1,
     },
     reason: "moved",
   };
@@ -235,10 +279,20 @@ function renderLayout() {
         color: rgba(255, 255, 255, 0.84);
       }
       [data-screen="map"] .map-pad {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 18px;
+        flex-wrap: wrap;
+      }
+      [data-screen="map"] .map-pad-dpad {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 68px));
-        justify-content: center;
         gap: 8px;
+      }
+      [data-screen="map"] .map-pad-actions {
+        display: grid;
+        align-items: center;
       }
       [data-screen="map"] .map-pad-spacer {
         visibility: hidden;
@@ -247,6 +301,12 @@ function renderLayout() {
         min-height: 54px;
         font-size: 1rem;
         font-weight: 700;
+      }
+      [data-screen="map"] .map-pad-confirm {
+        min-width: 88px;
+        min-height: 54px;
+        border-radius: 999px;
+        letter-spacing: 0.08em;
       }
       @media (max-width: 480px) {
         [data-screen="map"] .map-toolbar,
@@ -284,12 +344,17 @@ function renderLayout() {
         <div class="map-hud">
           <div id="mapMeta" class="map-meta"></div>
           <div class="map-pad">
-            <span class="map-pad-spacer"></span>
-            <button class="btn map-pad-btn" type="button" data-dir="up">↑</button>
-            <span class="map-pad-spacer"></span>
-            <button class="btn map-pad-btn" type="button" data-dir="left">←</button>
-            <button class="btn map-pad-btn" type="button" data-dir="down">↓</button>
-            <button class="btn map-pad-btn" type="button" data-dir="right">→</button>
+            <div class="map-pad-dpad">
+              <span class="map-pad-spacer"></span>
+              <button class="btn map-pad-btn" type="button" data-dir="up">↑</button>
+              <span class="map-pad-spacer"></span>
+              <button class="btn map-pad-btn" type="button" data-dir="left">←</button>
+              <button class="btn map-pad-btn" type="button" data-dir="down">↓</button>
+              <button class="btn map-pad-btn" type="button" data-dir="right">→</button>
+            </div>
+            <div class="map-pad-actions">
+              <button id="confirmBtn" class="btn map-pad-btn map-pad-confirm" type="button">決定</button>
+            </div>
           </div>
         </div>
       </section>
@@ -300,7 +365,7 @@ function renderLayout() {
 function objectLabel(type) {
   if (type === "exit") return "EXIT";
   if (type === "switch") return "SW";
-  if (type === "chest") return "宝";
+  if (type === "chest" || type === "treasure") return "宝";
   return "OBJ";
 }
 
@@ -308,6 +373,16 @@ export function findStandingObject(mapDefinition, mapState) {
   return (mapDefinition?.objects || []).find((row) => (
     Number(row?.x) === Number(mapState?.tile_x) && Number(row?.y) === Number(mapState?.tile_y)
   ));
+}
+
+export function findAdjacentObject(mapDefinition, mapState, predicate = () => true) {
+  const tileX = Number(mapState?.tile_x);
+  const tileY = Number(mapState?.tile_y);
+  return (mapDefinition?.objects || []).find((row) => {
+    const objectX = Number(row?.x);
+    const objectY = Number(row?.y);
+    return Math.abs(tileX - objectX) + Math.abs(tileY - objectY) === 1 && predicate(row);
+  }) || null;
 }
 
 function describeStandingObject(mapDefinition, mapState) {
@@ -361,6 +436,126 @@ function renderMapTiles(mapLayer, mapDefinition) {
   });
 }
 
+export function applySwitchStateToMap(mapDefinition, switchStates = {}) {
+  const normalizedSwitchStates = normalizeSwitchStates(switchStates);
+  const normalizedOpenedTreasures = normalizeTreasureStates(mapDefinition?.openedTreasures);
+  const baseRows = Array.isArray(mapDefinition?.baseRows) ? mapDefinition.baseRows : mapDefinition?.rows;
+  const nextRows = Array.isArray(baseRows) ? baseRows.map((row) => row.slice()) : [];
+
+  (mapDefinition?.objects || []).forEach((row) => {
+    if (row?.type !== "barrier" || !row?.trigger_by) return;
+    if (!normalizedSwitchStates[String(row.trigger_by)]) return;
+    const x = Number(row?.x);
+    const y = Number(row?.y);
+    if (!Array.isArray(nextRows[y])) return;
+    const current = Number(nextRows[y][x] ?? 0);
+    if (current === 1) nextRows[y][x] = 49;
+    else if (current === 49) nextRows[y][x] = 1;
+  });
+
+  (mapDefinition?.objects || []).forEach((row) => {
+    if (row?.type !== "treasure") return;
+    const key = treasureKey(row);
+    if (!normalizedOpenedTreasures[key]) return;
+    const x = Number(row?.x);
+    const y = Number(row?.y);
+    const closedGid = Number(row?.closed_gid || 125);
+    const openGid = Number(row?.open_gid || 126);
+    if (!Array.isArray(nextRows[y])) return;
+    if (Number(nextRows[y][x] ?? 0) === closedGid) {
+      nextRows[y][x] = openGid;
+    }
+  });
+
+  const renderPadding = mapDefinition?.renderPadding || { top: 0, right: 0, bottom: 0, left: 0, fillGid: 0 };
+  return {
+    ...mapDefinition,
+    rows: nextRows,
+    openedTreasures: normalizedOpenedTreasures,
+    renderRows: buildRenderRows(nextRows, mapDefinition.width, mapDefinition.height, {
+      top: renderPadding.top,
+      right: renderPadding.right,
+      bottom: renderPadding.bottom,
+      left: renderPadding.left,
+      fill_gid: renderPadding.fillGid,
+    }),
+  };
+}
+
+export function toggleAdjacentSwitch(mapDefinition, mapState) {
+  const adjacentSwitch = findAdjacentObject(
+    mapDefinition,
+    mapState,
+    (row) => row?.type === "switch" && row?.switch_id,
+  );
+  if (!adjacentSwitch) {
+    return { toggled: false, mapDefinition, mapState };
+  }
+  const switchId = String(adjacentSwitch.switch_id);
+  const currentSwitchStates = normalizeSwitchStates(mapState?.switch_states);
+  const nextSwitchStates = {
+    ...currentSwitchStates,
+    [switchId]: !currentSwitchStates[switchId],
+  };
+  return {
+    toggled: true,
+    switchId,
+    enabled: nextSwitchStates[switchId],
+    mapDefinition: applySwitchStateToMap(
+      { ...mapDefinition, openedTreasures: normalizeTreasureStates(mapState?.opened_treasures) },
+      nextSwitchStates,
+    ),
+    mapState: {
+      ...mapState,
+      switch_states: nextSwitchStates,
+    },
+  };
+}
+
+export function openAdjacentTreasure(mapDefinition, mapState, saveEnvelope) {
+  const adjacentTreasure = findAdjacentObject(
+    mapDefinition,
+    mapState,
+    (row) => row?.type === "treasure",
+  );
+  if (!adjacentTreasure) {
+    return { opened: false, mapDefinition, mapState, saveEnvelope };
+  }
+  const key = treasureKey(adjacentTreasure);
+  const currentOpenedTreasures = normalizeTreasureStates(mapState?.opened_treasures);
+  if (currentOpenedTreasures[key]) {
+    return { opened: false, alreadyOpened: true, mapDefinition, mapState, saveEnvelope };
+  }
+  const nextOpenedTreasures = {
+    ...currentOpenedTreasures,
+    [key]: true,
+  };
+  const itemName = String(adjacentTreasure.item_name || "Potion");
+  const bucketName = String(adjacentTreasure.inventory_bucket || "Anywhere");
+  const quantity = Math.max(1, asNumber(adjacentTreasure.quantity, 1));
+  const nextEnvelope = typeof structuredClone === "function"
+    ? structuredClone(saveEnvelope || { save: {} })
+    : JSON.parse(JSON.stringify(saveEnvelope || { save: {} }));
+  if (!nextEnvelope.save || typeof nextEnvelope.save !== "object") {
+    nextEnvelope.save = {};
+  }
+  addItemToInventory(nextEnvelope.save, bucketName, itemName, quantity);
+  return {
+    opened: true,
+    itemName,
+    quantity,
+    mapDefinition: applySwitchStateToMap(
+      { ...mapDefinition, openedTreasures: nextOpenedTreasures },
+      mapState?.switch_states,
+    ),
+    mapState: {
+      ...mapState,
+      opened_treasures: nextOpenedTreasures,
+    },
+    saveEnvelope: nextEnvelope,
+  };
+}
+
 function updateViewportTransform(mapViewport, mapLayer, mapDefinition, mapState) {
   const viewportWidth = mapViewport.clientWidth;
   const viewportHeight = mapViewport.clientHeight;
@@ -396,6 +591,55 @@ function readBattleReturnContext() {
   }
 }
 
+function readMapEntryContext() {
+  try {
+    const raw = sessionStorage.getItem(MAP_ENTRY_CONTEXT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch (_error) {
+    return null;
+  }
+}
+
+export function shouldResumeMapPosition(appState, battleReturnContext = null) {
+  if (battleReturnContext?.return_route === "map" && battleReturnContext?.resume_map) {
+    return true;
+  }
+  return Boolean(appState?.menuState?.map_return_pending);
+}
+
+function isBattleReturnToMap(battleReturnContext) {
+  return Boolean(
+    battleReturnContext?.return_route === "map"
+    && battleReturnContext?.resume_map,
+  );
+}
+
+export function deriveMapLaunchContext(appState, battleReturnContext = null, mapEntryContext = null) {
+  const freshLocationEntry = Boolean(
+    mapEntryContext?.entry_route === "location"
+    && mapEntryContext?.fresh_start,
+  );
+  const resumeFromSavedPosition = freshLocationEntry
+    ? false
+    : shouldResumeMapPosition(appState, battleReturnContext);
+  const returningFromBattle = freshLocationEntry ? false : isBattleReturnToMap(battleReturnContext);
+  const requestedMapId = String(
+    (freshLocationEntry && mapEntryContext?.map_id)
+    || (returningFromBattle && battleReturnContext?.map_id)
+    || appState?.menuState?.map_state?.current_map_id
+    || appState?.saveEnvelope?.save?.map?.map
+    || DEFAULT_MAP_ID,
+  );
+  return {
+    freshLocationEntry,
+    resumeFromSavedPosition,
+    returningFromBattle,
+    requestedMapId,
+  };
+}
+
 export async function mountScreen({ mountNode, store, navigate }) {
   mountNode.innerHTML = renderLayout();
 
@@ -403,6 +647,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   const mapViewport = mountNode.querySelector("#mapViewport");
   const mapLayer = mountNode.querySelector("#mapLayer");
   const mapMeta = mountNode.querySelector("#mapMeta");
+  const confirmBtn = mountNode.querySelector("#confirmBtn");
   const locationBtn = mountNode.querySelector("#locationBtn");
   const menuBtn = mountNode.querySelector("#menuBtn");
   const battleBtn = mountNode.querySelector("#battleBtn");
@@ -413,6 +658,33 @@ export async function mountScreen({ mountNode, store, navigate }) {
   let resizeObserver = null;
   let encounterLocked = false;
   let mapTransitionLocked = false;
+
+  function patchMapMenuState(partialMenuState) {
+    const currentState = store.getState();
+    const currentEnvelope = currentState.saveEnvelope && typeof currentState.saveEnvelope === "object"
+      ? currentState.saveEnvelope
+      : {
+        version: 1,
+        save: {},
+        menu_state: {},
+        selected_location_group: currentState.selectedLocationGroup,
+        selected_location: currentState.selectedLocation,
+        saved_at: new Date().toISOString(),
+      };
+    const nextMenuState = {
+      ...(currentState.menuState && typeof currentState.menuState === "object" ? currentState.menuState : {}),
+      ...(partialMenuState && typeof partialMenuState === "object" ? partialMenuState : {}),
+    };
+    const nextEnvelope = {
+      ...currentEnvelope,
+      menu_state: nextMenuState,
+      selected_location_group: currentState.selectedLocationGroup,
+      selected_location: currentState.selectedLocation,
+      saved_at: new Date().toISOString(),
+    };
+    store.updateMenuState(nextMenuState);
+    store.updateSaveEnvelope(nextEnvelope);
+  }
 
   function persistCurrentMapState(nextMapState) {
     if (!mapDefinition) return false;
@@ -429,6 +701,50 @@ export async function mountScreen({ mountNode, store, navigate }) {
     if (!mapDefinition || !mapState) return;
     updateViewportTransform(mapViewport, mapLayer, mapDefinition, mapState);
     updateMeta(mapMeta, mapDefinition, mapState);
+  }
+
+  function tryConfirm() {
+    if (!mapDefinition || !mapState || mapTransitionLocked) return;
+    const switchResult = toggleAdjacentSwitch(mapDefinition, mapState);
+    if (switchResult.toggled) {
+      mapDefinition = switchResult.mapDefinition;
+      mapState = switchResult.mapState;
+      renderMapTiles(mapLayer, mapDefinition);
+      persistCurrentMapState(mapState);
+      redraw();
+      mapStatus.textContent = `${switchResult.switchId} を ${switchResult.enabled ? "ON" : "OFF"} にしました。`;
+      return;
+    }
+    const treasureResult = openAdjacentTreasure(mapDefinition, mapState, store.getState().saveEnvelope);
+    if (treasureResult.opened) {
+      mapDefinition = treasureResult.mapDefinition;
+      mapState = treasureResult.mapState;
+      renderMapTiles(mapLayer, mapDefinition);
+      const currentState = store.getState();
+      const nextEnvelope = {
+        ...(treasureResult.saveEnvelope || currentState.saveEnvelope || { save: {}, menu_state: {} }),
+        menu_state: {
+          ...(currentState.menuState && typeof currentState.menuState === "object" ? currentState.menuState : {}),
+          map_state: {
+            ...mapState,
+          },
+        },
+        selected_location_group: currentState.selectedLocationGroup,
+        selected_location: currentState.selectedLocation,
+        saved_at: new Date().toISOString(),
+      };
+      store.updateMenuState(nextEnvelope.menu_state);
+      const persisted = store.updateSaveEnvelope(nextEnvelope);
+      if (persisted) {
+        triggerAutoSaveFromEnvelope(nextEnvelope);
+      }
+      redraw();
+      mapStatus.textContent = `${treasureResult.itemName} を手に入れた！`;
+      return;
+    }
+    mapStatus.textContent = treasureResult.alreadyOpened
+      ? "その宝箱はすでに開いています。"
+      : "反応するギミックは近くにありません。";
   }
 
   async function applyMapTransition(targetMapId, targetSpawn = null) {
@@ -450,14 +766,24 @@ export async function mountScreen({ mountNode, store, navigate }) {
         current_map_id: nextMapDefinition.id,
         tile_x: asNumber(targetSpawn?.x, asNumber(nextMapDefinition.spawn?.x, 0)),
         tile_y: asNumber(targetSpawn?.y, asNumber(nextMapDefinition.spawn?.y, 0)),
+        steps_since_reset: 0,
+        switch_states: {},
+        opened_treasures: {},
       };
       if (!canOccupyTile(mapDefinition, mapState.tile_x, mapState.tile_y)) {
         mapState = {
           current_map_id: nextMapDefinition.id,
           tile_x: asNumber(nextMapDefinition.spawn?.x, 0),
           tile_y: asNumber(nextMapDefinition.spawn?.y, 0),
+          steps_since_reset: 0,
+          switch_states: {},
+          opened_treasures: {},
         };
       }
+      mapDefinition = applySwitchStateToMap(
+        { ...mapDefinition, openedTreasures: mapState.opened_treasures },
+        mapState.switch_states,
+      );
       renderMapTiles(mapLayer, mapDefinition);
       persistCurrentMapState(mapState);
       redraw();
@@ -513,7 +839,11 @@ export async function mountScreen({ mountNode, store, navigate }) {
       return;
     }
     const standing = describeStandingObject(mapDefinition, mapState);
-    if (shouldTriggerEncounter(mapDefinition)) {
+    if (shouldTriggerEncounter(
+      mapDefinition,
+      Math.random(),
+      asNumber(mapState?.steps_since_reset, 0),
+    )) {
       mapStatus.textContent = "敵が現れた！ 戦闘へ移行します。";
       navigateToEncounter();
       return;
@@ -529,16 +859,30 @@ export async function mountScreen({ mountNode, store, navigate }) {
       ArrowRight: "right",
     };
     const direction = keyMap[event.key];
-    if (!direction) return;
-    event.preventDefault();
-    void tryMove(direction);
+    if (direction) {
+      event.preventDefault();
+      void tryMove(direction);
+      return;
+    }
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      tryConfirm();
+    }
   };
 
-  const onGoLocation = () => navigate("location");
-  const onGoMenu = () => navigate("menu");
+  const onConfirm = () => tryConfirm();
+  const onGoLocation = () => {
+    patchMapMenuState({ map_return_pending: false });
+    navigate("location");
+  };
+  const onGoMenu = () => {
+    patchMapMenuState({ map_return_pending: true });
+    navigate("menu");
+  };
   const onGoBattle = () => navigate("battle");
   const padHandlers = new Map();
 
+  confirmBtn.addEventListener("click", onConfirm);
   locationBtn.addEventListener("click", onGoLocation);
   menuBtn.addEventListener("click", onGoMenu);
   battleBtn.addEventListener("click", onGoBattle);
@@ -554,25 +898,34 @@ export async function mountScreen({ mountNode, store, navigate }) {
   try {
     const appState = store.getState();
     const battleReturnContext = readBattleReturnContext();
-    const resumeFromSavedPosition = Boolean(
-      battleReturnContext?.return_route === "map"
-      && battleReturnContext?.resume_map,
-    );
-    const requestedMapId = String(
-      (resumeFromSavedPosition && battleReturnContext?.map_id)
-      || appState?.menuState?.map_state?.current_map_id
-      || appState?.saveEnvelope?.save?.map?.map
-      || DEFAULT_MAP_ID,
-    );
+    const mapEntryContext = readMapEntryContext();
+    const {
+      freshLocationEntry,
+      resumeFromSavedPosition,
+      returningFromBattle,
+      requestedMapId,
+    } = deriveMapLaunchContext(appState, battleReturnContext, mapEntryContext);
     mapDefinition = await loadMapDefinition(requestedMapId);
-    const currentSelection = {
-      selected_location_group: appState.selectedLocationGroup,
-      selected_location: appState.selectedLocation,
-    };
+    const currentSelection = returningFromBattle
+      ? buildEncounterSelection(mapDefinition, {
+        selected_location_group: appState.selectedLocationGroup,
+        selected_location: appState.selectedLocation,
+      })
+      : {
+        selected_location_group: appState.selectedLocationGroup,
+        selected_location: appState.selectedLocation,
+      };
+    if (returningFromBattle) {
+      store.patch({
+        selectedLocationGroup: currentSelection.selected_location_group,
+        selectedLocation: currentSelection.selected_location,
+      });
+    }
     if (!isMapSelectionCompatible(mapDefinition, currentSelection)) {
       mapStatus.textContent = "現在のLocationではこのマップへ移動できません。";
       mapMeta.innerHTML = "<div>Locationを対応する場所に合わせてから移動してください。</div>";
       return () => {
+        confirmBtn.removeEventListener("click", onConfirm);
         locationBtn.removeEventListener("click", onGoLocation);
         menuBtn.removeEventListener("click", onGoMenu);
         battleBtn.removeEventListener("click", onGoBattle);
@@ -586,14 +939,32 @@ export async function mountScreen({ mountNode, store, navigate }) {
     mapState = deriveInitialMapState(appState, mapDefinition, {
       resumeFromSavedPosition,
     });
+    mapDefinition = applySwitchStateToMap(
+      { ...mapDefinition, openedTreasures: mapState.opened_treasures },
+      mapState.switch_states,
+    );
+    if (freshLocationEntry) {
+      sessionStorage.removeItem(MAP_ENTRY_CONTEXT_KEY);
+      patchMapMenuState({ map_return_pending: false });
+    }
     if (resumeFromSavedPosition) {
       sessionStorage.removeItem(BATTLE_RETURN_CONTEXT_KEY);
+      patchMapMenuState({ map_return_pending: false });
+      if (returningFromBattle) {
+        mapState = {
+          ...mapState,
+          steps_since_reset: 0,
+        };
+      }
     }
     if (!canOccupyTile(mapDefinition, mapState.tile_x, mapState.tile_y)) {
       mapState = {
         current_map_id: mapDefinition.id,
         tile_x: mapDefinition.spawn.x,
         tile_y: mapDefinition.spawn.y,
+        steps_since_reset: 0,
+        switch_states: normalizeSwitchStates(mapState?.switch_states),
+        opened_treasures: normalizeTreasureStates(mapState?.opened_treasures),
       };
     }
     renderMapTiles(mapLayer, mapDefinition);
@@ -614,6 +985,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   }
 
   return () => {
+    confirmBtn.removeEventListener("click", onConfirm);
     locationBtn.removeEventListener("click", onGoLocation);
     menuBtn.removeEventListener("click", onGoMenu);
     battleBtn.removeEventListener("click", onGoBattle);

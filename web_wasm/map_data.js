@@ -4,6 +4,8 @@ const MAP_MANIFEST = {
   Alter_Cave_B1: new URL("../assets/maps/Alter_Cave_B1.json", import.meta.url).href,
   Alter_Cave_B2: new URL("../assets/maps/Alter_Cave_B2.json", import.meta.url).href,
   Alter_Cave_B3: new URL("../assets/maps/Alter_Cave_B3.json", import.meta.url).href,
+  Alter_Cave_B4: new URL("../assets/maps/Alter_Cave_B4.json", import.meta.url).href,
+  Alter_Cave_Crystal_Room: new URL("../assets/maps/Alter_Cave_Crystal_Room.json", import.meta.url).href,
 };
 
 const mapCache = new Map();
@@ -50,7 +52,7 @@ function normalizeLocationRequirement(rawValue) {
   };
 }
 
-function buildRenderRows(rows, width, height, padding) {
+export function buildRenderRows(rows, width, height, padding) {
   const left = asNumber(padding?.left, 0);
   const right = asNumber(padding?.right, 0);
   const top = asNumber(padding?.top, 0);
@@ -112,6 +114,7 @@ export function normalizeMapDefinition(rawMap) {
     renderHeight: height + renderPadding.top + renderPadding.bottom,
     tileWidth,
     tileHeight,
+    baseRows: normalizedRows.map((row) => row.slice()),
     rows: normalizedRows,
     renderRows,
     renderPadding,
@@ -174,8 +177,21 @@ export function buildEncounterSelection(mapDefinition, fallbackSelection = {}) {
   };
 }
 
-export function shouldTriggerEncounter(mapDefinition, randomValue = Math.random()) {
-  const rate = Math.min(1, Math.max(0, Number(mapDefinition?.encounterRate || 0)));
+export function getEncounterRateForStep(mapDefinition, stepCountSinceReset = 0) {
+  const baseRate = Math.min(1, Math.max(0, Number(mapDefinition?.encounterRate || 0)));
+  const normalizedStepCount = Math.max(0, Number(stepCountSinceReset) || 0);
+  if (normalizedStepCount >= 1 && normalizedStepCount <= 5) {
+    return baseRate / 5;
+  }
+  return baseRate;
+}
+
+export function shouldTriggerEncounter(
+  mapDefinition,
+  randomValue = Math.random(),
+  stepCountSinceReset = 0,
+) {
+  const rate = getEncounterRateForStep(mapDefinition, stepCountSinceReset);
   return Number(randomValue) < rate;
 }
 

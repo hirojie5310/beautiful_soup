@@ -180,12 +180,12 @@
           "GuardedBy": "-"
         },
         {
-          "Map": "Altar Cave B2",
+          "Map": "Altar Cave B4",
           "Notes": "Southeast passage of path to the crystal",
           "GuardedBy": "-"
         },
         {
-          "Map": "Altar Cave B2",
+          "Map": "Altar Cave B4",
           "Notes": "North area of path to the crystal",
           "GuardedBy": "-"
         },
@@ -1918,12 +1918,12 @@
       ],
       "Treasures": [
         {
-          "Map": "Altar Cave B2",
+          "Map": "Altar Cave B4",
           "Notes": "Southwest passage of path to the crystal",
           "GuardedBy": "-"
         },
         {
-          "Map": "Altar Cave B2",
+          "Map": "Altar Cave B4",
           "Notes": "Northeast passage of path to the crystal",
           "GuardedBy": "-"
         },
