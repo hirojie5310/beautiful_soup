@@ -14,6 +14,7 @@ import {
   findStandingObject,
   moveMapPosition,
   openAdjacentTreasure,
+  shouldCloseEventOverlayOnConfirm,
   shouldResumeMapPosition,
   toggleAdjacentSwitch,
 } from "./map_screen.js";
@@ -119,6 +120,11 @@ test("shouldResumeMapPosition does not resume for fresh map entry", () => {
       map_return_pending: false,
     },
   }), false);
+});
+
+test("confirm button closes event overlay while event text is open", () => {
+  assert.equal(shouldCloseEventOverlayOnConfirm(true), true);
+  assert.equal(shouldCloseEventOverlayOnConfirm(false), false);
 });
 
 test("deriveMapLaunchContext forces default map for fresh location entry", () => {

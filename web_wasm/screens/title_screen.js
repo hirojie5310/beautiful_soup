@@ -27,15 +27,24 @@ function renderLayout() {
           display: flex;
           flex-direction: column;
           justify-content: space-between;
-          background: linear-gradient(180deg, rgba(8, 12, 30, 0.32), rgba(8, 12, 30, 0.82));
+          background: linear-gradient(180deg, rgba(248, 249, 255, 0.94), rgba(235, 239, 248, 0.98));
         }
         .title-hero-frame::before {
           content: "";
           position: absolute;
           inset: 0;
           background:
-            linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(10, 15, 38, 0.06) 28%, rgba(10, 15, 38, 0.58) 78%, rgba(10, 15, 38, 0.86)),
-            radial-gradient(circle at top center, rgba(255, 255, 255, 0.14), transparent 38%);
+            linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.1) 30%, rgba(246, 248, 255, 0.18) 72%, rgba(238, 242, 252, 0.42)),
+            radial-gradient(circle at top center, rgba(255, 255, 255, 0.22), transparent 40%);
+          pointer-events: none;
+          z-index: 1;
+        }
+        .title-hero-frame::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.2) 68%, rgba(255, 255, 255, 0.92));
+          animation: title-hero-fadewash ${TITLE_HERO_CYCLE_MS}ms ease-in-out infinite;
           pointer-events: none;
           z-index: 1;
         }
@@ -55,17 +64,20 @@ function renderLayout() {
           position: relative;
           z-index: 2;
           color: rgba(18, 24, 46, 0.92);
-          text-shadow: 0 1px 0 rgba(255, 255, 255, 0.28);
+          text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
         }
         .title-story-line {
           min-height: 6.4em;
           max-width: 32rem;
-          color: rgba(243, 246, 255, 0.96);
+          padding: 4px 0;
+          color: rgba(20, 25, 42, 0.96);
           font-size: 0.98rem;
           line-height: 1.8;
           letter-spacing: 0.03em;
           white-space: pre-wrap;
-          text-shadow: 0 2px 12px rgba(4, 7, 18, 0.88);
+          text-shadow:
+            0 1px 0 rgba(255, 255, 255, 0.42),
+            0 0 10px rgba(255, 255, 255, 0.2);
         }
         .title-bottom-panel {
           position: relative;
@@ -74,10 +86,13 @@ function renderLayout() {
           gap: 10px;
           margin-top: auto;
           padding: 12px;
-          border: 1px solid rgba(255, 255, 255, 0.28);
+          border: 1px solid rgba(255, 255, 255, 0.55);
           border-radius: 10px;
-          background: linear-gradient(180deg, rgba(9, 13, 31, 0.42), rgba(9, 13, 31, 0.76));
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+          background: linear-gradient(180deg, rgba(255, 255, 255, 0.46), rgba(231, 237, 250, 0.82));
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+        }
+        .title-status-line {
+          color: rgba(24, 30, 48, 0.96);
         }
         .title-menu-list {
           display: grid;
@@ -101,17 +116,31 @@ function renderLayout() {
           0% {
             background-position: center bottom;
             opacity: 0.96;
+            filter: brightness(1) saturate(1);
             transform: scale(1);
           }
           80% {
             background-position: center top;
             opacity: 0.96;
+            filter: brightness(1.04) saturate(0.96);
             transform: scale(1.02);
           }
           100% {
             background-position: center top;
-            opacity: 0;
+            opacity: 0.4;
+            filter: brightness(1.22) saturate(0.72);
             transform: scale(1.02);
+          }
+        }
+        @keyframes title-hero-fadewash {
+          0% {
+            opacity: 0;
+          }
+          82% {
+            opacity: 0;
+          }
+          100% {
+            opacity: 1;
           }
         }
         @media (max-width: 420px) {
@@ -141,7 +170,7 @@ function renderLayout() {
           <div id="titleStoryLine" class="title-story-line" aria-live="polite"></div>
         </div>
         <div class="title-bottom-panel">
-          <div id="titleStatus" class="status" style="margin-bottom:0;">開始メニューを選択してください。</div>
+          <div id="titleStatus" class="status title-status-line" style="margin-bottom:0;">開始メニューを選択してください。</div>
           <div id="menuList" class="title-menu-list"></div>
         </div>
       </section>

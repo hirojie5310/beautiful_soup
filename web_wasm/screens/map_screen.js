@@ -914,6 +914,10 @@ export function deriveMapLaunchContext(appState, battleReturnContext = null, map
   };
 }
 
+export function shouldCloseEventOverlayOnConfirm(isOverlayOpen) {
+  return Boolean(isOverlayOpen);
+}
+
 export async function mountScreen({ mountNode, store, navigate }) {
   mountNode.innerHTML = renderLayout();
 
@@ -1300,7 +1304,13 @@ export async function mountScreen({ mountNode, store, navigate }) {
     }
   };
 
-  const onConfirm = () => { void tryConfirm(); };
+  const onConfirm = () => {
+    if (shouldCloseEventOverlayOnConfirm(isEventOverlayOpen())) {
+      closeEventOverlay();
+      return;
+    }
+    void tryConfirm();
+  };
   const onCloseEvent = () => closeEventOverlay();
   const onGoLocation = () => {
     patchMapMenuState({ map_return_pending: false });
