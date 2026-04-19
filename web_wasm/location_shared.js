@@ -10,6 +10,7 @@ import { findPartyMemberIndex } from "./shared_party.js";
 export const LOCAL_SAVE_STORAGE_KEY = "ff3_wasm_savedata_v1";
 export const LOCAL_LOCATION_SELECTION_KEY = "ff3_wasm_location_selection_v1";
 export const PYTHON_BUNDLE_VERSION = "20260414a";
+export const RUNTIME_DATA_VERSION = "20260419a";
 export const INN_PRICE = 10;
 
 export function asObj(value) {
@@ -175,7 +176,9 @@ if '/' not in sys.path:
 }
 
 export async function prepareExplicitGroups(instance) {
-  const response = await fetch("../assets/data/explicit_groups.json");
+  const response = await fetch(`../assets/data/explicit_groups.json?v=${RUNTIME_DATA_VERSION}`, {
+    cache: "no-store",
+  });
   if (!response.ok) {
     instance.FS.writeFile("/tmp/explicit_groups.json", new Uint8Array());
     return;
