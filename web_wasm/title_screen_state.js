@@ -30,6 +30,15 @@ function blankMpLevels() {
   );
 }
 
+function blankMagicSlots() {
+  return Object.fromEntries(
+    Array.from({ length: 8 }, (_unused, index) => [
+      `LV${index + 1}`,
+      [null, null, null],
+    ]),
+  );
+}
+
 function buildNewGamePartyMember(index) {
   const portraitKey = FIXED_PARTY_SLOT_KEYS[index] || `member-${index + 1}`;
   const name = FIXED_PARTY_SLOT_LABELS[index] || `Member ${index + 1}`;
@@ -47,6 +56,7 @@ function buildNewGamePartyMember(index) {
     hp: 0,
     max_hp: 0,
     mp_levels: blankMpLevels(),
+    Magic: blankMagicSlots(),
     equipment: {
       main_hand: "Knife",
       off_hand: null,
@@ -67,6 +77,7 @@ export function createNewGameSaveData() {
     gil: 0,
     CP: 0,
     inventory: {},
+    item_stock: {},
     party: FIXED_PARTY_SLOT_KEYS.map((_key, index) => buildNewGamePartyMember(index)),
   };
 }

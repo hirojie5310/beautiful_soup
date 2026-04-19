@@ -67,8 +67,8 @@
       "x": 9,
       "y": 4,
       "treasure_id": "altar_cave_b3_treasure_top",
-      "item_name": "Potion",
-      "inventory_bucket": "Anywhere",
+      "item_name": "Longsword",
+      "inventory_bucket": "Weapon",
       "quantity": 1,
       "closed_gid": 125,
       "open_gid": 126
@@ -79,8 +79,8 @@
       "x": 1,
       "y": 10,
       "treasure_id": "altar_cave_b3_treasure_left",
-      "item_name": "Potion",
-      "inventory_bucket": "Anywhere",
+      "item_name": "Leather Shield",
+      "inventory_bucket": "Armor",
       "quantity": 1,
       "closed_gid": 125,
       "open_gid": 126

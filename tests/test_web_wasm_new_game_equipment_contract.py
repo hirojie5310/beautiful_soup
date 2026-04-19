@@ -41,7 +41,6 @@ def test_align_party_to_base_keeps_explicit_none_equipment_slots() -> None:
         "arms": None,
     }
 
-
 def test_merge_save_data_keeps_explicit_none_values_in_overlay_dict() -> None:
     merged = _merge_save_data(
         {

@@ -7,7 +7,10 @@ import {
   deriveMapLaunchContext,
   canOccupyTile,
   deriveInitialMapState,
+  findAdjacentTileWithGid,
   findAdjacentObject,
+  findCrystalSpriteOrigin,
+  isAdjacentToCrystalSprite,
   findStandingObject,
   moveMapPosition,
   openAdjacentTreasure,
@@ -256,6 +259,66 @@ test("findAdjacentObject returns switch next to player", () => {
   }, (row) => row.type === "switch"), mapWithSwitch.objects[0]);
 });
 
+test("findAdjacentTileWithGid detects a matching neighboring tile", () => {
+  const mapWithSpecialTile = {
+    ...stubMap,
+    rows: [
+      [1, 1, 1],
+      [1, 5, 36],
+      [1, 1, 1],
+    ],
+  };
+
+  assert.deepEqual(findAdjacentTileWithGid(mapWithSpecialTile, {
+    current_map_id: "Alter_Cave_B1",
+    tile_x: 1,
+    tile_y: 1,
+  }, 36), { x: 1, y: 0 });
+
+  assert.equal(findAdjacentTileWithGid(mapWithSpecialTile, {
+    current_map_id: "Alter_Cave_B1",
+    tile_x: 0,
+    tile_y: 0,
+  }, 36), null);
+});
+
+test("findCrystalSpriteOrigin locates the crystal sprite anchor in the crystal room", () => {
+  const crystalRoomMap = {
+    id: "Alter_Cave_Crystal_Room",
+    width: 4,
+    height: 4,
+    rows: [
+      [1, 1, 1, 1],
+      [1, 125, 1, 1],
+      [1, 7, 1, 1],
+      [1, 1, 1, 1],
+    ],
+  };
+
+  assert.deepEqual(findCrystalSpriteOrigin(crystalRoomMap), { x: 1, y: 1 });
+  assert.equal(findCrystalSpriteOrigin({ ...crystalRoomMap, id: "Alter_Cave_B1" }), null);
+});
+
+test("isAdjacentToCrystalSprite accepts either half of the crystal column", () => {
+  const crystalRoomMap = {
+    id: "Alter_Cave_Crystal_Room",
+    width: 4,
+    height: 5,
+    rows: [
+      [1, 1, 1, 1],
+      [1, 125, 1, 1],
+      [1, 7, 1, 1],
+      [1, 1, 1, 1],
+      [1, 1, 1, 1],
+    ],
+  };
+
+  assert.equal(isAdjacentToCrystalSprite(crystalRoomMap, { tile_x: 0, tile_y: 1 }), true);
+  assert.equal(isAdjacentToCrystalSprite(crystalRoomMap, { tile_x: 2, tile_y: 2 }), true);
+  assert.equal(isAdjacentToCrystalSprite(crystalRoomMap, { tile_x: 1, tile_y: 3 }), true);
+  assert.equal(isAdjacentToCrystalSprite(crystalRoomMap, { tile_x: 0, tile_y: 3 }), false);
+});
+
 test("applySwitchStateToMap flips linked barrier gid between 1 and 49", () => {
   const mapWithBarrier = {
     ...stubMap,
@@ -366,6 +429,104 @@ test("openAdjacentTreasure adds Potion to inventory and opens chest", () => {
   assert.equal(result.mapDefinition.rows[1][2], 126);
   assert.equal(result.mapState.opened_treasures.treasure1, true);
   assert.equal(result.saveEnvelope.save.inventory.Anywhere.Potion, 1);
+});
+
+test("openAdjacentTreasure stores Magic treasure under inventory level buckets", () => {
+  const mapWithTreasure = {
+    ...stubMap,
+    width: 3,
+    height: 3,
+    baseRows: [
+      [1, 1, 1],
+      [1, 1, 125],
+      [1, 1, 1],
+    ],
+    rows: [
+      [1, 1, 125],
+      [1, 1, 125],
+      [1, 1, 1],
+    ],
+    renderPadding: { top: 0, right: 0, bottom: 0, left: 0, fillGid: 1 },
+    objects: [
+      {
+        type: "treasure",
+        name: "treasure_magic",
+        treasure_id: "treasure_magic",
+        x: 2,
+        y: 1,
+        item_name: "Sleep",
+        inventory_bucket: "Magic",
+        quantity: 1,
+        closed_gid: 125,
+        open_gid: 126,
+      },
+    ],
+  };
+
+  const result = openAdjacentTreasure(mapWithTreasure, {
+    current_map_id: "Alter_Cave_B2",
+    tile_x: 1,
+    tile_y: 1,
+    switch_states: {},
+    opened_treasures: {},
+  }, {
+    save: { inventory: {} },
+    menu_state: {},
+  }, {
+    Sleep: 1,
+  });
+
+  assert.equal(result.opened, true);
+  assert.equal(result.saveEnvelope.save.inventory.Magic.LV1.Sleep, 1);
+  assert.equal(result.mapState.opened_treasures.treasure_magic, true);
+});
+
+test("openAdjacentTreasure leaves chest closed when Magic treasure level is unknown", () => {
+  const mapWithTreasure = {
+    ...stubMap,
+    width: 3,
+    height: 3,
+    baseRows: [
+      [1, 1, 1],
+      [1, 1, 125],
+      [1, 1, 1],
+    ],
+    rows: [
+      [1, 1, 1],
+      [1, 1, 125],
+      [1, 1, 1],
+    ],
+    renderPadding: { top: 0, right: 0, bottom: 0, left: 0, fillGid: 1 },
+    objects: [
+      {
+        type: "treasure",
+        name: "treasure_magic_unknown",
+        treasure_id: "treasure_magic_unknown",
+        x: 2,
+        y: 1,
+        item_name: "Sleep",
+        inventory_bucket: "Magic",
+        quantity: 1,
+        closed_gid: 125,
+        open_gid: 126,
+      },
+    ],
+  };
+
+  const result = openAdjacentTreasure(mapWithTreasure, {
+    current_map_id: "Alter_Cave_B2",
+    tile_x: 1,
+    tile_y: 1,
+    switch_states: {},
+    opened_treasures: {},
+  }, {
+    save: { inventory: {} },
+    menu_state: {},
+  });
+
+  assert.equal(result.opened, false);
+  assert.equal(result.inventoryError, true);
+  assert.equal(result.mapState.opened_treasures?.treasure_magic_unknown, undefined);
 });
 
 test("isMapSelectionCompatible requires matching location", () => {

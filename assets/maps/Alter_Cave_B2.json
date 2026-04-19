@@ -11,7 +11,7 @@
     "columns": 16,
     "tile_count": 128
   },
-  "collision_gids": [1, 2, 8, 69, 125],
+  "collision_gids": [1, 2, 69, 125],
   "location_requirement": {
     "group": "Altar Cave",
     "locations": ["Altar Cave B2"]
@@ -57,8 +57,8 @@
       "x": 13,
       "y": 7,
       "treasure_id": "altar_cave_b2_treasure_top",
-      "item_name": "Potion",
-      "inventory_bucket": "Anywhere",
+      "item_name": "Sleep",
+      "inventory_bucket": "Magic",
       "quantity": 1,
       "closed_gid": 125,
       "open_gid": 126
@@ -69,8 +69,8 @@
       "x": 3,
       "y": 13,
       "treasure_id": "altar_cave_b2_treasure_left",
-      "item_name": "Potion",
-      "inventory_bucket": "Anywhere",
+      "item_name": "Longsword",
+      "inventory_bucket": "Weapon",
       "quantity": 1,
       "closed_gid": 125,
       "open_gid": 126
@@ -81,8 +81,20 @@
       "x": 5,
       "y": 15,
       "treasure_id": "altar_cave_b2_treasure_mid",
-      "item_name": "Potion",
-      "inventory_bucket": "Anywhere",
+      "item_name": "Nunchaku",
+      "inventory_bucket": "Weapon",
+      "quantity": 1,
+      "closed_gid": 125,
+      "open_gid": 126
+    },
+    {
+      "type": "treasure",
+      "name": "treasure_mid_lower",
+      "x": 8,
+      "y": 18,
+      "treasure_id": "altar_cave_b2_treasure_mid_lower",
+      "item_name": "Longsword",
+      "inventory_bucket": "Weapon",
       "quantity": 1,
       "closed_gid": 125,
       "open_gid": 126
@@ -93,8 +105,8 @@
       "x": 15,
       "y": 16,
       "treasure_id": "altar_cave_b2_treasure_lower",
-      "item_name": "Potion",
-      "inventory_bucket": "Anywhere",
+      "item_name": "Bronze Bracers",
+      "inventory_bucket": "Armor",
       "quantity": 1,
       "closed_gid": 125,
       "open_gid": 126

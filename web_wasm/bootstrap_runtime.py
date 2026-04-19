@@ -297,6 +297,13 @@ def _align_party_to_base(base_party, overlay_party):
                     **base_equipment,
                     **overlay_equipment,
                 }
+            overlay_magic = (
+                overlay_entry.get("Magic")
+                if isinstance(overlay_entry, dict)
+                else None
+            )
+            if isinstance(overlay_magic, dict):
+                merged_entry["Magic"] = _merge_save_data(None, overlay_magic)
             merged_entry = _repair_party_entry_job(merged_entry, base_entry)
         aligned.append(merged_entry)
 
@@ -421,17 +428,32 @@ def get_location_selection_json():
     return json.dumps(payload, ensure_ascii=False)
 
 
-def boot_engine_for_location(location_group, location, seed=7):
+def boot_engine_for_location(location_group, location, seed=7, enemy_names_json=None):
     global state
     if isinstance(getattr(state, "save", None), dict):
         state.save = migrate_save(state.save)
     selected_group = str(location_group or "")
     selected_location = str(location or "")
-    entry = location_to_entry.get(selected_location)
-    if entry is None:
-        enemy_names = sorted(state.monsters.keys())[:3]
+    forced_enemy_names = []
+    if enemy_names_json is not None:
+        try:
+            parsed_enemy_names = json.loads(enemy_names_json)
+        except (TypeError, ValueError, json.JSONDecodeError):
+            parsed_enemy_names = []
+        if isinstance(parsed_enemy_names, list):
+            forced_enemy_names = [
+                str(name)
+                for name in parsed_enemy_names
+                if str(name or "") and str(name) in state.monsters
+            ]
+    if forced_enemy_names:
+        enemy_names = forced_enemy_names
     else:
-        enemy_names = pick_enemy_names(entry, state.monsters, k_min=2, k_max=6)
+        entry = location_to_entry.get(selected_location)
+        if entry is None:
+            enemy_names = sorted(state.monsters.keys())[:3]
+        else:
+            enemy_names = pick_enemy_names(entry, state.monsters, k_min=2, k_max=6)
 
     create_from_state = cast(
         Callable[..., WasmBattleEngine] | None,
@@ -838,30 +860,6 @@ def _ensure_menu_magic_setup(session):
         if any(name for lv in range(1, 9) for name in slots[lv]):
             has_equipped_magic = True
         equipped_by_member.append({str(lv): list(slots[lv]) for lv in range(1, 9)})
-    if not has_equipped_magic and not any(
-        stock_by_level.get(str(lv)) for lv in range(1, 9)
-    ):
-        slots_by_level = {str(lv): [] for lv in range(1, 9)}
-        for name, info in spell_meta.items():
-            if not isinstance(info, dict):
-                continue
-            level = max(1, min(8, _safe_int(info.get("level", 1), 1)))
-            magic_type = str(info.get("type") or "")
-            if "Black" in magic_type:
-                type_order = 0
-            elif "White" in magic_type:
-                type_order = 1
-            elif "Summon" in magic_type:
-                type_order = 2
-            else:
-                continue
-            slots_by_level[str(level)].append((type_order, name))
-        for lv in range(1, 9):
-            grouped = sorted(slots_by_level[str(lv)], key=lambda row: (row[0], row[1]))
-            black = [name for typ, name in grouped if typ == 0][:3]
-            white = [name for typ, name in grouped if typ == 1][:3]
-            summon = [name for typ, name in grouped if typ == 2][:1]
-            stock_by_level[str(lv)] = black + white + summon
     return {"stock_by_level": stock_by_level, "equipped_by_member": equipped_by_member}
 
 
@@ -1018,7 +1016,7 @@ def get_session_status_json():
 
 
 def boot_engine_for_location_with_save_json(
-    location_group, location, save_json, seed=7
+    location_group, location, save_json, seed=7, enemy_names_json=None
 ):
     global state
     parsed = json.loads(save_json)
@@ -1035,7 +1033,31 @@ def boot_engine_for_location_with_save_json(
         if isinstance(parsed_party, list):
             parsed["party"] = _align_party_to_base(base_party, parsed_party)
     state.save = _merge_save_data(base_save, parsed)
-    return boot_engine_for_location(location_group, location, seed=seed)
+    if isinstance(parsed, dict):
+        parsed_party = parsed.get("party")
+        merged_party = state.save.get("party")
+        if isinstance(parsed_party, list) and isinstance(merged_party, list):
+            for idx, overlay_entry in enumerate(parsed_party):
+                if idx >= len(merged_party):
+                    break
+                if not isinstance(overlay_entry, dict) or not isinstance(merged_party[idx], dict):
+                    continue
+                overlay_magic = overlay_entry.get("Magic")
+                if isinstance(overlay_magic, dict):
+                    merged_party[idx]["Magic"] = _merge_save_data(None, overlay_magic)
+        if "inventory" in parsed:
+            inventory = parsed.get("inventory")
+            state.save["inventory"] = (
+                _merge_save_data(None, inventory) if isinstance(inventory, dict) else {}
+            )
+        if "item_stock" in parsed:
+            item_stock = parsed.get("item_stock")
+            state.save["item_stock"] = (
+                _merge_save_data(None, item_stock) if isinstance(item_stock, dict) else {}
+            )
+    return boot_engine_for_location(
+        location_group, location, seed=seed, enemy_names_json=enemy_names_json
+    )
 
 
 def export_runtime_save_json():

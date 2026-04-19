@@ -10,6 +10,7 @@ test("createNewGameSaveData builds FF3 new game defaults", () => {
   assert.equal(save.gil, 0);
   assert.equal(save.CP, 0);
   assert.deepEqual(save.inventory, {});
+  assert.deepEqual(save.item_stock, {});
   assert.equal(save.party.length, 4);
 
   save.party.forEach((member) => {
@@ -20,6 +21,16 @@ test("createNewGameSaveData builds FF3 new game defaults", () => {
     assert.deepEqual(member.job_level, { level: 1, skill_point: 0 });
     assert.deepEqual(member.job_levels, {
       "Onion Knight": { level: 1, skill_point: 0 },
+    });
+    assert.deepEqual(member.Magic, {
+      LV1: [null, null, null],
+      LV2: [null, null, null],
+      LV3: [null, null, null],
+      LV4: [null, null, null],
+      LV5: [null, null, null],
+      LV6: [null, null, null],
+      LV7: [null, null, null],
+      LV8: [null, null, null],
     });
     assert.equal(member.row, "front");
     assert.deepEqual(member.equipment, {

@@ -6,6 +6,15 @@ import {
   loadMapDefinition,
   shouldTriggerEncounter,
 } from "../map_data.js";
+import {
+  buildRecoveredPartySnapshot,
+  clone,
+  loadJson,
+  persistMenuStateFromEnvelope,
+  syncMenuPartyRecovery,
+  syncSavePartyRecovery,
+} from "../location_shared.js";
+import { mergeMenuStateIntoSave } from "../menu_save_sync.js";
 import { triggerAutoSaveFromEnvelope } from "./screen_shared.js";
 
 const DISPLAY_TILE_SIZE = 22;
@@ -14,6 +23,18 @@ const HOLD_MOVE_REPEAT_MS = 110;
 const BATTLE_START_SELECTION_KEY = "ff3_wasm_battle_start_selection_v1";
 const BATTLE_RETURN_CONTEXT_KEY = "ff3_wasm_battle_return_context_v1";
 const MAP_ENTRY_CONTEXT_KEY = "ff3_wasm_map_entry_context_v1";
+const ALTER_CAVE_RECOVERY_MAP_ID = "Alter_Cave_B4";
+const ALTER_CAVE_RECOVERY_GID = 36;
+const ALTER_CAVE_RECOVERY_TEXT_INDEX = 582;
+const ALTER_CAVE_CRYSTAL_ROOM_MAP_ID = "Alter_Cave_Crystal_Room";
+const ALTER_CAVE_CRYSTAL_EVENT_TEXT_INDEX = 10;
+const ALTER_CAVE_CRYSTAL_POST_BATTLE_TEXT_INDICES = [30, 31];
+const ALTER_CAVE_CRYSTAL_BOSS_NAME = "Land Turtle";
+const CRYSTAL_SPRITE_FRAMES = 4;
+const CRYSTAL_SPRITE_FRAME_MS = 500;
+const CRYSTAL_IMAGE_URL = new URL("../../assets/images/maps/Crystal.png", import.meta.url).href;
+let spellLevelByNamePromise = null;
+let mergedFixedContentPromise = null;
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
@@ -102,10 +123,24 @@ function treasureKey(row) {
   return String(row?.treasure_id || row?.name || `${row?.x},${row?.y}`);
 }
 
-function addItemToInventory(save, bucketName, itemName, quantity = 1) {
+function addItemToInventory(save, bucketName, itemName, quantity = 1, spellLevelByName = {}) {
   if (!save || typeof save !== "object") return false;
   if (!save.inventory || typeof save.inventory !== "object") {
     save.inventory = {};
+  }
+  if (bucketName === "Magic") {
+    const spellLevel = asNumber(spellLevelByName[itemName], 0);
+    if (spellLevel <= 0) return false;
+    const levelKey = `LV${spellLevel}`;
+    if (!save.inventory.Magic || typeof save.inventory.Magic !== "object") {
+      save.inventory.Magic = {};
+    }
+    if (!save.inventory.Magic[levelKey] || typeof save.inventory.Magic[levelKey] !== "object") {
+      save.inventory.Magic[levelKey] = {};
+    }
+    const current = asNumber(save.inventory.Magic[levelKey][itemName], 0);
+    save.inventory.Magic[levelKey][itemName] = current + quantity;
+    return true;
   }
   if (!save.inventory[bucketName] || typeof save.inventory[bucketName] !== "object") {
     save.inventory[bucketName] = {};
@@ -113,6 +148,49 @@ function addItemToInventory(save, bucketName, itemName, quantity = 1) {
   const current = asNumber(save.inventory[bucketName][itemName], 0);
   save.inventory[bucketName][itemName] = current + quantity;
   return true;
+}
+
+async function loadSpellLevelByName() {
+  if (!spellLevelByNamePromise) {
+    spellLevelByNamePromise = loadJson("../assets/data/ffiii_spells.json")
+      .then((payload) => {
+        const next = {};
+        const rows = Array.isArray(payload?.spells) ? payload.spells : [];
+        rows.forEach((spell) => {
+          const name = String(spell?.name || "");
+          const level = asNumber(spell?.Level, 0);
+          if (name && level > 0) next[name] = level;
+        });
+        return next;
+      })
+      .catch((error) => {
+        spellLevelByNamePromise = null;
+        throw error;
+      });
+  }
+  return spellLevelByNamePromise;
+}
+
+async function loadMergedFixedContentByIndex(index) {
+  if (!mergedFixedContentPromise) {
+    mergedFixedContentPromise = loadJson("../assets/data/merged_fixed.json")
+      .catch((error) => {
+        mergedFixedContentPromise = null;
+        throw error;
+      });
+  }
+  const rows = await mergedFixedContentPromise;
+  const hit = Array.isArray(rows)
+    ? rows.find((row) => Number(row?.index) === Number(index))
+    : null;
+  return String(hit?.content || "");
+}
+
+async function loadMergedFixedContentByIndices(indices) {
+  const rows = Array.isArray(indices) ? indices : [];
+  return Promise.all(
+    rows.map((index) => loadMergedFixedContentByIndex(index)),
+  );
 }
 
 function normalizeMapSaveShape(mapState, mapDefinition) {
@@ -302,6 +380,20 @@ function renderLayout() {
         position: relative;
         z-index: 1;
       }
+      [data-screen="map"] .map-decoration {
+        position: absolute;
+        pointer-events: none;
+        image-rendering: pixelated;
+      }
+      [data-screen="map"] .map-decoration-crystal {
+        width: var(--map-tile-size);
+        height: calc(var(--map-tile-size) * 2);
+        background-image: url("${CRYSTAL_IMAGE_URL}");
+        background-repeat: no-repeat;
+        background-size: calc(var(--map-tile-size) * ${CRYSTAL_SPRITE_FRAMES}) calc(var(--map-tile-size) * 2);
+        animation: map-crystal-frames ${CRYSTAL_SPRITE_FRAMES * CRYSTAL_SPRITE_FRAME_MS}ms steps(${CRYSTAL_SPRITE_FRAMES}) infinite;
+        z-index: 1;
+      }
       [data-screen="map"] .map-player {
         position: absolute;
         left: 50%;
@@ -328,6 +420,58 @@ function renderLayout() {
       [data-screen="map"] .map-hud {
         display: grid;
         gap: 10px;
+      }
+      [data-screen="map"] .map-flash {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0;
+        background: rgba(255, 255, 255, 0.92);
+        z-index: 3;
+      }
+      [data-screen="map"] .map-flash.active {
+        animation: map-screen-flash 380ms ease-out;
+      }
+      [data-screen="map"] .map-event-overlay {
+        position: absolute;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+        background: rgba(7, 13, 30, 0.72);
+        z-index: 4;
+      }
+      [data-screen="map"] .map-event-overlay.open {
+        display: flex;
+      }
+      [data-screen="map"] .map-event-card {
+        width: min(100%, 340px);
+        padding: 14px 16px;
+        border: 2px solid rgba(255, 255, 255, 0.72);
+        border-radius: 12px;
+        background: rgba(8, 14, 34, 0.96);
+        color: #f4f7ff;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.34);
+      }
+      [data-screen="map"] .map-event-text {
+        margin: 0;
+        white-space: pre-wrap;
+        line-height: 1.65;
+      }
+      [data-screen="map"] .map-event-actions {
+        display: flex;
+        justify-content: center;
+        margin-top: 14px;
+      }
+      @keyframes map-screen-flash {
+        0% { opacity: 0; }
+        18% { opacity: 0.95; }
+        100% { opacity: 0; }
+      }
+      @keyframes map-crystal-frames {
+        from { background-position: 0 0; }
+        to { background-position: calc(var(--map-tile-size) * -${CRYSTAL_SPRITE_FRAMES}) 0; }
       }
       [data-screen="map"] .map-meta {
         display: flex;
@@ -400,6 +544,15 @@ function renderLayout() {
         <div id="mapViewport" class="map-viewport" aria-label="map viewport">
           <div id="mapLayer" class="map-layer"></div>
           <div class="map-player" aria-hidden="true"></div>
+          <div id="mapFlash" class="map-flash" aria-hidden="true"></div>
+          <div id="mapEventOverlay" class="map-event-overlay" aria-hidden="true">
+            <div class="map-event-card">
+              <p id="mapEventText" class="map-event-text"></p>
+              <div class="map-event-actions">
+                <button id="mapEventCloseBtn" class="btn" type="button">閉じる</button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="map-hud">
@@ -446,6 +599,46 @@ export function findAdjacentObject(mapDefinition, mapState, predicate = () => tr
   }) || null;
 }
 
+export function findAdjacentTileWithGid(mapDefinition, mapState, gid) {
+  const tileX = Number(mapState?.tile_x);
+  const tileY = Number(mapState?.tile_y);
+  const targetGid = Number(gid);
+  const deltas = [
+    { x: 0, y: -1 },
+    { x: 0, y: 1 },
+    { x: -1, y: 0 },
+    { x: 1, y: 0 },
+  ];
+  return deltas.find((delta) => (
+    Number(mapDefinition?.rows?.[tileY + delta.y]?.[tileX + delta.x] ?? NaN) === targetGid
+  )) || null;
+}
+
+export function findCrystalSpriteOrigin(mapDefinition) {
+  if (String(mapDefinition?.id || "") !== ALTER_CAVE_CRYSTAL_ROOM_MAP_ID) return null;
+  for (let y = 0; y < Number(mapDefinition?.height || 0) - 1; y += 1) {
+    for (let x = 0; x < Number(mapDefinition?.width || 0); x += 1) {
+      const topGid = Number(mapDefinition?.rows?.[y]?.[x] ?? NaN);
+      const bottomGid = Number(mapDefinition?.rows?.[y + 1]?.[x] ?? NaN);
+      if (topGid === 125 && bottomGid === 7) {
+        return { x, y };
+      }
+    }
+  }
+  return null;
+}
+
+export function isAdjacentToCrystalSprite(mapDefinition, mapState) {
+  const origin = findCrystalSpriteOrigin(mapDefinition);
+  if (!origin) return false;
+  const tileX = Number(mapState?.tile_x);
+  const tileY = Number(mapState?.tile_y);
+  return (
+    Math.abs(tileX - origin.x) + Math.abs(tileY - origin.y) === 1
+    || Math.abs(tileX - origin.x) + Math.abs(tileY - (origin.y + 1)) === 1
+  );
+}
+
 function describeStandingObject(mapDefinition, mapState) {
   const hit = findStandingObject(mapDefinition, mapState);
   if (!hit) return "";
@@ -465,6 +658,7 @@ function renderMapTiles(mapLayer, mapDefinition) {
   const tileSize = DISPLAY_TILE_SIZE;
   const tilesetRows = Math.max(1, Math.ceil(mapDefinition.tileset.tileCount / mapDefinition.tileset.columns));
   const renderPadding = mapDefinition.renderPadding || { left: 0, top: 0 };
+  const crystalOrigin = findCrystalSpriteOrigin(mapDefinition);
   mapLayer.innerHTML = "";
   mapLayer.style.width = `${mapDefinition.renderWidth * tileSize}px`;
   mapLayer.style.height = `${mapDefinition.renderHeight * tileSize}px`;
@@ -495,6 +689,15 @@ function renderMapTiles(mapLayer, mapDefinition) {
     marker.innerHTML = `<span>${objectLabel(row?.type)}</span>`;
     mapLayer.appendChild(marker);
   });
+
+  if (crystalOrigin) {
+    const crystal = document.createElement("div");
+    crystal.className = "map-decoration map-decoration-crystal";
+    crystal.setAttribute("aria-hidden", "true");
+    crystal.style.left = `${(crystalOrigin.x + renderPadding.left) * tileSize}px`;
+    crystal.style.top = `${(crystalOrigin.y + renderPadding.top) * tileSize}px`;
+    mapLayer.appendChild(crystal);
+  }
 }
 
 export function applySwitchStateToMap(mapDefinition, switchStates = {}) {
@@ -573,7 +776,7 @@ export function toggleAdjacentSwitch(mapDefinition, mapState) {
   };
 }
 
-export function openAdjacentTreasure(mapDefinition, mapState, saveEnvelope) {
+export function openAdjacentTreasure(mapDefinition, mapState, saveEnvelope, spellLevelByName = {}) {
   const adjacentTreasure = findAdjacentObject(
     mapDefinition,
     mapState,
@@ -600,7 +803,17 @@ export function openAdjacentTreasure(mapDefinition, mapState, saveEnvelope) {
   if (!nextEnvelope.save || typeof nextEnvelope.save !== "object") {
     nextEnvelope.save = {};
   }
-  addItemToInventory(nextEnvelope.save, bucketName, itemName, quantity);
+  if (!addItemToInventory(nextEnvelope.save, bucketName, itemName, quantity, spellLevelByName)) {
+    return {
+      opened: false,
+      inventoryError: true,
+      itemName,
+      bucketName,
+      mapDefinition,
+      mapState,
+      saveEnvelope,
+    };
+  }
   return {
     opened: true,
     itemName,
@@ -712,6 +925,10 @@ export async function mountScreen({ mountNode, store, navigate }) {
   const locationBtn = mountNode.querySelector("#locationBtn");
   const menuBtn = mountNode.querySelector("#menuBtn");
   const battleBtn = mountNode.querySelector("#battleBtn");
+  const mapFlash = mountNode.querySelector("#mapFlash");
+  const mapEventOverlay = mountNode.querySelector("#mapEventOverlay");
+  const mapEventText = mountNode.querySelector("#mapEventText");
+  const mapEventCloseBtn = mountNode.querySelector("#mapEventCloseBtn");
   const padButtons = Array.from(mountNode.querySelectorAll("[data-dir]"));
 
   let mapDefinition = null;
@@ -719,7 +936,61 @@ export async function mountScreen({ mountNode, store, navigate }) {
   let resizeObserver = null;
   let encounterLocked = false;
   let mapTransitionLocked = false;
+  let spellLevelByName = {};
+  let pyodide = null;
+  let eventOverlayCloseAction = null;
   const holdRepeater = createDirectionalHoldRepeater((direction) => tryMove(direction));
+
+  function isEventOverlayOpen() {
+    return mapEventOverlay.classList.contains("open");
+  }
+
+  function closeEventOverlay() {
+    mapEventOverlay.classList.remove("open");
+    mapEventOverlay.setAttribute("aria-hidden", "true");
+    const closeAction = eventOverlayCloseAction;
+    eventOverlayCloseAction = null;
+    if (typeof closeAction === "function") {
+      closeAction();
+    }
+  }
+
+  function openEventOverlay(message, options = {}) {
+    mapEventText.textContent = String(message || "");
+    eventOverlayCloseAction = typeof options.onClose === "function" ? options.onClose : null;
+    mapEventOverlay.classList.add("open");
+    mapEventOverlay.setAttribute("aria-hidden", "false");
+  }
+
+  function openEventOverlaySequence(messages, options = {}) {
+    const rows = Array.isArray(messages)
+      ? messages.map((message) => String(message || "")).filter((message) => Boolean(message))
+      : [];
+    if (!rows.length) return;
+    let index = 0;
+    const openNext = () => {
+      const isLast = index >= rows.length - 1;
+      openEventOverlay(rows[index], {
+        onClose: () => {
+          if (isLast) {
+            if (typeof options.onComplete === "function") {
+              options.onComplete();
+            }
+            return;
+          }
+          index += 1;
+          openNext();
+        },
+      });
+    };
+    openNext();
+  }
+
+  function triggerFlash() {
+    mapFlash.classList.remove("active");
+    void mapFlash.offsetWidth;
+    mapFlash.classList.add("active");
+  }
 
   function patchMapMenuState(partialMenuState) {
     const currentState = store.getState();
@@ -765,8 +1036,79 @@ export async function mountScreen({ mountNode, store, navigate }) {
     updateMeta(mapMeta, mapDefinition, mapState);
   }
 
-  function tryConfirm() {
-    if (!mapDefinition || !mapState || mapTransitionLocked) return;
+  async function runAlterCaveRecoveryEvent() {
+    if (!pyodide) {
+      const pyodideRuntime = await import("../pyodide_runtime.js");
+      pyodide = await pyodideRuntime.getPyodideRuntime();
+    }
+    const currentState = store.getState();
+    const originalEnvelope = currentState.saveEnvelope;
+    const nextEnvelope = originalEnvelope
+      ? clone(originalEnvelope)
+      : store.createDefaultEnvelope();
+    if (!nextEnvelope.save || typeof nextEnvelope.save !== "object") {
+      nextEnvelope.save = { gil: 0, inventory: {}, party: [] };
+    }
+    if (!nextEnvelope.menu_state || typeof nextEnvelope.menu_state !== "object") {
+      nextEnvelope.menu_state = {
+        party: [],
+        resources: { cp: 0, cp_max: 255, gil: nextEnvelope.save.gil || 0 },
+      };
+    }
+
+    const recoveredParty = await buildRecoveredPartySnapshot(
+      pyodide,
+      nextEnvelope.save,
+      currentState.selectedLocationGroup,
+      currentState.selectedLocation,
+    );
+    if (!recoveredParty.length) {
+      mapStatus.textContent = "回復イベントの実行に失敗しました。";
+      return;
+    }
+
+    syncSavePartyRecovery(nextEnvelope.save, recoveredParty);
+    syncMenuPartyRecovery(nextEnvelope.menu_state, recoveredParty);
+    nextEnvelope.save = mergeMenuStateIntoSave(nextEnvelope.save, nextEnvelope.menu_state);
+    nextEnvelope.saved_at = new Date().toISOString();
+    nextEnvelope.selected_location_group = currentState.selectedLocationGroup;
+    nextEnvelope.selected_location = currentState.selectedLocation;
+
+    if (!store.updateSaveEnvelope(nextEnvelope)) {
+      mapStatus.textContent = "回復イベントの保存に失敗しました。";
+      return;
+    }
+
+    persistMenuStateFromEnvelope(nextEnvelope);
+    triggerAutoSaveFromEnvelope(nextEnvelope);
+    triggerFlash();
+    openEventOverlay(await loadMergedFixedContentByIndex(ALTER_CAVE_RECOVERY_TEXT_INDEX));
+    mapStatus.textContent = "不思議な力で HP・MP が回復した。";
+  }
+
+  async function tryConfirm() {
+    if (!mapDefinition || !mapState || mapTransitionLocked || isEventOverlayOpen()) return;
+    if (isAdjacentToCrystalSprite(mapDefinition, mapState)) {
+      const message = await loadMergedFixedContentByIndex(ALTER_CAVE_CRYSTAL_EVENT_TEXT_INDEX);
+      openEventOverlay(message, {
+        onClose: () => {
+          mapStatus.textContent = `${ALTER_CAVE_CRYSTAL_BOSS_NAME} が現れた！`;
+          navigateToEncounter({
+            enemyNames: [ALTER_CAVE_CRYSTAL_BOSS_NAME],
+            postVictoryOverlayIndices: ALTER_CAVE_CRYSTAL_POST_BATTLE_TEXT_INDICES,
+          });
+        },
+      });
+      mapStatus.textContent = "クリスタルが強く輝いている……。";
+      return;
+    }
+    if (
+      mapDefinition.id === ALTER_CAVE_RECOVERY_MAP_ID
+      && findAdjacentTileWithGid(mapDefinition, mapState, ALTER_CAVE_RECOVERY_GID)
+    ) {
+      await runAlterCaveRecoveryEvent();
+      return;
+    }
     const switchResult = toggleAdjacentSwitch(mapDefinition, mapState);
     if (switchResult.toggled) {
       mapDefinition = switchResult.mapDefinition;
@@ -777,7 +1119,12 @@ export async function mountScreen({ mountNode, store, navigate }) {
       mapStatus.textContent = `${switchResult.switchId} を ${switchResult.enabled ? "ON" : "OFF"} にしました。`;
       return;
     }
-    const treasureResult = openAdjacentTreasure(mapDefinition, mapState, store.getState().saveEnvelope);
+    const treasureResult = openAdjacentTreasure(
+      mapDefinition,
+      mapState,
+      store.getState().saveEnvelope,
+      spellLevelByName,
+    );
     if (treasureResult.opened) {
       mapDefinition = treasureResult.mapDefinition;
       mapState = treasureResult.mapState;
@@ -802,6 +1149,10 @@ export async function mountScreen({ mountNode, store, navigate }) {
       }
       redraw();
       mapStatus.textContent = `${treasureResult.itemName} を手に入れた！`;
+      return;
+    }
+    if (treasureResult.inventoryError) {
+      mapStatus.textContent = `${treasureResult.itemName} の保存先を解決できませんでした。`;
       return;
     }
     mapStatus.textContent = treasureResult.alreadyOpened
@@ -856,7 +1207,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     }
   }
 
-  function navigateToEncounter() {
+  function navigateToEncounter(options = {}) {
     if (!mapDefinition || encounterLocked) return;
     encounterLocked = true;
     const storeState = store.getState();
@@ -864,11 +1215,21 @@ export async function mountScreen({ mountNode, store, navigate }) {
       selected_location_group: storeState.selectedLocationGroup,
       selected_location: storeState.selectedLocation,
     });
-    sessionStorage.setItem(BATTLE_START_SELECTION_KEY, JSON.stringify(encounterSelection));
+    const forcedEnemyNames = Array.isArray(options?.enemyNames)
+      ? options.enemyNames.map((name) => String(name || "")).filter((name) => Boolean(name))
+      : [];
+    const postVictoryOverlayIndices = Array.isArray(options?.postVictoryOverlayIndices)
+      ? options.postVictoryOverlayIndices.map((index) => Number(index)).filter((index) => Number.isFinite(index))
+      : [];
+    sessionStorage.setItem(BATTLE_START_SELECTION_KEY, JSON.stringify({
+      ...encounterSelection,
+      ...(forcedEnemyNames.length ? { enemy_names: forcedEnemyNames } : {}),
+    }));
     sessionStorage.setItem(BATTLE_RETURN_CONTEXT_KEY, JSON.stringify({
       return_route: "map",
       resume_map: true,
       map_id: mapDefinition.id,
+      ...(postVictoryOverlayIndices.length ? { post_victory_overlay_indices: postVictoryOverlayIndices } : {}),
     }));
     store.patch({
       selectedLocationGroup: encounterSelection.selected_location_group,
@@ -914,6 +1275,13 @@ export async function mountScreen({ mountNode, store, navigate }) {
   }
 
   const onKeyDown = (event) => {
+    if (isEventOverlayOpen()) {
+      if (event.key === "Enter" || event.key === " " || event.key === "Escape") {
+        event.preventDefault();
+        closeEventOverlay();
+      }
+      return;
+    }
     const keyMap = {
       ArrowUp: "up",
       ArrowDown: "down",
@@ -928,11 +1296,12 @@ export async function mountScreen({ mountNode, store, navigate }) {
     }
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      tryConfirm();
+      void tryConfirm();
     }
   };
 
-  const onConfirm = () => tryConfirm();
+  const onConfirm = () => { void tryConfirm(); };
+  const onCloseEvent = () => closeEventOverlay();
   const onGoLocation = () => {
     patchMapMenuState({ map_return_pending: false });
     navigate("location");
@@ -948,6 +1317,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   locationBtn.addEventListener("click", onGoLocation);
   menuBtn.addEventListener("click", onGoMenu);
   battleBtn.addEventListener("click", onGoBattle);
+  mapEventCloseBtn.addEventListener("click", onCloseEvent);
   padButtons.forEach((button) => {
     const direction = String(button.dataset.dir || "");
     const onPointerDown = (event) => {
@@ -983,6 +1353,11 @@ export async function mountScreen({ mountNode, store, navigate }) {
       returningFromBattle,
       requestedMapId,
     } = deriveMapLaunchContext(appState, battleReturnContext, mapEntryContext);
+    const postBattleOverlayIndices = returningFromBattle
+      && Array.isArray(battleReturnContext?.pending_overlay_indices)
+      ? battleReturnContext.pending_overlay_indices
+      : [];
+    spellLevelByName = await loadSpellLevelByName();
     mapDefinition = await loadMapDefinition(requestedMapId);
     const currentSelection = returningFromBattle
       ? buildEncounterSelection(mapDefinition, {
@@ -1007,6 +1382,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
         locationBtn.removeEventListener("click", onGoLocation);
         menuBtn.removeEventListener("click", onGoMenu);
         battleBtn.removeEventListener("click", onGoBattle);
+        mapEventCloseBtn.removeEventListener("click", onCloseEvent);
         padButtons.forEach((button) => {
           const handlers = padHandlers.get(button);
           if (!handlers) return;
@@ -1053,9 +1429,14 @@ export async function mountScreen({ mountNode, store, navigate }) {
     renderMapTiles(mapLayer, mapDefinition);
     persistCurrentMapState(mapState);
     redraw();
-    mapStatus.textContent = resumeFromSavedPosition
-      ? `戦闘前の位置から再開しました。エンカウント率 ${(mapDefinition.encounterRate * 100).toFixed(0)}%。`
-      : `方向ボタンかキーボード矢印キーで移動できます。エンカウント率 ${(mapDefinition.encounterRate * 100).toFixed(0)}%。`;
+    if (postBattleOverlayIndices.length) {
+      openEventOverlaySequence(await loadMergedFixedContentByIndices(postBattleOverlayIndices));
+      mapStatus.textContent = "戦いのあと、クリスタルが静かに輝いている。";
+    } else {
+      mapStatus.textContent = resumeFromSavedPosition
+        ? `戦闘前の位置から再開しました。エンカウント率 ${(mapDefinition.encounterRate * 100).toFixed(0)}%。`
+        : `方向ボタンかキーボード矢印キーで移動できます。エンカウント率 ${(mapDefinition.encounterRate * 100).toFixed(0)}%。`;
+    }
 
     if (typeof ResizeObserver !== "undefined") {
       resizeObserver = new ResizeObserver(() => redraw());
@@ -1072,6 +1453,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     locationBtn.removeEventListener("click", onGoLocation);
     menuBtn.removeEventListener("click", onGoMenu);
     battleBtn.removeEventListener("click", onGoBattle);
+    mapEventCloseBtn.removeEventListener("click", onCloseEvent);
     padButtons.forEach((button) => {
       const handlers = padHandlers.get(button);
       if (!handlers) return;

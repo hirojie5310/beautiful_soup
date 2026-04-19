@@ -144,6 +144,9 @@ function readBattleStartSelectionFromSession() {
       return {
         selected_location_group: String(parsed.selected_location_group || ""),
         selected_location: String(parsed.selected_location || ""),
+        enemy_names: Array.isArray(parsed.enemy_names)
+          ? parsed.enemy_names.map((name) => String(name || "")).filter((name) => Boolean(name))
+          : [],
       };
     }
   } catch (_error) {
@@ -160,6 +163,17 @@ function readBattleReturnContextFromSession() {
     return parsed && typeof parsed === "object" ? parsed : null;
   } catch (_error) {
     return null;
+  }
+}
+
+function writeBattleReturnContextToSession(nextContext) {
+  try {
+    sessionStorage.setItem(BATTLE_RETURN_CONTEXT_KEY, JSON.stringify(nextContext || {}));
+    battleReturnContext = nextContext && typeof nextContext === "object"
+      ? nextContext
+      : { return_route: "location", resume_map: false };
+  } catch (_error) {
+    // ignore session persistence failures
   }
 }
 
@@ -181,6 +195,7 @@ const hasSessionBattleStartSelection = Boolean(
 let currentBattleSelection = sessionBattleStartSelection || storeBattleStartSelection || {
   selected_location_group: "",
   selected_location: "",
+  enemy_names: [],
 };
 let battleReturnContext = readBattleReturnContextFromSession() || {
   return_route: "location",
@@ -207,6 +222,9 @@ function resolveBattleSelection(selectionPayload) {
     return {
       selected_location_group: fallbackGroup,
       selected_location: fallbackLocation,
+      enemy_names: Array.isArray(currentBattleSelection.enemy_names)
+        ? currentBattleSelection.enemy_names
+        : [],
     };
   }
   const locations = Array.isArray(group.locations) ? group.locations : [];
@@ -214,6 +232,9 @@ function resolveBattleSelection(selectionPayload) {
   return {
     selected_location_group: requestedGroup,
     selected_location: hasLocation ? requestedLocation : String(locations[0] || fallbackLocation || ""),
+    enemy_names: Array.isArray(currentBattleSelection.enemy_names)
+      ? currentBattleSelection.enemy_names
+      : [],
   };
 }
 
@@ -1982,17 +2003,22 @@ function bootLocationAndSyncSession() {
   logBattleBootDebug("saveDataForBoot.party.before_python_boot", saveDataForBoot?.party);
   const selectedGroup = String(currentBattleSelection.selected_location_group || "");
   const selectedLocation = String(currentBattleSelection.selected_location || "");
+  const enemyNamesJson = JSON.stringify(
+    Array.isArray(currentBattleSelection.enemy_names) ? currentBattleSelection.enemy_names : [],
+  );
   const payload = JSON.parse(saveDataForBoot
     ? bootWithSave(
       selectedGroup,
       selectedLocation,
       JSON.stringify(saveDataForBoot),
       7,
+      enemyNamesJson,
     )
     : bootForLocation(
       selectedGroup,
       selectedLocation,
       7,
+      enemyNamesJson,
     ));
   loadedSaveData = null;
   currentSelectedLocationGroup = String(
@@ -2001,6 +2027,9 @@ function bootLocationAndSyncSession() {
   currentBattleSelection = {
     selected_location_group: String(payload?.selected_location_group || selectedGroup || ""),
     selected_location: String(payload?.selected_location || selectedLocation || ""),
+    enemy_names: Array.isArray(currentBattleSelection.enemy_names)
+      ? currentBattleSelection.enemy_names
+      : [],
   };
   if (appStore) {
     appStore.patch({
@@ -2080,6 +2109,18 @@ async function executeRound() {
     ? `戦闘終了: ${result?.end_reason ?? "finished"}`
     : "次ターンの入力を開始してください。";
   if (battleFinished) {
+    const shouldQueuePostVictoryOverlay = Boolean(
+      result?.victory_rewards
+      && battleReturnContext?.return_route === "map"
+      && Array.isArray(battleReturnContext?.post_victory_overlay_indices)
+      && battleReturnContext.post_victory_overlay_indices.length,
+    );
+    if (shouldQueuePostVictoryOverlay) {
+      writeBattleReturnContextToSession({
+        ...battleReturnContext,
+        pending_overlay_indices: battleReturnContext.post_victory_overlay_indices,
+      });
+    }
     const exportSaveJson = pyodide.globals.get("export_runtime_save_json");
     const saveJson = exportSaveJson ? String(exportSaveJson() || "") : "";
     if (saveJson) {

@@ -451,6 +451,12 @@
       ],
       "Treasures": [
         {
+          "Treasure": "Leather Cap",
+          "Map": "Altar Cave B1",
+          "Notes": "Right room right",
+          "Guarded By": "-"
+        },
+        {
           "Treasure": "Leather Cap ×4",
           "Map": "Altar Cave B3",
           "Notes": "Starting equipment",
@@ -2010,7 +2016,13 @@
       "Treasures": [
         {
           "Treasure": "Bronze Bracers",
-          "Map": "Altar Cave B4",
+          "Map": "Altar Cave B1",
+          "Notes": "Right room right",
+          "Guarded By": "-"
+        },
+        {
+          "Treasure": "Bronze Bracers",
+          "Map": "Altar Cave B2",
           "Notes": "South chest in pit room",
           "Guarded By": "-"
         }
