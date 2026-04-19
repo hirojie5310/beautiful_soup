@@ -10,8 +10,10 @@ import {
   hydrateEnvelopeWithRuntime,
   persistAutoSave,
 } from "../title_screen_state.js";
+import { loadTitleStoryLines } from "../title_story.js";
 
 const TITLE_THEME_URL = new URL("../../assets/images/ffiii_theme.jpg", import.meta.url).href;
+const TITLE_HERO_CYCLE_MS = 60000;
 
 function renderLayout() {
   return `
@@ -37,15 +39,14 @@ function renderLayout() {
           pointer-events: none;
           z-index: 1;
         }
-        .title-hero-frame::after {
-          content: "";
+        .title-hero-background {
           position: absolute;
           inset: 0;
           background-image: url("${TITLE_THEME_URL}");
           background-size: 100% auto;
           background-position: center bottom;
           background-repeat: no-repeat;
-          animation: title-hero-pan 30s ease-in-out infinite;
+          animation: title-hero-pan ${TITLE_HERO_CYCLE_MS}ms ease-in-out infinite;
           transform-origin: center center;
           pointer-events: none;
           z-index: 0;
@@ -55,6 +56,16 @@ function renderLayout() {
           z-index: 2;
           color: rgba(18, 24, 46, 0.92);
           text-shadow: 0 1px 0 rgba(255, 255, 255, 0.28);
+        }
+        .title-story-line {
+          min-height: 6.4em;
+          max-width: 32rem;
+          color: rgba(243, 246, 255, 0.96);
+          font-size: 0.98rem;
+          line-height: 1.8;
+          letter-spacing: 0.03em;
+          white-space: pre-wrap;
+          text-shadow: 0 2px 12px rgba(4, 7, 18, 0.88);
         }
         .title-bottom-panel {
           position: relative;
@@ -121,11 +132,13 @@ function renderLayout() {
         }
       </style>
       <section class="frame title-hero-frame">
+        <div id="titleHeroBackground" class="title-hero-background" aria-hidden="true"></div>
         <div class="title-hero-content" style="display:grid; gap:14px;">
           <div>
             <div style="color:rgba(18,24,46,.78); letter-spacing:.22em; font-size:.8rem; font-weight:700;">BATTLE WASM RUNNER</div>
           </div>
           <div style="height:1px; background:linear-gradient(90deg, rgba(24,34,68,.72), rgba(24,34,68,0));"></div>
+          <div id="titleStoryLine" class="title-story-line" aria-live="polite"></div>
         </div>
         <div class="title-bottom-panel">
           <div id="titleStatus" class="status" style="margin-bottom:0;">開始メニューを選択してください。</div>
@@ -246,9 +259,56 @@ export async function mountScreen({ mountNode, store, navigate }) {
 
   const titleStatus = mountNode.querySelector("#titleStatus");
   const menuList = mountNode.querySelector("#menuList");
+  const titleHeroBackground = mountNode.querySelector("#titleHeroBackground");
+  const titleStoryLine = mountNode.querySelector("#titleStoryLine");
   const loadPanel = mountNode.querySelector("#loadPanel");
   const closeLoadBtn = mountNode.querySelector("#closeLoadBtn");
   const loadSlotList = mountNode.querySelector("#loadSlotList");
+
+  let storyIntervalId = 0;
+  let storyCycleResetHandler = null;
+
+  const stopStoryLoop = () => {
+    if (storyIntervalId) {
+      window.clearInterval(storyIntervalId);
+      storyIntervalId = 0;
+    }
+  };
+
+  const startStoryLoop = async () => {
+    try {
+      const lines = await loadTitleStoryLines();
+      if (!titleStoryLine || lines.length === 0) {
+        if (titleStoryLine) titleStoryLine.textContent = "";
+        return;
+      }
+      let lineIndex = 0;
+      const stepMs = Math.max(1000, Math.floor(TITLE_HERO_CYCLE_MS / lines.length));
+      const renderCurrentLine = () => {
+        titleStoryLine.textContent = lines[lineIndex] || "";
+      };
+      const restartStoryCycle = () => {
+        stopStoryLoop();
+        lineIndex = 0;
+        renderCurrentLine();
+        if (lines.length <= 1) return;
+        storyIntervalId = window.setInterval(() => {
+          if (lineIndex >= lines.length - 1) return;
+          lineIndex += 1;
+          renderCurrentLine();
+        }, stepMs);
+      };
+      restartStoryCycle();
+      if (titleHeroBackground) {
+        storyCycleResetHandler = () => {
+          restartStoryCycle();
+        };
+        titleHeroBackground.addEventListener("animationiteration", storyCycleResetHandler);
+      }
+    } catch (_error) {
+      if (titleStoryLine) titleStoryLine.textContent = "";
+    }
+  };
 
   const slots = await listSaveSlotsFromIndexedDB();
   const autoSlot = slots.find((row) => row.slot_id === AUTO_SAVE_SLOT_ID) || null;
@@ -315,8 +375,13 @@ export async function mountScreen({ mountNode, store, navigate }) {
   );
 
   closeLoadBtn.addEventListener("click", closeLoadPanel);
+  await startStoryLoop();
 
   return () => {
+    stopStoryLoop();
+    if (titleHeroBackground && storyCycleResetHandler) {
+      titleHeroBackground.removeEventListener("animationiteration", storyCycleResetHandler);
+    }
     closeLoadBtn.removeEventListener("click", closeLoadPanel);
   };
 }
