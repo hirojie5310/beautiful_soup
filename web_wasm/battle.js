@@ -1,6 +1,10 @@
 import { getPyodideRuntime } from "./pyodide_runtime.js";
 import { applyEventToPlaybackStatus } from "./battle_playback.js";
 import {
+  DEFAULT_BATTLE_RETURN_CONTEXT,
+  resolveMountedBattleReturnContext,
+} from "./battle_context.js";
+import {
   normalizeMemberIndexedRows,
   normalizePartyIdentityOrder,
   resolveFaceImageCandidates,
@@ -171,7 +175,7 @@ function writeBattleReturnContextToSession(nextContext) {
     sessionStorage.setItem(BATTLE_RETURN_CONTEXT_KEY, JSON.stringify(nextContext || {}));
     battleReturnContext = nextContext && typeof nextContext === "object"
       ? nextContext
-      : { return_route: "location", resume_map: false };
+      : { ...DEFAULT_BATTLE_RETURN_CONTEXT };
   } catch (_error) {
     // ignore session persistence failures
   }
@@ -197,10 +201,7 @@ let currentBattleSelection = sessionBattleStartSelection || storeBattleStartSele
   selected_location: "",
   enemy_names: [],
 };
-let battleReturnContext = readBattleReturnContextFromSession() || {
-  return_route: "location",
-  resume_map: false,
-};
+let battleReturnContext = resolveMountedBattleReturnContext(readBattleReturnContextFromSession());
 
 const COMMAND_LABELS = {
   Fight: "たたかう",
@@ -2264,6 +2265,10 @@ export async function initializeBattleApp({ root = document, store = null, navig
   resetBattleLogInteractionState();
   appStore = store;
   appNavigate = navigate;
+  battleReturnContext = resolveMountedBattleReturnContext(
+    readBattleReturnContextFromSession(),
+    battleReturnContext,
+  );
   const storeSelection = readBattleSelectionFromStore();
   if (storeSelection?.selected_location_group || storeSelection?.selected_location) {
     currentBattleSelection = storeSelection;
