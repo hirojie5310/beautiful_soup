@@ -43,6 +43,44 @@ const MENU_ROUTE_BY_LABEL = {
   マップ: "map",
 };
 
+export function deriveMenuMapOpenRequest(state) {
+  const requestedMapId = String(
+    state?.menuState?.map_state?.current_map_id
+    || state?.saveEnvelope?.save?.map?.map
+    || DEFAULT_MAP_ID,
+  );
+  return {
+    requestedMapId,
+    resumeToCurrentMap: Boolean(
+      state?.menuState?.map_return_pending
+      && requestedMapId,
+    ),
+  };
+}
+
+export function hydrateMenuStateFromEnvelope(currentMenuState, envelope) {
+  const normalizedCurrentState = normalizeMenuState(currentMenuState);
+  const envelopeMenuState = envelope?.menu_state && typeof envelope.menu_state === "object"
+    ? normalizeMenuState(envelope.menu_state)
+    : {};
+  const extractedState = extractMenuStateFromEnvelope(envelope);
+  return normalizeMenuState({
+    ...envelopeMenuState,
+    ...extractedState,
+    map_state: (
+      normalizedCurrentState?.map_state
+      && typeof normalizedCurrentState.map_state === "object"
+    )
+      ? normalizedCurrentState.map_state
+      : envelopeMenuState.map_state,
+    map_return_pending: Boolean(
+      normalizedCurrentState?.map_return_pending
+      ?? envelopeMenuState?.map_return_pending
+      ?? false
+    ),
+  });
+}
+
 function applyCachedImageSource(target, candidates, { onLoad, onError } = {}) {
   if (!target) return;
   const cachedUrl = readCachedImageUrl(candidates);
@@ -284,9 +322,10 @@ export async function mountScreen({ mountNode, store, navigate }) {
   let pendingLocalFileExport = false;
 
   if (!Array.isArray(state.party) || !state.party.length) {
-    const stored = await restoreSaveEnvelopeFromStorageAsync();
+    const currentEnvelope = store.getState().saveEnvelope;
+    const stored = currentEnvelope?.save ? currentEnvelope : await restoreSaveEnvelopeFromStorageAsync();
     if (stored?.save) {
-      state = extractMenuStateFromEnvelope(stored);
+      state = hydrateMenuStateFromEnvelope(state, stored);
       store.updateMenuState(state);
       store.updateSaveEnvelope({
         ...stored,
@@ -650,11 +689,11 @@ export async function mountScreen({ mountNode, store, navigate }) {
   const handleMapOpen = async () => {
     try {
       const currentState = store.getState();
-      const requestedMapId = String(
-        currentState.menuState?.map_state?.current_map_id
-        || currentState.saveEnvelope?.save?.map?.map
-        || DEFAULT_MAP_ID,
-      );
+      const { requestedMapId, resumeToCurrentMap } = deriveMenuMapOpenRequest(currentState);
+      if (resumeToCurrentMap) {
+        navigate("map");
+        return;
+      }
       const mapDefinition = await loadMapDefinition(requestedMapId);
       const selection = {
         selected_location_group: currentState.selectedLocationGroup,

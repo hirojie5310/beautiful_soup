@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { normalizeMapDefinition } from "./map_data.js";
+import { findCompatibleMapDefinition, normalizeMapDefinition } from "./map_data.js";
 
 test("normalizeMapDefinition adds render padding without changing logical spawn", () => {
   const result = normalizeMapDefinition({
@@ -40,4 +40,130 @@ test("normalizeMapDefinition adds render padding without changing logical spawn"
   assert.equal(result.renderRows[0][0], 19);
   assert.equal(result.renderRows[1][2], 5);
   assert.equal(result.renderRows[2][3], 19);
+});
+
+test("findCompatibleMapDefinition returns the map that matches selected location", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const href = String(url);
+    const payloadById = {
+      Alter_Cave_B1: {
+        id: "Alter_Cave_B1",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Altar Cave", locations: ["Altar Cave B1"] },
+      },
+      Alter_Cave_B2: {
+        id: "Alter_Cave_B2",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Altar Cave", locations: ["Altar Cave B2"] },
+      },
+      Alter_Cave_B3: {
+        id: "Alter_Cave_B3",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Altar Cave", locations: ["Altar Cave B3"] },
+      },
+      Alter_Cave_B4: {
+        id: "Alter_Cave_B4",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Altar Cave", locations: ["Altar Cave B4"] },
+      },
+      Alter_Cave_Crystal_Room: {
+        id: "Alter_Cave_Crystal_Room",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Altar Cave", locations: ["Altar Cave Crystal Room"] },
+      },
+    };
+    const matchedId = Object.keys(payloadById).find((id) => href.includes(id));
+    assert.ok(matchedId, `unexpected map url: ${href}`);
+    return {
+      ok: true,
+      async json() {
+        return payloadById[matchedId];
+      },
+    };
+  };
+
+  try {
+    const result = await findCompatibleMapDefinition({
+      selected_location_group: "Altar Cave",
+      selected_location: "Altar Cave B3",
+    });
+
+    assert.equal(result?.id, "Alter_Cave_B3");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("findCompatibleMapDefinition returns null when no map matches selected location", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const href = String(url);
+    const payloadById = {
+      Alter_Cave_B1: {
+        id: "Alter_Cave_B1",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Altar Cave", locations: ["Altar Cave B1"] },
+      },
+      Alter_Cave_B2: {
+        id: "Alter_Cave_B2",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Altar Cave", locations: ["Altar Cave B2"] },
+      },
+      Alter_Cave_B3: {
+        id: "Alter_Cave_B3",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Altar Cave", locations: ["Altar Cave B3"] },
+      },
+      Alter_Cave_B4: {
+        id: "Alter_Cave_B4",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Altar Cave", locations: ["Altar Cave B4"] },
+      },
+      Alter_Cave_Crystal_Room: {
+        id: "Alter_Cave_Crystal_Room",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Altar Cave", locations: ["Altar Cave Crystal Room"] },
+      },
+    };
+    const matchedId = Object.keys(payloadById).find((id) => href.includes(id));
+    assert.ok(matchedId, `unexpected map url: ${href}`);
+    return {
+      ok: true,
+      async json() {
+        return payloadById[matchedId];
+      },
+    };
+  };
+
+  try {
+    const result = await findCompatibleMapDefinition({
+      selected_location_group: "Ancient's Maze",
+      selected_location: "Crystal Room",
+    });
+
+    assert.equal(result, null);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });

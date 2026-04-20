@@ -200,6 +200,22 @@ export function getMapManifestUrl(mapId) {
   return MAP_MANIFEST[normalizedId] || MAP_MANIFEST[DEFAULT_MAP_ID];
 }
 
+export async function findCompatibleMapDefinition(selection, options = {}) {
+  const preferredMapId = String(options?.preferredMapId || "");
+  const candidateIds = [
+    ...(preferredMapId ? [preferredMapId] : []),
+    ...Object.keys(MAP_MANIFEST),
+  ].filter((value, index, values) => value && values.indexOf(value) === index);
+
+  for (const mapId of candidateIds) {
+    const mapDefinition = await loadMapDefinition(mapId);
+    if (isMapSelectionCompatible(mapDefinition, selection)) {
+      return mapDefinition;
+    }
+  }
+  return null;
+}
+
 export async function loadMapDefinition(mapId = DEFAULT_MAP_ID) {
   const normalizedId = String(mapId || DEFAULT_MAP_ID);
   if (mapCache.has(normalizedId)) {

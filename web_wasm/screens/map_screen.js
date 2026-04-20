@@ -231,7 +231,7 @@ export function deriveInitialMapState(appState, mapDefinition, options = {}) {
     };
   }
   return {
-    current_map_id: wantedMapId,
+    current_map_id: String(mapDefinition?.id || wantedMapId || DEFAULT_MAP_ID),
     tile_x: asNumber(mapDefinition?.spawn?.x, 0),
     tile_y: asNumber(mapDefinition?.spawn?.y, 0),
     steps_since_reset: 0,
@@ -984,6 +984,22 @@ export function shouldCloseEventOverlayOnConfirm(isOverlayOpen) {
   return Boolean(isOverlayOpen);
 }
 
+export function resolveInitialMapSelection(appState, mapDefinition, options = {}) {
+  const shouldPreferMapSelection = Boolean(
+    options?.returningFromBattle || options?.resumeFromSavedPosition,
+  );
+  if (shouldPreferMapSelection) {
+    return buildEncounterSelection(mapDefinition, {
+      selected_location_group: appState?.selectedLocationGroup,
+      selected_location: appState?.selectedLocation,
+    });
+  }
+  return {
+    selected_location_group: appState?.selectedLocationGroup,
+    selected_location: appState?.selectedLocation,
+  };
+}
+
 export async function mountScreen({ mountNode, store, navigate }) {
   mountNode.innerHTML = renderLayout();
 
@@ -1435,16 +1451,11 @@ export async function mountScreen({ mountNode, store, navigate }) {
       : [];
     spellLevelByName = await loadSpellLevelByName();
     mapDefinition = await loadMapDefinition(requestedMapId);
-    const currentSelection = returningFromBattle
-      ? buildEncounterSelection(mapDefinition, {
-        selected_location_group: appState.selectedLocationGroup,
-        selected_location: appState.selectedLocation,
-      })
-      : {
-        selected_location_group: appState.selectedLocationGroup,
-        selected_location: appState.selectedLocation,
-      };
-    if (returningFromBattle) {
+    const currentSelection = resolveInitialMapSelection(appState, mapDefinition, {
+      returningFromBattle,
+      resumeFromSavedPosition,
+    });
+    if (returningFromBattle || resumeFromSavedPosition) {
       store.patch({
         selectedLocationGroup: currentSelection.selected_location_group,
         selectedLocation: currentSelection.selected_location,

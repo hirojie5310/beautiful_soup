@@ -2283,6 +2283,15 @@ function attachBattleEventHandlers() {
     menuBtn.addEventListener("click", () => {
       refreshMenuStateFromPyodide();
       syncMenuViewStateToStorage();
+      if (appStore) {
+        const currentState = appStore.getState();
+        if (battleReturnContext?.return_route === "map" && battleReturnContext?.resume_map) {
+          appStore.updateMenuState({
+            ...(currentState.menuState && typeof currentState.menuState === "object" ? currentState.menuState : {}),
+            map_return_pending: true,
+          });
+        }
+      }
       if (appNavigate) {
         appNavigate("menu");
         return;

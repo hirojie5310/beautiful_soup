@@ -1,8 +1,6 @@
 import { getPyodideRuntime } from "../pyodide_runtime.js";
 import {
-  DEFAULT_MAP_ID,
-  isMapSelectionCompatible,
-  loadMapDefinition,
+  findCompatibleMapDefinition,
 } from "../map_data.js";
 import { resolveLocationMapImageUrl } from "../map_images.js";
 
@@ -48,7 +46,7 @@ function renderLayout() {
 
         <div class="buttons">
           <button id="startBattleBtn" class="btn" type="button" disabled>戦闘開始</button>
-          <button id="mapBtn" class="btn" type="button">マップ</button>
+          <button id="mapBtn" class="btn" type="button" disabled>マップ</button>
           <button id="titleBtn" class="btn" type="button">タイトルへ戻る</button>
           <button id="shopBtn" class="btn" type="button">Shop</button>
           <button id="innBtn" class="btn" type="button">Inn</button>
@@ -111,6 +109,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   const menuBtn = mountNode.querySelector("#menuBtn");
 
   let locationGroups = [];
+  let latestMapAvailabilityRequest = 0;
 
   const clearMapReturnPending = () => {
     const currentState = store.getState();
@@ -155,9 +154,13 @@ export async function mountScreen({ mountNode, store, navigate }) {
     });
     syncStoreSelection(store, locationGroupSelect, locationSelect);
     applyLocationFrameBackground(locationGroupSelect.value);
+    statusLine.textContent = "Locationを選択して「戦闘開始」を押してください。";
+    void refreshMapAvailability();
   };
   const handleLocationChange = () => {
     syncStoreSelection(store, locationGroupSelect, locationSelect);
+    statusLine.textContent = "Locationを選択して「戦闘開始」を押してください。";
+    void refreshMapAvailability();
   };
   const handleStartBattle = () => {
     const payload = {
@@ -179,23 +182,46 @@ export async function mountScreen({ mountNode, store, navigate }) {
     store.resetForTitle();
     navigate("title");
   };
+  const refreshMapAvailability = async () => {
+    const requestId = latestMapAvailabilityRequest + 1;
+    latestMapAvailabilityRequest = requestId;
+    mapBtn.disabled = true;
+
+    const selection = {
+      selected_location_group: String(locationGroupSelect.value || ""),
+      selected_location: String(locationSelect.value || ""),
+    };
+    if (!selection.selected_location_group || !selection.selected_location) {
+      return null;
+    }
+
+    try {
+      const mapDefinition = await findCompatibleMapDefinition(selection);
+      if (requestId !== latestMapAvailabilityRequest) {
+        return mapDefinition;
+      }
+      mapBtn.disabled = !mapDefinition;
+      return mapDefinition;
+    } catch (_error) {
+      if (requestId === latestMapAvailabilityRequest) {
+        mapBtn.disabled = true;
+      }
+      return null;
+    }
+  };
   const handleGoMap = () => {
     syncStoreSelection(store, locationGroupSelect, locationSelect);
     statusLine.textContent = "マップ整合性を確認中...";
-    void loadMapDefinition(DEFAULT_MAP_ID)
+    void refreshMapAvailability()
       .then((mapDefinition) => {
-        const selection = {
-          selected_location_group: String(locationGroupSelect.value || ""),
-          selected_location: String(locationSelect.value || ""),
-        };
-        if (!isMapSelectionCompatible(mapDefinition, selection)) {
+        if (!mapDefinition) {
           statusLine.textContent = "このLocationでは対応するマップへ移動できません。";
           return;
         }
         sessionStorage.setItem(MAP_ENTRY_CONTEXT_KEY, JSON.stringify({
           entry_route: "location",
           fresh_start: true,
-          map_id: DEFAULT_MAP_ID,
+          map_id: mapDefinition.id,
         }));
         statusLine.textContent = "マップへ移動します。";
         navigate("map");
@@ -249,6 +275,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     });
     syncStoreSelection(store, locationGroupSelect, locationSelect);
     applyLocationFrameBackground(locationGroupSelect.value);
+    await refreshMapAvailability();
 
     startBattleBtn.disabled = false;
     statusLine.textContent = "Locationを選択して「戦闘開始」を押してください。";

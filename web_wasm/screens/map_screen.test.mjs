@@ -14,6 +14,7 @@ import {
   findStandingObject,
   moveMapPosition,
   openAdjacentTreasure,
+  resolveInitialMapSelection,
   shouldCloseEventOverlayOnConfirm,
   shouldResumeMapPosition,
   toggleAdjacentSwitch,
@@ -70,6 +71,36 @@ test("deriveInitialMapState always starts from map spawn", () => {
   });
 });
 
+test("deriveInitialMapState ignores stale saved map id on fresh location entry", () => {
+  const result = deriveInitialMapState({
+    menuState: {
+      map_state: {
+        current_map_id: "Alter_Cave_B1",
+        tile_x: 9,
+        tile_y: 9,
+      },
+    },
+    saveEnvelope: {
+      save: {
+        map: { map: "Alter_Cave_B2", x: 4, y: 5 },
+      },
+    },
+  }, {
+    ...stubMap,
+    id: "Alter_Cave_B3",
+    spawn: { x: 9, y: 23 },
+  });
+
+  assert.deepEqual(result, {
+    current_map_id: "Alter_Cave_B3",
+    tile_x: 9,
+    tile_y: 23,
+    steps_since_reset: 0,
+    switch_states: {},
+    opened_treasures: {},
+  });
+});
+
 test("deriveInitialMapState can resume from saved position after battle", () => {
   const result = deriveInitialMapState({
     menuState: {
@@ -96,6 +127,41 @@ test("deriveInitialMapState can resume from saved position after battle", () => 
     steps_since_reset: 4,
     switch_states: {},
     opened_treasures: {},
+  });
+});
+
+test("deriveInitialMapState resumes menu map position ahead of save map position", () => {
+  const result = deriveInitialMapState({
+    menuState: {
+      map_state: {
+        current_map_id: "Alter_Cave_B4",
+        tile_x: 16,
+        tile_y: 26,
+        steps_since_reset: 7,
+        switch_states: { switch1: true },
+        opened_treasures: { chest1: true },
+      },
+    },
+    saveEnvelope: {
+      save: {
+        map: { map: "Alter_Cave_B3", x: 9, y: 23 },
+      },
+    },
+  }, {
+    ...stubMap,
+    id: "Alter_Cave_B4",
+    spawn: { x: 24, y: 27 },
+  }, {
+    resumeFromSavedPosition: true,
+  });
+
+  assert.deepEqual(result, {
+    current_map_id: "Alter_Cave_B4",
+    tile_x: 16,
+    tile_y: 26,
+    steps_since_reset: 7,
+    switch_states: { switch1: true },
+    opened_treasures: { chest1: true },
   });
 });
 
@@ -148,6 +214,78 @@ test("deriveMapLaunchContext forces default map for fresh location entry", () =>
     resumeFromSavedPosition: false,
     returningFromBattle: false,
     requestedMapId: "Alter_Cave_B1",
+  });
+});
+
+test("deriveMapLaunchContext prefers battle return map for map resume", () => {
+  assert.deepEqual(deriveMapLaunchContext({
+    menuState: {
+      map_state: {
+        current_map_id: "Alter_Cave_B2",
+      },
+      map_return_pending: true,
+    },
+    saveEnvelope: {
+      save: {
+        map: { map: "Alter_Cave_B1" },
+      },
+    },
+  }, {
+    return_route: "map",
+    resume_map: true,
+    map_id: "Alter_Cave_B4",
+  }, null), {
+    freshLocationEntry: false,
+    resumeFromSavedPosition: true,
+    returningFromBattle: true,
+    requestedMapId: "Alter_Cave_B4",
+  });
+});
+
+test("deriveMapLaunchContext falls back to menu map when returning from menu", () => {
+  assert.deepEqual(deriveMapLaunchContext({
+    menuState: {
+      map_state: {
+        current_map_id: "Alter_Cave_B3",
+      },
+      map_return_pending: true,
+    },
+    saveEnvelope: {
+      save: {
+        map: { map: "Alter_Cave_B1" },
+      },
+    },
+  }, null, null), {
+    freshLocationEntry: false,
+    resumeFromSavedPosition: true,
+    returningFromBattle: false,
+    requestedMapId: "Alter_Cave_B3",
+  });
+});
+
+test("resolveInitialMapSelection prefers the current map-linked location when resuming from menu", () => {
+  assert.deepEqual(resolveInitialMapSelection({
+    selectedLocationGroup: "Ancient's Maze",
+    selectedLocation: "Crystal Room",
+  }, stubMap, {
+    resumeFromSavedPosition: true,
+    returningFromBattle: false,
+  }), {
+    selected_location_group: "Altar Cave",
+    selected_location: "Altar Cave B1",
+  });
+});
+
+test("resolveInitialMapSelection keeps explicit location on fresh entry", () => {
+  assert.deepEqual(resolveInitialMapSelection({
+    selectedLocationGroup: "Altar Cave",
+    selectedLocation: "Altar Cave B3",
+  }, stubMap, {
+    resumeFromSavedPosition: false,
+    returningFromBattle: false,
+  }), {
+    selected_location_group: "Altar Cave",
+    selected_location: "Altar Cave B3",
   });
 });
 
