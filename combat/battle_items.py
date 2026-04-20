@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from combat.inventory import build_item_list
+from combat.spell_metadata import spell_target_scope
 
 
 def _weapon_name(weapon_json: dict[str, Any]) -> str:
@@ -46,7 +47,7 @@ def build_weapon_spell_item_definition(
     if spell_json.get("Type") is not None:
         spell_info["MagicType"] = spell_json.get("Type")
 
-    return {
+    weapon_item = {
         "Name": weapon_name,
         "ItemType": "Weapon",
         "BattleUseSource": "weapon",
@@ -58,6 +59,12 @@ def build_weapon_spell_item_definition(
         "WeaponSpell": spell_json,
         "WeaponType": weapon_json.get("Type"),
     }
+    for key in ("default_target_side", "target_scope", "effect_category", "status_ailment"):
+        if spell_json.get(key) is not None:
+            weapon_item[key] = spell_json.get(key)
+    if "target_scope" not in weapon_item:
+        weapon_item["target_scope"] = spell_target_scope(spell_json)
+    return weapon_item
 
 
 def build_battle_item_definitions(

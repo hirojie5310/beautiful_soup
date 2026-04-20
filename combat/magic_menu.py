@@ -164,12 +164,12 @@ def resolve_summon_spell_names_for_cast_code(
     そのジョブ/キャストコードで実際に使える子スペル名を返す。
 
     - 黒/白など通常魔法はそのまま [spell_name]
-    - 召喚親なら CastBy と allowed_names を使って子へ解決
+    - 召喚親なら cast_by と allowed_names を使って子へ解決
     - Evoker のように複数候補がある場合は複数返す
     """
     spell_def = spells_by_name.get(spell_name)
     if isinstance(spell_def, dict):
-        parent_name = spell_def.get("ParentSpellName")
+        parent_name = spell_def.get("parent_spell_name")
         if isinstance(parent_name, str) and parent_name:
             parent_spell = spells_by_name.get(parent_name)
             if isinstance(parent_spell, dict):
@@ -183,7 +183,7 @@ def resolve_summon_spell_names_for_cast_code(
         sibling_names = [
             name
             for name, raw in spells_by_name.items()
-            if isinstance(raw, dict) and raw.get("ParentSpellName") == spell_name
+            if isinstance(raw, dict) and raw.get("parent_spell_name") == spell_name
         ]
         if sibling_names:
             resolved = []
@@ -193,11 +193,7 @@ def resolve_summon_spell_names_for_cast_code(
                     continue
                 if allowed_names is not None and sibling_name not in set(allowed_names):
                     continue
-                child_cast_codes = _normalize_cast_codes(
-                    sibling_def.get("cast_by")
-                    or sibling_def.get("Cast By")
-                    or sibling_def.get("CastBy")
-                )
+                child_cast_codes = _normalize_cast_codes(sibling_def.get("cast_by"))
                 if cast_code and child_cast_codes and cast_code not in child_cast_codes:
                     continue
                 resolved.append(sibling_name)
@@ -223,9 +219,7 @@ def resolve_summon_spell_names_for_cast_code(
             continue
         if allowed_set is not None and child_name not in allowed_set:
             continue
-        child_cast_codes = _normalize_cast_codes(
-            child.get("cast_by") or child.get("Cast By") or child.get("CastBy")
-        )
+        child_cast_codes = _normalize_cast_codes(child.get("cast_by"))
         if cast_code and child_cast_codes and cast_code not in child_cast_codes:
             continue
         resolved.append(child_name)
@@ -469,7 +463,7 @@ def build_magic_list(
             continue
 
         if cast_code is not None:
-            cast_by = s.get("cast_by") or s.get("CastBy")
+            cast_by = s.get("cast_by")
             if cast_by:
                 if isinstance(cast_by, str):
                     ok = cast_code in [c.strip() for c in cast_by.split(",")]
@@ -577,27 +571,23 @@ def expand_spells_for_summons(
 
         # --- 親 Summon Magic（子配列を持つもの）だけ展開 ---
         if raw_type == "Summon Magic" and isinstance(child_list, list) and child_list:
-            parent_cast = _normalize_cast_codes(s.get("cast_by") or s.get("CastBy"))
+            parent_cast = _normalize_cast_codes(s.get("cast_by"))
 
             for child in child_list:
                 child_name = child.get("Name") or child.get("name")
                 if not child_name:
                     continue
 
-                child_cast = _normalize_cast_codes(
-                    child.get("cast_by")
-                    or child.get("CastBy")
-                    or child.get("Cast By")
-                )
+                child_cast = _normalize_cast_codes(child.get("cast_by"))
                 cast_merged = sorted(set(parent_cast + child_cast))
 
                 # 子の中身を基本そのまま使う（Power等を保持）
                 new_child = dict(child)
                 new_child["name"] = child_name  # load_spells 形式に合わせる
                 new_child["Type"] = "Summon"  # ★ここ重要
-                new_child["ParentSpellName"] = name
+                new_child["parent_spell_name"] = name
                 if cast_merged:
-                    new_child["CastBy"] = cast_merged
+                    new_child["cast_by"] = cast_merged
 
                 expanded[child_name] = new_child
 

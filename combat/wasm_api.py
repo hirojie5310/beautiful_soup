@@ -23,7 +23,9 @@ from combat.battle_items import build_battle_item_definitions, build_battle_item
 from combat.life_check import is_out_of_battle
 from combat.magic_damage import healing_spell_kind
 from combat.spell_metadata import (
+    spell_auto_all_target,
     spell_can_select_all,
+    spell_target_scope,
     spell_target_mode,
 )
 from combat.progression import apply_item_stock_to_inventory, apply_victory_rewards
@@ -370,6 +372,9 @@ def _build_battle_item_meta(
             continue
         meta[item_name] = {
             "target_side": infer_battle_item_target_side(item_json),
+            "target_scope": spell_target_scope(item_json),
+            "can_select_all": spell_can_select_all(item_json),
+            "auto_all_target": spell_auto_all_target(item_json),
         }
     return meta
 

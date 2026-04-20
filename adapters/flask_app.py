@@ -48,6 +48,7 @@ from combat.magic_damage import healing_spell_kind
 from combat.spell_metadata import (
     spell_auto_all_target,
     spell_can_select_all,
+    spell_target_scope,
     spell_target_mode,
 )
 from combat.runtime_state import init_runtime_state
@@ -267,6 +268,9 @@ def _build_battle_item_meta(
             continue
         meta[item_name] = {
             "target_side": infer_battle_item_target_side(item_json),
+            "target_scope": spell_target_scope(item_json),
+            "can_select_all": spell_can_select_all(item_json),
+            "auto_all_target": spell_auto_all_target(item_json),
         }
     return meta
 

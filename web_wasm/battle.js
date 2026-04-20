@@ -1261,6 +1261,7 @@ function renderCommandButtons() {
     const canSelectAll = Boolean(pendingActionDraft?.can_select_all);
     const canSelectAllForSide =
       canSelectAll && (
+        pendingActionDraft?.kind === "item" ||
         targetNorm === "one/all" ||
         (side === "enemy" && targetNorm === "one/all enemies") ||
         (side === "ally" && targetNorm === "one/all allies") ||
@@ -2011,11 +2012,26 @@ function chooseMagic(cand) {
 function chooseItem(cand) {
   const itemName = String(cand?.name || "");
   if (!itemName) return;
-  const targetSide = sessionStatus?.item_meta?.[itemName]?.target_side;
+  const itemMeta = sessionStatus?.item_meta?.[itemName] || {};
+  const targetSide = itemMeta?.target_side;
+  const canSelectAll = Boolean(itemMeta?.can_select_all);
+  const autoAllTarget = Boolean(itemMeta?.auto_all_target);
+  if (autoAllTarget && (targetSide === "ally" || targetSide === "enemy")) {
+    appendPendingAction({
+      kind: "item",
+      command: "Item",
+      item_name: itemName,
+      target_side: targetSide,
+      target_index: targetSide === "ally" ? currentMemberIndex : 0,
+      target_all: true,
+    });
+    return;
+  }
   pendingActionDraft = {
     kind: "item",
     command: "Item",
     item_name: itemName,
+    can_select_all: canSelectAll,
   };
   if (targetSide === "ally" || targetSide === "enemy") {
     pendingActionDraft.target_side = targetSide;

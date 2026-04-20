@@ -283,7 +283,7 @@ def apply_status_spell_to_enemy(
                 if a.strip()
             ]
 
-    # ---- 2) それでも無い場合は Effect から抽出（Mini/Toad等含む） ----
+    # ---- 2) それでも無い場合は Effect から抽出 ----
     if not ailments_list:
         effect_text = normalize_text_basic(spell_json.get("Effect") or "")
 
@@ -293,14 +293,6 @@ def apply_status_spell_to_enemy(
             after = effect_text.split("inflict", 1)[1].strip()
             after = after.split("for")[0].strip()
             ailments_list = [after]
-
-        # パターンB: Mini
-        elif "miniaturize" in effect_text:
-            ailments_list = ["mini"]
-
-        # パターンC: Toad
-        elif "toad" in effect_text and "turn target into a toad" in effect_text:
-            ailments_list = ["toad"]
 
     # ★ ここで Erase を特別扱いする（return False より前）
     if not ailments_list and spell_name == "erase":
@@ -577,15 +569,7 @@ def apply_status_spell_to_char(
             normalize_text_basic(a) for a in ailments.split(",") if a.strip()
         ]
 
-    # 2) まだ取れなかったら Effect から推定（Mini/Toad など）
-    if not ailments_list:
-        effect_text = normalize_text_basic(spell_json.get("Effect") or "")
-        if "miniaturize" in effect_text:
-            ailments_list = ["mini"]
-        elif "toad" in effect_text and "turn target into a toad" in effect_text:
-            ailments_list = ["toad"]
-
-    # 2.x) Effect から抽出（Inflict / Mini / Toad）
+    # 2) まだ取れなかったら Effect から推定
     if not ailments_list:
         effect_text = normalize_text_basic(spell_json.get("Effect") or "")
 
@@ -593,12 +577,6 @@ def apply_status_spell_to_char(
             after = effect_text.split("inflict", 1)[1].strip()
             after = after.split("for")[0].strip()
             ailments_list = [after]
-
-        elif "miniaturize" in effect_text:
-            ailments_list = ["mini"]
-
-        elif "toad" in effect_text and "turn target into a toad" in effect_text:
-            ailments_list = ["toad"]
 
     # 3) Erase / Toad / Mini 特別扱い
     spell_name = normalize_text_basic(
@@ -608,10 +586,6 @@ def apply_status_spell_to_char(
     if not ailments_list:
         if spell_name == "erase":
             ailments_list = ["erase"]
-        elif spell_name == "toad":
-            ailments_list = ["toad"]
-        elif spell_name == "mini":
-            ailments_list = ["mini"]
 
     if not ailments_list:
         return False  # 状態異常魔法ではない

@@ -16,6 +16,10 @@ def spell_effect_category(spell_json: Dict[str, Any]) -> str:
     return normalize_text_basic(spell_json.get("effect_category") or "")
 
 
+def spell_battle_behavior(spell_json: Dict[str, Any]) -> str:
+    return normalize_text_basic(spell_json.get("battle_behavior") or "")
+
+
 def spell_target_scope(spell_json: Dict[str, Any]) -> str:
     scope = normalize_text_basic(spell_json.get("target_scope") or "")
     if scope in {"one", "all", "one_or_all"}:

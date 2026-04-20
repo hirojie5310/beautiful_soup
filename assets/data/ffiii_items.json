@@ -12,6 +12,9 @@
       "Price": 150,
       "Value": 75,
       "SpellEffect": "Recovery",
+      "default_target_side": "Ally",
+      "target_scope": "one",
+      "effect_category": "heal_hp",
       "SpellInfo": {
         "Effect": "Restore target's HP",
         "Element": "Recovery",
@@ -267,6 +270,9 @@
       "Price": 1200,
       "Value": 600,
       "SpellEffect": "Recovery",
+      "default_target_side": "Ally",
+      "target_scope": "one",
+      "effect_category": "heal_hp",
       "SpellInfo": {
         "Effect": "Restore target's HP",
         "Element": "Recovery",
@@ -507,6 +513,9 @@
       "ItemType": "Anywhere",
       "Value": 1500,
       "SpellEffect": "Elixir",
+      "default_target_side": "Ally",
+      "target_scope": "one",
+      "effect_category": "heal_full",
       "SpellInfo": {
         "Effect": "Restore target to full HP and MP",
         "Element": null,
@@ -722,6 +731,9 @@
       "ItemType": "Anywhere",
       "Value": 1500,
       "SpellEffect": "Raise",
+      "default_target_side": "Ally",
+      "target_scope": "one",
+      "effect_category": "revive",
       "SpellInfo": {
         "Effect": "Revive from KO",
         "Element": "Recovery",
@@ -920,6 +932,9 @@
       "Price": 300,
       "Value": 150,
       "SpellEffect": "Stona",
+      "default_target_side": "Ally",
+      "target_scope": "one",
+      "effect_category": "status_recovery",
       "SpellInfo": {
         "Effect": "Cure Petrification and Partial Petrification",
         "Element": null,
@@ -1045,6 +1060,9 @@
       "Price": 100,
       "Value": 50,
       "SpellEffect": "Maiden's Kiss",
+      "default_target_side": "Ally",
+      "target_scope": "one",
+      "effect_category": "status_recovery",
       "SpellInfo": {
         "Effect": "Cure Toad",
         "Element": "Recovery",
@@ -1117,6 +1135,9 @@
       "Price": 100,
       "Value": 50,
       "SpellEffect": "Echo Herbs",
+      "default_target_side": "Ally",
+      "target_scope": "one",
+      "effect_category": "status_recovery",
       "SpellInfo": {
         "Effect": "Cure Silence",
         "Element": "Recovery",
@@ -1211,6 +1232,9 @@
       "Price": 100,
       "Value": 50,
       "SpellEffect": "Mallet",
+      "default_target_side": "Any",
+      "target_scope": "one",
+      "effect_category": "status_toggle",
       "SpellInfo": {
         "Effect": "Cure or inflict Mini",
         "Element": "Recovery",
@@ -1283,6 +1307,9 @@
       "Price": 40,
       "Value": 20,
       "SpellEffect": "Blindna",
+      "default_target_side": "Ally",
+      "target_scope": "one",
+      "effect_category": "status_recovery",
       "SpellInfo": {
         "Effect": "Cure Blind",
         "Element": null,
@@ -1394,6 +1421,9 @@
       "Price": 80,
       "Value": 40,
       "SpellEffect": "Poisona",
+      "default_target_side": "Ally",
+      "target_scope": "one",
+      "effect_category": "status_recovery",
       "SpellInfo": {
         "Effect": "Cure Poison",
         "Element": null,
@@ -1684,6 +1714,9 @@
       "Price": 200,
       "Value": 100,
       "SpellEffect": "Sight",
+      "default_target_side": "Any",
+      "target_scope": "one",
+      "effect_category": "field_utility",
       "SpellInfo": {
         "Effect": "View local map",
         "Element": null,
@@ -1753,6 +1786,9 @@
       "Price": 2000,
       "Value": 1000,
       "SpellEffect": "Teleport",
+      "default_target_side": "Ally",
+      "target_scope": "one",
+      "effect_category": "teleport",
       "SpellInfo": {
         "Effect": "Teleport to dungeon exit, or inflict KO in battle",
         "Element": null,
@@ -1875,6 +1911,9 @@
       "ItemType": "Combat",
       "Value": 500,
       "SpellEffect": "Blizzara",
+      "default_target_side": "Enemy",
+      "target_scope": "one",
+      "effect_category": "damage",
       "SpellInfo": {
         "Effect": "Deal Ice damage",
         "Element": "Ice",
@@ -1954,6 +1993,9 @@
       "ItemType": "Combat",
       "Value": 500,
       "SpellEffect": "Thundara",
+      "default_target_side": "Enemy",
+      "target_scope": "one",
+      "effect_category": "damage",
       "SpellInfo": {
         "Effect": "Deal Lightning damage",
         "Element": "Lightning",
@@ -2033,6 +2075,9 @@
       "ItemType": "Combat",
       "Value": 750,
       "SpellEffect": "Firaga",
+      "default_target_side": "Enemy",
+      "target_scope": "one",
+      "effect_category": "damage",
       "SpellInfo": {
         "Effect": "Deal Fire damage",
         "Element": "Fire",
@@ -2122,6 +2167,9 @@
       "ItemType": "Combat",
       "Value": 750,
       "SpellEffect": "Blizzaga",
+      "default_target_side": "Enemy",
+      "target_scope": "one",
+      "effect_category": "damage",
       "SpellInfo": {
         "Effect": "Deal Ice damage",
         "Element": "Ice",
@@ -2203,6 +2251,9 @@
       "ItemType": "Combat",
       "Value": 750,
       "SpellEffect": "Thundaga",
+      "default_target_side": "Enemy",
+      "target_scope": "one",
+      "effect_category": "damage",
       "SpellInfo": {
         "Effect": "Deal Lightning damage",
         "Element": "Lightning",
@@ -2302,6 +2353,9 @@
       "ItemType": "Combat",
       "Value": 1250,
       "SpellEffect": "Quake",
+      "default_target_side": "Enemy",
+      "target_scope": "one",
+      "effect_category": "damage",
       "SpellInfo": {
         "Effect": "Deal Earth damage",
         "Element": "Earth",
@@ -2370,6 +2424,9 @@
       "ItemType": "Combat",
       "Value": 1500,
       "SpellEffect": "Confuse",
+      "default_target_side": "Enemy",
+      "target_scope": "one",
+      "effect_category": "status",
       "SpellInfo": {
         "Effect": "Inflict Confusion",
         "Element": null,
@@ -2445,6 +2502,9 @@
       "ItemType": "Combat",
       "Value": 1500,
       "SpellEffect": "Haste",
+      "default_target_side": "Ally",
+      "target_scope": "one",
+      "effect_category": "buff_attack",
       "SpellInfo": {
         "Effect": "Enhance Accuracy and Attack Multiplier",
         "Element": null,
@@ -2519,6 +2579,9 @@
       "ItemType": "Combat",
       "Value": 1500,
       "SpellEffect": "Protect",
+      "default_target_side": "Ally",
+      "target_scope": "one",
+      "effect_category": "buff_defense",
       "SpellInfo": {
         "Effect": "Enhance Defense and Magic Defense",
         "Element": null,
@@ -2594,6 +2657,9 @@
       "ItemType": "Combat",
       "Value": 1500,
       "SpellEffect": "Raze",
+      "default_target_side": "Enemy",
+      "target_scope": "one",
+      "effect_category": "status",
       "SpellInfo": {
         "Effect": "Inflict KO",
         "Element": null,
@@ -2641,6 +2707,9 @@
       "ItemType": "Combat",
       "Value": 2000,
       "SpellEffect": "Teleport",
+      "default_target_side": "Enemy",
+      "target_scope": "one",
+      "effect_category": "status",
       "SpellInfo": {
         "Effect": "Teleport to dungeon exit, or inflict KO in battle",
         "Element": null,
@@ -2700,6 +2769,9 @@
       "ItemType": "Combat",
       "Value": 2500,
       "SpellEffect": "Death",
+      "default_target_side": "Enemy",
+      "target_scope": "one",
+      "effect_category": "status",
       "SpellInfo": {
         "Effect": "Inflict KO",
         "Element": null,
@@ -2776,6 +2848,9 @@
       "ItemType": "Combat",
       "Value": 1500,
       "SpellEffect": "Drain",
+      "default_target_side": "Enemy",
+      "target_scope": "one",
+      "effect_category": "drain",
       "SpellInfo": {
         "Effect": "Absorb HP from target",
         "Element": "Recovery",
@@ -2851,6 +2926,9 @@
       "ItemType": "Combat",
       "Value": 1500,
       "SpellEffect": "Aeroga",
+      "default_target_side": "Enemy",
+      "target_scope": "one",
+      "effect_category": "damage",
       "SpellInfo": {
         "Effect": "Deal Air and Ice damage",
         "Element": null,
@@ -2905,6 +2983,9 @@
       "ItemType": "Combat",
       "Value": 1500,
       "SpellEffect": "Shade",
+      "default_target_side": "Enemy",
+      "target_scope": "one",
+      "effect_category": "status",
       "SpellInfo": {
         "Effect": "Inflict Paralysis",
         "Element": null,
@@ -3000,6 +3081,9 @@
       "ItemType": "Combat",
       "Value": 1000,
       "SpellEffect": "Sleep",
+      "default_target_side": "Enemy",
+      "target_scope": "one",
+      "effect_category": "status",
       "SpellInfo": {
         "Effect": "Inflict Sleep",
         "Element": null,
@@ -3029,6 +3113,9 @@
       "ItemType": "Combat",
       "Value": 2500,
       "SpellEffect": "Reflect",
+      "default_target_side": "Ally",
+      "target_scope": "one",
+      "effect_category": "reflect",
       "SpellInfo": {
         "Effect": "Grant Reflect",
         "Element": null,
@@ -3120,6 +3207,9 @@
       "ItemType": "Combat",
       "Value": 2500,
       "SpellEffect": "Flare",
+      "default_target_side": "Enemy",
+      "target_scope": "one",
+      "effect_category": "damage",
       "SpellInfo": {
         "Effect": "Deal damage",
         "Element": null,
@@ -3196,6 +3286,9 @@
       "ItemType": "Combat",
       "Value": 2500,
       "SpellEffect": "Holy",
+      "default_target_side": "Enemy",
+      "target_scope": "one",
+      "effect_category": "damage",
       "SpellInfo": {
         "Effect": "Deal Holy damage",
         "Element": "Holy",

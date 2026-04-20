@@ -35,6 +35,31 @@ def infer_battle_item_target_side(item_json: Dict[str, Any]) -> str | None:
     - "enemy": 攻撃・敵向け状態異常
     - None: UIに対象面選択を委ねる
     """
+    side = normalize_text_basic(item_json.get("default_target_side") or "")
+    if side == "ally":
+        return "ally"
+    if side == "enemy":
+        return "enemy"
+    if side == "any":
+        return None
+
+    effect_category = normalize_text_basic(item_json.get("effect_category") or "")
+    if effect_category in {
+        "heal_hp",
+        "heal_full",
+        "revive",
+        "buff_attack",
+        "buff_defense",
+        "reflect",
+        "status_recovery",
+        "teleport",
+    }:
+        return "ally"
+    if effect_category in {"damage", "drain", "status"}:
+        return "enemy"
+    if effect_category in {"field_utility", "status_toggle"}:
+        return None
+
     spell_info = item_json.get("SpellInfo") or {}
     effect_text = normalize_text_basic(spell_info.get("Effect") or "")
     spell_effect = normalize_text_basic(item_json.get("SpellEffect") or "")
