@@ -1,4 +1,5 @@
 import { resolveFaceImageCandidates } from "../shared_party.js";
+import { readCachedImageUrl, resolveCachedImageUrl } from "../image_cache.js";
 import { renderMenuSubpageShell } from "./menu_subpage_shell.js";
 import {
   bindMenuSubpageNavigation,
@@ -57,10 +58,34 @@ function resolveStatusIconCandidates(iconKey) {
   const safeKey = encodeURIComponent(String(iconKey || ""));
   if (!safeKey) return [];
   return [
-    `/assets/status-icons/${safeKey}.png`,
-    `/assets/images/status_icons/${safeKey}.png`,
     `../assets/images/status_icons/${safeKey}.png`,
+    new URL(`../../assets/images/status_icons/${safeKey}.png`, import.meta.url).href,
+    `/assets/images/status_icons/${safeKey}.png`,
   ];
+}
+
+function applyCachedImageSource(target, candidates, { onLoad, onError } = {}) {
+  if (!target) return;
+  const cachedUrl = readCachedImageUrl(candidates);
+  if (cachedUrl !== null) {
+    if (cachedUrl) {
+      target.src = cachedUrl;
+      if (typeof onLoad === "function") onLoad(cachedUrl);
+      return;
+    }
+    if (typeof onError === "function") onError();
+    return;
+  }
+  resolveCachedImageUrl(candidates, {
+    onResolved: (resolvedUrl) => {
+      if (resolvedUrl) {
+        target.src = resolvedUrl;
+        if (typeof onLoad === "function") onLoad(resolvedUrl);
+        return;
+      }
+      if (typeof onError === "function") onError();
+    },
+  });
 }
 
 function rowHtml(label, value) {
@@ -85,7 +110,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     const fallback = document.createElement("div");
     fallback.className = "portrait-fallback";
     fallback.textContent = "NO PORTRAIT";
-    const candidates = resolveFaceImageCandidates(member);
+    const candidates = resolveFaceImageCandidates(member, Number(member?.index ?? index));
     if (!candidates.length) {
       portraitWrap.appendChild(fallback);
       return;
@@ -93,13 +118,12 @@ export async function mountScreen({ mountNode, store, navigate }) {
     const img = document.createElement("img");
     img.className = "portrait";
     img.alt = "";
-    let i = 0;
-    img.addEventListener("error", () => {
-      i += 1;
-      if (i < candidates.length) img.src = candidates[i];
-      else { img.remove(); portraitWrap.appendChild(fallback); }
+    applyCachedImageSource(img, candidates, {
+      onError: () => {
+        img.remove();
+        portraitWrap.appendChild(fallback);
+      },
     });
-    img.src = candidates[i];
     portraitWrap.appendChild(img);
   }
 
@@ -116,13 +140,11 @@ export async function mountScreen({ mountNode, store, navigate }) {
       const img = document.createElement("img");
       img.className = "status-icon";
       img.alt = iconKey;
-      let i = 0;
-      img.addEventListener("error", () => {
-        i += 1;
-        if (i < candidates.length) img.src = candidates[i];
-        else img.remove();
+      applyCachedImageSource(img, candidates, {
+        onError: () => {
+          img.remove();
+        },
       });
-      img.src = candidates[i];
       statusIcons.appendChild(img);
     });
     if (!statusIcons.childElementCount) statusIcons.textContent = st?.status_line || "-";

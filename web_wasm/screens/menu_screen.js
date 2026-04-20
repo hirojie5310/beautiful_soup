@@ -3,6 +3,7 @@ import {
   resolveFaceImageCandidates,
   resolveMemberJob,
 } from "../shared_party.js";
+import { readCachedImageUrl, resolveCachedImageUrl } from "../image_cache.js";
 import {
   DEFAULT_MAP_ID,
   isMapSelectionCompatible,
@@ -41,6 +42,30 @@ const MENU_ROUTE_BY_LABEL = {
   ジョブ: "job",
   マップ: "map",
 };
+
+function applyCachedImageSource(target, candidates, { onLoad, onError } = {}) {
+  if (!target) return;
+  const cachedUrl = readCachedImageUrl(candidates);
+  if (cachedUrl !== null) {
+    if (cachedUrl) {
+      target.src = cachedUrl;
+      if (typeof onLoad === "function") onLoad(cachedUrl);
+      return;
+    }
+    if (typeof onError === "function") onError();
+    return;
+  }
+  resolveCachedImageUrl(candidates, {
+    onResolved: (resolvedUrl) => {
+      if (resolvedUrl) {
+        target.src = resolvedUrl;
+        if (typeof onLoad === "function") onLoad(resolvedUrl);
+        return;
+      }
+      if (typeof onError === "function") onError();
+    },
+  });
+}
 
 function renderLayout() {
   return `
@@ -402,23 +427,18 @@ export async function mountScreen({ mountNode, store, navigate }) {
       const fallback = document.createElement("div");
       fallback.className = "portrait-fallback";
       fallback.textContent = "NO PORTRAIT";
-      const imageCandidates = resolveFaceImageCandidates(member);
+      const imageCandidates = resolveFaceImageCandidates(member, index);
       if (imageCandidates.length) {
         const img = document.createElement("img");
         img.className = "portrait";
         img.alt = "";
-        let imageIndex = 0;
-        img.addEventListener("load", () => fallback.remove());
-        img.addEventListener("error", () => {
-          imageIndex += 1;
-          if (imageIndex < imageCandidates.length) {
-            img.src = imageCandidates[imageIndex];
-            return;
-          }
-          img.remove();
-          if (!card.contains(fallback)) card.insertBefore(fallback, card.firstChild);
+        applyCachedImageSource(img, imageCandidates, {
+          onLoad: () => fallback.remove(),
+          onError: () => {
+            img.remove();
+            if (!card.contains(fallback)) card.insertBefore(fallback, card.firstChild);
+          },
         });
-        img.src = imageCandidates[imageIndex];
         card.appendChild(img);
       } else {
         card.appendChild(fallback);
