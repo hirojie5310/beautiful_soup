@@ -35,6 +35,7 @@ const CRYSTAL_SPRITE_FRAME_MS = 500;
 const CRYSTAL_IMAGE_URL = new URL("../../assets/images/maps/Crystal.png", import.meta.url).href;
 let spellLevelByNamePromise = null;
 let mergedFixedContentPromise = null;
+const mapRenderStateCache = new WeakMap();
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
@@ -583,6 +584,97 @@ function objectLabel(type) {
   return "OBJ";
 }
 
+function mapRenderSignature(mapDefinition) {
+  return [
+    String(mapDefinition?.id || ""),
+    Number(mapDefinition?.renderWidth || 0),
+    Number(mapDefinition?.renderHeight || 0),
+    String(mapDefinition?.tileset?.imageUrl || ""),
+    Number(mapDefinition?.tileset?.columns || 0),
+    Number(mapDefinition?.tileset?.tileCount || 0),
+    JSON.stringify(mapDefinition?.renderPadding || {}),
+    JSON.stringify(
+      Array.isArray(mapDefinition?.objects)
+        ? mapDefinition.objects.map((row) => ({
+          type: String(row?.type || ""),
+          name: String(row?.name || ""),
+          x: Number(row?.x || 0),
+          y: Number(row?.y || 0),
+        }))
+        : [],
+    ),
+    JSON.stringify(findCrystalSpriteOrigin(mapDefinition)),
+  ].join("|");
+}
+
+function ensureMapRenderState(mapLayer, mapDefinition) {
+  const tileSize = DISPLAY_TILE_SIZE;
+  const tilesetColumns = Number(mapDefinition?.tileset?.columns || 1);
+  const tilesetRows = Math.max(1, Math.ceil(Number(mapDefinition?.tileset?.tileCount || 0) / tilesetColumns));
+  const signature = mapRenderSignature(mapDefinition);
+  const existing = mapRenderStateCache.get(mapLayer);
+  if (existing?.signature === signature) {
+    return existing;
+  }
+
+  mapLayer.innerHTML = "";
+  mapLayer.style.width = `${mapDefinition.renderWidth * tileSize}px`;
+  mapLayer.style.height = `${mapDefinition.renderHeight * tileSize}px`;
+
+  const tileNodes = [];
+  mapDefinition.renderRows.forEach((row, y) => {
+    row.forEach((_gid, x) => {
+      const tile = document.createElement("div");
+      tile.className = "map-tile";
+      tile.style.left = `${x * tileSize}px`;
+      tile.style.top = `${y * tileSize}px`;
+      tile.style.backgroundImage = `url("${mapDefinition.tileset.imageUrl}")`;
+      tile.style.backgroundSize = `${tilesetColumns * tileSize}px ${tilesetRows * tileSize}px`;
+      mapLayer.appendChild(tile);
+      tileNodes.push(tile);
+    });
+  });
+
+  const renderPadding = mapDefinition.renderPadding || { left: 0, top: 0 };
+  (mapDefinition.objects || []).forEach((row) => {
+    const marker = document.createElement("div");
+    marker.className = "map-object";
+    marker.style.left = `${(Number(row.x || 0) + renderPadding.left) * tileSize}px`;
+    marker.style.top = `${(Number(row.y || 0) + renderPadding.top) * tileSize}px`;
+    marker.title = String(row?.name || row?.type || "");
+    marker.innerHTML = `<span>${objectLabel(row?.type)}</span>`;
+    mapLayer.appendChild(marker);
+  });
+
+  const crystalOrigin = findCrystalSpriteOrigin(mapDefinition);
+  if (crystalOrigin) {
+    const crystal = document.createElement("div");
+    crystal.className = "map-decoration map-decoration-crystal";
+    crystal.setAttribute("aria-hidden", "true");
+    crystal.style.left = `${(crystalOrigin.x + renderPadding.left) * tileSize}px`;
+    crystal.style.top = `${(crystalOrigin.y + renderPadding.top) * tileSize}px`;
+    mapLayer.appendChild(crystal);
+  }
+
+  const nextState = {
+    signature,
+    tileNodes,
+    previousRenderRows: [],
+    tilesetColumns,
+  };
+  mapRenderStateCache.set(mapLayer, nextState);
+  return nextState;
+}
+
+function updateRenderedTile(tile, gid, tilesetColumns) {
+  if (!tile) return;
+  const tileSize = DISPLAY_TILE_SIZE;
+  const localId = Math.max(0, Number(gid || 0) - 1);
+  const col = localId % tilesetColumns;
+  const tileRow = Math.floor(localId / tilesetColumns);
+  tile.style.backgroundPosition = `${-col * tileSize}px ${-tileRow * tileSize}px`;
+}
+
 export function findStandingObject(mapDefinition, mapState) {
   return (mapDefinition?.objects || []).find((row) => (
     Number(row?.x) === Number(mapState?.tile_x) && Number(row?.y) === Number(mapState?.tile_y)
@@ -655,49 +747,23 @@ function describeStandingObject(mapDefinition, mapState) {
 }
 
 function renderMapTiles(mapLayer, mapDefinition) {
-  const tileSize = DISPLAY_TILE_SIZE;
-  const tilesetRows = Math.max(1, Math.ceil(mapDefinition.tileset.tileCount / mapDefinition.tileset.columns));
-  const renderPadding = mapDefinition.renderPadding || { left: 0, top: 0 };
-  const crystalOrigin = findCrystalSpriteOrigin(mapDefinition);
-  mapLayer.innerHTML = "";
-  mapLayer.style.width = `${mapDefinition.renderWidth * tileSize}px`;
-  mapLayer.style.height = `${mapDefinition.renderHeight * tileSize}px`;
+  const renderRows = Array.isArray(mapDefinition?.renderRows) ? mapDefinition.renderRows : [];
+  const renderState = ensureMapRenderState(mapLayer, mapDefinition);
+  const previousRows = renderState.previousRenderRows;
+  let tileIndex = 0;
 
-  mapDefinition.renderRows.forEach((row, y) => {
+  renderRows.forEach((row, y) => {
     row.forEach((gid, x) => {
-      const tile = document.createElement("div");
-      tile.className = "map-tile";
-      tile.style.left = `${x * tileSize}px`;
-      tile.style.top = `${y * tileSize}px`;
-
-      const localId = Math.max(0, Number(gid || 0) - 1);
-      const col = localId % mapDefinition.tileset.columns;
-      const tileRow = Math.floor(localId / mapDefinition.tileset.columns);
-      tile.style.backgroundImage = `url("${mapDefinition.tileset.imageUrl}")`;
-      tile.style.backgroundSize = `${mapDefinition.tileset.columns * tileSize}px ${tilesetRows * tileSize}px`;
-      tile.style.backgroundPosition = `${-col * tileSize}px ${-tileRow * tileSize}px`;
-      mapLayer.appendChild(tile);
+      const previousGid = Number(previousRows?.[y]?.[x] ?? NaN);
+      const nextGid = Number(gid || 0);
+      if (previousGid !== nextGid) {
+        updateRenderedTile(renderState.tileNodes[tileIndex], nextGid, renderState.tilesetColumns);
+      }
+      tileIndex += 1;
     });
   });
 
-  (mapDefinition.objects || []).forEach((row) => {
-    const marker = document.createElement("div");
-    marker.className = "map-object";
-    marker.style.left = `${(Number(row.x || 0) + renderPadding.left) * tileSize}px`;
-    marker.style.top = `${(Number(row.y || 0) + renderPadding.top) * tileSize}px`;
-    marker.title = String(row?.name || row?.type || "");
-    marker.innerHTML = `<span>${objectLabel(row?.type)}</span>`;
-    mapLayer.appendChild(marker);
-  });
-
-  if (crystalOrigin) {
-    const crystal = document.createElement("div");
-    crystal.className = "map-decoration map-decoration-crystal";
-    crystal.setAttribute("aria-hidden", "true");
-    crystal.style.left = `${(crystalOrigin.x + renderPadding.left) * tileSize}px`;
-    crystal.style.top = `${(crystalOrigin.y + renderPadding.top) * tileSize}px`;
-    mapLayer.appendChild(crystal);
-  }
+  renderState.previousRenderRows = renderRows.map((row) => row.slice());
 }
 
 export function applySwitchStateToMap(mapDefinition, switchStates = {}) {

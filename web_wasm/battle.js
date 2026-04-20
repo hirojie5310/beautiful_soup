@@ -10,6 +10,10 @@ import {
   resolveFaceImageCandidates,
 } from "./shared_party.js";
 import {
+  readCachedImageUrl,
+  resolveCachedImageUrl,
+} from "./image_cache.js";
+import {
   AUTO_SAVE_SLOT_ID,
   LOCAL_MENU_STORAGE_KEY,
   parseSaveEnvelope,
@@ -60,6 +64,9 @@ let returnToLocationBound = false;
 let activeCombatPopups = {};
 let activeCombatEffects = {};
 let suppressMenuStateSync = false;
+const partyCardCache = new Map();
+const enemyCardCache = new Map();
+const statusIconRowCache = new WeakMap();
 const PYTHON_BUNDLE_VERSION = "20260406c";
 const ATTACK_EFFECT_SHEET_NAME = "ef_slash_frames.png";
 
@@ -332,6 +339,250 @@ function resolveStatusIconCandidates(iconKey) {
   ];
 }
 
+function applyCachedImageSource(target, candidates, { onLoad, onError } = {}) {
+  if (!target) return;
+  const cachedUrl = readCachedImageUrl(candidates);
+  if (cachedUrl !== null) {
+    if (cachedUrl) {
+      if ("src" in target) {
+        target.src = cachedUrl;
+      } else {
+        target.style.backgroundImage = `url("${cachedUrl}")`;
+      }
+      if (typeof onLoad === "function") onLoad(cachedUrl);
+      return;
+    }
+    if (typeof onError === "function") onError();
+    return;
+  }
+
+  resolveCachedImageUrl(candidates, {
+    onResolved: (resolvedUrl) => {
+      if (resolvedUrl) {
+        if ("src" in target) {
+          target.src = resolvedUrl;
+        } else {
+          target.style.backgroundImage = `url("${resolvedUrl}")`;
+        }
+        if (typeof onLoad === "function") onLoad(resolvedUrl);
+        return;
+      }
+      if (typeof onError === "function") onError();
+    },
+  });
+}
+
+function candidateListCacheKey(candidates) {
+  return Array.isArray(candidates)
+    ? candidates.map((candidate) => String(candidate || "")).filter(Boolean).join("\n")
+    : "";
+}
+
+function clearCardOverlayLayers(card) {
+  if (!card) return;
+  card.querySelectorAll(".combat-popup-layer,.combat-effect-layer").forEach((node) => node.remove());
+}
+
+function renderStatusIcons(iconRow, iconKeys) {
+  if (!iconRow) return;
+  const normalizedKeys = Array.isArray(iconKeys)
+    ? iconKeys.map((iconKey) => String(iconKey || "").trim()).filter(Boolean)
+    : [];
+  const previousState = statusIconRowCache.get(iconRow) || {
+    order: [],
+    nodes: new Map(),
+  };
+  const nextNodes = new Map();
+  const nextOrder = [];
+  const occurrenceCounts = new Map();
+
+  normalizedKeys.forEach((iconKey) => {
+    const occurrence = occurrenceCounts.get(iconKey) || 0;
+    occurrenceCounts.set(iconKey, occurrence + 1);
+    const nodeKey = `${iconKey}#${occurrence}`;
+    nextOrder.push(nodeKey);
+    let icon = previousState.nodes.get(nodeKey);
+    if (!icon) {
+      const candidates = resolveStatusIconCandidates(iconKey);
+      if (!candidates.length) return;
+      icon = document.createElement("img");
+      icon.className = "status-icon";
+      icon.alt = iconKey;
+      icon.loading = "lazy";
+      icon.decoding = "async";
+      icon.addEventListener("error", () => {
+        icon.remove();
+      });
+      applyCachedImageSource(icon, candidates, {
+        onError: () => {
+          icon.remove();
+        },
+      });
+    }
+    nextNodes.set(nodeKey, icon);
+    iconRow.appendChild(icon);
+  });
+
+  previousState.nodes.forEach((icon, nodeKey) => {
+    if (nextNodes.has(nodeKey)) return;
+    icon.remove();
+  });
+
+  statusIconRowCache.set(iconRow, {
+    order: nextOrder,
+    nodes: nextNodes,
+  });
+  iconRow.style.display = iconRow.childElementCount > 0 ? "" : "none";
+}
+
+function syncManagedCardImage(state, candidates) {
+  if (!state?.image || !state?.fallback) return;
+  const nextCandidateKey = candidateListCacheKey(candidates);
+  if (!nextCandidateKey) {
+    state.image.removeAttribute("src");
+    state.image.style.display = "none";
+    state.fallback.style.display = "";
+    state.currentCandidateKey = "";
+    return;
+  }
+  if (state.currentCandidateKey === nextCandidateKey) return;
+  state.currentCandidateKey = nextCandidateKey;
+  state.image.style.display = "";
+  state.fallback.style.display = "";
+  applyCachedImageSource(state.image, candidates, {
+    onLoad: () => {
+      if (state.currentCandidateKey !== nextCandidateKey) return;
+      state.fallback.style.display = "none";
+      state.image.style.display = "";
+    },
+    onError: () => {
+      if (state.currentCandidateKey !== nextCandidateKey) return;
+      state.image.removeAttribute("src");
+      state.image.style.display = "none";
+      state.fallback.style.display = "";
+    },
+  });
+}
+
+function createPartyCardState(idx) {
+  const card = document.createElement("article");
+  card.className = "card party-card";
+
+  const faceImage = document.createElement("img");
+  faceImage.className = "party-face";
+  faceImage.alt = "";
+  faceImage.loading = "eager";
+  faceImage.decoding = "async";
+  card.appendChild(faceImage);
+
+  const faceFallback = document.createElement("div");
+  faceFallback.className = "party-face-fallback";
+  faceFallback.textContent = "NO PORTRAIT";
+  card.appendChild(faceFallback);
+
+  const content = document.createElement("div");
+  content.className = "party-card-content";
+
+  const nameRow = document.createElement("div");
+  nameRow.className = "name party-name-row";
+  content.appendChild(nameRow);
+
+  const hpRow = document.createElement("div");
+  hpRow.className = "hp party-hp-row";
+  content.appendChild(hpRow);
+
+  const levelRow = document.createElement("div");
+  levelRow.className = "status party-level-row";
+  content.appendChild(levelRow);
+
+  const iconRow = document.createElement("div");
+  iconRow.className = "status-icon-row party-status-icons-row";
+  content.appendChild(iconRow);
+
+  card.appendChild(content);
+
+  return {
+    card,
+    image: faceImage,
+    fallback: faceFallback,
+    content,
+    nameRow,
+    hpRow,
+    levelRow,
+    iconRow,
+    currentCandidateKey: "",
+    index: idx,
+  };
+}
+
+function createEnemyCardState(idx) {
+  const card = document.createElement("article");
+  card.className = "card target enemy-card";
+  card.addEventListener("click", () => {
+    if (battleFinished) return;
+    const enemy = Array.isArray(sessionStatus.enemies) ? sessionStatus.enemies[idx] : null;
+    if (isOutOfBattleEnemy(enemy)) return;
+    selectedEnemyIndex = idx;
+    renderEnemies();
+    renderStatus();
+  });
+
+  const spriteImage = document.createElement("img");
+  spriteImage.className = "enemy-sprite";
+  spriteImage.alt = "";
+  spriteImage.loading = "eager";
+  spriteImage.decoding = "async";
+  card.appendChild(spriteImage);
+
+  const spriteFallback = document.createElement("div");
+  spriteFallback.className = "enemy-sprite-fallback";
+  spriteFallback.textContent = "NO SPRITE";
+  card.appendChild(spriteFallback);
+
+  const content = document.createElement("div");
+  content.className = "enemy-card-content";
+
+  const nameRow = document.createElement("div");
+  nameRow.className = "name";
+  content.appendChild(nameRow);
+
+  const hpRow = document.createElement("div");
+  hpRow.className = "hp";
+  content.appendChild(hpRow);
+
+  const iconRow = document.createElement("div");
+  iconRow.className = "status-icon-row";
+  content.appendChild(iconRow);
+
+  card.appendChild(content);
+
+  return {
+    card,
+    image: spriteImage,
+    fallback: spriteFallback,
+    content,
+    nameRow,
+    hpRow,
+    iconRow,
+    currentCandidateKey: "",
+    index: idx,
+  };
+}
+
+function getPartyCardState(idx) {
+  if (!partyCardCache.has(idx)) {
+    partyCardCache.set(idx, createPartyCardState(idx));
+  }
+  return partyCardCache.get(idx);
+}
+
+function getEnemyCardState(idx) {
+  if (!enemyCardCache.has(idx)) {
+    enemyCardCache.set(idx, createEnemyCardState(idx));
+  }
+  return enemyCardCache.get(idx);
+}
+
 function enterCommandMode() {
   inputMode = "command";
   pendingActionDraft = null;
@@ -558,9 +809,11 @@ function appendCombatEffect(card, effect) {
   slash.style.setProperty("--slash-end-x", `${Math.max(startX, endX)}px`);
   slash.style.setProperty("--slash-start-y", `${startY}px`);
   slash.style.setProperty("--slash-end-y", `${endY}px`);
-  if (candidates.length) {
-    slash.style.setProperty("--slash-image", `url("${candidates[0]}")`);
-  }
+  applyCachedImageSource(slash, candidates, {
+    onLoad: (resolvedUrl) => {
+      slash.style.setProperty("--slash-image", `url("${resolvedUrl}")`);
+    },
+  });
 
   layer.appendChild(slash);
   card.appendChild(layer);
@@ -813,94 +1066,25 @@ function applyNamedCombatEffect(playbackStatus, effect) {
 
 function renderParty() {
   const party = Array.isArray(sessionStatus.party) ? sessionStatus.party : [];
-  partyGrid.innerHTML = "";
+  const activeKeys = new Set();
   party.forEach((member, idx) => {
-    const card = document.createElement("article");
     const activeClass = idx === currentMemberIndex && !battleFinished ? " active" : "";
-    card.className = `card party-card${activeClass}`;
-    const faceFallback = document.createElement("div");
-    faceFallback.className = "party-face-fallback";
-    faceFallback.textContent = "NO PORTRAIT";
-    const faceImageCandidates = resolveFaceImageCandidates(member, idx);
-    if (faceImageCandidates.length) {
-      const faceImage = document.createElement("img");
-      faceImage.className = "party-face";
-      faceImage.alt = "";
-      faceImage.loading = "eager";
-      faceImage.decoding = "async";
-      let imageIndex = 0;
-      faceImage.addEventListener("load", () => {
-        faceFallback.remove();
-      });
-      faceImage.src = faceImageCandidates[imageIndex];
-      faceImage.addEventListener("error", () => {
-        imageIndex += 1;
-        if (imageIndex < faceImageCandidates.length) {
-          faceImage.src = faceImageCandidates[imageIndex];
-          return;
-        }
-        faceImage.remove();
-        if (!card.contains(faceFallback)) {
-          card.insertBefore(faceFallback, card.firstChild);
-        }
-      });
-      card.appendChild(faceImage);
-    } else {
-      card.appendChild(faceFallback);
-    }
-
-    const content = document.createElement("div");
-    content.className = "party-card-content";
-    const nameRow = document.createElement("div");
-    nameRow.className = "name party-name-row";
-    nameRow.textContent = String(member?.name ?? `Member ${idx + 1}`);
-    content.appendChild(nameRow);
-
-    const hpRow = document.createElement("div");
-    hpRow.className = "hp party-hp-row";
-    hpRow.textContent = `HP ${Number(member?.hp ?? 0)} / ${Number(member?.max_hp ?? 0)}`;
-    content.appendChild(hpRow);
-
-    const levelRow = document.createElement("div");
-    levelRow.className = "status party-level-row";
-    levelRow.textContent = `Lv ${Number(member?.level ?? 0)}`;
-    content.appendChild(levelRow);
-
-    const memberStatusIcons = Array.isArray(member?.status_icons) ? member.status_icons : [];
-    if (memberStatusIcons.length) {
-      const iconRow = document.createElement("div");
-      iconRow.className = "status-icon-row party-status-icons-row";
-      memberStatusIcons.forEach((iconKey) => {
-        const icon = document.createElement("img");
-        icon.className = "status-icon";
-        icon.alt = String(iconKey || "");
-        icon.loading = "lazy";
-        icon.decoding = "async";
-        const candidates = resolveStatusIconCandidates(iconKey);
-        let iconIndex = 0;
-        const tryNextIcon = () => {
-          iconIndex += 1;
-          if (iconIndex >= candidates.length) {
-            icon.remove();
-            return;
-          }
-          icon.src = candidates[iconIndex];
-        };
-        icon.addEventListener("error", tryNextIcon);
-        if (candidates.length) {
-          icon.src = candidates[iconIndex];
-          iconRow.appendChild(icon);
-        }
-      });
-      if (iconRow.childElementCount > 0) {
-        content.appendChild(iconRow);
-      }
-    }
-
-    card.appendChild(content);
-    appendCombatEffect(card, effectForTarget("char", idx));
-    appendCombatPopup(card, popupForTarget("char", idx));
-    partyGrid.appendChild(card);
+    const cardState = getPartyCardState(idx);
+    activeKeys.add(idx);
+    cardState.card.className = `card party-card${activeClass}`;
+    cardState.nameRow.textContent = String(member?.name ?? `Member ${idx + 1}`);
+    cardState.hpRow.textContent = `HP ${Number(member?.hp ?? 0)} / ${Number(member?.max_hp ?? 0)}`;
+    cardState.levelRow.textContent = `Lv ${Number(member?.level ?? 0)}`;
+    syncManagedCardImage(cardState, resolveFaceImageCandidates(member, idx));
+    renderStatusIcons(cardState.iconRow, member?.status_icons);
+    clearCardOverlayLayers(cardState.card);
+    appendCombatEffect(cardState.card, effectForTarget("char", idx));
+    appendCombatPopup(cardState.card, popupForTarget("char", idx));
+    partyGrid.appendChild(cardState.card);
+  });
+  partyCardCache.forEach((cardState, key) => {
+    if (activeKeys.has(key)) return;
+    cardState.card.remove();
   });
 }
 
@@ -916,90 +1100,24 @@ function renderEnemies() {
       enemyFrame.style.backgroundImage = "none";
     }
   }
-  enemyGrid.innerHTML = "";
+  const activeKeys = new Set();
   enemies.forEach((enemy, idx) => {
-    const card = document.createElement("article");
     const selectedClass = idx === selectedEnemySafeIndex() ? " selected" : "";
-    card.className = `card target enemy-card${selectedClass}`;
-
-    const spriteFallback = document.createElement("div");
-    spriteFallback.className = "enemy-sprite-fallback";
-    spriteFallback.textContent = "NO SPRITE";
-    const spriteImageCandidates = resolveEnemyImageCandidates(enemy);
-    if (spriteImageCandidates.length) {
-      const spriteImage = document.createElement("img");
-      spriteImage.className = "enemy-sprite";
-      spriteImage.alt = "";
-      spriteImage.loading = "eager";
-      spriteImage.decoding = "async";
-      let imageIndex = 0;
-      spriteImage.addEventListener("load", () => {
-        spriteFallback.remove();
-      });
-      spriteImage.src = spriteImageCandidates[imageIndex];
-      spriteImage.addEventListener("error", () => {
-        imageIndex += 1;
-        if (imageIndex < spriteImageCandidates.length) {
-          spriteImage.src = spriteImageCandidates[imageIndex];
-          return;
-        }
-        spriteImage.remove();
-        if (!card.contains(spriteFallback)) {
-          card.insertBefore(spriteFallback, card.firstChild);
-        }
-      });
-      card.appendChild(spriteImage);
-    } else {
-      card.appendChild(spriteFallback);
-    }
-
-    const content = document.createElement("div");
-    content.className = "enemy-card-content";
-    content.innerHTML = `
-      <div class="name">${enemy?.name ?? `Enemy ${idx + 1}`}</div>
-      <div class="hp">HP ${Number(enemy?.hp ?? 0)} / ${Number(enemy?.max_hp ?? 0)}</div>
-    `;
-    const enemyStatusIcons = Array.isArray(enemy?.status_icons) ? enemy.status_icons : [];
-    if (enemyStatusIcons.length) {
-      const iconRow = document.createElement("div");
-      iconRow.className = "status-icon-row";
-      enemyStatusIcons.forEach((iconKey) => {
-        const icon = document.createElement("img");
-        icon.className = "status-icon";
-        icon.alt = String(iconKey || "");
-        icon.loading = "lazy";
-        icon.decoding = "async";
-        const candidates = resolveStatusIconCandidates(iconKey);
-        let iconIndex = 0;
-        const tryNextIcon = () => {
-          iconIndex += 1;
-          if (iconIndex >= candidates.length) {
-            icon.remove();
-            return;
-          }
-          icon.src = candidates[iconIndex];
-        };
-        icon.addEventListener("error", tryNextIcon);
-        if (candidates.length) {
-          icon.src = candidates[iconIndex];
-          iconRow.appendChild(icon);
-        }
-      });
-      if (iconRow.childElementCount > 0) {
-        content.appendChild(iconRow);
-      }
-    }
-    card.appendChild(content);
-    appendCombatEffect(card, effectForTarget("enemy", idx));
-    appendCombatPopup(card, popupForTarget("enemy", idx));
-    card.addEventListener("click", () => {
-      if (battleFinished) return;
-      if (isOutOfBattleEnemy(enemy)) return;
-      selectedEnemyIndex = idx;
-      renderEnemies();
-      renderStatus();
-    });
-    enemyGrid.appendChild(card);
+    const cardState = getEnemyCardState(idx);
+    activeKeys.add(idx);
+    cardState.card.className = `card target enemy-card${selectedClass}`;
+    cardState.nameRow.textContent = String(enemy?.name ?? `Enemy ${idx + 1}`);
+    cardState.hpRow.textContent = `HP ${Number(enemy?.hp ?? 0)} / ${Number(enemy?.max_hp ?? 0)}`;
+    syncManagedCardImage(cardState, resolveEnemyImageCandidates(enemy));
+    renderStatusIcons(cardState.iconRow, enemy?.status_icons);
+    clearCardOverlayLayers(cardState.card);
+    appendCombatEffect(cardState.card, effectForTarget("enemy", idx));
+    appendCombatPopup(cardState.card, popupForTarget("enemy", idx));
+    enemyGrid.appendChild(cardState.card);
+  });
+  enemyCardCache.forEach((cardState, key) => {
+    if (activeKeys.has(key)) return;
+    cardState.card.remove();
   });
 }
 
