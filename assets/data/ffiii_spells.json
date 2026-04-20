@@ -1708,6 +1708,8 @@
       "Value": 30000,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "default_target_side": "Ally",
+      "target_scope": "one",
       "Weight": 8,
       "CastBy": [
         "De",
@@ -1766,6 +1768,8 @@
       "Value": 10000,
       "Reflectable": "No",
       "Target": "One/All Enemies",
+      "default_target_side": "Any",
+      "target_scope": "one_or_all",
       "Weight": 8,
       "CastBy": [
         "WM",
@@ -1795,6 +1799,8 @@
       "Value": 10000,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "default_target_side": "Ally",
+      "target_scope": "one",
       "Weight": 7,
       "CastBy": [
         "WM",
@@ -1823,6 +1829,8 @@
       "Value": 10000,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "default_target_side": "Ally",
+      "target_scope": "one",
       "Weight": 7,
       "CastBy": [
         "WM",
@@ -1921,6 +1929,8 @@
       "Value": 5000,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "default_target_side": "Ally",
+      "target_scope": "one",
       "Weight": 6,
       "CastBy": [
         "WM",
@@ -1955,6 +1965,8 @@
       "Value": 5000,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "default_target_side": "Ally",
+      "target_scope": "one",
       "Weight": 5,
       "CastBy": [
         "WM",
@@ -1994,6 +2006,8 @@
       "Value": 2500,
       "Reflectable": "No",
       "Target": "One/All Enemies",
+      "default_target_side": "Any",
+      "target_scope": "one_or_all",
       "Weight": 4,
       "CastBy": [
         "WM",
@@ -2032,6 +2046,8 @@
       "Value": 2500,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "default_target_side": "Ally",
+      "target_scope": "one",
       "Weight": 5,
       "CastBy": [
         "WM",
@@ -2078,6 +2094,8 @@
       "Value": 2500,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "default_target_side": "Ally",
+      "target_scope": "one",
       "Weight": 4,
       "CastBy": [
         "WM",
@@ -2286,6 +2304,8 @@
       "Value": 750,
       "Reflectable": "No",
       "Target": "One/All Enemies",
+      "default_target_side": "Any",
+      "target_scope": "one_or_all",
       "Weight": 3,
       "CastBy": [
         "WM",
@@ -2347,6 +2367,8 @@
       "Value": 750,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "default_target_side": "Ally",
+      "target_scope": "one",
       "Weight": 3,
       "CastBy": [
         "WM",
@@ -2604,6 +2626,8 @@
       "Value": 50,
       "Reflectable": "No",
       "Target": "One/All Enemies",
+      "default_target_side": "Any",
+      "target_scope": "one_or_all",
       "Weight": 1,
       "CastBy": [
         "WM",
@@ -2658,6 +2682,8 @@
       "Value": 50,
       "Reflectable": "No",
       "Target": "One Enemy",
+      "default_target_side": "Ally",
+      "target_scope": "one",
       "Weight": 1,
       "CastBy": [
         "WM",
@@ -2744,6 +2770,13 @@
           "Price": "-",
           "Value": "-",
           "Target": "All Allies",
+          "default_target_side": "Ally",
+          "target_scope": "all",
+          "effect_category": "buff_attack",
+          "cast_variant_of": "Bahamut",
+          "cast_by": [
+            "Ev"
+          ],
           "Status": "-",
           "Element": "-",
           "Weight": 7,
@@ -2816,6 +2849,14 @@
           "Price": "-",
           "Value": "-",
           "Target": "All Enemies",
+          "default_target_side": "Enemy",
+          "target_scope": "all",
+          "effect_category": "status",
+          "status_ailment": "Petrification",
+          "cast_variant_of": "Leviathan",
+          "cast_by": [
+            "Ev"
+          ],
           "Status": "Petrification",
           "Element": "Earth",
           "Weight": 6,
@@ -2888,6 +2929,13 @@
           "Price": "-",
           "Value": "-",
           "Target": "All Allies",
+          "default_target_side": "Ally",
+          "target_scope": "all",
+          "effect_category": "reflect",
+          "cast_variant_of": "Odin",
+          "cast_by": [
+            "Ev"
+          ],
           "Status": "-",
           "Element": "-",
           "Weight": 5,
@@ -3028,6 +3076,13 @@
           "Price": "-",
           "Value": "-",
           "Target": "All Allies",
+          "default_target_side": "Ally",
+          "target_scope": "all",
+          "effect_category": "heal_hp",
+          "cast_variant_of": "Ifrit",
+          "cast_by": [
+            "Ev"
+          ],
           "Status": "-",
           "Element": "Recovery",
           "Weight": 5,
@@ -3096,6 +3151,14 @@
           "Price": "-",
           "Value": "-",
           "Target": "All Enemies",
+          "default_target_side": "Enemy",
+          "target_scope": "all",
+          "effect_category": "status",
+          "status_ailment": "Paralysis",
+          "cast_variant_of": "Ramuh",
+          "cast_by": [
+            "Ev"
+          ],
           "Status": "Paralysis",
           "Element": "-",
           "Weight": 5,
@@ -3164,6 +3227,14 @@
           "Price": "-",
           "Value": "-",
           "Target": "All Enemies",
+          "default_target_side": "Enemy",
+          "target_scope": "all",
+          "effect_category": "status",
+          "status_ailment": "Sleep",
+          "cast_variant_of": "Shiva",
+          "cast_by": [
+            "Ev"
+          ],
           "Status": "Sleep",
           "Element": "-",
           "Weight": 5,

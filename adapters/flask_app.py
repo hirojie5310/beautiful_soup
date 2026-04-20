@@ -45,6 +45,11 @@ from combat.magic_menu import (
     load_party_inventory_magic_counts,
 )
 from combat.magic_damage import healing_spell_kind
+from combat.spell_metadata import (
+    spell_auto_all_target,
+    spell_can_select_all,
+    spell_target_mode,
+)
 from combat.runtime_state import init_runtime_state
 from combat.char_build import (
     apply_job_equipment_restrictions,
@@ -938,12 +943,10 @@ def _build_magic_spell_meta(session: BattleSession) -> dict[str, dict[str, Any]]
         if not isinstance(raw, dict):
             continue
         target_norm = normalize_text_basic(raw.get("Target") or "")
-        can_select_all = target_norm in {"one/all enemies", "one/all allies", "one/all"}
-        auto_all_target = target_norm in {"all enemies", "all allies"}
+        can_select_all = spell_can_select_all(raw)
+        auto_all_target = spell_auto_all_target(raw)
         healing_type = str(healing_spell_kind(raw) or "")
-        target_mode = "enemy_only"
-        if healing_type in {"hp", "status", "revive", "protect", "haste", "reflect"}:
-            target_mode = "any" if healing_type == "hp" else "ally_only"
+        target_mode = spell_target_mode(raw, healing_type=healing_type)
         rows[name] = {
             "target": str(raw.get("Target") or ""),
             "target_norm": target_norm,

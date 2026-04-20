@@ -14,12 +14,12 @@
 import random
 from typing import Optional, Dict, Any
 from copy import deepcopy
+from combat.spell_metadata import spell_auto_all_target
 from utils.text_normalize import normalize_text_basic
 
 
-def _is_auto_all_target(target: Any) -> bool:
-    normalized = normalize_text_basic(str(target or ""))
-    return normalized in {"all enemies", "all allies"}
+def _is_auto_all_target(spell_json: Any) -> bool:
+    return isinstance(spell_json, dict) and spell_auto_all_target(spell_json)
 
 
 from combat.models import SpellInfo, EnemyAttackResult
@@ -89,7 +89,7 @@ def spell_from_json(spell_json: Dict[str, Any]) -> SpellInfo:
             accuracy_percent=acc_percent,
             magic_type="summon",
             elements=elements,
-            auto_all_target=_is_auto_all_target(spell_json.get("Target")),
+            auto_all_target=_is_auto_all_target(spell_json),
         )
 
     # ----------------------------------------
@@ -114,7 +114,7 @@ def spell_from_json(spell_json: Dict[str, Any]) -> SpellInfo:
         accuracy_percent=acc_percent,
         magic_type=magic_type,
         elements=elements,
-        auto_all_target=_is_auto_all_target(spell_json.get("Target")),
+        auto_all_target=_is_auto_all_target(spell_json),
     )
 
 

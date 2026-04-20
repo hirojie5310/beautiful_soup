@@ -85,6 +85,11 @@ from combat.item_effects import (
     item_damage_char_to_enemy,
     weapon_spell_damage_char_to_enemy,
 )
+from combat.spell_metadata import (
+    spell_default_target_side,
+    spell_effect_category,
+    spell_target_scope,
+)
 from combat.battle_items import is_weapon_spell_item
 from combat.inventory import (
     consume_item_from_inventory,
@@ -998,20 +1003,13 @@ def run_character_turn(
                 return dmg_to_enemy, None
 
             spell_type = normalize_text_basic(char_spell_json.get("Type") or "")
-            spell_name_lower = normalize_text_basic(char_spell_name or "")
-            is_ifrit_healing_light = spell_name_lower == "ifrit: healing light"
-            is_summon_heal = (
-                spell_type.startswith("summon")
-                or "healing light" in spell_name_lower
-                or is_ifrit_healing_light
+            spell_scope = spell_target_scope(char_spell_json)
+            spell_side = spell_default_target_side(
+                char_spell_json,
+                healing_type=heal_type,
             )
-
-            target_raw = normalize_text_basic(char_spell_json.get("Target") or "")
-            can_select_aoe = target_raw in {
-                "one/all enemies",
-                "one/all allies",
-                "one/all",
-            }
+            is_summon_heal = spell_type.startswith("summon")
+            can_select_aoe = spell_scope == "one_or_all"
             aoe_heal_selected = bool(aoe_selected_override) and can_select_aoe
             spell_label = char_spell_name or (
                 "召喚魔法" if is_summon_heal else "回復魔法"
@@ -1024,7 +1022,7 @@ def run_character_turn(
                 target_stats=target_stats,
             )
 
-            force_all_allies = is_ifrit_healing_light or target_raw == "all allies"
+            force_all_allies = spell_scope == "all" and spell_side == "Ally"
             if target_side == "enemy" and not force_all_allies:
                 holy_spell = healing_magic_as_holy_spell(char_spell)
 
@@ -1182,7 +1180,7 @@ def run_character_turn(
                 alive_targets = [
                     pm for pm in party_members if getattr(pm.state, "hp", 0) > 0
                 ]
-                # Target が "All Allies" の魔法（例: Ifrit: Healing Light）は
+                # 対象データ上 "all" + "Ally" の回復魔法は
                 # 自動全体対象でも等分しない。
                 per_target_heal = (
                     max(0, heal)
@@ -1469,8 +1467,16 @@ def run_character_turn(
                 raise ValueError("Haste には char_spell_json が必要です")
 
             spell_label = char_spell_name or "Haste"
-            spell_name_lower = normalize_text_basic(spell_label)
-            is_bahamut_aura = spell_name_lower == "bahamut: aura"
+            raw_spell_type = normalize_text_basic(char_spell_json.get("Type") or "")
+            is_party_haste = (
+                raw_spell_type == "summon"
+                and spell_target_scope(char_spell_json) == "all"
+                and spell_default_target_side(
+                    char_spell_json,
+                    healing_type=heal_type,
+                )
+                == "Ally"
+            )
             mp_used = use_mp_for_spell(char_state, char_spell_json)
             lvl = int(char_spell_json.get("Level", 1))
 
@@ -1481,7 +1487,7 @@ def run_character_turn(
                 dmg_to_enemy = 0
                 return dmg_to_enemy, None
 
-            if is_bahamut_aura:
+            if is_party_haste:
                 base_acc = float(char_spell_json.get("Accuracy") or 0.0)
                 if base_acc <= 1.0:
                     base_acc *= 100.0
@@ -1506,7 +1512,7 @@ def run_character_turn(
                 dmg_to_enemy = 0
                 return dmg_to_enemy, None
 
-            if is_bahamut_aura:
+            if is_party_haste:
                 aura_targets: list[tuple[Any, Any]] = []
                 if party_members is not None:
                     aura_targets = [
@@ -1593,12 +1599,7 @@ def run_character_turn(
         # ------------------------
         # ⑤.5 Reflect / Odin: Protective Light
         # ------------------------
-        elif (
-            (char_spell_json or {}).get("name") or (char_spell_json or {}).get("Name")
-        ) in (
-            "Reflect",
-            "Odin: Protective Light",
-        ):
+        elif heal_type == "reflect":
             if char_spell_json is None:
                 raise ValueError("Reflect 系には char_spell_json が必要です")
 
@@ -1619,10 +1620,18 @@ def run_character_turn(
                 dmg_to_enemy = 0
                 return dmg_to_enemy, None
 
-            if (
-                normalize_text_basic(char_spell_json.get("Type", "")) == "summon"
-                and raw_name == "Odin: Protective Light"
-            ):
+            raw_spell_type = normalize_text_basic(char_spell_json.get("Type", ""))
+            is_party_reflect = (
+                raw_spell_type == "summon"
+                and spell_target_scope(char_spell_json) == "all"
+                and spell_default_target_side(
+                    char_spell_json,
+                    healing_type=heal_type,
+                )
+                == "Ally"
+            )
+
+            if is_party_reflect:
                 base_acc = float(char_spell_json.get("Accuracy") or 0.0)
                 if base_acc <= 1.0:
                     base_acc *= 100.0
@@ -1652,7 +1661,7 @@ def run_character_turn(
             suffix = f"（MP{lvl} {remain}/{maxmp}）"
 
             if roll < hit_percent:
-                if raw_name == "Odin: Protective Light":
+                if is_party_reflect:
                     reflect_targets: list[BattleActorState] = []
                     if party_members is not None:
                         reflect_targets = [
@@ -1698,7 +1707,7 @@ def run_character_turn(
                             f"（命中率{hit_percent:.1f}% 判定{roll:.1f}） {suffix}"
                         )
             else:
-                if raw_name == "Odin: Protective Light":
+                if is_party_reflect:
                     logs.append(
                         f"{char_name}は召喚魔法《{spell_label}》を呼び出した！ "
                         f"しかし何も起こらなかった…"
@@ -1925,7 +1934,10 @@ def run_character_turn(
                 char_spell_json.get("Name") or char_spell_json.get("name") or ""
             )
             name_lower = normalize_text_basic(spell_name_raw)
-            pure_status_spell = is_pure_status_spell(spell_label)
+            pure_status_spell = (
+                spell_effect_category(char_spell_json) == "status"
+                or is_pure_status_spell(spell_label)
+            )
             if "absorb hp" in effect_text or name_lower == "drain":
                 is_drain_spell = True
 

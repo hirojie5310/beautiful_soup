@@ -38,6 +38,7 @@ from combat.elements import (
 )
 from combat.elements import parse_elements
 from combat.logging import log_damage
+from combat.spell_metadata import spell_effect_category, spell_display_name
 from utils.text_normalize import normalize_text_basic
 
 
@@ -107,8 +108,22 @@ def healing_spell_kind(spell_json: Dict[str, Any]) -> str | None:
       "reflect" : 魔法反射
     回復/補助系でなければ None
     """
+    effect_category = spell_effect_category(spell_json)
+    if effect_category == "heal_hp":
+        return "hp"
+    if effect_category == "status_recovery":
+        return "status"
+    if effect_category == "revive":
+        return "revive"
+    if effect_category == "buff_defense":
+        return "protect"
+    if effect_category == "buff_attack":
+        return "haste"
+    if effect_category == "reflect":
+        return "reflect"
+
     effect = normalize_text_basic(spell_json.get("Effect") or "")
-    name = normalize_text_basic(spell_json.get("Name") or "")
+    name = normalize_text_basic(spell_display_name(spell_json))
 
     # --- HP回復 ---
     if "restore target's hp" in effect:

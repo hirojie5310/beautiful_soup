@@ -27,6 +27,7 @@ from combat.magic_damage import magic_damage_enemy_to_char
 from combat.life_check import is_out_of_battle
 from combat.logging import log_hp_change
 from combat.hp_change import apply_signed_hp_change
+from combat.spell_metadata import spell_auto_all_target, spell_status_text
 from utils.text_normalize import normalize_text_basic
 
 
@@ -316,8 +317,7 @@ def is_spell_aoe(spell: dict) -> bool:
 
 # AoE関数呼び出し用関数
 def spell_is_aoe(spell_def: dict) -> bool:
-    target = normalize_text_basic(spell_def.get("Target") or "")
-    return target == "all enemies"
+    return spell_auto_all_target(spell_def)
 
 
 def spell_base_power(spell_def: dict) -> int:
@@ -325,5 +325,5 @@ def spell_base_power(spell_def: dict) -> int:
 
 
 def spell_has_ailment(spell_def: dict) -> bool:
-    a = (spell_def.get("StatusAilment") or spell_def.get("Status") or "").strip()
+    a = spell_status_text(spell_def)
     return bool(a and a != "-")

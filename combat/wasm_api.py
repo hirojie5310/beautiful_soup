@@ -22,6 +22,10 @@ from combat.item_effects import infer_battle_item_target_side
 from combat.battle_items import build_battle_item_definitions, build_battle_item_list
 from combat.life_check import is_out_of_battle
 from combat.magic_damage import healing_spell_kind
+from combat.spell_metadata import (
+    spell_can_select_all,
+    spell_target_mode,
+)
 from combat.progression import apply_item_stock_to_inventory, apply_victory_rewards
 from combat.usecases import BattleSession, build_battle_session, execute_round_dto
 from combat.models import EquipmentSet
@@ -436,15 +440,9 @@ def _build_magic_spell_meta(session: BattleSession) -> dict[str, dict[str, Any]]
         if not isinstance(raw, dict):
             continue
         target_norm = str(raw.get("Target") or "").strip().lower()
-        can_select_all = target_norm in {
-            "one/all enemies",
-            "one/all allies",
-            "one/all",
-        }
+        can_select_all = spell_can_select_all(raw)
         healing_type = str(healing_spell_kind(raw) or "")
-        target_mode = "enemy_only"
-        if healing_type in {"hp", "status", "revive", "protect", "haste", "reflect"}:
-            target_mode = "any" if healing_type == "hp" else "ally_only"
+        target_mode = spell_target_mode(raw, healing_type=healing_type)
         rows[name] = {
             "target": str(raw.get("Target") or ""),
             "target_norm": target_norm,
@@ -485,24 +483,15 @@ def _build_magic_spell_meta(session: BattleSession) -> dict[str, dict[str, Any]]
             if child_targets and len(set(child_targets)) == 1:
                 target_norm = child_targets[0]
 
-            can_select_all = target_norm in {
-                "one/all enemies",
-                "one/all allies",
-                "one/all",
-            }
+            parent_meta_source = dict(parent_raw)
+            parent_meta_source["Target"] = target_norm
+
+            can_select_all = spell_can_select_all(parent_meta_source)
             healing_type = str(healing_spell_kind(parent_raw) or "")
-            target_mode = "enemy_only"
-            if target_norm == "all allies":
-                target_mode = "ally_only"
-            if healing_type in {
-                "hp",
-                "status",
-                "revive",
-                "protect",
-                "haste",
-                "reflect",
-            }:
-                target_mode = "any" if healing_type == "hp" else "ally_only"
+            target_mode = spell_target_mode(
+                parent_meta_source,
+                healing_type=healing_type,
+            )
             rows[parent_name] = {
                 "target": str(parent_raw.get("Target") or ""),
                 "target_norm": target_norm,

@@ -194,7 +194,9 @@ def resolve_summon_spell_names_for_cast_code(
                 if allowed_names is not None and sibling_name not in set(allowed_names):
                     continue
                 child_cast_codes = _normalize_cast_codes(
-                    sibling_def.get("Cast By") or sibling_def.get("CastBy")
+                    sibling_def.get("cast_by")
+                    or sibling_def.get("Cast By")
+                    or sibling_def.get("CastBy")
                 )
                 if cast_code and child_cast_codes and cast_code not in child_cast_codes:
                     continue
@@ -222,7 +224,7 @@ def resolve_summon_spell_names_for_cast_code(
         if allowed_set is not None and child_name not in allowed_set:
             continue
         child_cast_codes = _normalize_cast_codes(
-            child.get("Cast By") or child.get("CastBy")
+            child.get("cast_by") or child.get("Cast By") or child.get("CastBy")
         )
         if cast_code and child_cast_codes and cast_code not in child_cast_codes:
             continue
@@ -467,7 +469,7 @@ def build_magic_list(
             continue
 
         if cast_code is not None:
-            cast_by = s.get("CastBy")
+            cast_by = s.get("cast_by") or s.get("CastBy")
             if cast_by:
                 if isinstance(cast_by, str):
                     ok = cast_code in [c.strip() for c in cast_by.split(",")]
@@ -575,7 +577,7 @@ def expand_spells_for_summons(
 
         # --- 親 Summon Magic（子配列を持つもの）だけ展開 ---
         if raw_type == "Summon Magic" and isinstance(child_list, list) and child_list:
-            parent_cast = _normalize_cast_codes(s.get("CastBy"))
+            parent_cast = _normalize_cast_codes(s.get("cast_by") or s.get("CastBy"))
 
             for child in child_list:
                 child_name = child.get("Name") or child.get("name")
@@ -583,7 +585,9 @@ def expand_spells_for_summons(
                     continue
 
                 child_cast = _normalize_cast_codes(
-                    child.get("CastBy") or child.get("Cast By")
+                    child.get("cast_by")
+                    or child.get("CastBy")
+                    or child.get("Cast By")
                 )
                 cast_merged = sorted(set(parent_cast + child_cast))
 

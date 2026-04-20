@@ -26,6 +26,7 @@ from typing import Optional, Dict, Any, List
 from combat.enums import Status
 from combat.models import BattleActorState, FinalCharacterStats, FinalEnemyStats
 from combat.models import EnemyCasterStats
+from combat.spell_metadata import spell_effect_category, spell_status_text
 from utils.text_normalize import normalize_text_basic
 
 
@@ -235,7 +236,7 @@ def apply_status_spell_to_enemy(
 
         # ⑤ 状態異常を spell_json に注入
         if child:
-            child_status = (child.get("Status") or "").strip()
+            child_status = spell_status_text(child)
             if child_status and child_status != "-":
                 spell_json = dict(spell_json)  # shallow copy
                 spell_json["StatusAilment"] = child_status
@@ -246,7 +247,7 @@ def apply_status_spell_to_enemy(
     )
 
     # ---- 1) 状態異常リスト抽出（StatusAilment / StatusAilments） ----
-    ailments = spell_json.get("StatusAilment") or spell_json.get("StatusAilments") or ""
+    ailments = spell_status_text(spell_json)
 
     ailments_list: List[str] = []
     if isinstance(ailments, str) and ailments.strip():
@@ -265,13 +266,22 @@ def apply_status_spell_to_enemy(
     if not ailments_list:
         raw_type = normalize_text_basic(spell_json.get("Type", ""))
         if raw_type == "summon" or raw_type.startswith("summon"):
-            child_status = (spell_json.get("Status") or "").strip()
+            child_status = spell_status_text(spell_json)
             if child_status and child_status != "-":
                 ailments_list = [
                     normalize_text_basic(a)
                     for a in child_status.split(",")
                     if a.strip()
                 ]
+
+    if not ailments_list and spell_effect_category(spell_json) == "status":
+        child_status = spell_status_text(spell_json)
+        if child_status and child_status != "-":
+            ailments_list = [
+                normalize_text_basic(a)
+                for a in child_status.split(",")
+                if a.strip()
+            ]
 
     # ---- 2) それでも無い場合は Effect から抽出（Mini/Toad等含む） ----
     if not ailments_list:
