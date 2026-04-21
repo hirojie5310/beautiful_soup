@@ -7,7 +7,7 @@
   },
   "spells": [
     {
-      "name": "Flare",
+      "Name": "Flare",
       "Type": "Black Magic",
       "Level": 8,
       "Effect": "Deal damage",
@@ -63,7 +63,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Death",
+      "Name": "Death",
       "Type": "Black Magic",
       "Level": 8,
       "Effect": "Inflict KO",
@@ -115,7 +115,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Meteor",
+      "Name": "Meteor",
       "Type": "Black Magic",
       "Level": 8,
       "Effect": "Deal damage",
@@ -167,7 +167,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Quake",
+      "Name": "Quake",
       "Type": "Black Magic",
       "Level": 7,
       "Effect": "Deal Earth damage",
@@ -253,7 +253,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Breakga",
+      "Name": "Breakga",
       "Type": "Black Magic",
       "Level": 7,
       "Effect": "Inflict Petrification",
@@ -337,7 +337,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Drain",
+      "Name": "Drain",
       "Type": "Black Magic",
       "Level": 7,
       "Effect": "Absorb HP from target",
@@ -411,7 +411,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Firaga",
+      "Name": "Firaga",
       "Type": "Black Magic",
       "Level": 6,
       "Effect": "Deal Fire damage",
@@ -461,7 +461,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Bio",
+      "Name": "Bio",
       "Type": "Black Magic",
       "Level": 6,
       "Effect": "Deal damage",
@@ -492,7 +492,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Warp",
+      "Name": "Warp",
       "Type": "Black Magic",
       "Level": 6,
       "Effect": "Teleport to any previous dungeon floor, or inflict KO in battle",
@@ -524,7 +524,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Thundaga",
+      "Name": "Thundaga",
       "Type": "Black Magic",
       "Level": 5,
       "Effect": "Deal Lightning damage",
@@ -574,7 +574,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Raze",
+      "Name": "Raze",
       "Type": "Black Magic",
       "Level": 5,
       "Effect": "Inflict KO",
@@ -618,7 +618,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Erase",
+      "Name": "Erase",
       "Type": "Black Magic",
       "Level": 5,
       "Effect": "Remove Reflect (doesn't work)",
@@ -650,7 +650,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Break",
+      "Name": "Break",
       "Type": "Black Magic",
       "Level": 4,
       "Effect": "Deal damage and inflict Partial Petrification (1/2)",
@@ -727,7 +727,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Blizzaga",
+      "Name": "Blizzaga",
       "Type": "Black Magic",
       "Level": 4,
       "Effect": "Deal Ice damage",
@@ -796,7 +796,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Shade",
+      "Name": "Shade",
       "Type": "Black Magic",
       "Level": 4,
       "Effect": "Inflict Paralysis",
@@ -852,7 +852,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Fira",
+      "Name": "Fira",
       "Type": "Black Magic",
       "Level": 3,
       "Effect": "Deal Fire damage",
@@ -973,7 +973,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Blizzara",
+      "Name": "Blizzara",
       "Type": "Black Magic",
       "Level": 3,
       "Effect": "Deal Ice damage",
@@ -1112,7 +1112,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Thundara",
+      "Name": "Thundara",
       "Type": "Black Magic",
       "Level": 3,
       "Effect": "Deal Lightning damage",
@@ -1247,7 +1247,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Thunder",
+      "Name": "Thunder",
       "Type": "Black Magic",
       "Level": 2,
       "Effect": "Deal Lightning damage",
@@ -1318,7 +1318,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Poison",
+      "Name": "Poison",
       "Type": "Black Magic",
       "Level": 2,
       "Effect": "Deal damage and inflict Poison",
@@ -1382,7 +1382,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Blind",
+      "Name": "Blind",
       "Type": "Black Magic",
       "Level": 2,
       "Effect": "Inflict Blind",
@@ -1484,7 +1484,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Fire",
+      "Name": "Fire",
       "Type": "Black Magic",
       "Level": 1,
       "Effect": "Deal Fire damage",
@@ -1577,7 +1577,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Blizzard",
+      "Name": "Blizzard",
       "Type": "Black Magic",
       "Level": 1,
       "Effect": "Deal Ice damage",
@@ -1678,7 +1678,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Sleep",
+      "Name": "Sleep",
       "Type": "Black Magic",
       "Level": 1,
       "Effect": "Inflict Sleep",
@@ -1742,7 +1742,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Tornado",
+      "Name": "Tornado",
       "Type": "White Magic",
       "Level": 8,
       "Effect": "Set target's HP to critical",
@@ -1783,7 +1783,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Arise",
+      "Name": "Arise",
       "Type": "White Magic",
       "Level": 8,
       "Effect": "Revive from KO with full HP",
@@ -1812,7 +1812,7 @@
       ]
     },
     {
-      "name": "Holy",
+      "Name": "Holy",
       "Type": "White Magic",
       "Level": 8,
       "Effect": "Deal Holy damage",
@@ -1849,7 +1849,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Curaja",
+      "Name": "Curaja",
       "Type": "White Magic",
       "Level": 7,
       "Effect": "Restore target's HP",
@@ -1882,7 +1882,7 @@
       ]
     },
     {
-      "name": "Esuna",
+      "Name": "Esuna",
       "Type": "White Magic",
       "Level": 7,
       "Effect": "Cure all status ailments",
@@ -1914,7 +1914,7 @@
       ]
     },
     {
-      "name": "Reflect",
+      "Name": "Reflect",
       "Type": "White Magic",
       "Level": 7,
       "Effect": "Grant Reflect",
@@ -1975,7 +1975,7 @@
       ]
     },
     {
-      "name": "Aeroga",
+      "Name": "Aeroga",
       "Type": "White Magic",
       "Level": 6,
       "Effect": "Deal Air and Ice damage",
@@ -2017,7 +2017,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Stona",
+      "Name": "Stona",
       "Type": "White Magic",
       "Level": 6,
       "Effect": "Cure Petrification and Partial Petrification",
@@ -2055,7 +2055,7 @@
       ]
     },
     {
-      "name": "Haste",
+      "Name": "Haste",
       "Type": "White Magic",
       "Level": 6,
       "Effect": "Enhance Accuracy and Attack Multiplier",
@@ -2096,7 +2096,7 @@
       ]
     },
     {
-      "name": "Curaga",
+      "Name": "Curaga",
       "Type": "White Magic",
       "Level": 5,
       "Effect": "Restore target's HP",
@@ -2137,7 +2137,7 @@
       ]
     },
     {
-      "name": "Raise",
+      "Name": "Raise",
       "Type": "White Magic",
       "Level": 5,
       "Effect": "Revive from KO",
@@ -2190,7 +2190,7 @@
       ]
     },
     {
-      "name": "Protect",
+      "Name": "Protect",
       "Type": "White Magic",
       "Level": 5,
       "Effect": "Enhance Defense and Magic Defense",
@@ -2256,7 +2256,7 @@
       ]
     },
     {
-      "name": "Libra",
+      "Name": "Libra",
       "Type": "White Magic",
       "Level": 4,
       "Effect": "View target's HP",
@@ -2306,7 +2306,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Confuse",
+      "Name": "Confuse",
       "Type": "White Magic",
       "Level": 4,
       "Effect": "Inflict Confusion",
@@ -2365,7 +2365,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Silence",
+      "Name": "Silence",
       "Type": "White Magic",
       "Level": 4,
       "Effect": "Inflict Silence",
@@ -2411,7 +2411,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Cura",
+      "Name": "Cura",
       "Type": "White Magic",
       "Level": 3,
       "Effect": "Restore target's HP",
@@ -2477,7 +2477,7 @@
       ]
     },
     {
-      "name": "Teleport",
+      "Name": "Teleport",
       "Type": "White Magic",
       "Level": 3,
       "Effect": "Teleport to dungeon exit, or inflict KO in battle",
@@ -2538,7 +2538,7 @@
       ]
     },
     {
-      "name": "Blindna",
+      "Name": "Blindna",
       "Type": "White Magic",
       "Level": 3,
       "Effect": "Cure Blind",
@@ -2592,7 +2592,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Aero",
+      "Name": "Aero",
       "Type": "White Magic",
       "Level": 2,
       "Effect": "Deal Air and Ice damage",
@@ -2658,7 +2658,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Toad",
+      "Name": "Toad",
       "Type": "White Magic",
       "Level": 2,
       "Effect": "Turn target into a toad",
@@ -2712,7 +2712,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Mini",
+      "Name": "Mini",
       "Type": "White Magic",
       "Level": 2,
       "Effect": "Miniaturize target",
@@ -2752,7 +2752,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Cure",
+      "Name": "Cure",
       "Type": "White Magic",
       "Level": 1,
       "Effect": "Restore target's HP",
@@ -2810,7 +2810,7 @@
       ]
     },
     {
-      "name": "Poisona",
+      "Name": "Poisona",
       "Type": "White Magic",
       "Level": 1,
       "Effect": "Cure Poison",
@@ -2852,7 +2852,7 @@
       ]
     },
     {
-      "name": "Sight",
+      "Name": "Sight",
       "Type": "White Magic",
       "Level": 1,
       "Effect": "View local map",
@@ -2892,7 +2892,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Bahamut",
+      "Name": "Bahamut",
       "Type": "Summon Magic",
       "Level": 8,
       "Effect": "Summon Bahamut",
@@ -2981,7 +2981,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Leviathan",
+      "Name": "Leviathan",
       "Type": "Summon Magic",
       "Level": 7,
       "Effect": "Summon Leviathan",
@@ -3071,7 +3071,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Odin",
+      "Name": "Odin",
       "Type": "Summon Magic",
       "Level": 6,
       "Effect": "Summon Odin",
@@ -3160,7 +3160,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Titan",
+      "Name": "Titan",
       "Type": "Summon Magic",
       "Level": 5,
       "Effect": "Summon Titan",
@@ -3241,7 +3241,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Ifrit",
+      "Name": "Ifrit",
       "Type": "Summon Magic",
       "Level": 4,
       "Effect": "Summon Ifrit",
@@ -3326,7 +3326,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Ramuh",
+      "Name": "Ramuh",
       "Type": "Summon Magic",
       "Level": 3,
       "Effect": "Summon Ramuh",
@@ -3412,7 +3412,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Shiva",
+      "Name": "Shiva",
       "Type": "Summon Magic",
       "Level": 2,
       "Effect": "Summon Shiva",
@@ -3498,7 +3498,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Chocobo",
+      "Name": "Chocobo",
       "Type": "Summon Magic",
       "Level": 1,
       "Effect": "Summon Chocobo",
@@ -3579,7 +3579,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Recovery",
+      "Name": "Recovery",
       "Type": "Item Magic",
       "Level": 1,
       "Effect": "Restore target's HP",
@@ -3611,7 +3611,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Elixir",
+      "Name": "Elixir",
       "Type": "Item Magic",
       "Level": 1,
       "Effect": "Restore target to full HP and MP",
@@ -3634,7 +3634,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Echo Herbs",
+      "Name": "Echo Herbs",
       "Type": "Item Magic",
       "Level": 1,
       "Effect": "Cure Silence",
@@ -3659,7 +3659,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Mallet",
+      "Name": "Mallet",
       "Type": "Item Magic",
       "Level": 1,
       "Effect": "Cure or inflict Mini",
@@ -3684,7 +3684,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Maiden'S Kiss",
+      "Name": "Maiden'S Kiss",
       "Type": "Item Magic",
       "Level": 1,
       "Effect": "Cure Toad",
@@ -3709,7 +3709,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Zantetsuken",
+      "Name": "Zantetsuken",
       "Type": "Black Magic (used only by monsters)",
       "Level": 8,
       "Effect": "Deal damage",
@@ -3722,7 +3722,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Flame",
+      "Name": "Flame",
       "Type": "Black Magic (used only by monsters)",
       "Level": 6,
       "Effect": "Deal Fire damage",
@@ -3780,7 +3780,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Snowstorm",
+      "Name": "Snowstorm",
       "Type": "Black Magic (used only by monsters)",
       "Level": 3,
       "Effect": "Deal Ice damage",
@@ -3814,7 +3814,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Lightning",
+      "Name": "Lightning",
       "Type": "Black Magic (used only by monsters)",
       "Level": 3,
       "Effect": "Deal Lightning damage",
@@ -3866,7 +3866,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Earthquake",
+      "Name": "Earthquake",
       "Type": "Black Magic (used only by monsters)",
       "Level": 7,
       "Effect": "Deal Earth damage",
@@ -3880,7 +3880,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Stare",
+      "Name": "Stare",
       "Type": "Black Magic (used only by monsters)",
       "Level": 7,
       "Effect": "Inflict Petrification",
@@ -3903,7 +3903,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Tidal Wave",
+      "Name": "Tidal Wave",
       "Type": "Black Magic (used only by monsters)",
       "Level": 7,
       "Effect": "Deal damage",
@@ -3916,7 +3916,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Particle Beam",
+      "Name": "Particle Beam",
       "Type": "Black Magic (used only by monsters)",
       "Level": 7,
       "Effect": "Deal damage",
@@ -3943,7 +3943,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Self Destruct",
+      "Name": "Self Destruct",
       "Type": "Black Magic (used only by monsters)",
       "Level": 3,
       "Effect": "Explode for 4×HP damage if not at max HP",
@@ -3976,7 +3976,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Glare",
+      "Name": "Glare",
       "Type": "Black Magic (used only by monsters)",
       "Level": 1,
       "Effect": "Inflict Sleep",
@@ -3990,7 +3990,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Bad Breath",
+      "Name": "Bad Breath",
       "Type": "Black Magic (used only by monsters)",
       "Level": 4,
       "Effect": "Inflict Paralysis",
@@ -4030,7 +4030,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Mind Blast",
+      "Name": "Mind Blast",
       "Type": "Black Magic (used only by monsters)",
       "Level": 4,
       "Effect": "Inflict Paralysis",
@@ -4044,7 +4044,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Summon",
+      "Name": "Summon",
       "Type": "Monster Ability",
       "Level": 1,
       "Effect": "Summon another monster",
@@ -4072,7 +4072,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Mega Flare",
+      "Name": "Mega Flare",
       "Type": "Black Magic (used only by monsters)",
       "Level": 8,
       "Effect": "Deal damage",
@@ -4085,7 +4085,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Barrier Shift",
+      "Name": "Barrier Shift",
       "Type": "Black Magic (used only by monsters)",
       "Level": 4,
       "Effect": "Change elemental weakness",
@@ -4114,7 +4114,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Divide",
+      "Name": "Divide",
       "Type": "Black Magic (used only by monsters)",
       "Level": 4,
       "Effect": "Create new monster with same HP",
@@ -4141,7 +4141,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Earthquake",
+      "Name": "Earthquake",
       "Type": "Black Magic (used only by monsters)",
       "Level": 7,
       "Effect": "Deal Earth damage",
@@ -4155,7 +4155,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Quicksand",
+      "Name": "Quicksand",
       "Type": "Terrain Effect (Black Magic)",
       "BaseTerrain": "Desert",
       "Level": 1,
@@ -4173,7 +4173,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Wind Slash",
+      "Name": "Wind Slash",
       "Type": "Terrain Effect (Black Magic)",
       "BaseTerrain": "Forest",
       "Level": 1,
@@ -4213,7 +4213,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Sinkhole",
+      "Name": "Sinkhole",
       "Type": "Terrain Effect (Black Magic)",
       "BaseTerrain": "Marsh",
       "Level": 1,
@@ -4234,7 +4234,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Torrent",
+      "Name": "Torrent",
       "Type": "Terrain Effect (Black Magic)",
       "BaseTerrain": "River",
       "Level": 1,
@@ -4263,7 +4263,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Whirlpool",
+      "Name": "Whirlpool",
       "Type": "Terrain Effect (Black Magic)",
       "BaseTerrain": "Ocean",
       "Level": 1,
@@ -4293,7 +4293,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Cyclone",
+      "Name": "Cyclone",
       "Type": "Terrain Effect (Black Magic)",
       "BaseTerrain": "Sky",
       "Level": 1,
@@ -4311,7 +4311,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "name": "Cave In",
+      "Name": "Cave In",
       "Type": "Terrain Effect (Black Magic)",
       "Level": 1,
       "Effect": "Deal Earth damage",

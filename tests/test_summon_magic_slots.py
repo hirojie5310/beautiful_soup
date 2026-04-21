@@ -177,6 +177,17 @@ def test_evoker_cast_uses_random_child_from_parent_summon():
     assert seen == {"Shiva: Mesmerize", "Shiva: Icy Stare"}
 
 
+def test_expand_summons_keeps_child_specific_cast_by() -> None:
+    spells, _jobs = _load_master_data()
+
+    expanded = expand_spells_for_summons(spells)
+
+    assert "name" not in expanded["Shiva: Mesmerize"]
+    assert expanded["Shiva: Mesmerize"]["cast_by"] == ["Ev"]
+    assert expanded["Shiva: Icy Stare"]["cast_by"] == ["Ev"]
+    assert expanded["Shiva: Diamond Dust"]["cast_by"] == ["Sa", "Su"]
+
+
 def test_evoker_action_log_shows_resolved_child_summon_name():
     spells = {
         "Shiva": {

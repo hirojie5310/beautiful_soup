@@ -571,23 +571,15 @@ def expand_spells_for_summons(
 
         # --- 親 Summon Magic（子配列を持つもの）だけ展開 ---
         if raw_type == "Summon Magic" and isinstance(child_list, list) and child_list:
-            parent_cast = _normalize_cast_codes(s.get("cast_by"))
-
             for child in child_list:
                 child_name = child.get("Name") or child.get("name")
                 if not child_name:
                     continue
 
-                child_cast = _normalize_cast_codes(child.get("cast_by"))
-                cast_merged = sorted(set(parent_cast + child_cast))
-
                 # 子の中身を基本そのまま使う（Power等を保持）
                 new_child = dict(child)
-                new_child["name"] = child_name  # load_spells 形式に合わせる
                 new_child["Type"] = "Summon"  # ★ここ重要
                 new_child["parent_spell_name"] = name
-                if cast_merged:
-                    new_child["cast_by"] = cast_merged
 
                 expanded[child_name] = new_child
 

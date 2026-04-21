@@ -2,7 +2,7 @@
 from pathlib import Path
 import json
 
-from assets.data.data_loader import load_armors, load_savedata, load_weapons
+from assets.data.data_loader import load_armors, load_savedata, load_spells, load_weapons
 from combat.runtime_state import init_runtime_state
 
 
@@ -31,6 +31,15 @@ def test_init_runtime_state_reads_bonus_equipment_data() -> None:
     }
     assert state.armors["White Robe"]["Bonus"] == {"Mind": 5}
     assert state.base_dir == BASE_DIR
+
+
+def test_load_spells_prefers_uppercase_name_key() -> None:
+    spells = load_spells(BASE_DIR / "assets/data/ffiii_spells.json")
+
+    flare = spells["Flare"]
+
+    assert flare["Name"] == "Flare"
+    assert "name" not in flare
 
 
 def test_load_savedata_accepts_v1_envelope_format(tmp_path: Path) -> None:

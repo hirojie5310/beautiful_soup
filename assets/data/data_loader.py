@@ -37,13 +37,21 @@ SAVE_SCHEMA_FILENAME = "ff3-save-envelope.schema.json"
 # ============================================================
 
 
+def _entry_name(item: Dict[str, Any], *name_keys: str) -> str:
+    for key in name_keys:
+        value = item.get(key)
+        if isinstance(value, str) and value:
+            return value
+    raise KeyError(f"missing name key; tried {name_keys}")
+
+
 def _load_named_index(
-    path: Path, top_key: str, name_key: str = "name"
+    path: Path, top_key: str, name_keys: tuple[str, ...] = ("name",)
 ) -> Dict[str, Dict[str, Any]]:
-    """共通：JSON を読み込み、top_key 配下を name_key で dict 化"""
+    """共通：JSON を読み込み、top_key 配下を名前キーで dict 化"""
     raw = _load_json_file(path)
     items = raw.get(top_key, [])
-    return {item[name_key]: item for item in items}
+    return {_entry_name(item, *name_keys): item for item in items}
 
 
 def _load_json_file(path: Path) -> Any:
@@ -120,13 +128,13 @@ def load_armors(path: Path) -> Dict[str, Dict[str, Any]]:
 
 
 def load_spells(path: Path) -> Dict[str, Dict[str, Any]]:
-    """魔法 JSON を name → dict にして返す"""
-    return _load_named_index(path, top_key="spells")
+    """魔法 JSON を Name 優先で dict にして返す"""
+    return _load_named_index(path, top_key="spells", name_keys=("Name", "name"))
 
 
 def load_items(path: Path) -> Dict[str, Dict[str, Any]]:
     """アイテム JSON を Name → dict にして返す"""
-    return _load_named_index(path, top_key="items", name_key="Name")
+    return _load_named_index(path, top_key="items", name_keys=("Name",))
 
 
 # ジョブJSONを読み込み、Jobオブジェクトの辞書を作成（データの“ロード”というより“ドメインモデルの組み立て）
