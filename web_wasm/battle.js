@@ -36,6 +36,12 @@ let statusLine = null;
 let logView = null;
 let plannedActionsView = null;
 let rewardPanel = null;
+let battleLogToggleBtn = null;
+let actionSheet = null;
+let actionSheetBackdrop = null;
+let actionSheetTitle = null;
+let actionSheetBody = null;
+let actionSheetCloseBtn = null;
 let locationBtn = null;
 let menuBtn = null;
 let loadSaveBtn = null;
@@ -64,6 +70,7 @@ let returnToLocationBound = false;
 let activeCombatPopups = {};
 let activeCombatEffects = {};
 let suppressMenuStateSync = false;
+let battleLogExpanded = false;
 const partyCardCache = new Map();
 const enemyCardCache = new Map();
 const statusIconRowCache = new WeakMap();
@@ -138,6 +145,12 @@ function bindDom(root = document) {
   logView = root.querySelector("#logView");
   plannedActionsView = root.querySelector("#plannedActionsView");
   rewardPanel = root.querySelector("#rewardPanel");
+  battleLogToggleBtn = root.querySelector("#battleLogToggleBtn");
+  actionSheet = root.querySelector("#actionSheet");
+  actionSheetBackdrop = root.querySelector("#actionSheetBackdrop");
+  actionSheetTitle = root.querySelector("#actionSheetTitle");
+  actionSheetBody = root.querySelector("#actionSheetBody");
+  actionSheetCloseBtn = root.querySelector("#actionSheetCloseBtn");
   locationBtn = root.querySelector("#locationBtn");
   menuBtn = root.querySelector("#menuBtn");
   loadSaveBtn = root.querySelector("#loadSaveBtn");
@@ -491,6 +504,16 @@ function createPartyCardState(idx) {
   hpRow.className = "hp party-hp-row";
   content.appendChild(hpRow);
 
+  const hpBarRow = document.createElement("div");
+  hpBarRow.className = "party-hp-bar-row";
+  const hpBar = document.createElement("div");
+  hpBar.className = "hp-bar";
+  const hpBarFill = document.createElement("div");
+  hpBarFill.className = "hp-bar-fill";
+  hpBar.appendChild(hpBarFill);
+  hpBarRow.appendChild(hpBar);
+  content.appendChild(hpBarRow);
+
   const levelRow = document.createElement("div");
   levelRow.className = "status party-level-row";
   content.appendChild(levelRow);
@@ -508,11 +531,34 @@ function createPartyCardState(idx) {
     content,
     nameRow,
     hpRow,
+    hpBarRow,
+    hpBar,
+    hpBarFill,
     levelRow,
     iconRow,
     currentCandidateKey: "",
     index: idx,
   };
+}
+
+function clampPercent(value) {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(100, value));
+}
+
+function applyHudHpBar(barFill, member) {
+  if (!barFill) return;
+  const hp = Number(member?.hp ?? 0);
+  const maxHp = Math.max(0, Number(member?.max_hp ?? 0));
+  const ratio = maxHp > 0 ? (hp / maxHp) * 100 : 0;
+  const normalizedRatio = clampPercent(ratio);
+  barFill.style.setProperty("--hp-ratio", `${normalizedRatio}%`);
+  barFill.classList.remove("is-caution", "is-danger");
+  if (normalizedRatio <= 25) {
+    barFill.classList.add("is-danger");
+  } else if (normalizedRatio <= 55) {
+    barFill.classList.add("is-caution");
+  }
 }
 
 function createEnemyCardState(idx) {
@@ -720,6 +766,127 @@ function currentItemCandidates() {
     : [];
 }
 
+function setActionSheetOpen(open) {
+  const isOpen = Boolean(open);
+  if (actionSheet) {
+    actionSheet.classList.toggle("open", isOpen);
+    actionSheet.setAttribute("aria-hidden", isOpen ? "false" : "true");
+  }
+  if (actionSheetBackdrop) {
+    actionSheetBackdrop.classList.toggle("open", isOpen);
+  }
+  if (!isOpen && actionSheetBody) {
+    actionSheetBody.innerHTML = "";
+  }
+}
+
+function closeActionSheetToCommand() {
+  enterCommandMode();
+  rerenderAll();
+}
+
+function createSheetButton(label, onClick, { disabled = false } = {}) {
+  const button = document.createElement("button");
+  button.className = "btn";
+  button.type = "button";
+  button.disabled = disabled;
+  button.textContent = String(label || "");
+  button.addEventListener("click", onClick);
+  return button;
+}
+
+function createActionSheetGrid() {
+  const grid = document.createElement("div");
+  grid.className = "action-sheet-grid";
+  return grid;
+}
+
+function createActionSheetSection(label) {
+  const section = document.createElement("section");
+  section.className = "action-sheet-section";
+  if (label) {
+    const heading = document.createElement("div");
+    heading.className = "action-sheet-section-label";
+    heading.textContent = label;
+    section.appendChild(heading);
+  }
+  const grid = createActionSheetGrid();
+  section.appendChild(grid);
+  return { section, grid };
+}
+
+function currentActorName() {
+  const party = Array.isArray(sessionStatus.party) ? sessionStatus.party : [];
+  const actor = party[currentMemberIndex];
+  return String(actor?.name || "");
+}
+
+function renderMagicActionSheet() {
+  if (!actionSheetBody || !actionSheetTitle) return;
+  const actorName = currentActorName();
+  actionSheetTitle.textContent = actorName
+    ? `${actorName} の魔法`
+    : "魔法を選択";
+  actionSheetBody.innerHTML = "";
+
+  const backGrid = createActionSheetGrid();
+  backGrid.appendChild(createSheetButton("← コマンドにもどる", () => {
+    closeActionSheetToCommand();
+  }));
+  actionSheetBody.appendChild(backGrid);
+
+  const candidates = currentMemberMagicCandidates();
+  const groupedCandidates = [];
+  let currentGroup = null;
+  candidates.forEach((cand) => {
+    const groupLabel = String(cand?.group_label || "").trim();
+    if (!groupLabel) {
+      groupedCandidates.push({ header: "", spells: [cand] });
+      currentGroup = null;
+      return;
+    }
+    if (!currentGroup || currentGroup.header !== groupLabel) {
+      currentGroup = { header: groupLabel, spells: [] };
+      groupedCandidates.push(currentGroup);
+    }
+    currentGroup.spells.push(cand);
+  });
+
+  groupedCandidates.forEach((group) => {
+    const { section, grid } = createActionSheetSection(group.header);
+    group.spells.forEach((cand) => {
+      grid.appendChild(createSheetButton(
+        String(cand?.label || cand?.name || "(magic)"),
+        () => chooseMagic(cand),
+        { disabled: !pyodide || battleFinished },
+      ));
+    });
+    actionSheetBody.appendChild(section);
+  });
+}
+
+function renderItemActionSheet() {
+  if (!actionSheetBody || !actionSheetTitle) return;
+  const actorName = currentActorName();
+  actionSheetTitle.textContent = actorName
+    ? `${actorName} のアイテム`
+    : "アイテムを選択";
+  actionSheetBody.innerHTML = "";
+
+  const grid = createActionSheetGrid();
+  grid.appendChild(createSheetButton("← コマンドにもどる", () => {
+    closeActionSheetToCommand();
+  }));
+  currentItemCandidates().forEach((cand) => {
+    grid.appendChild(createSheetButton(
+      String(cand?.label || cand?.name || "(item)"),
+      () => chooseItem(cand),
+      { disabled: !pyodide || battleFinished },
+    ));
+  });
+  actionSheetBody.appendChild(grid);
+}
+
 function cloneJsonValue(value) {
   return JSON.parse(JSON.stringify(value ?? null));
 }
@@ -763,9 +930,12 @@ function appendCombatPopup(card, popup) {
   const bubble = document.createElement("div");
   const value = Number(popup?.value ?? 0);
   const kind = String(popup?.kind || "");
-  let text = String(value);
+  let text = String(popup?.text || value);
   let extraClass = "";
-  if (kind === "heal") {
+  if (kind === "status") {
+    text = String(popup?.text || "");
+    extraClass = popup?.statusCategory === "cure" ? " status cure" : " status";
+  } else if (kind === "heal") {
     text = `+${Math.abs(value)}`;
     extraClass = " heal";
   } else if (kind === "miss") {
@@ -986,6 +1156,35 @@ function buildNamedCombatEffects(block, playbackStatus) {
       return;
     }
 
+    match = line.match(/(?:^|[！。]\s*)([^！。]+?)は《?([^》！。]+?)》?状態になった/);
+    if (!match) match = line.match(/(?:^|[！。]\s*)([^！。]+?)は([^！。]+?)状態になった/);
+    if (match) {
+      const target = resolveNamedTarget(match[1], playbackStatus, preferredSide, usageMap);
+      if (target) {
+        effects.push({
+          ...target,
+          kind: "status",
+          text: String(match[2] || "").trim(),
+          statusCategory: "inflict",
+        });
+      }
+      return;
+    }
+
+    match = line.match(/(?:^|[！。]\s*)([^！。]+?)の([^！。]+?)が解けた/);
+    if (match) {
+      const target = resolveNamedTarget(match[1], playbackStatus, preferredSide, usageMap);
+      if (target) {
+        effects.push({
+          ...target,
+          kind: "status",
+          text: `${String(match[2] || "").trim()}解除`,
+          statusCategory: "cure",
+        });
+      }
+      return;
+    }
+
     match = line.match(/しかし([^！。]+?)には効かなかった/);
     if (match) {
       const target = resolveNamedTarget(match[1], playbackStatus, preferredSide, usageMap);
@@ -1013,6 +1212,8 @@ function applyNamedPopupOverrides(activePopups, effects) {
       ...current,
       kind: String(effect?.kind || current.kind || "damage"),
       value: Number(effect?.value ?? current.value ?? 0),
+      text: String(effect?.text ?? current.text ?? ""),
+      statusCategory: String(effect?.statusCategory ?? current.statusCategory ?? ""),
     };
   });
   return nextPopups;
@@ -1057,10 +1258,16 @@ function applyNamedCombatEffect(playbackStatus, effect) {
         sheetName: ATTACK_EFFECT_SHEET_NAME,
       }
       : null,
-    popup: {
-      kind,
-      value,
-    },
+    popup: kind === "status"
+      ? {
+        kind,
+        text: String(effect?.text || ""),
+        statusCategory: String(effect?.statusCategory || "inflict"),
+      }
+      : {
+        kind,
+        value,
+      },
   };
 }
 
@@ -1073,8 +1280,9 @@ function renderParty() {
     activeKeys.add(idx);
     cardState.card.className = `card party-card${activeClass}`;
     cardState.nameRow.textContent = String(member?.name ?? `Member ${idx + 1}`);
-    cardState.hpRow.textContent = `HP ${Number(member?.hp ?? 0)} / ${Number(member?.max_hp ?? 0)}`;
+    cardState.hpRow.textContent = `${Number(member?.hp ?? 0)} / ${Number(member?.max_hp ?? 0)}`;
     cardState.levelRow.textContent = `Lv ${Number(member?.level ?? 0)}`;
+    applyHudHpBar(cardState.hpBarFill, member);
     syncManagedCardImage(cardState, resolveFaceImageCandidates(member, idx));
     renderStatusIcons(cardState.iconRow, member?.status_icons);
     clearCardOverlayLayers(cardState.card);
@@ -1090,6 +1298,9 @@ function renderParty() {
 
 function renderEnemies() {
   const enemies = Array.isArray(sessionStatus.enemies) ? sessionStatus.enemies : [];
+  if (enemyGrid) {
+    enemyGrid.dataset.count = String(enemies.length);
+  }
   const mapImageUrl = resolveLocationMapImageUrl(currentSelectedLocationGroup, () => {
     renderEnemies();
   });
@@ -1123,94 +1334,26 @@ function renderEnemies() {
 
 function renderCommandButtons() {
   commandGrid.innerHTML = "";
+  if (inputMode === "pick_magic") {
+    setActionSheetOpen(true);
+    renderMagicActionSheet();
+  } else if (inputMode === "pick_item") {
+    setActionSheetOpen(true);
+    renderItemActionSheet();
+  } else {
+    setActionSheetOpen(false);
+  }
+  if (commandFrame) {
+    const expanded = inputMode === "pick_side"
+      || inputMode === "pick_target";
+    commandFrame.classList.toggle("command-frame-expanded", expanded);
+  }
   commandGrid.classList.toggle("command-mode", inputMode === "command");
   if (inputMode === "pick_magic") {
-    const backBtn = document.createElement("button");
-    backBtn.className = "btn";
-    backBtn.type = "button";
-    backBtn.textContent = "← コマンドにもどる";
-    backBtn.addEventListener("click", () => {
-      enterCommandMode();
-      rerenderAll();
-    });
-    commandGrid.appendChild(backBtn);
-
-    const candidates = currentMemberMagicCandidates();
-    const groupedCandidates = [];
-    let currentGroup = null;
-    candidates.forEach((cand) => {
-      const groupLabel = String(cand?.group_label || "").trim();
-      if (!groupLabel) {
-        groupedCandidates.push({ header: "", spells: [cand] });
-        currentGroup = null;
-        return;
-      }
-      if (!currentGroup || currentGroup.header !== groupLabel) {
-        currentGroup = { header: groupLabel, spells: [] };
-        groupedCandidates.push(currentGroup);
-      }
-      currentGroup.spells.push(cand);
-    });
-
-    groupedCandidates.forEach((group) => {
-      if (!group.header) {
-        group.spells.forEach((cand) => {
-          const button = document.createElement("button");
-          button.className = "btn";
-          button.type = "button";
-          button.disabled = !pyodide || battleFinished;
-          button.textContent = String(cand?.label || cand?.name || "(magic)");
-          button.addEventListener("click", () => chooseMagic(cand));
-          commandGrid.appendChild(button);
-        });
-        return;
-      }
-
-      const row = document.createElement("div");
-      row.className = "magic-group-row";
-
-      const header = document.createElement("div");
-      header.className = "magic-group-header";
-      header.textContent = group.header;
-      row.appendChild(header);
-
-      const spells = document.createElement("div");
-      spells.className = "magic-group-spells";
-      group.spells.forEach((cand) => {
-        const button = document.createElement("button");
-        button.className = "btn";
-        button.type = "button";
-        button.disabled = !pyodide || battleFinished;
-        button.textContent = String(cand?.label || cand?.name || "(magic)");
-        button.addEventListener("click", () => chooseMagic(cand));
-        spells.appendChild(button);
-      });
-      row.appendChild(spells);
-      commandGrid.appendChild(row);
-    });
     return;
   }
 
   if (inputMode === "pick_item") {
-    const backBtn = document.createElement("button");
-    backBtn.className = "btn";
-    backBtn.type = "button";
-    backBtn.textContent = "← コマンドにもどる";
-    backBtn.addEventListener("click", () => {
-      enterCommandMode();
-      rerenderAll();
-    });
-    commandGrid.appendChild(backBtn);
-
-    currentItemCandidates().forEach((cand) => {
-      const button = document.createElement("button");
-      button.className = "btn";
-      button.type = "button";
-      button.disabled = !pyodide || battleFinished;
-      button.textContent = String(cand?.label || cand?.name || "(item)");
-      button.addEventListener("click", () => chooseItem(cand));
-      commandGrid.appendChild(button);
-    });
     return;
   }
 
@@ -1344,9 +1487,21 @@ function goBackToPreviousMemberAction() {
 }
 
 function renderPlannedActions() {
+  if (!plannedActionsView) return;
   plannedActionsView.textContent = pendingActions.length
     ? JSON.stringify(pendingActions, null, 2)
     : "(none)";
+}
+
+function setBattleLogExpanded(expanded) {
+  battleLogExpanded = Boolean(expanded);
+  if (battleLogFrame) {
+    battleLogFrame.classList.toggle("open", battleLogExpanded);
+  }
+  if (battleLogToggleBtn) {
+    battleLogToggleBtn.textContent = battleLogExpanded ? "ログを閉じる" : "ログを開く";
+    battleLogToggleBtn.setAttribute("aria-expanded", battleLogExpanded ? "true" : "false");
+  }
 }
 
 function renderStatus() {
@@ -1695,6 +1850,7 @@ function resetBattleLogInteractionState() {
 function bindReturnToLocationOnClick() {
   if (returnToLocationBound || !battleLogFrame) return;
   returnToLocationBound = true;
+  setBattleLogExpanded(true);
   battleLogFrame.classList.add("is-clickable-next");
   const onClick = () => {
     const returnRoute = String(battleReturnContext?.return_route || "location");
@@ -1711,9 +1867,7 @@ function setCommandLogLayout({ showCommand }) {
   if (commandFrame) {
     commandFrame.style.display = showCommand ? "" : "none";
   }
-  if (battleLogFrame) {
-    battleLogFrame.style.display = showCommand ? "none" : "";
-  }
+  setBattleLogExpanded(!showCommand);
 }
 
 function buildLogBlocks(logs) {
@@ -2295,6 +2449,28 @@ async function executeRound() {
 }
 
 function attachBattleEventHandlers() {
+  if (actionSheetBackdrop) {
+    actionSheetBackdrop.addEventListener("click", () => {
+      if (inputMode === "pick_magic" || inputMode === "pick_item") {
+        closeActionSheetToCommand();
+      }
+    });
+  }
+
+  if (actionSheetCloseBtn) {
+    actionSheetCloseBtn.addEventListener("click", () => {
+      if (inputMode === "pick_magic" || inputMode === "pick_item") {
+        closeActionSheetToCommand();
+      }
+    });
+  }
+
+  if (battleLogToggleBtn) {
+    battleLogToggleBtn.addEventListener("click", () => {
+      setBattleLogExpanded(!battleLogExpanded);
+    });
+  }
+
   if (menuBtn) {
     menuBtn.addEventListener("click", () => {
       refreshMenuStateFromPyodide();
@@ -2405,6 +2581,7 @@ function attachBattleEventHandlers() {
 
 export async function initializeBattleApp({ root = document, store = null, navigate = null } = {}) {
   bindDom(root);
+  setBattleLogExpanded(false);
   resetBattleLogInteractionState();
   appStore = store;
   appNavigate = navigate;
