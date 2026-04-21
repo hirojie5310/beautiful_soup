@@ -801,7 +801,7 @@ function createActionSheetGrid() {
   return grid;
 }
 
-function createActionSheetSection(label) {
+function createActionSheetSection(label, { magicLevel = false } = {}) {
   const section = document.createElement("section");
   section.className = "action-sheet-section";
   if (label) {
@@ -811,6 +811,9 @@ function createActionSheetSection(label) {
     section.appendChild(heading);
   }
   const grid = createActionSheetGrid();
+  if (magicLevel) {
+    grid.classList.add("magic-level-grid");
+  }
   section.appendChild(grid);
   return { section, grid };
 }
@@ -853,7 +856,7 @@ function renderMagicActionSheet() {
   });
 
   groupedCandidates.forEach((group) => {
-    const { section, grid } = createActionSheetSection(group.header);
+    const { section, grid } = createActionSheetSection(group.header, { magicLevel: true });
     group.spells.forEach((cand) => {
       grid.appendChild(createSheetButton(
         String(cand?.label || cand?.name || "(magic)"),

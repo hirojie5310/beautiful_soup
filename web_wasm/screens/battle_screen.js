@@ -30,27 +30,7 @@ function renderLayout() {
       .battle-screen .battle-stage {
         min-height: 0;
         display: grid;
-        grid-template-rows: auto minmax(0, 1fr);
-        gap: 10px;
-      }
-      .battle-screen .battle-stage-header {
-        padding: 12px 14px;
-        display: flex;
-        justify-content: space-between;
-        gap: 10px;
-        align-items: flex-start;
-      }
-      .battle-screen .battle-stage-heading {
-        display: grid;
-        gap: 4px;
-        min-width: 0;
-      }
-      .battle-screen .toolbar {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: flex-end;
+        grid-template-rows: auto;
       }
       .battle-screen .btn {
         border: 1px solid rgba(255,255,255,.24);
@@ -70,28 +50,28 @@ function renderLayout() {
         overflow: hidden;
       }
       .battle-screen #enemyFrame {
-        height: 100%;
+        height: auto;
         background-size: cover;
         background-position: center;
         display: grid;
-        grid-template-rows: auto minmax(0, 1fr);
+        grid-template-rows: auto auto;
+        align-content: start;
       }
       .battle-screen .enemy-stage-head {
         display: flex;
         justify-content: space-between;
         gap: 8px;
         align-items: center;
-        padding: 10px 14px 0;
+        padding: 8px 14px 0;
       }
       .battle-screen .enemy-stage-caption {
         color: #acb6d7;
         font-size: .76rem;
       }
       .battle-screen .enemy-stage-body {
-        min-height: 0;
         display: grid;
         place-items: center;
-        padding: 8px 14px 14px;
+        padding: 6px 14px 10px;
       }
       .battle-screen .party-grid {
         display: grid;
@@ -173,11 +153,6 @@ function renderLayout() {
         display: grid;
         gap: 4px;
         min-width: 0;
-      }
-      .battle-screen .dock-progress-label {
-        color: #ffe588;
-        font-size: .76rem;
-        letter-spacing: .06em;
       }
       .battle-screen .dock-actions {
         display: flex;
@@ -276,6 +251,9 @@ function renderLayout() {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 8px;
+      }
+      .battle-screen .action-sheet-grid.magic-level-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
       }
       .battle-screen .action-sheet-section {
         display: grid;
@@ -518,13 +496,6 @@ function renderLayout() {
           --dock-height: 37vh;
           grid-template-rows: minmax(0, 1fr) minmax(248px, var(--dock-height));
         }
-        .battle-screen .battle-stage-header {
-          align-items: stretch;
-          flex-direction: column;
-        }
-        .battle-screen .toolbar {
-          justify-content: flex-start;
-        }
         .battle-screen .enemy-grid {
           width: min(100%, 300px);
           grid-template-columns: repeat(2, minmax(0, 144px));
@@ -596,6 +567,9 @@ function renderLayout() {
         .battle-screen .action-sheet-grid {
           grid-template-columns: minmax(0, 1fr);
         }
+        .battle-screen .action-sheet-grid.magic-level-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
       }
       @media (max-width: 420px) {
         .battle-screen .battle-dock {
@@ -639,20 +613,9 @@ function renderLayout() {
     </style>
     <div class="battle-screen">
       <section class="battle-stage">
-        <section class="frame battle-stage-header">
-          <div class="battle-stage-heading">
-            <span id="battlePhase" class="status">起動中...</span>
-          </div>
-          <div class="toolbar">
-            <button id="locationBtn" class="btn" type="button">Location選択</button>
-            <button id="menuBtn" class="btn" type="button">メニュー</button>
-            <button id="loadSaveBtn" class="btn" type="button">ロード</button>
-            <input id="loadSaveInput" type="file" accept="application/json,.json" style="display:none;" />
-          </div>
-        </section>
         <section class="frame battle-stage-panel" id="enemyFrame">
           <div class="enemy-stage-head">
-            <div class="enemy-stage-caption">対象選択と戦闘演出のメイン領域</div>
+            <span id="battlePhase" class="status">起動中...</span>
           </div>
           <div class="enemy-stage-body">
             <div id="enemyGrid" class="enemy-grid"></div>
@@ -662,7 +625,6 @@ function renderLayout() {
       <section class="frame battle-dock">
         <div class="dock-topbar">
           <div class="dock-progress">
-            <div class="dock-progress-label">COMMAND DOCK</div>
             <div id="statusLine" class="status">エンジン起動中です...</div>
           </div>
           <div class="dock-actions">
