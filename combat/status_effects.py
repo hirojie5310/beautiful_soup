@@ -44,6 +44,65 @@ def _status_immunity_keys_for_char(char_stats: FinalCharacterStats) -> set[str]:
     return immune_set
 
 
+def _instant_ko_rule(spell_json: Dict[str, Any]) -> str:
+    return normalize_text_basic(spell_json.get("instant_ko_rule") or "")
+
+
+def _dispel_effect_keys(spell_json: Dict[str, Any]) -> list[str]:
+    raw = spell_json.get("dispel_effects") or ""
+    if isinstance(raw, list):
+        return [normalize_text_basic(value) for value in raw if str(value).strip()]
+    if isinstance(raw, str) and raw.strip():
+        return [normalize_text_basic(part) for part in raw.split(",") if part.strip()]
+    return []
+
+
+def _remove_dispellable_buffs(
+    *,
+    target_state: BattleActorState,
+    target_stats: FinalCharacterStats | FinalEnemyStats,
+    target_name: str,
+    spell_label: str,
+    dispel_keys: list[str],
+    logs: list[str],
+) -> bool:
+    changed = False
+    removed: list[str] = []
+
+    if "reflect" in dispel_keys and getattr(target_state, "reflect_charges", 0) > 0:
+        target_state.reflect_charges = 0
+        changed = True
+        removed.append("Reflect")
+
+    if "haste" in dispel_keys:
+        old_power = getattr(target_stats, "haste_power_bonus", 0)
+        old_mul = getattr(target_stats, "haste_multiplier_bonus", 0)
+        if old_power or old_mul:
+            target_stats.haste_power_bonus = 0
+            target_stats.haste_multiplier_bonus = 0
+            changed = True
+            removed.append("Haste")
+
+    if "protect" in dispel_keys:
+        old_def_bonus = getattr(target_stats, "protect_defense_bonus", 0)
+        old_mdef_bonus = getattr(target_stats, "protect_magic_defense_bonus", 0)
+        if old_def_bonus or old_mdef_bonus:
+            target_stats.defense = max(0, target_stats.defense - old_def_bonus)
+            target_stats.magic_defense = max(0, target_stats.magic_defense - old_mdef_bonus)
+            target_stats.protect_defense_bonus = 0
+            target_stats.protect_magic_defense_bonus = 0
+            changed = True
+            removed.append("Protect")
+
+    if changed:
+        logs.append(
+            f"{target_name}にかかっていた《{', '.join(removed)}》は《{spell_label}》で解除された！"
+        )
+    else:
+        logs.append(f"{target_name}には《{spell_label}》の解除対象がなかった。")
+    return True
+
+
 # <状態異常> =============================================================================
 
 
@@ -196,6 +255,7 @@ def apply_status_spell_to_enemy(
     logs: List[str],
     *,
     caster_stats: Optional[FinalCharacterStats] = None,  # ★追加
+    enemy_stats: Optional[FinalEnemyStats] = None,
     summon_child_name: Optional[str] = None,
 ) -> bool:
     """
@@ -241,10 +301,19 @@ def apply_status_spell_to_enemy(
                 spell_json = dict(spell_json)  # shallow copy
                 spell_json["StatusAilment"] = child_status
 
-    # ★ スペル名は最初に拾っておく（Name / name 両対応）
-    spell_name = normalize_text_basic(
-        spell_json.get("Name") or spell_json.get("name") or ""
-    )
+    spell_label = str(spell_json.get("Name") or spell_json.get("name") or "Spell")
+    dispel_keys = _dispel_effect_keys(spell_json)
+    if dispel_keys:
+        if enemy_stats is None:
+            return False
+        return _remove_dispellable_buffs(
+            target_state=enemy_state,
+            target_stats=enemy_stats,
+            target_name=enemy_name,
+            spell_label=spell_label,
+            dispel_keys=dispel_keys,
+            logs=logs,
+        )
 
     # ---- 1) 状態異常リスト抽出（StatusAilment / StatusAilments） ----
     ailments = spell_status_text(spell_json)
@@ -255,10 +324,7 @@ def apply_status_spell_to_enemy(
             normalize_text_basic(a) for a in ailments.split(",") if a.strip()
         ]
 
-    # ★ ここでスペル名を取得（name / Name どちらにも対応）
-    spell_name = normalize_text_basic(
-        spell_json.get("Name") or spell_json.get("name") or ""
-    )
+    instant_ko_rule = _instant_ko_rule(spell_json)
 
     # ---- 1.5) Summon 子スペルの Status を拾う ----
     # expand_summon_magic_as_children 済みだと Type="Summon" の子が spells_by_name に入る。
@@ -283,27 +349,8 @@ def apply_status_spell_to_enemy(
                 if a.strip()
             ]
 
-    # ---- 2) それでも無い場合は Effect から抽出 ----
-    if not ailments_list:
-        effect_text = normalize_text_basic(spell_json.get("Effect") or "")
-
-        # パターンA: "Inflict xxx"
-        if "inflict" in effect_text:
-            # "inflict ko" / "inflict petrification" 等を吸う
-            after = effect_text.split("inflict", 1)[1].strip()
-            after = after.split("for")[0].strip()
-            ailments_list = [after]
-
-    # ★ ここで Erase を特別扱いする（return False より前）
-    if not ailments_list and spell_name == "erase":
-        ailments_list = ["erase"]
-
-    if not ailments_list:
-        return False  # 状態異常魔法ではない
-
-    # ---- 2.5) Erase（黒魔法Lv5 全体即死）専用：ここでダミー状態異常を立てる ----
-    if not ailments_list and spell_name == "erase":
-        ailments_list = ["erase"]
+    if not ailments_list and instant_ko_rule == "raze":
+        ailments_list = ["ko"]
 
     if not ailments_list:
         return False  # 状態異常魔法ではない
@@ -352,13 +399,7 @@ def apply_status_spell_to_enemy(
         return True  # Toad/Mini 用処理はここで完了
 
     # ---- 3.6) Erase / Raze 専用処理（即死系）----
-    instant_ko_spell = None
-    if "erase" in ailments_list:
-        instant_ko_spell = "erase"
-    elif spell_name == "raze":
-        instant_ko_spell = "raze"
-
-    if instant_ko_spell is not None:
+    if instant_ko_rule == "raze":
         target_lv = int(enemy_json.get("Level", 1) or 1)
         caster_lv = caster_stats.level if caster_stats is not None else 1
 
@@ -369,33 +410,23 @@ def apply_status_spell_to_enemy(
         mind = caster_stats.mind if caster_stats is not None else 0
         hit_percent = base_acc + (mind / 2.0)
 
-        if instant_ko_spell == "raze":
-            level_threshold = _ff3_raze_level_threshold(caster_lv)
-            if target_lv >= level_threshold:
-                hit_percent = 0.0
-        else:
-            if target_lv >= caster_lv * 0.75:
-                hit_percent = 0.0
+        level_threshold = _ff3_raze_level_threshold(caster_lv)
+        if target_lv >= level_threshold:
+            hit_percent = 0.0
 
         hit_percent = max(0.0, min(hit_percent, 100.0))
         roll = rng.random() * 100.0
-        spell_label = spell_json.get("Name") or instant_ko_spell.title()
+        spell_label = spell_json.get("Name") or instant_ko_rule.title()
 
         if roll < hit_percent:
             enemy_state.statuses.add(Status.KO)
             enemy_state.hp = 0
-            if instant_ko_spell == "raze":
-                logs.append(
-                    f"{enemy_name}は《{spell_label}》の効果で倒れた！"
-                    f"（命中率{hit_percent:.1f}% 判定{roll:.1f}）"
-                )
-            else:
-                logs.append(
-                    f"{enemy_name}は《{spell_label}》の効果で消し去られた！"
-                    f"（命中率{hit_percent:.1f}% 判定{roll:.1f}）"
-                )
+            logs.append(
+                f"{enemy_name}は《{spell_label}》の効果で倒れた！"
+                f"（命中率{hit_percent:.1f}% 判定{roll:.1f}）"
+            )
         else:
-            if instant_ko_spell == "raze" and hit_percent <= 0.0:
+            if hit_percent <= 0.0:
                 level_threshold = _ff3_raze_level_threshold(caster_lv)
                 logs.append(
                     f"{enemy_name}には《{spell_label}》が効かなかった…"
@@ -562,6 +593,18 @@ def apply_status_spell_to_char(
     """
 
     # 1) まずは敵用と同じように ailments_list を抽出する（ほぼコピペでOK）
+    spell_label = str(spell_json.get("Name") or spell_json.get("name") or "Spell")
+    dispel_keys = _dispel_effect_keys(spell_json)
+    if dispel_keys:
+        return _remove_dispellable_buffs(
+            target_state=char_state,
+            target_stats=char_stats,
+            target_name=char_name,
+            spell_label=spell_label,
+            dispel_keys=dispel_keys,
+            logs=logs,
+        )
+
     ailments = spell_json.get("StatusAilment") or spell_json.get("StatusAilments") or ""
     ailments_list: list[str] = []
     if isinstance(ailments, str) and ailments.strip():
@@ -569,23 +612,10 @@ def apply_status_spell_to_char(
             normalize_text_basic(a) for a in ailments.split(",") if a.strip()
         ]
 
-    # 2) まだ取れなかったら Effect から推定
-    if not ailments_list:
-        effect_text = normalize_text_basic(spell_json.get("Effect") or "")
+    instant_ko_rule = _instant_ko_rule(spell_json)
 
-        if "inflict" in effect_text:
-            after = effect_text.split("inflict", 1)[1].strip()
-            after = after.split("for")[0].strip()
-            ailments_list = [after]
-
-    # 3) Erase / Toad / Mini 特別扱い
-    spell_name = normalize_text_basic(
-        spell_json.get("Name") or spell_json.get("name") or ""
-    )
-
-    if not ailments_list:
-        if spell_name == "erase":
-            ailments_list = ["erase"]
+    if not ailments_list and instant_ko_rule == "raze":
+        ailments_list = ["ko"]
 
     if not ailments_list:
         return False  # 状態異常魔法ではない
@@ -625,15 +655,16 @@ def apply_status_spell_to_char(
 
     # 7) Erase / Toad / Mini のような「特別ルール」を先に処理
     # ---- Erase（即死） ----
-    if "erase" in ailments_list:
+    if instant_ko_rule == "raze":
         target_lv = char_stats.level
         caster_lv = int(spell_json.get("AttackerLevel", 1) or 1)  # ★敵側から埋める
 
         if "ko" in immune_set:
-            logs.append(f"{char_name}には《Erase》が効かなかった！（無効）")
+            spell_label = str(spell_json.get("Name") or instant_ko_rule.title())
+            logs.append(f"{char_name}には《{spell_label}》が効かなかった！（無効）")
             return True
 
-        if target_lv >= caster_lv * 0.75:
+        if target_lv >= _ff3_raze_level_threshold(caster_lv):
             hit_percent = 0.0
         else:
             base_acc = float(spell_json.get("BaseAccuracy") or 0.0)
@@ -642,16 +673,17 @@ def apply_status_spell_to_char(
             hit_percent = max(0.0, min(base_acc, 100.0))
 
         roll = rng.random() * 100.0
+        spell_label = str(spell_json.get("Name") or instant_ko_rule.title())
         if roll < hit_percent:
             char_state.statuses.add(Status.KO)
             char_state.hp = 0
             logs.append(
-                f"{char_name}は《Erase》で消し去られた！"
+                f"{char_name}は《{spell_label}》で消し去られた！"
                 f"（命中率{hit_percent:.1f}% 判定{roll:.1f}）"
             )
         else:
             logs.append(
-                f"{char_name}には《Erase》が効かなかった…"
+                f"{char_name}には《{spell_label}》が効かなかった…"
                 f"（命中率{hit_percent:.1f}% 判定{roll:.1f}）"
             )
         return True
@@ -1003,5 +1035,13 @@ def apply_protect_buff(
 
     target_stats.defense = min(255, target_stats.defense + add_value)
     target_stats.magic_defense = min(255, target_stats.magic_defense + add_value)
+    target_stats.protect_defense_bonus = min(
+        255,
+        getattr(target_stats, "protect_defense_bonus", 0) + add_value,
+    )
+    target_stats.protect_magic_defense_bonus = min(
+        255,
+        getattr(target_stats, "protect_magic_defense_bonus", 0) + add_value,
+    )
 
     return old_def, old_mdef, add_value

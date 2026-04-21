@@ -58,7 +58,9 @@
       "cast_by": [
         "Ma",
         "Sa"
-      ]
+      ],
+      "target_scope": "one_or_all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Death",
@@ -108,7 +110,9 @@
       "cast_by": [
         "Ma",
         "Sa"
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Meteor",
@@ -158,7 +162,9 @@
       "cast_by": [
         "Ma",
         "Sa"
-      ]
+      ],
+      "target_scope": "all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Quake",
@@ -242,7 +248,9 @@
         "BM",
         "Ma",
         "Sa"
-      ]
+      ],
+      "target_scope": "all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Breakga",
@@ -324,7 +332,9 @@
         "BM",
         "Ma",
         "Sa"
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Drain",
@@ -396,7 +406,9 @@
         "BM",
         "Ma",
         "Sa"
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Firaga",
@@ -444,7 +456,9 @@
         "BM",
         "Ma",
         "Sa"
-      ]
+      ],
+      "target_scope": "one_or_all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Bio",
@@ -473,7 +487,9 @@
         "BM",
         "Ma",
         "Sa"
-      ]
+      ],
+      "target_scope": "one_or_all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Warp",
@@ -503,7 +519,9 @@
         "BM",
         "Ma",
         "Sa"
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Thundaga",
@@ -551,7 +569,9 @@
         "BM",
         "Ma",
         "Sa"
-      ]
+      ],
+      "target_scope": "one_or_all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Raze",
@@ -559,6 +579,7 @@
       "Level": 5,
       "Effect": "Inflict KO",
       "effect_category": "status",
+      "instant_ko_rule": "raze",
       "status_ailment": "KO",
       "StatusAilment": "KO",
       "BasePower": 100,
@@ -592,7 +613,9 @@
         "BM",
         "Ma",
         "Sa"
-      ]
+      ],
+      "target_scope": "all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Erase",
@@ -600,6 +623,7 @@
       "Level": 5,
       "Effect": "Remove Reflect (doesn't work)",
       "effect_category": "remove_reflect",
+      "dispel_effects": "Protect, Haste, Reflect",
       "BasePower": 0,
       "BaseAccuracy": 0.6,
       "Price": 5000,
@@ -621,7 +645,9 @@
         "BM",
         "Ma",
         "Sa"
-      ]
+      ],
+      "target_scope": "one_or_all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Break",
@@ -696,7 +722,9 @@
         "RM",
         "Ma",
         "Sa"
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Blizzaga",
@@ -763,7 +791,9 @@
         "RM",
         "Ma",
         "Sa"
-      ]
+      ],
+      "target_scope": "one_or_all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Shade",
@@ -817,7 +847,9 @@
         "RM",
         "Ma",
         "Sa"
-      ]
+      ],
+      "target_scope": "one_or_all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Fira",
@@ -936,7 +968,9 @@
         "RM",
         "Ma",
         "Sa"
-      ]
+      ],
+      "target_scope": "one_or_all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Blizzara",
@@ -1073,7 +1107,9 @@
         "RM",
         "Ma",
         "Sa"
-      ]
+      ],
+      "target_scope": "one_or_all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Thundara",
@@ -1206,7 +1242,9 @@
         "RM",
         "Ma",
         "Sa"
-      ]
+      ],
+      "target_scope": "one_or_all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Thunder",
@@ -1275,7 +1313,9 @@
         "RM",
         "Ma",
         "Sa"
-      ]
+      ],
+      "target_scope": "one_or_all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Poison",
@@ -1337,7 +1377,9 @@
         "RM",
         "Ma",
         "Sa"
-      ]
+      ],
+      "target_scope": "one_or_all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Blind",
@@ -1437,7 +1479,9 @@
         "RM",
         "Ma",
         "Sa"
-      ]
+      ],
+      "target_scope": "one_or_all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Fire",
@@ -1528,7 +1572,9 @@
         "RM",
         "Ma",
         "Sa"
-      ]
+      ],
+      "target_scope": "one_or_all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Blizzard",
@@ -1627,7 +1673,9 @@
         "RM",
         "Ma",
         "Sa"
-      ]
+      ],
+      "target_scope": "one_or_all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Sleep",
@@ -1689,7 +1737,9 @@
         "RM",
         "Ma",
         "Sa"
-      ]
+      ],
+      "target_scope": "one_or_all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Tornado",
@@ -1728,7 +1778,9 @@
       "cast_by": [
         "De",
         "Sa"
-      ]
+      ],
+      "target_scope": "one_or_all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Arise",
@@ -1736,6 +1788,7 @@
       "Level": 8,
       "Effect": "Revive from KO with full HP",
       "effect_category": "revive",
+      "field_revive_hp": "full",
       "status_ailment": "KO",
       "Element": "Recovery",
       "StatusAilment": "KO",
@@ -1791,7 +1844,9 @@
       "cast_by": [
         "De",
         "Sa"
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Curaja",
@@ -1799,6 +1854,7 @@
       "Level": 7,
       "Effect": "Restore target's HP",
       "effect_category": "heal_hp",
+      "field_heal_hp": 9999,
       "Element": "Recovery",
       "BasePower": 220,
       "BaseAccuracy": 1.0,
@@ -1956,7 +2012,9 @@
         "WM",
         "De",
         "Sa"
-      ]
+      ],
+      "target_scope": "one_or_all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Stona",
@@ -2043,6 +2101,7 @@
       "Level": 5,
       "Effect": "Restore target's HP",
       "effect_category": "heal_hp",
+      "field_heal_hp": 400,
       "Element": "Recovery",
       "BasePower": 180,
       "BaseAccuracy": 1.0,
@@ -2083,6 +2142,7 @@
       "Level": 5,
       "Effect": "Revive from KO",
       "effect_category": "revive",
+      "field_revive_hp": "half",
       "status_ailment": "KO",
       "Element": "Recovery",
       "StatusAilment": "KO",
@@ -2241,7 +2301,9 @@
         "RM",
         "De",
         "Sa"
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Confuse",
@@ -2298,7 +2360,9 @@
         "RM",
         "De",
         "Sa"
-      ]
+      ],
+      "target_scope": "one_or_all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Silence",
@@ -2342,7 +2406,9 @@
         "RM",
         "De",
         "Sa"
-      ]
+      ],
+      "target_scope": "one_or_all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Cura",
@@ -2350,6 +2416,7 @@
       "Level": 3,
       "Effect": "Restore target's HP",
       "effect_category": "heal_hp",
+      "field_heal_hp": 150,
       "Element": "Recovery",
       "BasePower": 125,
       "BaseAccuracy": 1.0,
@@ -2520,7 +2587,9 @@
         "MK",
         "De",
         "Sa"
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Aero",
@@ -2584,7 +2653,9 @@
         "RM",
         "De",
         "Sa"
-      ]
+      ],
+      "target_scope": "one_or_all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Toad",
@@ -2636,7 +2707,9 @@
         "MK",
         "De",
         "Sa"
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Mini",
@@ -2674,7 +2747,9 @@
         "MK",
         "De",
         "Sa"
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Cure",
@@ -2682,6 +2757,7 @@
       "Level": 1,
       "Effect": "Restore target's HP",
       "effect_category": "heal_hp",
+      "field_heal_hp": 50,
       "Element": "Recovery",
       "BasePower": 42,
       "BaseAccuracy": 1.0,
@@ -2811,7 +2887,9 @@
         "MK",
         "De",
         "Sa"
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Bahamut",
@@ -2898,7 +2976,9 @@
         "Ev",
         "Su",
         "Sa"
-      ]
+      ],
+      "target_scope": "all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Leviathan",
@@ -2986,7 +3066,9 @@
         "Ev",
         "Su",
         "Sa"
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Odin",
@@ -3073,7 +3155,9 @@
         "Ev",
         "Su",
         "Sa"
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Titan",
@@ -3152,7 +3236,9 @@
         "Ev",
         "Su",
         "Sa"
-      ]
+      ],
+      "target_scope": "all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Ifrit",
@@ -3235,7 +3321,9 @@
         "Ev",
         "Su",
         "Sa"
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Ramuh",
@@ -3319,7 +3407,9 @@
         "Ev",
         "Su",
         "Sa"
-      ]
+      ],
+      "target_scope": "all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Shiva",
@@ -3403,7 +3493,9 @@
         "Ev",
         "Su",
         "Sa"
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Chocobo",
@@ -3482,7 +3574,9 @@
         "Ev",
         "Su",
         "Sa"
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Recovery",
@@ -3512,7 +3606,9 @@
           "Effect": "Recovery",
           "Multiplier": 12
         }
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Elixir",
@@ -3533,7 +3629,9 @@
           "Effect": "Elixir",
           "Multiplier": 1
         }
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Echo Herbs",
@@ -3556,7 +3654,9 @@
           "Effect": "Echo Herbs",
           "Multiplier": 1
         }
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Mallet",
@@ -3579,7 +3679,9 @@
           "Effect": "Mallet",
           "Multiplier": 1
         }
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Maiden'S Kiss",
@@ -3602,7 +3704,9 @@
           "Effect": "Maiden's Kiss",
           "Multiplier": 1
         }
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Zantetsuken",
@@ -3613,7 +3717,9 @@
       "BaseAccuracy": 1.0,
       "Reflectable": "No",
       "Target": "All Enemies",
-      "Weight": 8
+      "Weight": 8,
+      "target_scope": "all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Flame",
@@ -3669,7 +3775,9 @@
           "Exp": 8000,
           "Gil": 7200
         }
-      ]
+      ],
+      "target_scope": "all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Snowstorm",
@@ -3701,7 +3809,9 @@
           "Exp": 8000,
           "Gil": 7200
         }
-      ]
+      ],
+      "target_scope": "all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Lightning",
@@ -3751,7 +3861,9 @@
           "Exp": 8000,
           "Gil": 7200
         }
-      ]
+      ],
+      "target_scope": "all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Earthquake",
@@ -3763,7 +3875,9 @@
       "BaseAccuracy": 1.0,
       "Reflectable": "No",
       "Target": "All Enemies",
-      "Weight": 7
+      "Weight": 7,
+      "target_scope": "all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Stare",
@@ -3784,7 +3898,9 @@
           "Exp": 160,
           "Gil": 115
         }
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Tidal Wave",
@@ -3795,7 +3911,9 @@
       "BaseAccuracy": 1.0,
       "Reflectable": "No",
       "Target": "All Enemies",
-      "Weight": 7
+      "Weight": 7,
+      "target_scope": "all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Particle Beam",
@@ -3820,13 +3938,15 @@
           "Exp": null,
           "Gil": null
         }
-      ]
+      ],
+      "target_scope": "all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Self Destruct",
       "Type": "Black Magic (used only by monsters)",
       "Level": 3,
-      "Effect": "Explode for 4\u00d7HP damage if not at max HP",
+      "Effect": "Explode for 4×HP damage if not at max HP",
       "BasePower": 0,
       "BaseAccuracy": 1.0,
       "Reflectable": "No",
@@ -3851,7 +3971,9 @@
           "Exp": 3800,
           "Gil": 1900
         }
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Glare",
@@ -3863,7 +3985,9 @@
       "BaseAccuracy": 0.8,
       "Reflectable": "No",
       "Target": "One Enemy",
-      "Weight": 3
+      "Weight": 3,
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Bad Breath",
@@ -3901,7 +4025,9 @@
           "Exp": 440,
           "Gil": 260
         }
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Mind Blast",
@@ -3913,7 +4039,9 @@
       "BaseAccuracy": 0.8,
       "Reflectable": "No",
       "Target": "All Enemies",
-      "Weight": 4
+      "Weight": 4,
+      "target_scope": "all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Summon",
@@ -3939,7 +4067,9 @@
           "Exp": 4200,
           "Gil": 3600
         }
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Mega Flare",
@@ -3950,7 +4080,9 @@
       "BaseAccuracy": 1.0,
       "Reflectable": "Yes",
       "Target": "All Enemies",
-      "Weight": 8
+      "Weight": 8,
+      "target_scope": "all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Barrier Shift",
@@ -3977,7 +4109,9 @@
           "Exp": 1040,
           "Gil": 2100
         }
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Divide",
@@ -4002,7 +4136,9 @@
           "Exp": 320,
           "Gil": 945
         }
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Earthquake",
@@ -4014,7 +4150,9 @@
       "BaseAccuracy": 1.0,
       "Reflectable": "No",
       "Target": "All Enemies",
-      "Weight": 7
+      "Weight": 7,
+      "target_scope": "all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Quicksand",
@@ -4030,7 +4168,9 @@
       "Weight": 3,
       "cast_by": [
         "Ge"
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Wind Slash",
@@ -4068,7 +4208,9 @@
       ],
       "cast_by": [
         "Ge"
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Sinkhole",
@@ -4087,7 +4229,9 @@
       ],
       "cast_by": [
         "Ge"
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Torrent",
@@ -4114,7 +4258,9 @@
       ],
       "cast_by": [
         "Ge"
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Whirlpool",
@@ -4142,7 +4288,9 @@
       ],
       "cast_by": [
         "Ge"
-      ]
+      ],
+      "target_scope": "all",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Cyclone",
@@ -4158,7 +4306,9 @@
       "Weight": 3,
       "cast_by": [
         "Ge"
-      ]
+      ],
+      "target_scope": "one",
+      "default_target_side": "Enemy"
     },
     {
       "name": "Cave In",
@@ -4177,7 +4327,9 @@
       ],
       "cast_by": [
         "Ge"
-      ]
+      ],
+      "target_scope": "all",
+      "default_target_side": "Enemy"
     }
   ],
   "errors": []

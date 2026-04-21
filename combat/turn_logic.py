@@ -1076,6 +1076,7 @@ def run_character_turn(
                                     blind=char_is_blind,
                                     target_count=target_count,
                                     spell_name=(char_spell_name or ""),
+                                    spell_json=char_spell_json,
                                 )
                                 old_hp = em_state.hp
                                 enemy_max_hp = _target_max_hp(
@@ -1118,6 +1119,7 @@ def run_character_turn(
                     blind=char_is_blind,
                     target_count=1,
                     spell_name=(char_spell_name or ""),
+                    spell_json=char_spell_json,
                 )
 
                 if not is_undead_target(target_enemy_json):
@@ -1175,6 +1177,7 @@ def run_character_turn(
                 blind=char_is_blind,
                 target_count=target_count,
                 spell_name=(char_spell_name or ""),
+                spell_json=char_spell_json,
             )
 
             if (aoe_heal_selected or force_all_allies) and party_members is not None:
@@ -1351,12 +1354,12 @@ def run_character_turn(
                 dmg_to_enemy = 0
                 return dmg_to_enemy, None
 
-            effect = normalize_text_basic(char_spell_json.get("Effect") or "")
+            revive_mode = normalize_text_basic(char_spell_json.get("field_revive_hp") or "")
 
             if target_state.has(Status.KO):
                 target_state.statuses.discard(Status.KO)
 
-            if "full hp" in effect:
+            if revive_mode == "full":
                 target_state.hp = _target_max_hp(
                     target_state=target_state,
                     target_stats=target_stats,
@@ -1903,45 +1906,18 @@ def run_character_turn(
             # ------------------------
             # 純ステータス魔法判定（あなたの既存ロジックを踏襲）
             # ------------------------
-            pure_status_spells = {
-                "Sleep",
-                "Blind",
-                "Poison",
-                "Shade",
-                "Erase",
-                "Raze",
-                "Warp",
-                "Break",
-                "Breakga",
-                "Death",
-                "Mini",
-                "Toad",
-                "Teleport",
-                "Silence",
-                "Confuse",
-                "Mesmerize",
-                "Mind Blast",
-                "Demon Eye",
-            }
-
-            def is_pure_status_spell(name: str) -> bool:
-                return any(name.endswith(ps) for ps in pure_status_spells)
-
             raw_spell_type = normalize_text_basic(char_spell_json.get("Type") or "")
             is_summon_spell = raw_spell_type in ("summon", "summon magic")
             effect_category = spell_effect_category(char_spell_json)
-            is_drain_spell = False
-            effect_text = normalize_text_basic(char_spell_json.get("Effect") or "")
-            spell_name_raw = (
-                char_spell_json.get("Name") or char_spell_json.get("name") or ""
-            )
-            name_lower = normalize_text_basic(spell_name_raw)
+            status_text = spell_status_text(char_spell_json)
+            is_drain_spell = effect_category == "drain"
             pure_status_spell = (
                 effect_category == "status"
-                or is_pure_status_spell(spell_label)
+                or bool(status_text)
+                or effect_category == "teleport"
+                or bool(char_spell_json.get("instant_ko_rule"))
+                or bool(char_spell_json.get("dispel_effects"))
             )
-            if effect_category == "drain" or "absorb hp" in effect_text:
-                is_drain_spell = True
 
             is_tornado_spell = effect_category == "set_hp_critical"
             is_libra_spell = effect_category == "inspect"
@@ -1958,11 +1934,12 @@ def run_character_turn(
                 return 0, None
 
             if target_side in ("ally", "self"):
+                ally_target_stats = cast(FinalCharacterStats, target_stats)
                 target_is_mini_or_toad = target_state.has(Status.MINI) or target_state.has(
                     Status.TOAD
                 )
                 target_relation, target_hit_elems = element_relation_and_hits_for_char(
-                    target_stats,
+                    ally_target_stats,
                     spell_elements,
                 )
 
@@ -1975,7 +1952,7 @@ def run_character_turn(
                     hit_count = magic_hit_count_char_to_enemy(
                         char_stats,
                         char_spell,
-                        ff3_confused_self_dummy_enemy(target_stats),
+                        ff3_confused_self_dummy_enemy(ally_target_stats),
                         rng=rng,
                         use_expectation=False,
                         blind=char_is_blind,
@@ -1999,7 +1976,7 @@ def run_character_turn(
                     handled = apply_status_spell_to_char(
                         spell_json=char_spell_json,
                         char_state=target_state,
-                        char_stats=target_stats,
+                        char_stats=ally_target_stats,
                         char_name=target_name,
                         rng=rng,
                         logs=logs,
@@ -2013,7 +1990,7 @@ def run_character_turn(
                 dmg_to_target = magic_damage_char_to_ally(
                     caster=char_stats,
                     spell=char_spell,
-                    target=target_stats,
+                    target=ally_target_stats,
                     element_relation=target_relation,
                     rng=rng,
                     use_expectation=False,
@@ -2031,7 +2008,7 @@ def run_character_turn(
                 apply_status_spell_to_char(
                     spell_json=char_spell_json,
                     char_state=target_state,
-                    char_stats=target_stats,
+                    char_stats=ally_target_stats,
                     char_name=target_name,
                     rng=rng,
                     logs=logs,
@@ -2231,6 +2208,7 @@ def run_character_turn(
                         rng=rng,
                         logs=logs,
                         caster_stats=char_stats,
+                        enemy_stats=em_stats,
                         summon_child_name=char_spell_name,
                     )
 
@@ -2354,6 +2332,7 @@ def run_character_turn(
                 rng=rng,
                 logs=logs,
                 caster_stats=char_stats,
+                enemy_stats=enemy_stats,
                 summon_child_name=char_spell_name,
             )
 
@@ -2434,10 +2413,7 @@ def run_character_turn(
                 target_stats = tpm.stats
                 target_name = tpm.name
 
-        spell_info = char_item.get("SpellInfo") or {}
-        effect_text = normalize_text_basic(spell_info.get("Effect") or "")
-        item_spell_effect = normalize_text_basic(char_item.get("SpellEffect") or "")
-        item_name_lower = normalize_text_basic(char_item.get("Name") or "")
+        item_effect_category = normalize_text_basic(char_item.get("effect_category") or "")
         item_scope = spell_target_scope(char_item)
         item_target_all = is_weapon_spell_item(char_item) and (
             item_scope == "all"
@@ -2447,17 +2423,8 @@ def run_character_turn(
         # =========================
         # 攻撃/状態異常アイテム判定
         # =========================
-        is_attack_item = False
-        if "deal" in effect_text and "damage" in effect_text:
-            is_attack_item = True
-        if "inflict ko" in effect_text:
-            is_attack_item = True
-        if (
-            "absorb hp" in effect_text
-            or item_spell_effect == "drain"
-            or "lilith's kiss" in item_name_lower
-        ):
-            is_attack_item = True
+        is_attack_item = item_effect_category in {"damage", "drain", "set_hp_critical"}
+        is_drain_item = item_effect_category == "drain"
 
         # ============================================================
         # 1) 敵ターゲット：攻撃 or 状態異常（B案：消費できたら効果）
@@ -2531,11 +2498,6 @@ def run_character_turn(
 
                         total_damage += max(0, actual_enemy_change)
 
-                        is_drain_item = (
-                            "absorb hp" in effect_text
-                            or item_spell_effect == "drain"
-                            or "lilith's kiss" in item_name_lower
-                        )
                         if is_drain_item and actual_enemy_change > 0:
                             old_hp = char_state.hp
                             heal = actual_enemy_change
@@ -2546,21 +2508,6 @@ def run_character_turn(
                                     f"{char_name}は{runtime_enemy_name}からHPを{actual_heal}吸収した！"
                                     f"（{char_name} 残りHP: {char_state.hp}）"
                                 )
-
-                        if "inflict ko" in effect_text:
-                            runtime_enemy_state.hp = 0
-                            logs.append(f"{runtime_enemy_name}に即死効果が発動した！")
-                        elif (
-                            "inflict " in effect_text
-                            or "partial petrification" in effect_text
-                        ):
-                            apply_status_item_to_enemy(
-                                item_json=char_item,
-                                enemy_state=runtime_enemy_state,
-                                enemy_name=runtime_enemy_name,
-                                rng=rng,
-                                logs=logs,
-                            )
 
                     if _all_runtime_enemies_defeated(enemies):
                         return total_damage, OneTurnResult(
@@ -2589,6 +2536,14 @@ def run_character_turn(
 
                 if not handled_any:
                     logs.append(f"{char_name}は{item_name}を使った！ しかし効果がなかった…")
+                elif _all_runtime_enemies_defeated(enemies):
+                    return 0, OneTurnResult(
+                        char_state=char_state,
+                        enemy_state=enemy_state,
+                        logs=logs,
+                        enemy_attack_result=None,
+                        end_reason="enemy_defeated",
+                    )
                 return 0, None
 
             # まず「敵に使う系」のアイテムだけ許可
@@ -2665,12 +2620,6 @@ def run_character_turn(
                     display_amount=max(0, dmg_to_enemy),
                 )
 
-                # 吸収系
-                is_drain_item = (
-                    "absorb hp" in effect_text
-                    or item_spell_effect == "drain"
-                    or "lilith's kiss" in item_name_lower
-                )
                 if is_drain_item and actual_enemy_change > 0:
                     old_hp = char_state.hp
                     heal = actual_enemy_change
@@ -2681,19 +2630,6 @@ def run_character_turn(
                             f"{char_name}は{enemy_name}からHPを{actual_heal}吸収した！"
                             f"（{char_name} 残りHP: {char_state.hp}）"
                         )
-
-                # 即死系
-                if "inflict ko" in effect_text:
-                    enemy_state.hp = 0
-                    logs.append(f"{enemy_name}に即死効果が発動した！")
-                elif "inflict " in effect_text or "partial petrification" in effect_text:
-                    apply_status_item_to_enemy(
-                        item_json=char_item,
-                        enemy_state=enemy_state,
-                        enemy_name=enemy_name,
-                        rng=rng,
-                        logs=logs,
-                    )
 
                 return dmg_to_enemy, None
 
@@ -2722,6 +2658,14 @@ def run_character_turn(
 
             # 状態異常として処理できたならここで終了
             if handled_as_status:
+                if enemy_state.hp <= 0:
+                    return 0, OneTurnResult(
+                        char_state=char_state,
+                        enemy_state=enemy_state,
+                        logs=logs,
+                        enemy_attack_result=None,
+                        end_reason="enemy_defeated",
+                    )
                 return 0, None
 
             # 状態異常としても処理できず、攻撃アイテムでもない場合
@@ -2796,13 +2740,14 @@ def run_character_turn(
             return 0, None
 
         # それ以外の回復・補助アイテム
+        ally_target_stats = cast(FinalCharacterStats, target_stats)
         apply_item_effect_to_actor(
             item_json=char_item,
             target_state=target_state,
             target_name=target_name,
-            max_hp=target_stats.max_hp,
+            max_hp=ally_target_stats.max_hp,
             logs=logs,
-            target_stats=target_stats,
+            target_stats=ally_target_stats,
             actor_stats=char_stats,
             rng=rng,
             actor_name=char_name,  # ★追加
@@ -3817,7 +3762,6 @@ def run_enemy_turn(
         ):
             spell_def = _find_spell_json_for_enemy_attack(enemy_json, enemy_attack)
             spell_name = (spell_def or {}).get("Name") or enemy_attack.attack_name
-            name_lower = normalize_text_basic(spell_name)
             effect_category = spell_effect_category(spell_def or {})
             battle_behavior = spell_battle_behavior(spell_def or {})
 
@@ -3843,6 +3787,7 @@ def run_enemy_turn(
             # 2) ★ Target が All Enemies なら汎用AoEへ
             elif spell_def and spell_is_aoe(spell_def):
                 # 状態異常系全体攻撃（Mind Blast型：BasePower==0 かつ StatusAilmentあり）
+                enemy_down = False
                 if spell_base_power(spell_def) <= 0 and spell_has_ailment(spell_def):
                     enemy_cast_aoe_status_spell_to_party(
                         spell_json=spell_def,
@@ -3962,7 +3907,8 @@ def run_enemy_turn(
                     enemy_attack = None
 
                 # 3-3) Haste / Protect（自己バフ）
-                elif name_lower == "haste":
+                elif effect_category == "buff_attack":
+                    spell_label = str(spell_name or "魔法")
                     # 命中判定（そのまま）
                     if spell_def is not None:
                         base_acc = spell_def.get("BaseAccuracy")
@@ -3976,7 +3922,7 @@ def run_enemy_turn(
 
                     if rng.random() * 100.0 >= hit_percent:
                         logs.append(
-                            f"{enemy_name}は《Haste》を唱えた！ しかし何も起こらなかった…"
+                            f"{enemy_name}は《{spell_label}》を唱えた！ しかし何も起こらなかった…"
                         )
                         dmg_to_char = 0
                         enemy_attack = None
@@ -4014,7 +3960,7 @@ def run_enemy_turn(
                         )
 
                         logs.append(
-                            f"{enemy_name}は《Haste》を唱えた！ "
+                            f"{enemy_name}は《{spell_label}》を唱えた！ "
                             f"物理加算値 {old_power_bonus}→{new_power_bonus}"
                             f"、攻撃回数加算 {old_mul_bonus}→{new_mul_bonus}"
                             f"（今回 +{add_power}, +{add_mul}）に上がった。"
@@ -4023,7 +3969,8 @@ def run_enemy_turn(
                         dmg_to_char = 0
                         enemy_attack = None
 
-                elif name_lower == "protect":
+                elif effect_category == "buff_defense":
+                    spell_label = str(spell_name or "魔法")
                     if spell_def is not None:
                         base_acc = spell_def.get("BaseAccuracy")
                         if base_acc is None:
@@ -4036,7 +3983,7 @@ def run_enemy_turn(
 
                     if rng.random() * 100.0 >= hit_percent:
                         logs.append(
-                            f"{enemy_name}は《Protect》を唱えた！ "
+                            f"{enemy_name}は《{spell_label}》を唱えた！ "
                             f"しかし何も起こらなかった…"
                         )
                         dmg_to_char = 0
@@ -4075,7 +4022,7 @@ def run_enemy_turn(
                         )
 
                         logs.append(
-                            f"{enemy_name}は《Protect》を唱えた！ "
+                            f"{enemy_name}は《{spell_label}》を唱えた！ "
                             f"防御力 {old_def}→{enemy_stats.defense}、"
                             f"魔法防御 {old_mdef}→{enemy_stats.magic_defense}（今回 +{add_value}）に上がった。"
                         )

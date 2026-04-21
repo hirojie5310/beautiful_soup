@@ -6,6 +6,7 @@ function asObj(v) { return v && typeof v === "object" ? v : {}; }
 function asArray(v) { return Array.isArray(v) ? v : []; }
 function asNum(v, d = 0) { const n = Number(v); return Number.isFinite(n) ? n : d; }
 function canon(text) { return String(text || "").trim().toLowerCase().replace(/[\-_]/g, " "); }
+function normalizeMetaKey(text) { return String(text || "").trim().toLowerCase(); }
 function clone(value) { return typeof structuredClone === "function" ? structuredClone(value) : JSON.parse(JSON.stringify(value)); }
 
 const MODES = [
@@ -15,19 +16,92 @@ const MODES = [
 ];
 const ITEM_TYPE_ORDER = { Anywhere: 0, Field: 1, Combat: 2, Weapon: 3, Armor: 4, "Key Item": 5 };
 const FIELD_USABLE_TYPES = new Set(["Anywhere", "Field"]);
-const TARGET_REQUIRED = new Set([
-  "potion", "hi potion", "elixir", "antidote", "echo herbs", "mallet", "maiden's kiss",
-  "gold needle", "eye drops", "phoenix down",
-]);
-const HEAL_AMOUNT = { potion: 90, "hi potion": 360 };
-const STATUS_CLEAR = {
-  antidote: ["poison"],
-  "eye drops": ["blind"],
-  "echo herbs": ["silence"],
-  "maiden's kiss": ["toad"],
-  mallet: ["mini"],
-  "gold needle": ["petrify", "petrification", "partial_petrify", "partial petrification"],
-};
+
+function normalizeTargetScope(value) {
+  return canon(value);
+}
+
+export function parseItemStatusAilments(statusAilment) {
+  if (Array.isArray(statusAilment)) {
+    return statusAilment.map((value) => String(value || "").trim()).filter(Boolean);
+  }
+  if (typeof statusAilment !== "string") return [];
+  return statusAilment.split(",").map((value) => value.trim()).filter(Boolean);
+}
+
+export function getItemMeta(inventoryCatalog, itemName) {
+  return asObj(asObj(inventoryCatalog)?.item_meta)?.[itemName] || null;
+}
+
+export function itemRequiresTarget(itemMeta) {
+  const meta = asObj(itemMeta);
+  const targetScope = normalizeTargetScope(meta.target_scope);
+  const effectCategory = normalizeMetaKey(meta.effect_category);
+  if (!targetScope || !["one", "single"].includes(targetScope)) return false;
+  return Boolean(effectCategory || meta.default_target_side);
+}
+
+export function applyFieldItemEffect(member, itemMeta) {
+  const nextMember = { ...asObj(member) };
+  const meta = asObj(itemMeta);
+  const effectCategory = normalizeMetaKey(meta.effect_category);
+  const maxHp = Math.max(1, asNum(nextMember.max_hp, asNum(nextMember.hp, 0)));
+  const hp = asNum(nextMember.hp, 0);
+  let changed = false;
+
+  if (effectCategory === "heal_hp") {
+    if (hp <= 0 || hp >= maxHp) return { changed: false, member: nextMember };
+    const amount = asNum(meta.value, 0);
+    if (amount <= 0) return { changed: false, member: nextMember };
+    nextMember.hp = Math.min(maxHp, hp + amount);
+    changed = nextMember.hp !== hp;
+    return { changed, member: nextMember };
+  }
+
+  if (effectCategory === "heal_full") {
+    nextMember.hp = maxHp;
+    changed = hp !== nextMember.hp;
+    const levels = asObj(nextMember.mp_levels);
+    for (let lv = 1; lv <= 8; lv += 1) {
+      const key = String(lv);
+      const row = asObj(levels[key]);
+      const current = asNum(row.current, 0);
+      const max = asNum(row.max, current);
+      if (current !== max) {
+        row.current = max;
+        levels[key] = row;
+        changed = true;
+      }
+    }
+    nextMember.mp_levels = levels;
+    return { changed, member: nextMember };
+  }
+
+  if (effectCategory === "revive") {
+    if (hp > 0) return { changed: false, member: nextMember };
+    nextMember.hp = Math.max(1, Math.floor(maxHp / 2));
+    const beforeStatuses = asArray(nextMember.status_icons);
+    const removeSet = new Set(parseItemStatusAilments(meta.status_ailment).map((key) => canon(key)));
+    removeSet.add("ko");
+    const nextStatuses = beforeStatuses.filter((icon) => !removeSet.has(canon(icon)));
+    nextMember.status_icons = nextStatuses;
+    changed = nextMember.hp !== hp || nextStatuses.length !== beforeStatuses.length;
+    return { changed, member: nextMember };
+  }
+
+  if (effectCategory === "status_recovery" || effectCategory === "status_toggle") {
+    const beforeStatuses = asArray(nextMember.status_icons);
+    const removeSet = new Set(parseItemStatusAilments(meta.status_ailment).map((key) => canon(key)));
+    if (!removeSet.size) return { changed: false, member: nextMember };
+    const nextStatuses = beforeStatuses.filter((icon) => !removeSet.has(canon(icon)));
+    nextMember.status_icons = nextStatuses;
+    changed = nextStatuses.length !== beforeStatuses.length;
+    return { changed, member: nextMember };
+  }
+
+  return { changed: false, member: nextMember };
+}
+
 function renderLayout() {
   return renderMenuSubpageShell({
     content: `
@@ -148,15 +222,6 @@ export async function mountScreen({ mountNode, store, navigate }) {
     return false;
   }
 
-  function clearStatuses(member, keys) {
-    const before = asArray(member?.status_icons);
-    const removeSet = new Set(keys.map((key) => canon(key)));
-    const next = before.filter((icon) => !removeSet.has(canon(icon)));
-    if (next.length === before.length) return false;
-    member.status_icons = next;
-    return true;
-  }
-
   function useItem(itemName, targetIdx) {
     const appState = getState();
     const rawMenuState = asObj(appState.menuState);
@@ -165,45 +230,17 @@ export async function mountScreen({ mountNode, store, navigate }) {
     const itemType = inventoryRows().find((row) => row.name === itemName)?.itemType || "";
     if (!FIELD_USABLE_TYPES.has(itemType)) return { ok: false, message: "このアイテムはフィールドでは使えません。" };
 
-    const target = asObj(party[targetIdx]);
-    const normalized = canon(itemName);
-    let changed = false;
-    if (normalized === "phoenix down") {
-      const hp = asNum(target.hp, 0);
-      const maxHp = Math.max(1, asNum(target.max_hp, hp));
-      if (hp > 0) return { ok: false, message: "効果がありません。" };
-      target.hp = Math.max(1, Math.floor(maxHp / 2));
-      changed = true;
-      clearStatuses(target, ["ko"]);
-    } else if (normalized === "elixir") {
-      const maxHp = Math.max(1, asNum(target.max_hp, 1));
-      const beforeHp = asNum(target.hp, 0);
-      target.hp = maxHp;
-      changed = beforeHp !== target.hp;
-      const levels = asObj(target.mp_levels);
-      for (let lv = 1; lv <= 8; lv += 1) {
-        const row = asObj(levels[String(lv)]);
-        const cur = asNum(row.current, 0);
-        const max = asNum(row.max, cur);
-        if (cur !== max) { row.current = max; levels[String(lv)] = row; changed = true; }
-      }
-      target.mp_levels = levels;
-    } else if (HEAL_AMOUNT[normalized]) {
-      const hp = asNum(target.hp, 0);
-      const maxHp = Math.max(1, asNum(target.max_hp, hp));
-      if (hp <= 0 || hp >= maxHp) return { ok: false, message: "効果がありません。" };
-      target.hp = Math.min(maxHp, hp + HEAL_AMOUNT[normalized]);
-      changed = true;
-    } else if (STATUS_CLEAR[normalized]) {
-      changed = clearStatuses(target, STATUS_CLEAR[normalized]);
-    } else {
+    const itemMeta = getItemMeta(rawMenuState.inventory_catalog, itemName);
+    const effectCategory = normalizeMetaKey(itemMeta?.effect_category);
+    if (!effectCategory) {
       return { ok: false, message: "未実装のアイテムです。" };
     }
+    const result = applyFieldItemEffect(party[targetIdx], itemMeta);
+    if (!result.changed) return { ok: false, message: "効果がありません。" };
 
-    if (!changed) return { ok: false, message: "効果がありません。" };
     const nextEnvelope = clone(appState.saveEnvelope || store.createDefaultEnvelope());
     if (!consumeInventory(nextEnvelope, itemName)) return { ok: false, message: "在庫がありません。" };
-    party[targetIdx] = target;
+    party[targetIdx] = result.member;
     const nextMenuState = { ...rawMenuState, party };
     nextEnvelope.menu_state = nextMenuState;
     if (nextEnvelope?.save && typeof nextEnvelope.save === "object") {
@@ -260,7 +297,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       targetList.innerHTML = '<div class="empty">キャラクター情報がありません。</div>';
       return;
     }
-    const selectedRequiresTarget = TARGET_REQUIRED.has(canon(selectedItemName));
+    const selectedRequiresTarget = itemRequiresTarget(getItemMeta(getState().menuState?.inventory_catalog, selectedItemName));
     party.forEach((member, idx) => {
       const btn = document.createElement("button");
       btn.type = "button";

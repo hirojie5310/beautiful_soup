@@ -70,7 +70,7 @@ def test_haste_item_is_guaranteed_even_with_high_rng_roll() -> None:
     target_state = BattleActorState(hp=200, max_hp=200)
     item_json = {
         "Name": "Bacchus's Cider",
-        "SpellEffect": "Haste",
+        "effect_category": "buff_attack",
         "SpellInfo": {
             "Effect": "Enhance Accuracy and Attack Multiplier",
             "BasePower": 5,
@@ -99,6 +99,8 @@ def test_status_item_is_guaranteed_even_when_base_accuracy_is_low() -> None:
     enemy_state = BattleActorState(hp=100, max_hp=100)
     item_json = {
         "Name": "Mallet Bomb",
+        "effect_category": "status",
+        "status_ailment": "Mini",
         "SpellInfo": {
             "Effect": "Inflict Mini",
             "BaseAccuracy": 0.01,
@@ -116,6 +118,32 @@ def test_status_item_is_guaranteed_even_when_base_accuracy_is_low() -> None:
 
     assert handled is True
     assert Status.MINI in enemy_state.statuses
+    assert any("効いた" in line for line in logs)
+
+
+def test_ko_status_item_sets_enemy_hp_to_zero() -> None:
+    enemy_state = BattleActorState(hp=100, max_hp=100)
+    item_json = {
+        "Name": "Black Hole",
+        "effect_category": "status",
+        "status_ailment": "KO",
+        "SpellInfo": {
+            "BaseAccuracy": 0.01,
+        },
+    }
+    logs: list[str] = []
+
+    handled = apply_status_item_to_enemy(
+        item_json=item_json,
+        enemy_state=enemy_state,
+        enemy_name="Goblin",
+        rng=Random(0),
+        logs=logs,
+    )
+
+    assert handled is True
+    assert Status.KO in enemy_state.statuses
+    assert enemy_state.hp == 0
     assert any("効いた" in line for line in logs)
 
 
@@ -166,6 +194,52 @@ def test_shining_curtain_is_guaranteed_to_apply_reflect() -> None:
     assert save["inventory"]["Combat"] == {}
 
 
+def test_enemy_ko_item_uses_metadata_without_effect_text_classification() -> None:
+    caster_stats = _char_stats()
+    enemy_stats = _enemy_stats()
+    caster_state = BattleActorState(hp=300, max_hp=300)
+    enemy_state = BattleActorState(hp=500, max_hp=500)
+    save = {"inventory": {"Combat": {"Black Hole": 1}}}
+    logs: list[str] = []
+
+    damage, result = run_character_turn(
+        char_name="Refia",
+        enemy_name="Goblin",
+        char_stats=caster_stats,
+        enemy_stats=enemy_stats,
+        enemy_json={},
+        char_state=caster_state,
+        enemy_state=enemy_state,
+        char_attack_kind="item",
+        char_battle_command="Item",
+        char_weapon_hand="main",
+        char_spell=None,
+        char_spell_json=None,
+        char_spell_healing_type=None,
+        char_spell_name=None,
+        char_item={
+            "Name": "Black Hole",
+            "effect_category": "status",
+            "status_ailment": "KO",
+            "default_target_side": "Enemy",
+            "target_scope": "one",
+            "SpellInfo": {"BaseAccuracy": 0.01},
+        },
+        logs=logs,
+        rng=Random(0),
+        target_side="enemy",
+        target_index=0,
+        save=save,
+    )
+
+    assert damage == 0
+    assert result is not None
+    assert result.end_reason == "enemy_defeated"
+    assert enemy_state.hp == 0
+    assert Status.KO in enemy_state.statuses
+    assert save["inventory"]["Combat"] == {}
+
+
 def test_ally_targeted_toad_is_guaranteed_to_apply_status() -> None:
     caster_stats = _char_stats()
     target_stats = _char_stats()
@@ -204,6 +278,8 @@ def test_ally_targeted_toad_is_guaranteed_to_apply_status() -> None:
             "Level": 3,
             "Target": "One Ally",
             "Effect": "Turn target into a toad",
+            "effect_category": "status",
+            "status_ailment": "Toad",
         },
         char_spell_healing_type=None,
         char_spell_name="Toad",

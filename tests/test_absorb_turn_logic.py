@@ -171,3 +171,59 @@ def test_absorb_auto_all_target_quake_fully_heals_enemy() -> None:
     assert damage == 0
     assert result is None
     assert enemy_state.hp == 100
+
+
+def test_drain_spell_uses_effect_category_without_effect_text_fallback() -> None:
+    char_stats = make_char_stats()
+    enemy_stats = make_enemy_stats()
+    char_state = BattleActorState(hp=120, max_hp=300)
+    char_state.mp_pool[7] = 10
+    enemy_state = BattleActorState(hp=100, max_hp=100)
+    enemy_json = {
+        "ElementalVulnerability": {"Weak": [], "Null": [], "Absorb": []},
+        "StatusAilmentVulnerability": {"Immune": []},
+    }
+    spell_json = {
+        "Name": "Drain",
+        "Type": "Black Magic",
+        "Level": 7,
+        "effect_category": "drain",
+        "Element": None,
+        "BaseAccuracy": 1.0,
+        "BasePower": 24,
+        "Reflectable": "No",
+    }
+    spell = SpellInfo(
+        power=24,
+        accuracy_percent=100,
+        magic_type="black",
+        elements=[],
+        auto_all_target=False,
+    )
+    logs: list[str] = []
+
+    damage, result = run_character_turn(
+        char_name="Refia",
+        enemy_name="Bomb",
+        char_stats=char_stats,
+        enemy_stats=enemy_stats,
+        enemy_json=enemy_json,
+        char_state=char_state,
+        enemy_state=enemy_state,
+        char_attack_kind="magic",
+        char_battle_command="Magic",
+        char_weapon_hand="main",
+        char_spell=spell,
+        char_spell_json=spell_json,
+        char_spell_healing_type=None,
+        char_spell_name="Drain",
+        char_item=None,
+        logs=logs,
+        rng=Random(0),
+    )
+
+    assert damage > 0
+    assert result is not None
+    assert result.end_reason == "enemy_defeated"
+    assert char_state.hp > 120
+    assert any("吸収した" in line for line in logs)

@@ -61,8 +61,8 @@ def test_potion_selection_goes_directly_to_ally_target() -> None:
         {
             "Potion": {
                 "Name": "Potion",
-                "SpellEffect": "Recovery",
-                "SpellInfo": {"Effect": "Restore target's HP"},
+                "effect_category": "heal_hp",
+                "default_target_side": "Ally",
             }
         }
     )
@@ -87,7 +87,8 @@ def test_attack_item_selection_goes_directly_to_enemy_target() -> None:
         {
             "Bomb Fragment": {
                 "Name": "Bomb Fragment",
-                "SpellInfo": {"Effect": "Deal fire damage"},
+                "effect_category": "damage",
+                "default_target_side": "Enemy",
             }
         }
     )

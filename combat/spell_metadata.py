@@ -24,12 +24,6 @@ def spell_target_scope(spell_json: Dict[str, Any]) -> str:
     scope = normalize_text_basic(spell_json.get("target_scope") or "")
     if scope in {"one", "all", "one_or_all"}:
         return scope
-
-    target = normalize_text_basic(spell_json.get("Target") or spell_json.get("target") or "")
-    if target in {"one/all enemies", "one/all allies", "one/all"}:
-        return "one_or_all"
-    if target in {"all enemies", "all allies"}:
-        return "all"
     return "one"
 
 
@@ -54,20 +48,10 @@ def spell_default_target_side(
     if side == "any":
         return "Any"
 
-    target = normalize_text_basic(spell_json.get("Target") or spell_json.get("target") or "")
-    is_ally_target = "ally" in target or "allies" in target
-    is_enemy_target = "enemy" in target or "enemies" in target
-
     if healing_type == "hp":
-        if spell_target_scope(spell_json) == "all" and is_ally_target:
-            return "Ally"
         return "Any"
     if healing_type in SUPPORT_HEALING_KINDS:
         return "Ally"
-    if is_ally_target:
-        return "Ally"
-    if is_enemy_target:
-        return "Enemy"
     return "Enemy"
 
 

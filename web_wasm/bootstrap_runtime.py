@@ -1,6 +1,6 @@
 # web_wasm/bootstrap_runtime.py
 import json
-from typing import Callable, SupportsIndex, SupportsInt, cast
+from typing import Any, Callable, SupportsIndex, SupportsInt, cast
 
 from combat.wasm_api import WasmBattleEngine, build_session_status_snapshot
 from combat.runtime_state import init_runtime_state
@@ -150,6 +150,10 @@ def _merge_save_data(base, overlay):
     return overlay
 
 
+def _as_save_dict(value: Any) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
+
+
 def _normalize_party_identity_key(raw):
     raw_text = str(raw or "").strip()
     if not raw_text:
@@ -240,7 +244,7 @@ def _align_party_to_base(base_party, overlay_party):
     if not isinstance(base_party, list) or not base_party:
         return [
             {
-                **entry,
+                **cast(dict[str, Any], entry),
                 "index": idx,
             }
             if isinstance(entry, dict)
@@ -288,11 +292,11 @@ def _align_party_to_base(base_party, overlay_party):
                 else None
             )
             if isinstance(overlay_equipment, dict):
-                base_equipment = (
-                    base_entry.get("equipment")
-                    if isinstance(base_entry, dict) and isinstance(base_entry.get("equipment"), dict)
-                    else {}
-                )
+                base_equipment: dict[str, Any] = {}
+                if isinstance(base_entry, dict):
+                    base_equipment_value = base_entry.get("equipment")
+                    if isinstance(base_equipment_value, dict):
+                        base_equipment = base_equipment_value
                 merged_entry["equipment"] = {
                     **base_equipment,
                     **overlay_equipment,
@@ -341,7 +345,7 @@ def _mp_from_mp_levels(entry):
 def _normalize_loaded_save(save_data):
     if not isinstance(save_data, dict):
         return save_data
-    normalized = _merge_save_data(None, save_data)
+    normalized = _as_save_dict(_merge_save_data(None, save_data))
     party = normalized.get("party")
     if not isinstance(party, list):
         return normalized
@@ -357,7 +361,7 @@ def _normalize_loaded_save(save_data):
 def _normalize_save_for_runtime(save_data):
     if not isinstance(save_data, dict):
         return {}
-    normalized = _merge_save_data(None, save_data)
+    normalized = _as_save_dict(_merge_save_data(None, save_data))
     ensure_save_schema_version(normalized)
     return normalized
 
@@ -398,7 +402,7 @@ def migrate_save(save_data):
     if not isinstance(save_data, dict):
         raise ValueError("save_data must be JSON object")
 
-    current = _merge_save_data(None, save_data)
+    current = _as_save_dict(_merge_save_data(None, save_data))
     ensure_save_schema_version(current)
 
     version = _safe_int(current.get("schema_version", 1), 1)
@@ -430,8 +434,9 @@ def get_location_selection_json():
 
 def boot_engine_for_location(location_group, location, seed=7, enemy_names_json=None):
     global state
-    if isinstance(getattr(state, "save", None), dict):
-        state.save = migrate_save(state.save)
+    current_save = getattr(state, "save", None)
+    if isinstance(current_save, dict):
+        state.save = migrate_save(current_save)
     selected_group = str(location_group or "")
     selected_location = str(location or "")
     forced_enemy_names = []
@@ -780,6 +785,16 @@ def _build_magic_spell_meta(session):
         rows[name] = {
             "type": str(raw.get("Type") or ""),
             "level": _safe_int(raw.get("Level", 1), 1),
+            "effect_category": str(raw.get("effect_category") or ""),
+            "default_target_side": str(raw.get("default_target_side") or ""),
+            "target_scope": str(raw.get("target_scope") or ""),
+            "status_ailment": (
+                raw.get("status_ailment")
+                or raw.get("StatusAilment")
+                or raw.get("StatusAilments")
+            ),
+            "field_heal_hp": raw.get("field_heal_hp"),
+            "field_revive_hp": raw.get("field_revive_hp"),
         }
     return rows
 
@@ -958,6 +973,7 @@ def get_menu_state_json():
         "equip_candidates_by_member": _build_equip_candidates_by_member(engine.session),
         "equipment_by_member": equip_by_member,
         "magic_setup": _ensure_menu_magic_setup(engine.session),
+        "magic_spell_meta_by_name": _build_magic_spell_meta(engine.session),
         "inventory_catalog": {
             "items": sorted(
                 [
@@ -982,6 +998,18 @@ def get_menu_state_json():
             ),
             "item_types": {
                 name: str(item_json.get("ItemType") or "")
+                for name, item_json in items_by_name.items()
+                if isinstance(name, str) and name and isinstance(item_json, dict)
+            },
+            "item_meta": {
+                name: {
+                    "item_type": str(item_json.get("ItemType") or ""),
+                    "value": item_json.get("Value", 0),
+                    "effect_category": str(item_json.get("effect_category") or ""),
+                    "default_target_side": str(item_json.get("default_target_side") or ""),
+                    "target_scope": str(item_json.get("target_scope") or ""),
+                    "status_ailment": item_json.get("status_ailment"),
+                }
                 for name, item_json in items_by_name.items()
                 if isinstance(name, str) and name and isinstance(item_json, dict)
             },
@@ -1032,7 +1060,7 @@ def boot_engine_for_location_with_save_json(
         base_party = base_save.get("party", []) if isinstance(base_save, dict) else []
         if isinstance(parsed_party, list):
             parsed["party"] = _align_party_to_base(base_party, parsed_party)
-    state.save = _merge_save_data(base_save, parsed)
+    state.save = _as_save_dict(_merge_save_data(base_save, parsed))
     if isinstance(parsed, dict):
         parsed_party = parsed.get("party")
         merged_party = state.save.get("party")
@@ -1055,6 +1083,8 @@ def boot_engine_for_location_with_save_json(
             state.save["item_stock"] = (
                 _merge_save_data(None, item_stock) if isinstance(item_stock, dict) else {}
             )
+    if enemy_names_json is None:
+        return boot_engine_for_location(location_group, location, seed=seed)
     return boot_engine_for_location(
         location_group, location, seed=seed, enemy_names_json=enemy_names_json
     )

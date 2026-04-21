@@ -90,6 +90,9 @@ def test_ifrit_healing_light_all_allies_is_not_split() -> None:
         "Target": "All Allies",
         "Power": 90,
         "Effect": "Restore target's HP",
+        "effect_category": "heal_hp",
+        "default_target_side": "Ally",
+        "target_scope": "all",
     }
     party = [
         SimpleNamespace(name="Refia", stats=caster_stats, state=caster_state),

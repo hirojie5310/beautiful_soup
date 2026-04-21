@@ -1,7 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { applyMagicSetupToSaveParty } from "./magic_screen.js";
+import {
+  applyFieldSpellEffect,
+  applyMagicSetupToSaveParty,
+  getSpellMeta,
+  parseSpellStatusAilments,
+} from "./magic_screen.js";
 
 test("applyMagicSetupToSaveParty writes equipped magic rows into save entries", () => {
   const saveParty = [
@@ -26,4 +31,59 @@ test("applyMagicSetupToSaveParty writes equipped magic rows into save entries", 
   assert.equal("magic" in saveParty[0], false);
   assert.deepEqual(saveParty[1].Magic.LV8, ["Bahamut", null, null]);
   assert.deepEqual(saveParty[1].Magic.LV3, [null, null, null]);
+});
+
+test("parseSpellStatusAilments splits comma-separated spell metadata", () => {
+  assert.deepEqual(
+    parseSpellStatusAilments("Blind, Confusion, Poison"),
+    ["Blind", "Confusion", "Poison"],
+  );
+});
+
+test("getSpellMeta resolves magic metadata by name", () => {
+  const meta = getSpellMeta({
+    Cure: { effect_category: "heal_hp", field_heal_hp: 50 },
+  }, "Cure");
+
+  assert.deepEqual(meta, { effect_category: "heal_hp", field_heal_hp: 50 });
+});
+
+test("applyFieldSpellEffect heals from spell metadata", () => {
+  const result = applyFieldSpellEffect(
+    { mp_levels: { "1": { current: 3, max: 3 } } },
+    { hp: 10, max_hp: 100, status_icons: [] },
+    { effect_category: "heal_hp", field_heal_hp: 50 },
+    1,
+  );
+
+  assert.equal(result.ok, true);
+  assert.equal(result.target.hp, 60);
+  assert.equal(result.caster.mp_levels["1"].current, 2);
+});
+
+test("applyFieldSpellEffect revives to full from metadata", () => {
+  const result = applyFieldSpellEffect(
+    { mp_levels: { "7": { current: 2, max: 2 } } },
+    { hp: 0, max_hp: 120, status_icons: ["ko", "poison"] },
+    { effect_category: "revive", field_revive_hp: "full", status_ailment: "KO" },
+    7,
+  );
+
+  assert.equal(result.ok, true);
+  assert.equal(result.target.hp, 120);
+  assert.deepEqual(result.target.status_icons, ["poison"]);
+  assert.equal(result.caster.mp_levels["7"].current, 1);
+});
+
+test("applyFieldSpellEffect clears statuses from metadata", () => {
+  const result = applyFieldSpellEffect(
+    { mp_levels: { "6": { current: 2, max: 2 } } },
+    { hp: 50, max_hp: 100, status_icons: ["partial_petrify", "poison"] },
+    { effect_category: "status_recovery", status_ailment: "Partial Petrification, Petrification" },
+    6,
+  );
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.target.status_icons, ["poison"]);
+  assert.equal(result.caster.mp_levels["6"].current, 1);
 });

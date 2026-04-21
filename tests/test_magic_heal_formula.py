@@ -47,6 +47,7 @@ def test_white_heal_uses_job_level_in_multiplier() -> None:
         use_expectation=True,
         target_count=4,
         spell_name="Cure",
+        spell_json={"field_heal_hp": 50},
     )
 
     # 期待値モード: base_per_hit = int(40 * 1.25) = 50
@@ -65,6 +66,7 @@ def test_curaja_single_target_is_full_heal_value() -> None:
         use_expectation=True,
         target_count=1,
         spell_name="Curaja",
+        spell_json={"field_heal_hp": 9999},
     )
     heal_multi = magic_heal_amount_to_char(
         caster=caster,
@@ -72,6 +74,7 @@ def test_curaja_single_target_is_full_heal_value() -> None:
         use_expectation=True,
         target_count=4,
         spell_name="Curaja",
+        spell_json={"field_heal_hp": 9999},
     )
 
     assert heal_single == 9999
@@ -88,6 +91,7 @@ def test_curaja_non_single_target_never_uses_full_heal_shortcut() -> None:
         use_expectation=True,
         target_count=0,
         spell_name="Curaja",
+        spell_json={"field_heal_hp": 9999},
     )
     heal_multi = magic_heal_amount_to_char(
         caster=caster,
@@ -95,6 +99,7 @@ def test_curaja_non_single_target_never_uses_full_heal_shortcut() -> None:
         use_expectation=True,
         target_count=4,
         spell_name="Curaja",
+        spell_json={"field_heal_hp": 9999},
     )
 
     assert heal_zero == heal_multi

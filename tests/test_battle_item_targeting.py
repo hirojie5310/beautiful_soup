@@ -9,8 +9,8 @@ def test_infer_battle_item_target_side_for_recovery_item() -> None:
         infer_battle_item_target_side(
             {
                 "Name": "Potion",
-                "SpellEffect": "Recovery",
-                "SpellInfo": {"Effect": "Restore target's HP"},
+                "effect_category": "heal_hp",
+                "default_target_side": "Ally",
             }
         )
         == "ally"
@@ -22,7 +22,8 @@ def test_infer_battle_item_target_side_for_attack_item() -> None:
         infer_battle_item_target_side(
             {
                 "Name": "Bomb Fragment",
-                "SpellInfo": {"Effect": "Deal fire damage"},
+                "effect_category": "damage",
+                "default_target_side": "Enemy",
             }
         )
         == "enemy"
@@ -34,8 +35,22 @@ def test_infer_battle_item_target_side_for_status_item() -> None:
         infer_battle_item_target_side(
             {
                 "Name": "Faerie Claws",
-                "SpellInfo": {"Effect": "Inflict Confusion"},
+                "effect_category": "status",
+                "default_target_side": "Enemy",
+                "status_ailment": "Confusion",
             }
         )
         == "enemy"
+    )
+
+
+def test_infer_battle_item_target_side_requires_explicit_item_metadata() -> None:
+    assert (
+        infer_battle_item_target_side(
+            {
+                "Name": "Mystery Potion",
+                "SpellInfo": {"Effect": "Restore target's HP"},
+            }
+        )
+        is None
     )

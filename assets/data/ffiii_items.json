@@ -935,6 +935,7 @@
       "default_target_side": "Ally",
       "target_scope": "one",
       "effect_category": "status_recovery",
+      "status_ailment": "Partial Petrification, Petrification",
       "SpellInfo": {
         "Effect": "Cure Petrification and Partial Petrification",
         "Element": null,
@@ -1063,6 +1064,7 @@
       "default_target_side": "Ally",
       "target_scope": "one",
       "effect_category": "status_recovery",
+      "status_ailment": "Toad",
       "SpellInfo": {
         "Effect": "Cure Toad",
         "Element": "Recovery",
@@ -1138,6 +1140,7 @@
       "default_target_side": "Ally",
       "target_scope": "one",
       "effect_category": "status_recovery",
+      "status_ailment": "Silence",
       "SpellInfo": {
         "Effect": "Cure Silence",
         "Element": "Recovery",
@@ -1235,6 +1238,7 @@
       "default_target_side": "Any",
       "target_scope": "one",
       "effect_category": "status_toggle",
+      "status_ailment": "Mini",
       "SpellInfo": {
         "Effect": "Cure or inflict Mini",
         "Element": "Recovery",
@@ -1310,6 +1314,7 @@
       "default_target_side": "Ally",
       "target_scope": "one",
       "effect_category": "status_recovery",
+      "status_ailment": "Blind",
       "SpellInfo": {
         "Effect": "Cure Blind",
         "Element": null,
@@ -1424,6 +1429,7 @@
       "default_target_side": "Ally",
       "target_scope": "one",
       "effect_category": "status_recovery",
+      "status_ailment": "Poison",
       "SpellInfo": {
         "Effect": "Cure Poison",
         "Element": null,
@@ -2427,6 +2433,7 @@
       "default_target_side": "Enemy",
       "target_scope": "one",
       "effect_category": "status",
+      "status_ailment": "Confusion",
       "SpellInfo": {
         "Effect": "Inflict Confusion",
         "Element": null,
@@ -2660,6 +2667,7 @@
       "default_target_side": "Enemy",
       "target_scope": "one",
       "effect_category": "status",
+      "status_ailment": "KO",
       "SpellInfo": {
         "Effect": "Inflict KO",
         "Element": null,
@@ -2710,6 +2718,7 @@
       "default_target_side": "Enemy",
       "target_scope": "one",
       "effect_category": "status",
+      "status_ailment": "KO",
       "SpellInfo": {
         "Effect": "Teleport to dungeon exit, or inflict KO in battle",
         "Element": null,
@@ -2772,6 +2781,7 @@
       "default_target_side": "Enemy",
       "target_scope": "one",
       "effect_category": "status",
+      "status_ailment": "KO",
       "SpellInfo": {
         "Effect": "Inflict KO",
         "Element": null,
@@ -2986,6 +2996,7 @@
       "default_target_side": "Enemy",
       "target_scope": "one",
       "effect_category": "status",
+      "status_ailment": "Paralysis",
       "SpellInfo": {
         "Effect": "Inflict Paralysis",
         "Element": null,
@@ -3084,6 +3095,7 @@
       "default_target_side": "Enemy",
       "target_scope": "one",
       "effect_category": "status",
+      "status_ailment": "Sleep",
       "SpellInfo": {
         "Effect": "Inflict Sleep",
         "Element": null,

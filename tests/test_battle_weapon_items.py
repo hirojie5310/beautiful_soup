@@ -7,6 +7,7 @@ from combat.battle_items import (
     build_battle_item_list,
     build_weapon_spell_item_definition,
 )
+from combat.item_effects import spell_from_item
 from combat.models import BattleActorState
 from combat.turn_logic import run_character_turn
 
@@ -126,3 +127,25 @@ def test_weapon_spell_item_is_not_consumed_and_uses_caster_intelligence():
     assert save_low["inventory"]["Weapon"]["Fire Staff"] == 1
     assert save_high["inventory"]["Weapon"]["Fire Staff"] == 1
     assert high_damage > low_damage
+
+
+def test_weapon_spell_item_spellinfo_uses_explicit_element_and_type_metadata():
+    aero_knife = build_weapon_spell_item_definition(
+        {"name": "Air Knife", "SpellCast": "Aero"},
+        {
+            "Aero": {
+                "name": "Aero",
+                "Type": "White Magic",
+                "Element": "Air",
+                "BasePower": 45,
+                "BaseAccuracy": 1.0,
+                "effect_category": "damage",
+            }
+        },
+    )
+
+    assert aero_knife is not None
+    spell = spell_from_item(aero_knife)
+
+    assert spell.elements == ["air"]
+    assert spell.magic_type == "white"

@@ -13,17 +13,6 @@ const MODES = [
   { key: "remove", label: "はずす" },
   { key: "swap", label: "こうかん" },
 ];
-const HEAL_SPELL_AMOUNT = { Cure: 50, Cura: 150, Curaga: 400, Curaja: 9999 };
-const RAISE_SPELLS = new Set(["Raise", "Arise"]);
-const STATUS_SPELL_CLEAR = {
-  Poisona: ["poison"],
-  Blindna: ["blind"],
-  Stona: ["petrify", "petrification", "partial_petrify", "partial petrification"],
-};
-const ESUNA_CLEAR = [
-  "poison", "blind", "mini", "silence", "toad", "petrify", "petrification",
-  "partial_petrify", "partial petrification", "confusion", "sleep", "paralyze", "paralysis",
-];
 const STATUS_EFFECT_KEY_BY_ICON = {
   poison: "Poison",
   blind: "Blind",
@@ -38,13 +27,79 @@ const STATUS_EFFECT_KEY_BY_ICON = {
   paralysis: "Paralysis",
   paralyze: "Paralysis",
   "partial petrification": "Partial Petrification",
+  "partial petrify": "Partial Petrification",
   partial_petrify: "Partial Petrification",
 };
 
 function asArray(v) { return Array.isArray(v) ? v : []; }
 function asObj(v) { return v && typeof v === "object" ? v : {}; }
 function normalizeStatusText(value) { return String(value || "").trim().toLowerCase().replace(/[_-]/g, " "); }
+function normalizeMetaKey(value) { return String(value || "").trim().toLowerCase(); }
 function clone(value) { return typeof structuredClone === "function" ? structuredClone(value) : JSON.parse(JSON.stringify(value)); }
+
+function canonicalStatusKey(value) {
+  const normalized = normalizeStatusText(value);
+  const mapped = STATUS_EFFECT_KEY_BY_ICON[normalized];
+  return normalizeStatusText(mapped || normalized);
+}
+
+export function parseSpellStatusAilments(statusAilment) {
+  if (Array.isArray(statusAilment)) {
+    return statusAilment.map((value) => String(value || "").trim()).filter(Boolean);
+  }
+  if (typeof statusAilment !== "string") return [];
+  return statusAilment.split(",").map((value) => value.trim()).filter(Boolean);
+}
+
+export function getSpellMeta(metaByName, spellName) {
+  return asObj(metaByName)?.[spellName] || null;
+}
+
+export function applyFieldSpellEffect(caster, target, spellMeta, selectedLevel) {
+  const meta = asObj(spellMeta);
+  const effectCategory = normalizeMetaKey(meta.effect_category);
+  const lvKey = String(selectedLevel);
+  const lvRow = asObj(asObj(caster?.mp_levels)[lvKey]);
+  const mpCurrent = Number(lvRow?.current ?? 0);
+  if (mpCurrent < 1) return { ok: false, message: "MPがたりません。" };
+
+  const targetHp = Number(target?.hp ?? 0);
+  const targetMax = Number(target?.max_hp ?? 0);
+  const targetIcons = asArray(target?.status_icons).map((row) => String(row));
+  let nextTarget = { ...target };
+  let changed = false;
+
+  if (effectCategory === "heal_hp") {
+    if (targetHp <= 0 || targetHp >= targetMax) return { ok: false, message: "この対象にはこうかがありません。" };
+    const heal = Number(meta.field_heal_hp || 0);
+    if (heal <= 0) return { ok: false, message: "フィールドではつかえないまほうです。" };
+    nextTarget.hp = heal >= 9999 ? targetMax : Math.min(targetMax, targetHp + heal);
+    changed = true;
+  } else if (effectCategory === "revive") {
+    const isKo = targetHp <= 0 || targetIcons.some((v) => normalizeStatusText(v) === "ko");
+    if (!isKo) return { ok: false, message: "この対象にはこうかがありません。" };
+    nextTarget.hp = normalizeMetaKey(meta.field_revive_hp) === "full"
+      ? targetMax
+      : Math.max(1, Math.floor(targetMax / 2));
+    const removeSet = new Set(parseSpellStatusAilments(meta.status_ailment).map((key) => canonicalStatusKey(key)));
+    removeSet.add("ko");
+    nextTarget.status_icons = targetIcons.filter((value) => !removeSet.has(canonicalStatusKey(value)));
+    changed = true;
+  } else if (effectCategory === "status_recovery") {
+    const removeSet = new Set(parseSpellStatusAilments(meta.status_ailment).map((key) => canonicalStatusKey(key)));
+    if (!removeSet.size) return { ok: false, message: "フィールドではつかえないまほうです。" };
+    const nextIcons = targetIcons.filter((value) => !removeSet.has(canonicalStatusKey(value)));
+    if (nextIcons.length === targetIcons.length) return { ok: false, message: "この対象にはこうかがありません。" };
+    nextTarget.status_icons = nextIcons;
+    changed = true;
+  } else {
+    return { ok: false, message: "フィールドではつかえないまほうです。" };
+  }
+
+  if (!changed) return { ok: false, message: "この対象にはこうかがありません。" };
+  const nextCaster = { ...caster, mp_levels: { ...asObj(caster?.mp_levels), [lvKey]: { ...lvRow, current: mpCurrent - 1 } } };
+  return { ok: true, caster: nextCaster, target: nextTarget };
+}
 
 function findSavePartyIndex(saveParty, member, fallbackIndex) {
   const wanted = memberIdentityKeys(member, fallbackIndex);
@@ -59,7 +114,8 @@ function findSavePartyIndex(saveParty, member, fallbackIndex) {
 export function applyMagicSetupToSaveParty(saveParty, equippedByMember, partyMembers = []) {
   const party = asArray(saveParty);
   const equipped = asArray(equippedByMember);
-  asArray(partyMembers).forEach((member, memberIndex) => {
+  const members = asArray(partyMembers).length ? asArray(partyMembers) : party;
+  members.forEach((member, memberIndex) => {
     const saveIndex = findSavePartyIndex(party, member, memberIndex);
     const entry = party[saveIndex];
     if (!entry || typeof entry !== "object") return;
@@ -213,52 +269,14 @@ export async function mountScreen({ mountNode, store, navigate }) {
     if (!raw) return "（空）";
     return `${spellTypeSymbol(metaByName?.[raw] || {})}${raw}`;
   }
-  function removeStatuses(member, keys) {
-    const normalized = new Set(keys.map((k) => normalizeStatusText(k)));
-    const before = asArray(member?.status_icons);
-    const after = before.filter((value) => !normalized.has(normalizeStatusText(value)));
-    return { changed: after.length !== before.length, icons: after };
-  }
-
   function applyFieldSpell(caster, target, spellName) {
     const s = String(spellName || "");
     if (!s || !caster || !target) return { ok: false, message: "対象を選んでください。" };
-    const lvRow = asObj(asObj(caster?.mp_levels)[String(selectedLevel)]);
-    const mpCurrent = Number(lvRow?.current ?? 0);
-    if (mpCurrent < 1) return { ok: false, message: "MPがたりません。" };
-    const targetHp = Number(target?.hp ?? 0);
-    const targetMax = Number(target?.max_hp ?? 0);
-    const targetIcons = asArray(target?.status_icons).map((row) => String(row));
-    let nextTarget = { ...target };
-    let changed = false;
-    if (Object.prototype.hasOwnProperty.call(HEAL_SPELL_AMOUNT, s)) {
-      if (targetHp <= 0 || targetHp >= targetMax) return { ok: false, message: "この対象にはこうかがありません。" };
-      const heal = Number(HEAL_SPELL_AMOUNT[s] || 0);
-      nextTarget.hp = heal >= 9999 ? targetMax : Math.min(targetMax, targetHp + heal);
-      changed = true;
-    } else if (RAISE_SPELLS.has(s)) {
-      const isKo = targetHp <= 0 || targetIcons.some((v) => normalizeStatusText(v) === "ko");
-      if (!isKo) return { ok: false, message: "この対象にはこうかがありません。" };
-      nextTarget.hp = s === "Arise" ? targetMax : Math.max(1, Math.floor(targetMax / 2));
-      const clean = removeStatuses(nextTarget, ["ko"]);
-      nextTarget.status_icons = clean.icons;
-      changed = true;
-    } else if (Object.prototype.hasOwnProperty.call(STATUS_SPELL_CLEAR, s)) {
-      const clean = removeStatuses(nextTarget, STATUS_SPELL_CLEAR[s]);
-      if (!clean.changed) return { ok: false, message: "この対象にはこうかがありません。" };
-      nextTarget.status_icons = clean.icons;
-      changed = true;
-    } else if (s === "Esuna") {
-      const clean = removeStatuses(nextTarget, ESUNA_CLEAR);
-      if (!clean.changed) return { ok: false, message: "この対象にはこうかがありません。" };
-      nextTarget.status_icons = clean.icons;
-      changed = true;
-    } else {
-      return { ok: false, message: "フィールドではつかえないまほうです。" };
-    }
-    if (!changed) return { ok: false, message: "この対象にはこうかがありません。" };
-    const nextCaster = { ...caster, mp_levels: { ...asObj(caster?.mp_levels), [String(selectedLevel)]: { ...lvRow, current: mpCurrent - 1 } } };
-    return { ok: true, caster: nextCaster, target: nextTarget, message: `${s} をつかいました。` };
+    const metaByName = store.getState().menuState?.magic_spell_meta_by_name || store.getState().menuState?.magicMetaByName;
+    const spellMeta = getSpellMeta(metaByName, s);
+    const result = applyFieldSpellEffect(caster, target, spellMeta, selectedLevel);
+    if (!result.ok) return result;
+    return { ...result, message: `${s} をつかいました。` };
   }
 
   function executeModeAction(row) {

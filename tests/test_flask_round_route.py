@@ -52,13 +52,14 @@ def _build_app(monkeypatch, *, expected_actions: int = 4):
                         "Potion": {
                             "Name": "Potion",
                             "ItemType": "Anywhere",
-                            "SpellEffect": "Recovery",
-                            "SpellInfo": {"Effect": "Restore target's HP"},
+                            "effect_category": "heal_hp",
+                            "default_target_side": "Ally",
                         },
                         "Bomb Fragment": {
                             "Name": "Bomb Fragment",
                             "ItemType": "Combat",
-                            "SpellInfo": {"Effect": "Deal fire damage"},
+                            "effect_category": "damage",
+                            "default_target_side": "Enemy",
                         },
                         "Gysahl Greens": {
                             "Name": "Gysahl Greens",
@@ -136,7 +137,15 @@ def test_root_page_renders_html(monkeypatch):
     assert '"jump_target_index": null' in body
     assert "magicSpellMetaJson" in body
     assert "itemBattleMetaJson" in body
-    assert '"Potion":{"target_side":"ally"}' in body.replace(" ", "")
+
+    item_meta_match = re.search(
+        r'<script id="itemBattleMetaJson" type="application/json">(.*?)</script>',
+        body,
+        re.S,
+    )
+    assert item_meta_match is not None
+    item_meta_payload = json.loads(item_meta_match.group(1))
+    assert item_meta_payload["Potion"]["target_side"] == "ally"
 
     match = re.search(
         r'<script id="commandCandidatesJson" type="application/json">(.*?)</script>',

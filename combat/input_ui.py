@@ -3,8 +3,8 @@
 
 # normalize_battle_command	バトルコマンド文字列をBattleKindに正規化
 # choose_magic	Lv別の魔法一覧を表示し、ユーザーに番号入力で魔法を選ばせて選択された魔法名を返す
-# categorize_anywhere_item	アイテムのEffectテキストからキーワードを判定し、Anywhereアイテムをカテゴリ名に割り振る。
-# categorize_combat_item	アイテムのEffectテキストからキーワードを判定し、Combatアイテムをカテゴリ名に割り振る。
+# categorize_anywhere_item	アイテムメタからAnywhereアイテムをカテゴリ名に割り振る。
+# categorize_combat_item	アイテムメタからCombatアイテムをカテゴリ名に割り振る。
 # build_grouped_item_menu	Anywhere/Combat別、細分別に表示順のアイテム名リスト（番号→名前対応用）を返す。
 # choose_item	効果別にグループ化されたアイテムメニューを表示し、ユーザーに番号で選ばせて選択されたアイテム名を返す
 # ask_action_for_member	戦闘コマンドをインタラクティブに入力させてPlannedActionを組み立てて返す関数
@@ -106,21 +106,21 @@ def choose_magic(
 
 
 def categorize_anywhere_item(effect_text: str) -> str:
-    e = normalize_text_basic(effect_text)
-    if "revive from ko" in e:
+    effect_category = normalize_text_basic(effect_text)
+    if effect_category == "revive":
         return "Revive"
-    if "cure " in e:
+    if effect_category == "status_recovery":
         return "Cure"
-    if "restore" in e:
+    if effect_category in {"heal_hp", "heal_full"}:
         return "Restore"
     return "Other"
 
 
 def categorize_combat_item(effect_text: str) -> str:
-    e = normalize_text_basic(effect_text)
-    if "deal" in e and "damage" in e:
+    effect_category = normalize_text_basic(effect_text)
+    if effect_category in {"damage", "drain"}:
         return "Damage"
-    if "inflict " in e:
+    if effect_category == "status":
         return "Inflict"
     return "Support"
 
@@ -137,15 +137,14 @@ def build_grouped_item_menu(
             continue
 
         item_json = items_by_name.get(name, {})
-        spell_info = item_json.get("SpellInfo") or {}
-        effect_text = spell_info.get("Effect") or ""
+        effect_category = item_json.get("effect_category") or ""
 
         t = normalize_text_basic(itype or "")
         if t == "anywhere":
-            cat = categorize_anywhere_item(effect_text)
+            cat = categorize_anywhere_item(effect_category)
             anywhere_buckets[cat].append((name, qty))
         elif t == "combat":
-            cat = categorize_combat_item(effect_text)
+            cat = categorize_combat_item(effect_category)
             combat_buckets[cat].append((name, qty))
         else:
             anywhere_buckets["Other"].append((name, qty))

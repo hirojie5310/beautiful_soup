@@ -39,7 +39,14 @@ def make_caster(*, level: int, mind: int = 40) -> FinalCharacterStats:
 
 
 def test_raze_fails_when_target_level_meets_ff3_threshold():
-    spell_json = {"Name": "Raze", "BaseAccuracy": 0.8, "Effect": "Inflict KO"}
+    spell_json = {
+        "Name": "Raze",
+        "BaseAccuracy": 0.8,
+        "Effect": "Inflict KO",
+        "effect_category": "status",
+        "instant_ko_rule": "raze",
+        "status_ailment": "KO",
+    }
     enemy_state = BattleActorState(hp=999, max_hp=999)
     enemy_json = {"Level": 15, "StatusAilmentVulnerability": {"Immune": []}}
     logs = []
@@ -61,7 +68,14 @@ def test_raze_fails_when_target_level_meets_ff3_threshold():
 
 
 def test_raze_can_hit_when_target_level_is_below_ff3_threshold():
-    spell_json = {"Name": "Raze", "BaseAccuracy": 1.0, "Effect": "Inflict KO"}
+    spell_json = {
+        "Name": "Raze",
+        "BaseAccuracy": 1.0,
+        "Effect": "Inflict KO",
+        "effect_category": "status",
+        "instant_ko_rule": "raze",
+        "status_ailment": "KO",
+    }
     enemy_state = BattleActorState(hp=500, max_hp=500)
     enemy_json = {"Level": 14, "StatusAilmentVulnerability": {"Immune": []}}
     logs = []
@@ -80,3 +94,23 @@ def test_raze_can_hit_when_target_level_is_below_ff3_threshold():
     assert enemy_state.hp == 0
     assert Status.KO in enemy_state.statuses
     assert any("《Raze》の効果で倒れた" in line for line in logs)
+
+
+def test_inflict_text_without_status_metadata_is_not_treated_as_status_spell():
+    enemy_state = BattleActorState(hp=500, max_hp=500)
+    enemy_json = {"Level": 14, "StatusAilmentVulnerability": {"Immune": []}}
+    logs = []
+
+    handled = apply_status_spell_to_enemy(
+        spell_json={"Name": "Mystery Hex", "BaseAccuracy": 1.0, "Effect": "Inflict KO"},
+        enemy_state=enemy_state,
+        enemy_json=enemy_json,
+        enemy_name="Garuda",
+        rng=random.Random(0),
+        logs=logs,
+        caster_stats=make_caster(level=20),
+    )
+
+    assert handled is False
+    assert enemy_state.hp == 500
+    assert Status.KO not in enemy_state.statuses

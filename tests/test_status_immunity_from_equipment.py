@@ -61,16 +61,23 @@ def test_equipment_status_immunity_blocks_enemy_status_spell() -> None:
     assert any("無効" in line for line in logs)
 
 
-def test_equipment_ko_immunity_blocks_enemy_erase() -> None:
-    char_stats = make_char_stats(status_immunities=("KO",))
+def test_enemy_erase_dispels_character_buffs() -> None:
+    char_stats = make_char_stats()
+    char_stats.haste_power_bonus = 12
+    char_stats.haste_multiplier_bonus = 3
+    char_stats.protect_defense_bonus = 8
+    char_stats.protect_magic_defense_bonus = 8
+    char_stats.defense += 8
+    char_stats.magic_defense += 8
     char_state = BattleActorState(hp=300, max_hp=300)
+    char_state.reflect_charges = 1
     logs: list[str] = []
 
     handled = apply_status_spell_to_char(
         spell_json={
             "Name": "Erase",
             "BaseAccuracy": 1.0,
-            "AttackerLevel": 99,
+            "dispel_effects": "Protect, Haste, Reflect",
         },
         char_state=char_state,
         char_stats=char_stats,
@@ -80,6 +87,12 @@ def test_equipment_ko_immunity_blocks_enemy_erase() -> None:
     )
 
     assert handled is True
-    assert Status.KO not in char_state.statuses
+    assert char_stats.haste_power_bonus == 0
+    assert char_stats.haste_multiplier_bonus == 0
+    assert char_stats.protect_defense_bonus == 0
+    assert char_stats.protect_magic_defense_bonus == 0
+    assert char_stats.defense == 1
+    assert char_stats.magic_defense == 1
+    assert char_state.reflect_charges == 0
     assert char_state.hp == 300
-    assert any("Erase" in line and "無効" in line for line in logs)
+    assert any("Erase" in line and "解除" in line for line in logs)

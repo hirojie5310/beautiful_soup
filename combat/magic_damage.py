@@ -38,7 +38,7 @@ from combat.elements import (
 )
 from combat.elements import parse_elements
 from combat.logging import log_damage
-from combat.spell_metadata import spell_effect_category, spell_display_name
+from combat.spell_metadata import spell_effect_category
 from utils.text_normalize import normalize_text_basic
 
 
@@ -122,43 +122,6 @@ def healing_spell_kind(spell_json: Dict[str, Any]) -> str | None:
     if effect_category == "reflect":
         return "reflect"
 
-    effect = normalize_text_basic(spell_json.get("Effect") or "")
-    name = normalize_text_basic(spell_display_name(spell_json))
-
-    # --- HP回復 ---
-    if "restore target's hp" in effect:
-        return "hp"
-
-    # ★ 召喚「Ifrit: Healing Light」（Effect が無い回復系）
-    if "healing light" in name:
-        return "hp"
-
-    # --- 状態回復 ---
-    if effect.startswith("cure"):
-        return "status"
-
-    # --- 蘇生 ---
-    if effect.startswith("revive"):
-        return "revive"
-
-    # 防御アップ（Protect）
-    if "enhance defense and magic defense" in effect or name == "protect":
-        return "protect"
-
-    # ヘイスト（Haste）
-    # 召喚「Bahamut: Aura」は実態として味方全体バフ（攻撃力/攻撃回数強化）なので
-    # Haste 系として扱う。
-    if (
-        "enhance accuracy and attack multiplier" in effect
-        or name == "haste"
-        or "bahamut: aura" in name
-    ):
-        return "haste"
-
-    # Reflect（Wall）
-    if "grant reflect" in effect or name == "reflect":
-        return "reflect"
-
     return None
 
 
@@ -171,14 +134,18 @@ def magic_heal_amount_to_char(
     blind: bool = False,
     target_count: int = 1,
     spell_name: str = "",
+    spell_json: Optional[Dict[str, Any]] = None,
 ) -> int:
     """
     回復白魔法の回復量を計算する簡易関数。
     攻撃魔法の式を流用し、相手側の魔防/抵抗は無視。
     """
-    # Curaja(Cure4) は単体対象時にのみ全回復（実装上は 9999 固定値）
-    if normalize_text_basic(spell_name) == "curaja" and target_count == 1:
-        return 9999
+    # 単体対象時のみ全回復になる回復魔法は、データ側の field_heal_hp で表現する。
+    field_heal_hp = 0
+    if isinstance(spell_json, dict):
+        field_heal_hp = int(spell_json.get("field_heal_hp", 0) or 0)
+    if field_heal_hp >= 9999 and target_count == 1:
+        return field_heal_hp
 
     magic_power = _calc_magic_power(caster, spell)
     magic_mult = _calc_magic_multiplier(caster, spell)

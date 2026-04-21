@@ -2,6 +2,7 @@
 from random import Random
 from types import SimpleNamespace
 
+from combat.enums import Status
 from combat.models import (
     BattleActorState,
     FinalCharacterStats,
@@ -79,6 +80,9 @@ def test_curaja_single_target_fully_heals_selected_ally() -> None:
         "Level": 7,
         "Target": "One/All Allies",
         "Effect": "Restore target's HP",
+        "field_heal_hp": 9999,
+        "target_scope": "one_or_all",
+        "default_target_side": "Any",
     }
     party = [
         SimpleNamespace(name="Refia", stats=caster_stats, state=caster_state),
@@ -133,6 +137,9 @@ def test_curaja_multi_target_uses_normal_heal_route() -> None:
         "Level": 7,
         "Target": "One/All Allies",
         "Effect": "Restore target's HP",
+        "field_heal_hp": 9999,
+        "target_scope": "one_or_all",
+        "default_target_side": "Any",
     }
     party = [
         SimpleNamespace(name="Refia", stats=caster_stats, state=caster_state),
@@ -201,6 +208,7 @@ def test_single_target_heal_log_displays_spell_amount_even_when_capped() -> None
         blind=False,
         target_count=1,
         spell_name="Cure",
+        spell_json=spell_json,
     )
     logs: list[str] = []
 
@@ -252,6 +260,9 @@ def test_multi_target_heal_log_displays_spell_amount_even_when_capped() -> None:
         "Level": 7,
         "Target": "One/All Allies",
         "Effect": "Restore target's HP",
+        "field_heal_hp": 9999,
+        "target_scope": "one_or_all",
+        "default_target_side": "Any",
     }
     party = [
         SimpleNamespace(name="Refia", stats=caster_stats, state=caster_state),
@@ -267,6 +278,7 @@ def test_multi_target_heal_log_displays_spell_amount_even_when_capped() -> None:
         blind=False,
         target_count=total_targets,
         spell_name="Curaja",
+        spell_json=spell_json,
     )
     per_target_heal = int(max(0, expected_heal) / total_targets)
     logs: list[str] = []
@@ -304,3 +316,117 @@ def test_multi_target_heal_log_displays_spell_amount_even_when_capped() -> None:
         in line
         for line in logs
     )
+
+
+def test_raise_uses_field_revive_hp_metadata_for_partial_revive() -> None:
+    caster_stats = _char_stats(max_hp=9999)
+    target_stats = _char_stats(max_hp=1800)
+    enemy_stats = _enemy_stats()
+    caster_state = BattleActorState(hp=1500, max_hp=9999)
+    caster_state.mp_pool[5] = 1
+    caster_state.max_mp_pool[5] = 1
+    target_state = BattleActorState(hp=0, max_hp=1800)
+    target_state.statuses.add(Status.KO)
+    enemy_state = BattleActorState(hp=500, max_hp=500)
+    raise_spell = SpellInfo(power=1, accuracy_percent=15, magic_type="white", elements=[])
+    spell_json = {
+        "Name": "Raise",
+        "Type": "White Magic",
+        "Level": 5,
+        "Effect": "stale legacy text",
+        "effect_category": "revive",
+        "field_revive_hp": "half",
+        "status_ailment": "KO",
+        "target_scope": "one",
+        "default_target_side": "Ally",
+    }
+    party = [
+        SimpleNamespace(name="Refia", stats=caster_stats, state=caster_state),
+        SimpleNamespace(name="Ingus", stats=target_stats, state=target_state),
+    ]
+    logs: list[str] = []
+
+    damage, result = run_character_turn(
+        char_name="Refia",
+        enemy_name="Goblin",
+        char_stats=caster_stats,
+        enemy_stats=enemy_stats,
+        enemy_json={},
+        char_state=caster_state,
+        enemy_state=enemy_state,
+        char_attack_kind="magic",
+        char_battle_command="Magic",
+        char_weapon_hand="main",
+        char_spell=raise_spell,
+        char_spell_json=spell_json,
+        char_spell_healing_type="revive",
+        char_spell_name="Raise",
+        char_item=None,
+        logs=logs,
+        rng=Random(0),
+        target_side="ally",
+        target_index=1,
+        party_members=party,
+    )
+
+    assert damage == 0
+    assert result is None
+    assert target_state.hp == 360
+    assert Status.KO not in target_state.statuses
+
+
+def test_arise_uses_field_revive_hp_metadata_for_full_revive() -> None:
+    caster_stats = _char_stats(max_hp=9999)
+    target_stats = _char_stats(max_hp=1800)
+    enemy_stats = _enemy_stats()
+    caster_state = BattleActorState(hp=1500, max_hp=9999)
+    caster_state.mp_pool[8] = 1
+    caster_state.max_mp_pool[8] = 1
+    target_state = BattleActorState(hp=0, max_hp=1800)
+    target_state.statuses.add(Status.KO)
+    enemy_state = BattleActorState(hp=500, max_hp=500)
+    arise_spell = SpellInfo(power=255, accuracy_percent=100, magic_type="white", elements=[])
+    spell_json = {
+        "Name": "Arise",
+        "Type": "White Magic",
+        "Level": 8,
+        "Effect": "stale legacy text",
+        "effect_category": "revive",
+        "field_revive_hp": "full",
+        "status_ailment": "KO",
+        "target_scope": "one",
+        "default_target_side": "Ally",
+    }
+    party = [
+        SimpleNamespace(name="Refia", stats=caster_stats, state=caster_state),
+        SimpleNamespace(name="Ingus", stats=target_stats, state=target_state),
+    ]
+    logs: list[str] = []
+
+    damage, result = run_character_turn(
+        char_name="Refia",
+        enemy_name="Goblin",
+        char_stats=caster_stats,
+        enemy_stats=enemy_stats,
+        enemy_json={},
+        char_state=caster_state,
+        enemy_state=enemy_state,
+        char_attack_kind="magic",
+        char_battle_command="Magic",
+        char_weapon_hand="main",
+        char_spell=arise_spell,
+        char_spell_json=spell_json,
+        char_spell_healing_type="revive",
+        char_spell_name="Arise",
+        char_item=None,
+        logs=logs,
+        rng=Random(0),
+        target_side="ally",
+        target_index=1,
+        party_members=party,
+    )
+
+    assert damage == 0
+    assert result is None
+    assert target_state.hp == target_stats.max_hp
+    assert Status.KO not in target_state.statuses

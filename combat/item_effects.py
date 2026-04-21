@@ -28,6 +28,30 @@ from utils.text_normalize import normalize_text_basic
 # ============================================================
 
 
+def _item_effect_category(item_json: Dict[str, Any]) -> str:
+    return normalize_text_basic(item_json.get("effect_category") or "")
+
+
+def _item_status_text(item_json: Dict[str, Any]) -> str:
+    spell_info = item_json.get("SpellInfo") or {}
+    return str(
+        item_json.get("status_ailment")
+        or item_json.get("StatusAilment")
+        or item_json.get("StatusAilments")
+        or spell_info.get("status_ailment")
+        or spell_info.get("StatusAilment")
+        or spell_info.get("StatusAilments")
+        or ""
+    ).strip()
+
+
+def _item_status_list(item_json: Dict[str, Any]) -> List[str]:
+    text = _item_status_text(item_json)
+    if not text:
+        return []
+    return [normalize_text_basic(part) for part in text.split(",") if part.strip()]
+
+
 def infer_battle_item_target_side(item_json: Dict[str, Any]) -> str | None:
     """
     戦闘中のアイテムが主に向く対象を推定する。
@@ -43,7 +67,7 @@ def infer_battle_item_target_side(item_json: Dict[str, Any]) -> str | None:
     if side == "any":
         return None
 
-    effect_category = normalize_text_basic(item_json.get("effect_category") or "")
+    effect_category = _item_effect_category(item_json)
     if effect_category in {
         "heal_hp",
         "heal_full",
@@ -59,38 +83,6 @@ def infer_battle_item_target_side(item_json: Dict[str, Any]) -> str | None:
         return "enemy"
     if effect_category in {"field_utility", "status_toggle"}:
         return None
-
-    spell_info = item_json.get("SpellInfo") or {}
-    effect_text = normalize_text_basic(spell_info.get("Effect") or "")
-    spell_effect = normalize_text_basic(item_json.get("SpellEffect") or "")
-    item_name_lower = normalize_text_basic(item_json.get("Name") or "")
-
-    is_attack_item = False
-    if "deal" in effect_text and "damage" in effect_text:
-        is_attack_item = True
-    if "inflict ko" in effect_text:
-        is_attack_item = True
-    if (
-        "absorb hp" in effect_text
-        or spell_effect == "drain"
-        or "lilith's kiss" in item_name_lower
-    ):
-        is_attack_item = True
-
-    if is_attack_item:
-        return "enemy"
-
-    if "inflict " in effect_text:
-        return "enemy"
-
-    if (
-        "restore target's hp" in effect_text
-        or "restore target to full hp and mp" in effect_text
-        or "revive from ko" in effect_text
-        or "grant reflect" in effect_text
-        or spell_effect in {"recovery", "raise", "reflect", "haste", "protect"}
-    ):
-        return "ally"
 
     return None
 
@@ -124,7 +116,8 @@ def apply_item_effect_to_actor(
         return
 
     spell_info = item_json.get("SpellInfo") or {}
-    effect_text = normalize_text_basic(spell_info.get("Effect") or "")
+    effect_category = _item_effect_category(item_json)
+    item_statuses = _item_status_list(item_json)
     value = int(item_json.get("Value", 0) or 0)
 
     # 既に戦闘不能（HP<=0）の場合、HP回復系の扱いをどうするかは好みだが、
@@ -137,14 +130,7 @@ def apply_item_effect_to_actor(
     #    SpellEffect: "Haste"
     #    Multiplier は 3 で固定
     # ------------------------------------------
-    name_lower = normalize_text_basic(item_json.get("Name") or "")
-    spell_effect = normalize_text_basic(item_json.get("SpellEffect") or "")
-
-    is_haste_item = (
-        "enhance accuracy and attack multiplier" in effect_text
-        or spell_effect == "haste"
-        or name_lower == "bacchus's cider"
-    )
+    is_haste_item = effect_category == "buff_attack"
 
     if is_haste_item:
         # ステータス情報が無いと攻撃力・攻撃回数をいじれないので念のため
@@ -208,11 +194,7 @@ def apply_item_effect_to_actor(
     #    SpellEffect: "Protect"
     #    Multiplier は 3 で固定（※現状は未使用）
     # ------------------------------------------
-    is_protect_item = (
-        "enhance defense and magic defense" in effect_text
-        or spell_effect == "protect"
-        or name_lower == "turtle shell"
-    )
+    is_protect_item = effect_category == "buff_defense"
 
     if is_protect_item:
         # ステータス情報が無いと防御をいじれないので念のため
@@ -261,7 +243,7 @@ def apply_item_effect_to_actor(
     # ------------------------------------------
     # 1) HP 回復系 ("Restore target's HP")
     # ------------------------------------------
-    if "restore target's hp" in effect_text:
+    if effect_category == "heal_hp":
         if is_ko:
             logs.append(f"{prefix}{target_name}は戦闘不能のため効果がなかった…")
             return
@@ -286,7 +268,7 @@ def apply_item_effect_to_actor(
     # 2) エリクサー系 ("Restore target to full HP and MP")
     #    ※ MPの最大値管理をまだしていないので、ここでは HP のみ最大まで回復。
     # ------------------------------------------
-    if "restore target to full hp and mp" in effect_text:
+    if effect_category == "heal_full":
         if is_ko and max_hp is None:
             # max_hp がないと蘇生＋全快を再現しにくいので、とりあえず 1 だけ復活させる例
             target_state.hp = 1
@@ -304,7 +286,7 @@ def apply_item_effect_to_actor(
     # ------------------------------------------
     # 3) 蘇生系 ("Revive from KO")
     # ------------------------------------------
-    if "revive from ko" in effect_text:
+    if effect_category == "revive":
         if not is_ko:
             logs.append(f"{prefix}{target_name}は倒れていないので効果がなかった。")
             return
@@ -329,51 +311,36 @@ def apply_item_effect_to_actor(
     #    "Cure Poison"
     # ------------------------------------------
     cured_any = False
-    recognized_any = False  # ★ 追加：「この関数で認識している Cure かどうか」
+    recognized_any = effect_category in {"status_recovery", "status_toggle"}
 
-    if "cure poison" in effect_text:
-        recognized_any = True
-        if Status.POISON in target_state.statuses:
-            target_state.statuses.discard(Status.POISON)
-            cured_any = True
+    if recognized_any:
+        status_map = {
+            "poison": Status.POISON,
+            "blind": Status.BLIND,
+            "mini": Status.MINI,
+            "silence": Status.SILENCE,
+            "toad": Status.TOAD,
+            "confusion": Status.CONFUSION,
+            "sleep": Status.SLEEP,
+            "paralysis": Status.PARALYZE,
+            "petrification": Status.PETRIFY,
+            "partial petrification": Status.PARTIAL_PETRIFY,
+            "partial petrification (1/3)": Status.PARTIAL_PETRIFY,
+            "partial petrification (1/2)": Status.PARTIAL_PETRIFY,
+            "partial petrification (full)": Status.PETRIFY,
+        }
 
-    if "cure blind" in effect_text:
-        recognized_any = True
-        if Status.BLIND in target_state.statuses:
-            target_state.statuses.discard(Status.BLIND)
-            cured_any = True
-
-    if "cure or inflict mini" in effect_text:
-        recognized_any = True
-        if Status.MINI in target_state.statuses:
-            target_state.statuses.discard(Status.MINI)
-            cured_any = True
-
-    if "cure silence" in effect_text:
-        recognized_any = True
-        if Status.SILENCE in target_state.statuses:
-            target_state.statuses.discard(Status.SILENCE)
-            cured_any = True
-
-    if "cure toad" in effect_text:
-        recognized_any = True
-        if Status.TOAD in target_state.statuses:
-            target_state.statuses.discard(Status.TOAD)
-            cured_any = True
-
-    if "petrification" in effect_text:
-        # "Cure Petrification and Partial Petrification" をまとめて処理
-        recognized_any = True
-        if (
-            Status.PETRIFY in target_state.statuses
-            or Status.PARTIAL_PETRIFY in target_state.statuses
-        ):
-            target_state.statuses.discard(Status.PETRIFY)
-            target_state.statuses.discard(Status.PARTIAL_PETRIFY)
-            # ★ 部分石化ゲージも 0 にリセット
-            if hasattr(target_state, "partial_petrify_gauge"):
+        for ailment in item_statuses:
+            status = status_map.get(ailment)
+            if status is None:
+                continue
+            if status in target_state.statuses:
+                target_state.statuses.discard(status)
+                cured_any = True
+            if status in {Status.PARTIAL_PETRIFY, Status.PETRIFY} and hasattr(
+                target_state, "partial_petrify_gauge"
+            ):
                 target_state.partial_petrify_gauge = 0.0
-            cured_any = True
 
     if cured_any:
         logs.append(
@@ -417,38 +384,36 @@ def apply_status_item_to_enemy(
         False : この関数では扱わないアイテムだった（＝他で処理してね）
     """
     spell_info = item_json.get("SpellInfo") or {}
-    effect_text = normalize_text_basic(spell_info.get("Effect") or "")
+    effect_category = _item_effect_category(item_json)
+    ailments_list = _item_status_list(item_json)
 
-    # 今の JSON だと "Inflict Paralysis" などが入っている。
-    # 必要に応じて "inflict poison" なども増やせるようにマッピングで書いておく。
-    status_map: Dict[str, Tuple[Status, str]] = {
-        "inflict poison": (Status.POISON, "毒"),
-        "inflict blind": (Status.BLIND, "盲目"),
-        "inflict mini": (Status.MINI, "小人"),
-        "inflict silence": (Status.SILENCE, "沈黙"),
-        "inflict toad": (Status.TOAD, "カエル"),
-        "inflict petrification": (Status.PETRIFY, "石化"),
-        "inflict ko": (Status.KO, "気絶"),
-        "inflict sleep": (Status.SLEEP, "睡眠"),
-        "inflict paralysis": (Status.PARALYZE, "麻痺"),
-        "inflict partial petrification": (Status.PARTIAL_PETRIFY, "一部石化"),
-        "inflict confusion": (Status.CONFUSION, "混乱"),
-        # "inflict poison": (Status.POISON, "毒"),
-        # "inflict blind": (Status.BLIND, "暗闇"),
-        # ... 将来増やすときはここに追加
-    }
-
-    key = None
-    for k in status_map.keys():
-        if k in effect_text:
-            key = k
-            break
-
-    if key is None:
+    if effect_category not in {"status", "status_toggle"} or not ailments_list:
         # この関数の対象ではない
         return False
 
-    status_enum, status_label = status_map[key]
+    status_map: Dict[str, Tuple[Status, str]] = {
+        "poison": (Status.POISON, "毒"),
+        "blind": (Status.BLIND, "盲目"),
+        "mini": (Status.MINI, "小人"),
+        "silence": (Status.SILENCE, "沈黙"),
+        "toad": (Status.TOAD, "カエル"),
+        "petrification": (Status.PETRIFY, "石化"),
+        "ko": (Status.KO, "気絶"),
+        "sleep": (Status.SLEEP, "睡眠"),
+        "paralysis": (Status.PARALYZE, "麻痺"),
+        "partial petrification": (Status.PARTIAL_PETRIFY, "一部石化"),
+        "partial petrification (1/3)": (Status.PARTIAL_PETRIFY, "一部石化"),
+        "partial petrification (1/2)": (Status.PARTIAL_PETRIFY, "一部石化"),
+        "partial petrification (full)": (Status.PETRIFY, "石化"),
+        "confusion": (Status.CONFUSION, "混乱"),
+    }
+
+    ailment = ailments_list[0]
+    status_pair = status_map.get(ailment)
+    if status_pair is None:
+        return False
+
+    status_enum, status_label = status_pair
 
     base_acc = spell_info.get("BaseAccuracy")
     if base_acc is None:
@@ -458,10 +423,8 @@ def apply_status_item_to_enemy(
     if rng is None:
         rng = random.Random()
 
-    if "inflict partial petrification" in effect_text:
-        # どの段階か判定（アイテムJSONのEffectやNameに含まれる前提）
-        src = normalize_text_basic(effect_text + " " + str(item_json.get("Name", "")))
-        amount = partial_petrify_amount_from_name(src)
+    if ailment.startswith("partial petrification"):
+        amount = partial_petrify_amount_from_name(ailment)
 
         apply_partial_petrification(
             target_state=enemy_state,
@@ -472,6 +435,8 @@ def apply_status_item_to_enemy(
         return True
 
     enemy_state.statuses.add(status_enum)
+    if status_enum == Status.KO:
+        enemy_state.hp = 0
     logs.append(f"{enemy_name}に{status_label}が効いた！")
 
     return True
@@ -484,6 +449,7 @@ def apply_status_item_to_enemy(
 
 def spell_from_item(item_json: Dict[str, Any]) -> SpellInfo:
     spell_info = item_json.get("SpellInfo") or {}
+    weapon_spell = item_json.get("WeaponSpell") or {}
 
     # ----------------------------
     # 1) Element / Elements / Elemental を読む（共通パーサ）
@@ -492,52 +458,36 @@ def spell_from_item(item_json: Dict[str, Any]) -> SpellInfo:
         spell_info.get("Element")
         or spell_info.get("Elements")
         or spell_info.get("Elemental")  # 念のため
+        or weapon_spell.get("Element")
+        or weapon_spell.get("Elements")
     )
 
     elements: list[str] = parse_elements(elem_raw)
-
-    # ----------------------------
-    # 2) 無い場合は Effect から推定
-    # ----------------------------
-    if not elements:
-        effect_text = normalize_text_basic(spell_info.get("Effect") or "")
-        spell_effect_name = normalize_text_basic(item_json.get("SpellEffect") or "")
-        src = effect_text + " " + spell_effect_name
-
-        def has(*keys):
-            return any(k in src for k in keys)
-
-        inferred: List[str] = []
-        if has("air", "wind", "aero"):
-            inferred.append("air")  # ★ Air で統一
-        if has("ice", "blizzard"):
-            inferred.append("ice")
-        if has("fire", "fira", "firaga"):
-            inferred.append("fire")
-        if has("thunder", "lightning", "bolt", "zeus"):
-            inferred.append("lightning")
-        if has("earth", "quake"):
-            inferred.append("earth")
-        if has("holy"):
-            inferred.append("holy")
-        if has("dark"):
-            inferred.append("dark")
-        if has("recovery", "drain", "absorb hp"):
-            inferred.append("recovery")
-
-        elements = inferred
 
     # Power/Accuracy
     power = int(spell_info.get("BasePower", 0))
     base_acc = float(spell_info.get("BaseAccuracy", 1.0) or 1.0)
     acc_percent = int(round(base_acc * 100))
 
-    # Magic type（適当に black/white）
-    effect_text = normalize_text_basic(spell_info.get("Effect") or "")
-    if "deal" in effect_text and "damage" in effect_text:
+    # Magic type はデータ側の Type / MagicType / effect_category を優先する
+    magic_type_raw = normalize_text_basic(
+        spell_info.get("MagicType")
+        or weapon_spell.get("Type")
+        or item_json.get("MagicType")
+        or ""
+    )
+    if "black" in magic_type_raw:
         magic_type = "black"
-    else:
+    elif "white" in magic_type_raw:
         magic_type = "white"
+    elif "summon" in magic_type_raw:
+        magic_type = "summon"
+    else:
+        effect_category = _item_effect_category(item_json)
+        if effect_category in {"damage", "set_hp_critical", "drain"}:
+            magic_type = "black"
+        else:
+            magic_type = "white"
 
     return SpellInfo(
         power,
