@@ -56,3 +56,35 @@ export function applyEventToPlaybackStatus(
   }
   return null;
 }
+
+export function applyNamedPopupOverrides(activePopups, effects) {
+  const nextPopups = activePopups && typeof activePopups === "object"
+    ? activePopups
+    : {};
+  const rows = Array.isArray(effects) ? effects : [];
+  rows.forEach((effect) => {
+    const side = String(effect?.side || "");
+    const index = Number(effect?.index ?? -1);
+    if (!side || index < 0) return;
+    const key = `${side}:${index}`;
+    const current = nextPopups[key];
+    if (!current || typeof current !== "object") return;
+    const nextKind = String(effect?.kind || current.kind || "damage");
+    // Event-derived popups already know the actual HP delta. Do not downgrade a
+    // confirmed damage/heal popup into MISS based only on log text parsing.
+    if (
+      nextKind === "miss"
+      && ["damage", "heal", "status"].includes(String(current.kind || ""))
+    ) {
+      return;
+    }
+    nextPopups[key] = {
+      ...current,
+      kind: nextKind,
+      value: Number(effect?.value ?? current.value ?? 0),
+      text: String(effect?.text ?? current.text ?? ""),
+      statusCategory: String(effect?.statusCategory ?? current.statusCategory ?? ""),
+    };
+  });
+  return nextPopups;
+}
