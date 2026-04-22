@@ -42,13 +42,13 @@
     },
     {
       "type": "exit",
-      "name": "Alter Cave Crystal Room",
+      "name": "Ur",
       "x": 3,
       "y": 1,
-      "target_map": "Alter_Cave_Crystal_Room",
+      "target_map": "Ur",
       "target_spawn": {
-        "x": 6,
-        "y": 5
+        "x": 15,
+        "y": 29
       }
     },
     {

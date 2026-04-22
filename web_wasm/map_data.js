@@ -6,6 +6,7 @@ const MAP_MANIFEST = {
   Alter_Cave_B3: new URL("../assets/maps/Alter_Cave_B3.json", import.meta.url).href,
   Alter_Cave_B4: new URL("../assets/maps/Alter_Cave_B4.json", import.meta.url).href,
   Alter_Cave_Crystal_Room: new URL("../assets/maps/Alter_Cave_Crystal_Room.json", import.meta.url).href,
+  Ur: new URL("../assets/maps/Ur.json", import.meta.url).href,
 };
 
 const mapCache = new Map();
