@@ -30,7 +30,7 @@ function renderLayout() {
       .battle-screen .battle-stage {
         min-height: 0;
         display: grid;
-        grid-template-rows: auto;
+        grid-template-rows: minmax(0, 1fr);
       }
       .battle-screen .btn {
         border: 1px solid rgba(255,255,255,.24);
@@ -54,8 +54,8 @@ function renderLayout() {
         background-size: cover;
         background-position: center;
         display: grid;
-        grid-template-rows: auto auto;
-        align-content: start;
+        grid-template-rows: auto minmax(0, 1fr);
+        align-content: stretch;
       }
       .battle-screen .enemy-stage-head {
         display: flex;
@@ -69,9 +69,11 @@ function renderLayout() {
         font-size: .76rem;
       }
       .battle-screen .enemy-stage-body {
+        min-height: 0;
+        height: 100%;
         display: grid;
-        place-items: center;
-        padding: 6px 14px 10px;
+        align-items: stretch;
+        padding: 4px 10px 10px;
       }
       .battle-screen .party-grid {
         display: grid;
@@ -82,43 +84,40 @@ function renderLayout() {
         grid-template-columns: repeat(4, minmax(0, 1fr));
       }
       .battle-screen .enemy-grid {
-        width: min(100%, 420px);
+        width: 100%;
+        height: 100%;
         display: grid;
-        grid-template-columns: repeat(2, minmax(120px, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         grid-template-rows: repeat(2, minmax(0, 1fr));
         gap: 10px;
-        grid-auto-flow: column;
-        align-content: center;
-        justify-content: center;
+        align-content: stretch;
+        justify-content: stretch;
         justify-items: stretch;
-        margin: 0 auto;
       }
       .battle-screen .enemy-grid[data-count="1"] {
-        width: min(100%, 220px);
         grid-template-columns: minmax(0, 1fr);
         grid-template-rows: minmax(0, 1fr);
       }
       .battle-screen .enemy-grid[data-count="2"] {
-        width: min(100%, 220px);
-        grid-template-columns: minmax(0, 1fr);
-        grid-template-rows: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: minmax(0, 1fr);
       }
-      .battle-screen .enemy-grid[data-count="3"],
+      .battle-screen .enemy-grid[data-count="3"] {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-rows: minmax(0, 1fr);
+      }
       .battle-screen .enemy-grid[data-count="4"] {
-        width: min(100%, 320px);
-        grid-template-columns: repeat(2, minmax(120px, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         grid-template-rows: repeat(2, minmax(0, 1fr));
       }
       .battle-screen .enemy-grid[data-count="5"],
       .battle-screen .enemy-grid[data-count="6"] {
-        width: min(100%, 420px);
-        grid-template-columns: repeat(3, minmax(108px, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         grid-template-rows: repeat(2, minmax(0, 1fr));
         gap: 8px;
       }
       .battle-screen .enemy-grid[data-count="5"] .enemy-card,
       .battle-screen .enemy-grid[data-count="6"] .enemy-card {
-        min-height: 96px;
         padding: 6px;
       }
       .battle-screen .enemy-grid[data-count="5"] .enemy-card .name,
@@ -280,7 +279,8 @@ function renderLayout() {
       .battle-screen .enemy-card {
         position: relative;
         overflow: hidden;
-        min-height: 112px;
+        min-height: 0;
+        height: 100%;
         isolation: isolate;
         background-size: cover;
         background-position: center;
@@ -297,7 +297,7 @@ function renderLayout() {
         inset: 0;
         z-index: 1;
         pointer-events: none;
-        background: linear-gradient(180deg, rgba(3,6,19,0.46), rgba(3,6,19,0.78));
+        background: linear-gradient(180deg, rgba(3,6,19,0.72) 0%, rgba(3,6,19,0.18) 40%, rgba(3,6,19,0.82) 100%);
       }
       .battle-screen .party-face,
       .battle-screen .enemy-sprite {
@@ -310,7 +310,7 @@ function renderLayout() {
         z-index: 0;
       }
       .battle-screen .party-face { object-fit: cover; object-position: center 22%; }
-      .battle-screen .enemy-sprite { object-fit: contain; object-position: center; }
+      .battle-screen .enemy-sprite { object-fit: contain; object-position: center 58%; }
       .battle-screen .party-face-fallback,
       .battle-screen .enemy-sprite-fallback {
         position: absolute;
@@ -331,13 +331,33 @@ function renderLayout() {
         flex-direction: column;
         gap: 2px;
       }
+      .battle-screen .enemy-card-content {
+        height: 100%;
+        justify-content: space-between;
+        gap: 8px;
+      }
       .battle-screen .party-name-row { order: 1; }
       .battle-screen .party-hp-row { order: 2; }
       .battle-screen .party-hp-bar-row { order: 3; }
       .battle-screen .party-level-row { order: 4; }
       .battle-screen .party-status-icons-row { order: 5; min-height: 12px; }
+      .battle-screen .enemy-name-row { order: 1; }
+      .battle-screen .enemy-hp-wrap { order: 2; display: grid; gap: 4px; align-self: stretch; }
+      .battle-screen .enemy-hp-bar-row { display: block; }
+      .battle-screen .enemy-status-icons-row { min-height: 14px; }
       .battle-screen .name { font-weight: 700; font-size: .82rem; }
       .battle-screen .hp { font-size: .76rem; color: #89f0ac; }
+      .battle-screen .status-icon-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        align-items: center;
+      }
+      .battle-screen .status-icon {
+        width: 16px;
+        height: 16px;
+        image-rendering: pixelated;
+      }
       .battle-screen .party-card .name {
         font-size: .74rem;
         white-space: nowrap;
@@ -350,6 +370,20 @@ function renderLayout() {
       }
       .battle-screen .party-card .status {
         font-size: .64rem;
+      }
+      .battle-screen .enemy-card .name {
+        font-size: .88rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .battle-screen .enemy-card .hp {
+        font-size: .68rem;
+        color: #d6e6ff;
+      }
+      .battle-screen .enemy-card .hp-bar {
+        height: 8px;
+        background: rgba(5, 11, 25, .52);
       }
       .battle-screen .party-hp-bar-row {
         display: grid;
@@ -497,32 +531,23 @@ function renderLayout() {
           grid-template-rows: minmax(0, 1fr) minmax(248px, var(--dock-height));
         }
         .battle-screen .enemy-grid {
-          width: min(100%, 300px);
-          grid-template-columns: repeat(2, minmax(0, 144px));
-          grid-template-rows: repeat(2, minmax(0, 1fr));
-          grid-auto-flow: column;
-          justify-items: stretch;
+          gap: 8px;
         }
         .battle-screen .enemy-grid[data-count="1"] {
-          width: min(100%, 180px);
           grid-template-columns: minmax(0, 1fr);
           grid-template-rows: minmax(0, 1fr);
         }
         .battle-screen .enemy-grid[data-count="2"] {
-          width: min(100%, 172px);
-          grid-template-columns: minmax(0, 1fr);
-          grid-template-rows: repeat(2, minmax(0, 1fr));
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          grid-template-rows: minmax(0, 1fr);
         }
-        .battle-screen .enemy-grid[data-count="3"],
-        .battle-screen .enemy-grid[data-count="4"] {
-          width: min(100%, 300px);
-          grid-template-columns: repeat(2, minmax(0, 144px));
-          grid-template-rows: repeat(2, minmax(0, 1fr));
+        .battle-screen .enemy-grid[data-count="3"] {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          grid-template-rows: minmax(0, 1fr);
         }
         .battle-screen .enemy-grid[data-count="5"],
         .battle-screen .enemy-grid[data-count="6"] {
-          width: min(100%, 300px);
-          grid-template-columns: repeat(3, minmax(0, 96px));
+          grid-template-columns: repeat(3, minmax(0, 1fr));
           grid-template-rows: repeat(2, minmax(0, 1fr));
           gap: 6px;
         }
@@ -543,6 +568,9 @@ function renderLayout() {
         .battle-screen .enemy-grid[data-count="5"] .enemy-card .hp,
         .battle-screen .enemy-grid[data-count="6"] .enemy-card .hp {
           display: none;
+        }
+        .battle-screen .enemy-card .name {
+          font-size: .78rem;
         }
         .battle-screen .dock-panels {
           grid-template-columns: minmax(0, 1fr);
@@ -580,12 +608,10 @@ function renderLayout() {
           font-size: .9rem;
         }
         .battle-screen .enemy-grid {
-          gap: 8px;
+          gap: 6px;
         }
         .battle-screen .enemy-grid[data-count="5"],
         .battle-screen .enemy-grid[data-count="6"] {
-          width: min(100%, 258px);
-          grid-template-columns: repeat(3, minmax(0, 82px));
           gap: 5px;
         }
         .battle-screen .party-card,
@@ -608,6 +634,16 @@ function renderLayout() {
         .battle-screen .enemy-grid[data-count="5"] .enemy-card,
         .battle-screen .enemy-grid[data-count="6"] .enemy-card {
           min-height: 78px;
+        }
+        .battle-screen .enemy-card .name {
+          font-size: .72rem;
+        }
+        .battle-screen .enemy-card .hp-bar {
+          height: 7px;
+        }
+        .battle-screen .status-icon {
+          width: 14px;
+          height: 14px;
         }
       }
     </style>

@@ -592,15 +592,29 @@ function createEnemyCardState(idx) {
   content.className = "enemy-card-content";
 
   const nameRow = document.createElement("div");
-  nameRow.className = "name";
+  nameRow.className = "name enemy-name-row";
   content.appendChild(nameRow);
+
+  const hpWrap = document.createElement("div");
+  hpWrap.className = "enemy-hp-wrap";
 
   const hpRow = document.createElement("div");
   hpRow.className = "hp";
-  content.appendChild(hpRow);
+  hpWrap.appendChild(hpRow);
+
+  const hpBarRow = document.createElement("div");
+  hpBarRow.className = "enemy-hp-bar-row";
+  const hpBar = document.createElement("div");
+  hpBar.className = "hp-bar";
+  const hpBarFill = document.createElement("div");
+  hpBarFill.className = "hp-bar-fill";
+  hpBar.appendChild(hpBarFill);
+  hpBarRow.appendChild(hpBar);
+  hpWrap.appendChild(hpBarRow);
+  content.appendChild(hpWrap);
 
   const iconRow = document.createElement("div");
-  iconRow.className = "status-icon-row";
+  iconRow.className = "status-icon-row enemy-status-icons-row";
   content.appendChild(iconRow);
 
   card.appendChild(content);
@@ -611,7 +625,11 @@ function createEnemyCardState(idx) {
     fallback: spriteFallback,
     content,
     nameRow,
+    hpWrap,
     hpRow,
+    hpBarRow,
+    hpBar,
+    hpBarFill,
     iconRow,
     currentCandidateKey: "",
     index: idx,
@@ -788,6 +806,46 @@ function closeActionSheetToCommand() {
   rerenderAll();
 }
 
+function handleActionSheetDismiss() {
+  if (inputMode === "pick_magic" || inputMode === "pick_item") {
+    closeActionSheetToCommand();
+    return;
+  }
+  if (inputMode === "pick_side") {
+    returnToSourceSelection();
+    return;
+  }
+  if (inputMode === "pick_target") {
+    if (shouldReturnToSideSelection()) {
+      inputMode = "pick_side";
+    } else {
+      inputMode = sourceSelectionModeForDraft();
+      if (inputMode === "command") {
+        pendingActionDraft = null;
+      }
+    }
+    rerenderAll();
+  }
+}
+
+function sourceSelectionModeForDraft() {
+  if (pendingActionDraft?.kind === "magic") return "pick_magic";
+  if (pendingActionDraft?.kind === "item") return "pick_item";
+  return "command";
+}
+
+function returnToSourceSelection() {
+  inputMode = sourceSelectionModeForDraft();
+  if (inputMode === "command") {
+    pendingActionDraft = null;
+  }
+  rerenderAll();
+}
+
+function shouldReturnToSideSelection() {
+  return Boolean(pendingActionDraft?.requires_side_choice);
+}
+
 function createSheetButton(label, onClick, { disabled = false } = {}) {
   const button = document.createElement("button");
   button.className = "btn";
@@ -890,6 +948,101 @@ function renderItemActionSheet() {
       { disabled: !pyodide || battleFinished },
     ));
   });
+  actionSheetBody.appendChild(grid);
+}
+
+function renderTargetSideActionSheet() {
+  if (!actionSheetBody || !actionSheetTitle) return;
+  const actorName = currentActorName();
+  actionSheetTitle.textContent = actorName
+    ? `${actorName} の対象サイド`
+    : "対象サイドを選択";
+  actionSheetBody.innerHTML = "";
+
+  const grid = createActionSheetGrid();
+  grid.appendChild(createSheetButton("← まほう・アイテム選択にもどる", () => {
+    returnToSourceSelection();
+  }));
+  grid.appendChild(createSheetButton("敵を対象にする", () => {
+    pendingActionDraft = { ...(pendingActionDraft || {}), target_side: "enemy" };
+    inputMode = "pick_target";
+    rerenderAll();
+  }));
+  grid.appendChild(createSheetButton("味方を対象にする", () => {
+    pendingActionDraft = { ...(pendingActionDraft || {}), target_side: "ally" };
+    inputMode = "pick_target";
+    rerenderAll();
+  }));
+  actionSheetBody.appendChild(grid);
+}
+
+function renderTargetActionSheet() {
+  if (!actionSheetBody || !actionSheetTitle) return;
+  const actorName = currentActorName();
+  const side = pendingActionDraft?.target_side || "enemy";
+  const sideLabel = side === "ally" ? "味方" : "敵";
+  actionSheetTitle.textContent = actorName
+    ? `${actorName} の対象選択`
+    : `${sideLabel}対象を選択`;
+  actionSheetBody.innerHTML = "";
+
+  const grid = createActionSheetGrid();
+  const backLabel = shouldReturnToSideSelection()
+    ? "← 対象サイド選択にもどる"
+    : "← まほう・アイテム選択にもどる";
+  grid.appendChild(createSheetButton(backLabel, () => {
+    if (shouldReturnToSideSelection()) {
+      inputMode = "pick_side";
+    } else {
+      inputMode = sourceSelectionModeForDraft();
+      if (inputMode === "command") {
+        pendingActionDraft = null;
+      }
+    }
+    rerenderAll();
+  }));
+
+  const targetNorm = String(pendingActionDraft?.target_norm || "");
+  const canSelectAll = Boolean(pendingActionDraft?.can_select_all);
+  const canSelectAllForSide =
+    canSelectAll && (
+      pendingActionDraft?.kind === "item" ||
+      targetNorm === "one/all" ||
+      (side === "enemy" && targetNorm === "one/all enemies") ||
+      (side === "ally" && targetNorm === "one/all allies") ||
+      (
+        pendingActionDraft?.kind === "magic" &&
+        pendingActionDraft?.target_mode === "any" &&
+        side === "ally" &&
+        targetNorm === "one/all enemies"
+      )
+    );
+  if (canSelectAllForSide) {
+    grid.appendChild(createSheetButton(
+      side === "ally" ? "味方全体" : "敵全体",
+      () => finalizeDraftAction(0, { targetAll: true }),
+    ));
+  }
+
+  if (side === "ally") {
+    const party = Array.isArray(sessionStatus.party) ? sessionStatus.party : [];
+    party.forEach((member, idx) => {
+      grid.appendChild(createSheetButton(
+        `味方: ${member?.name || `Member ${idx + 1}`}`,
+        () => finalizeDraftAction(idx),
+      ));
+    });
+  } else {
+    const enemies = Array.isArray(sessionStatus.enemies) ? sessionStatus.enemies : [];
+    enemies.forEach((enemy, idx) => {
+      if (isOutOfBattleEnemy(enemy)) return;
+      grid.appendChild(createSheetButton(
+        `敵: ${enemy?.name || `Enemy ${idx + 1}`}`,
+        () => finalizeDraftAction(idx),
+      ));
+    });
+  }
+
   actionSheetBody.appendChild(grid);
 }
 
@@ -1303,6 +1456,7 @@ function renderEnemies() {
     cardState.card.className = `card target enemy-card${selectedClass}`;
     cardState.nameRow.textContent = String(enemy?.name ?? `Enemy ${idx + 1}`);
     cardState.hpRow.textContent = `HP ${Number(enemy?.hp ?? 0)} / ${Number(enemy?.max_hp ?? 0)}`;
+    applyHudHpBar(cardState.hpBarFill, enemy);
     syncManagedCardImage(cardState, resolveEnemyImageCandidates(enemy));
     renderStatusIcons(cardState.iconRow, enemy?.status_icons);
     clearCardOverlayLayers(cardState.card);
@@ -1324,6 +1478,12 @@ function renderCommandButtons() {
   } else if (inputMode === "pick_item") {
     setActionSheetOpen(true);
     renderItemActionSheet();
+  } else if (inputMode === "pick_side") {
+    setActionSheetOpen(true);
+    renderTargetSideActionSheet();
+  } else if (inputMode === "pick_target") {
+    setActionSheetOpen(true);
+    renderTargetActionSheet();
   } else {
     setActionSheetOpen(false);
   }
@@ -1342,93 +1502,10 @@ function renderCommandButtons() {
   }
 
   if (inputMode === "pick_side") {
-    const backBtn = document.createElement("button");
-    backBtn.className = "btn";
-    backBtn.type = "button";
-    backBtn.textContent = "← えらびなおす";
-    backBtn.addEventListener("click", () => {
-      inputMode = pendingActionDraft?.kind === "magic" ? "pick_magic" : "pick_item";
-      pendingActionDraft = null;
-      rerenderAll();
-    });
-    commandGrid.appendChild(backBtn);
-
-    ["enemy", "ally"].forEach((side) => {
-      const button = document.createElement("button");
-      button.className = "btn";
-      button.type = "button";
-      button.textContent = side === "enemy" ? "敵を対象にする" : "味方を対象にする";
-      button.addEventListener("click", () => {
-        pendingActionDraft = { ...(pendingActionDraft || {}), target_side: side };
-        inputMode = "pick_target";
-        rerenderAll();
-      });
-      commandGrid.appendChild(button);
-    });
     return;
   }
 
   if (inputMode === "pick_target") {
-    const backBtn = document.createElement("button");
-    backBtn.className = "btn";
-    backBtn.type = "button";
-    backBtn.textContent = "← えらびなおす";
-    backBtn.addEventListener("click", () => {
-      if (pendingActionDraft?.target_side === "ally" || pendingActionDraft?.target_side === "enemy") {
-        inputMode = "pick_side";
-      } else {
-        enterCommandMode();
-      }
-      rerenderAll();
-    });
-    commandGrid.appendChild(backBtn);
-
-    const side = pendingActionDraft?.target_side || "enemy";
-    const targetNorm = String(pendingActionDraft?.target_norm || "");
-    const canSelectAll = Boolean(pendingActionDraft?.can_select_all);
-    const canSelectAllForSide =
-      canSelectAll && (
-        pendingActionDraft?.kind === "item" ||
-        targetNorm === "one/all" ||
-        (side === "enemy" && targetNorm === "one/all enemies") ||
-        (side === "ally" && targetNorm === "one/all allies") ||
-        (
-          pendingActionDraft?.kind === "magic" &&
-          pendingActionDraft?.target_mode === "any" &&
-          side === "ally" &&
-          targetNorm === "one/all enemies"
-        )
-      );
-    if (canSelectAllForSide) {
-      const allButton = document.createElement("button");
-      allButton.className = "btn";
-      allButton.type = "button";
-      allButton.textContent = side === "ally" ? "味方全体" : "敵全体";
-      allButton.addEventListener("click", () => finalizeDraftAction(0, { targetAll: true }));
-      commandGrid.appendChild(allButton);
-    }
-    if (side === "ally") {
-      const party = Array.isArray(sessionStatus.party) ? sessionStatus.party : [];
-      party.forEach((member, idx) => {
-        const button = document.createElement("button");
-        button.className = "btn";
-        button.type = "button";
-        button.textContent = `味方: ${member?.name || `Member ${idx + 1}`}`;
-        button.addEventListener("click", () => finalizeDraftAction(idx));
-        commandGrid.appendChild(button);
-      });
-      return;
-    }
-    const enemies = Array.isArray(sessionStatus.enemies) ? sessionStatus.enemies : [];
-    enemies.forEach((enemy, idx) => {
-      if (isOutOfBattleEnemy(enemy)) return;
-      const button = document.createElement("button");
-      button.className = "btn";
-      button.type = "button";
-      button.textContent = `敵: ${enemy?.name || `Enemy ${idx + 1}`}`;
-      button.addEventListener("click", () => finalizeDraftAction(idx));
-      commandGrid.appendChild(button);
-    });
     return;
   }
 
@@ -2117,6 +2194,7 @@ function chooseMagic(cand) {
       target_side: "ally",
       can_select_all: canSelectAll,
       target_norm: targetNorm,
+      requires_side_choice: false,
     };
     inputMode = "pick_target";
     rerenderAll();
@@ -2130,6 +2208,7 @@ function chooseMagic(cand) {
       can_select_all: canSelectAll,
       target_norm: targetNorm,
       target_mode: mode,
+      requires_side_choice: true,
     };
     inputMode = "pick_side";
     rerenderAll();
@@ -2142,6 +2221,7 @@ function chooseMagic(cand) {
     target_side: "enemy",
     can_select_all: canSelectAll,
     target_norm: targetNorm,
+    requires_side_choice: false,
   };
   inputMode = "pick_target";
   rerenderAll();
@@ -2170,6 +2250,7 @@ function chooseItem(cand) {
     command: "Item",
     item_name: itemName,
     can_select_all: canSelectAll,
+    requires_side_choice: !(targetSide === "ally" || targetSide === "enemy"),
   };
   if (targetSide === "ally" || targetSide === "enemy") {
     pendingActionDraft.target_side = targetSide;
@@ -2435,17 +2516,13 @@ async function executeRound() {
 function attachBattleEventHandlers() {
   if (actionSheetBackdrop) {
     actionSheetBackdrop.addEventListener("click", () => {
-      if (inputMode === "pick_magic" || inputMode === "pick_item") {
-        closeActionSheetToCommand();
-      }
+      handleActionSheetDismiss();
     });
   }
 
   if (actionSheetCloseBtn) {
     actionSheetCloseBtn.addEventListener("click", () => {
-      if (inputMode === "pick_magic" || inputMode === "pick_item") {
-        closeActionSheetToCommand();
-      }
+      handleActionSheetDismiss();
     });
   }
 
