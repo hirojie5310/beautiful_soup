@@ -9,13 +9,13 @@ INNER_MARGIN = 1
 SUSPICIOUS_SCORE_THRESHOLD = 5000
 INNER_SCORE_TIE_THRESHOLD = 32
 BASE_DIR = Path(__file__).resolve().parent
-TILESET_PATH = BASE_DIR / "TILESET - Ur.png"
-MAP_PATH = BASE_DIR / "Ur.png"
-RECONSTRUCTED_PATH = BASE_DIR / "Ur_reconstructed.png"
-COMPARISON_PATH = BASE_DIR / "Ur_comparison.png"
-CSV_PATH = BASE_DIR / "Ur_tiles.csv"
-DEBUG_CSV_PATH = BASE_DIR / "Ur_tiles_debug.csv"
-SUSPICIOUS_PATH = BASE_DIR / "Ur_suspicious_tiles.png"
+TILESET_PATH = BASE_DIR / "TILESET - Shop_1.png"
+MAP_PATH = BASE_DIR / "Ur-ArmorShop.png"
+RECONSTRUCTED_PATH = BASE_DIR / "Ur-ArmorShop_reconstructed.png"
+COMPARISON_PATH = BASE_DIR / "Ur-ArmorShop_comparison.png"
+CSV_PATH = BASE_DIR / "Ur-ArmorShop_tiles.csv"
+DEBUG_CSV_PATH = BASE_DIR / "Ur-ArmorShop_tiles_debug.csv"
+SUSPICIOUS_PATH = BASE_DIR / "Ur-ArmorShop_suspicious_tiles.png"
 
 
 def open_image(path: Path) -> Image.Image:
