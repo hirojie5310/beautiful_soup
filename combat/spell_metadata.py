@@ -69,10 +69,14 @@ def spell_target_mode(
 
 
 def spell_status_text(spell_json: Dict[str, Any]) -> str:
-    return str(
+    raw = str(
         spell_json.get("status_ailment")
         or spell_json.get("StatusAilment")
         or spell_json.get("StatusAilments")
         or spell_json.get("Status")
         or ""
     ).strip()
+    normalized = normalize_text_basic(raw)
+    if normalized in {"", "-", "none", "n/a", "na"}:
+        return ""
+    return raw

@@ -1,5 +1,8 @@
 import { getPyodideRuntime } from "./pyodide_runtime.js";
-import { applyEventToPlaybackStatus } from "./battle_playback.js";
+import {
+  applyEventToPlaybackStatus,
+  applyNamedPopupOverrides,
+} from "./battle_playback.js";
 import {
   DEFAULT_BATTLE_RETURN_CONTEXT,
   resolveMountedBattleReturnContext,
@@ -945,7 +948,7 @@ function appendCombatPopup(card, popup) {
     text = "MISS";
     extraClass = " miss";
   } else if (value > 0) {
-    text = `-${value}`;
+    text = `${value}`;
   } else if (value < 0) {
     text = `+${Math.abs(value)}`;
     extraClass = " heal";
@@ -1198,28 +1201,6 @@ function buildNamedCombatEffects(block, playbackStatus) {
   });
 
   return effects;
-}
-
-function applyNamedPopupOverrides(activePopups, effects) {
-  const nextPopups = activePopups && typeof activePopups === "object"
-    ? activePopups
-    : {};
-  asArrayValue(effects).forEach((effect) => {
-    const side = String(effect?.side || "");
-    const index = Number(effect?.index ?? -1);
-    if (!side || index < 0) return;
-    const key = combatPopupKey(side, index);
-    const current = nextPopups[key];
-    if (!current || typeof current !== "object") return;
-    nextPopups[key] = {
-      ...current,
-      kind: String(effect?.kind || current.kind || "damage"),
-      value: Number(effect?.value ?? current.value ?? 0),
-      text: String(effect?.text ?? current.text ?? ""),
-      statusCategory: String(effect?.statusCategory ?? current.statusCategory ?? ""),
-    };
-  });
-  return nextPopups;
 }
 
 function applyNamedCombatEffect(playbackStatus, effect) {
