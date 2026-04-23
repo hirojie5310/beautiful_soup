@@ -72,6 +72,39 @@
         "x": 3,
         "y": 1
       }
+    },
+    {
+      "type": "exit",
+      "name": "Ur Elder House 1",
+      "x": 9,
+      "y": 26,
+      "target_map": "Ur_ElderHouse_1",
+      "target_spawn": {
+        "x": 12,
+        "y": 17
+      }
+    },
+    {
+      "type": "exit",
+      "name": "Ur Shed 1F",
+      "x": 5,
+      "y": 7,
+      "target_map": "Ur_Shed_1F",
+      "target_spawn": {
+        "x": 8,
+        "y": 8
+      }
+    },
+    {
+      "type": "exit",
+      "name": "Ur Inn ItemShop",
+      "x": 21,
+      "y": 26,
+      "target_map": "Ur_Inn_ItemShop",
+      "target_spawn": {
+        "x": 5,
+        "y": 20
+      }
     }
   ],
   "rows": [
