@@ -11,6 +11,7 @@ import {
   findAdjacentObject,
   findCrystalSpriteOrigin,
   isAdjacentToCrystalSprite,
+  interpolateMapPosition,
   findStandingObject,
   moveMapPosition,
   openAdjacentTreasure,
@@ -309,6 +310,24 @@ test("moveMapPosition advances only onto passable tiles", () => {
   const blocked = moveMapPosition(stubMap, moved.nextState, "left");
   assert.equal(blocked.moved, false);
   assert.equal(blocked.reason, "blocked");
+});
+
+test("interpolateMapPosition returns intermediate fractional tile positions", () => {
+  assert.deepEqual(
+    interpolateMapPosition({ x: 3, y: 4 }, { x: 4, y: 6 }, 0.25),
+    { x: 3.25, y: 4.5 },
+  );
+});
+
+test("interpolateMapPosition clamps progress to the animation range", () => {
+  assert.deepEqual(
+    interpolateMapPosition({ x: 3, y: 4 }, { x: 4, y: 6 }, -1),
+    { x: 3, y: 4 },
+  );
+  assert.deepEqual(
+    interpolateMapPosition({ x: 3, y: 4 }, { x: 4, y: 6 }, 2),
+    { x: 4, y: 6 },
+  );
 });
 
 test("createDirectionalHoldRepeater runs immediately, repeats while held, and stops cleanly", () => {
