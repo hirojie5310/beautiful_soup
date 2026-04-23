@@ -7,6 +7,12 @@ const MAP_MANIFEST = {
   Alter_Cave_B4: new URL("../assets/maps/Alter_Cave_B4.json", import.meta.url).href,
   Alter_Cave_Crystal_Room: new URL("../assets/maps/Alter_Cave_Crystal_Room.json", import.meta.url).href,
   Ur: new URL("../assets/maps/Ur.json", import.meta.url).href,
+  Ur_ElderHouse_1: new URL("../assets/maps/Ur_ElderHouse_1.json", import.meta.url).href,
+  Ur_ElderHouse_2: new URL("../assets/maps/Ur_ElderHouse_2.json", import.meta.url).href,
+  Ur_Inn_ItemShop: new URL("../assets/maps/Ur-Inn_ItemShop.json", import.meta.url).href,
+  Ur_Pub: new URL("../assets/maps/Ur-Pub.json", import.meta.url).href,
+  Ur_Shed_1F: new URL("../assets/maps/Ur-Shed_1F_tiles.json", import.meta.url).href,
+  Ur_Shed_2F: new URL("../assets/maps/Ur-Shed_2F_tiles.json", import.meta.url).href,
 };
 
 const mapCache = new Map();
