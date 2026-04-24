@@ -18,6 +18,10 @@ import { mergeMenuStateIntoSave } from "../menu_save_sync.js";
 import { triggerAutoSaveFromEnvelope } from "./screen_shared.js";
 
 const DISPLAY_TILE_SIZE = 22;
+const CHARACTER_SOURCE_TILE_SIZE = 16;
+const CHARACTER_DISPLAY_SCALE = 1.5;
+const CHARACTER_DISPLAY_TILE_SIZE = CHARACTER_SOURCE_TILE_SIZE * CHARACTER_DISPLAY_SCALE;
+const CHARACTER_SHEET_COLUMNS = 6;
 const MAP_MOVE_ANIMATION_MS = 140;
 const HOLD_MOVE_INITIAL_DELAY_MS = 220;
 const HOLD_MOVE_REPEAT_MS = 110;
@@ -34,6 +38,22 @@ const ALTER_CAVE_CRYSTAL_BOSS_NAME = "Land Turtle";
 const CRYSTAL_SPRITE_FRAMES = 4;
 const CRYSTAL_SPRITE_FRAME_MS = 500;
 const CRYSTAL_IMAGE_URL = new URL("../../assets/images/maps/Crystal.png", import.meta.url).href;
+const ONION_KNIGHT_IMAGE_URL = new URL("../../assets/images/characters/onion_knight.png", import.meta.url).href;
+const ONION_KNIGHT_CHARACTER_SPRITE = {
+  rows: 4,
+  url: ONION_KNIGHT_IMAGE_URL,
+};
+const CHARACTER_SPRITES_BY_JOB_KEY = {
+  "mystic-knight": {
+    rows: 1,
+    url: new URL("../../assets/images/characters/mystic_knight.png", import.meta.url).href,
+  },
+  "onion-knight": ONION_KNIGHT_CHARACTER_SPRITE,
+  sage: {
+    rows: 1,
+    url: new URL("../../assets/images/characters/sage.png", import.meta.url).href,
+  },
+};
 let spellLevelByNamePromise = null;
 let mergedFixedContentPromise = null;
 const mapRenderStateCache = new WeakMap();
@@ -52,6 +72,52 @@ export function interpolateMapPosition(fromPosition, toPosition, progress) {
     x: startX + (endX - startX) * clampedProgress,
     y: startY + (endY - startY) * clampedProgress,
   };
+}
+
+export function resolveCharacterSpriteFrame(direction, walkFrame = 0) {
+  const normalizedDirection = String(direction || "down");
+  const frameOffset = Math.abs(Number(walkFrame || 0)) % 2;
+  const baseFrame = {
+    up: 0,
+    left: 2,
+    right: 2,
+    down: 4,
+  }[normalizedDirection] ?? 4;
+  return {
+    frameIndex: baseFrame + frameOffset,
+    facingScale: normalizedDirection === "right" ? -1 : 1,
+  };
+}
+
+export function normalizeCharacterJobKey(jobName) {
+  return String(jobName || "")
+    .trim()
+    .toLowerCase()
+    .replace(/['’]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function firstPartyMemberFromAppState(appState) {
+  const menuParty = Array.isArray(appState?.menuState?.party) ? appState.menuState.party : [];
+  if (menuParty[0] && typeof menuParty[0] === "object") return menuParty[0];
+  const saveParty = Array.isArray(appState?.saveEnvelope?.save?.party) ? appState.saveEnvelope.save.party : [];
+  if (saveParty[0] && typeof saveParty[0] === "object") return saveParty[0];
+  return null;
+}
+
+export function resolveLeaderCharacterSprite(appState) {
+  const leader = firstPartyMemberFromAppState(appState);
+  const jobKey = normalizeCharacterJobKey(
+    leader?.current_job
+    || leader?.job
+    || leader?.job_name,
+  );
+  return CHARACTER_SPRITES_BY_JOB_KEY[jobKey] || ONION_KNIGHT_CHARACTER_SPRITE;
+}
+
+export function resolveLeaderCharacterSpriteUrl(appState) {
+  return resolveLeaderCharacterSprite(appState).url;
 }
 
 export function createDirectionalHoldRepeater(
@@ -410,26 +476,20 @@ function renderLayout() {
       }
       [data-screen="map"] .map-player {
         position: absolute;
-        left: 50%;
-        top: 50%;
-        width: calc(var(--map-tile-size) * 0.86);
-        height: calc(var(--map-tile-size) * 0.86);
-        transform: translate(-50%, -50%) translateY(calc(var(--map-tile-size) * 0.14));
-        border-radius: 8px;
-        background:
-          linear-gradient(180deg, rgba(255, 241, 176, 0.95), rgba(228, 148, 61, 0.95));
-        border: 1px solid rgba(255, 255, 255, 0.78);
-        box-shadow:
-          0 0 0 3px rgba(9, 13, 31, 0.55),
-          0 0 20px rgba(255, 207, 86, 0.22);
+        left: var(--player-left, 50%);
+        top: var(--player-top, 50%);
+        width: ${CHARACTER_DISPLAY_TILE_SIZE}px;
+        height: ${CHARACTER_DISPLAY_TILE_SIZE}px;
+        transform: translate(-50%, -50%) scaleX(var(--player-facing-scale, 1));
+        transform-origin: center;
+        background-image: var(--player-sprite-url, url("${ONION_KNIGHT_IMAGE_URL}"));
+        background-repeat: no-repeat;
+        background-size:
+          ${CHARACTER_DISPLAY_TILE_SIZE * CHARACTER_SHEET_COLUMNS}px
+          calc(${CHARACTER_DISPLAY_TILE_SIZE}px * var(--player-sprite-rows, 4));
+        image-rendering: pixelated;
+        filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.45));
         z-index: 2;
-      }
-      [data-screen="map"] .map-player::after {
-        content: "";
-        position: absolute;
-        inset: 22% 28% 34%;
-        border-radius: 999px 999px 40% 40%;
-        background: rgba(32, 37, 72, 0.35);
       }
       [data-screen="map"] .map-hud {
         display: grid;
@@ -924,6 +984,39 @@ function updateViewportTransform(mapViewport, mapLayer, mapDefinition, mapState,
   const translateX = clamp(centeredX, minX, 0);
   const translateY = clamp(centeredY, minY, 0);
   mapLayer.style.transform = `translate(${translateX}px, ${translateY}px)`;
+  return {
+    translateX,
+    translateY,
+    viewX,
+    viewY,
+  };
+}
+
+function updateMapPlayerSprite(mapPlayer, direction, walkFrame) {
+  if (!mapPlayer) return;
+  const { frameIndex, facingScale } = resolveCharacterSpriteFrame(direction, walkFrame);
+  mapPlayer.style.backgroundPosition = `${-frameIndex * CHARACTER_DISPLAY_TILE_SIZE}px 0`;
+  mapPlayer.style.setProperty("--player-facing-scale", String(facingScale));
+}
+
+function updateMapPlayerSpriteImage(mapPlayer, appState) {
+  if (!mapPlayer) return;
+  const sprite = resolveLeaderCharacterSprite(appState);
+  mapPlayer.style.setProperty("--player-sprite-url", `url("${sprite.url}")`);
+  mapPlayer.style.setProperty("--player-sprite-rows", String(sprite.rows));
+}
+
+function updateMapPlayerPosition(mapPlayer, mapDefinition, viewportTransform) {
+  if (!mapPlayer) return;
+  const renderPadding = mapDefinition.renderPadding || { left: 0, top: 0 };
+  const translateX = Number(viewportTransform?.translateX || 0);
+  const translateY = Number(viewportTransform?.translateY || 0);
+  const viewX = Number(viewportTransform?.viewX || 0);
+  const viewY = Number(viewportTransform?.viewY || 0);
+  const playerLeft = translateX + (viewX + renderPadding.left + 0.5) * DISPLAY_TILE_SIZE;
+  const playerTop = translateY + (viewY + renderPadding.top + 0.5) * DISPLAY_TILE_SIZE;
+  mapPlayer.style.setProperty("--player-left", `${playerLeft}px`);
+  mapPlayer.style.setProperty("--player-top", `${playerTop}px`);
 }
 
 function updateMeta(mapMeta, mapDefinition, mapState) {
@@ -1021,6 +1114,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   const mapStatus = mountNode.querySelector("#mapStatus");
   const mapViewport = mountNode.querySelector("#mapViewport");
   const mapLayer = mountNode.querySelector("#mapLayer");
+  const mapPlayer = mountNode.querySelector(".map-player");
   const mapMeta = mountNode.querySelector("#mapMeta");
   const confirmBtn = mountNode.querySelector("#confirmBtn");
   const locationBtn = mountNode.querySelector("#locationBtn");
@@ -1043,6 +1137,8 @@ export async function mountScreen({ mountNode, store, navigate }) {
   let visualMapPosition = null;
   let moveAnimationFrameId = null;
   let moveAnimation = null;
+  let playerDirection = "down";
+  let playerWalkFrame = 0;
   const holdRepeater = createDirectionalHoldRepeater((direction) => tryMove(direction));
 
   function isEventOverlayOpen() {
@@ -1144,7 +1240,16 @@ export async function mountScreen({ mountNode, store, navigate }) {
 
   function redraw() {
     if (!mapDefinition || !mapState) return;
-    updateViewportTransform(mapViewport, mapLayer, mapDefinition, mapState, visualMapPosition);
+    const viewportTransform = updateViewportTransform(
+      mapViewport,
+      mapLayer,
+      mapDefinition,
+      mapState,
+      visualMapPosition,
+    );
+    updateMapPlayerPosition(mapPlayer, mapDefinition, viewportTransform);
+    updateMapPlayerSpriteImage(mapPlayer, store.getState());
+    updateMapPlayerSprite(mapPlayer, playerDirection, playerWalkFrame);
     updateMeta(mapMeta, mapDefinition, mapState);
   }
 
@@ -1400,14 +1505,18 @@ export async function mountScreen({ mountNode, store, navigate }) {
 
   async function tryMove(direction) {
     if (!mapDefinition || !mapState || mapTransitionLocked) return;
+    playerDirection = String(direction || playerDirection);
     const result = moveMapPosition(mapDefinition, mapState, direction);
     if (!result.moved) {
+      playerWalkFrame = 0;
+      updateMapPlayerSprite(mapPlayer, playerDirection, playerWalkFrame);
       mapStatus.textContent = result.reason === "blocked"
         ? "その方向には進めません。"
         : "移動できません。";
       return;
     }
     const previousMapState = mapState;
+    playerWalkFrame = playerWalkFrame === 0 ? 1 : 0;
     mapState = result.nextState;
     persistCurrentMapState(mapState);
     animateVisualMapPosition(previousMapState, mapState);
