@@ -97,6 +97,39 @@
     },
     {
       "type": "exit",
+      "name": "Ur Magic Shop",
+      "x": 10,
+      "y": 19,
+      "target_map": "Ur_MagicShop",
+      "target_spawn": {
+        "x": 4,
+        "y": 9
+      }
+    },
+    {
+      "type": "exit",
+      "name": "Ur Armor Shop",
+      "x": 14,
+      "y": 20,
+      "target_map": "Ur_ArmorShop",
+      "target_spawn": {
+        "x": 3,
+        "y": 9
+      }
+    },
+    {
+      "type": "exit",
+      "name": "Ur Weapon Shop",
+      "x": 18,
+      "y": 19,
+      "target_map": "Ur_WeaponShop",
+      "target_spawn": {
+        "x": 3,
+        "y": 8
+      }
+    },
+    {
+      "type": "exit",
       "name": "Ur Inn ItemShop",
       "x": 21,
       "y": 26,

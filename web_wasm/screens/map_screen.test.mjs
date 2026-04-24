@@ -11,9 +11,14 @@ import {
   findAdjacentObject,
   findCrystalSpriteOrigin,
   isAdjacentToCrystalSprite,
+  interpolateMapPosition,
   findStandingObject,
   moveMapPosition,
+  normalizeCharacterJobKey,
   openAdjacentTreasure,
+  resolveCharacterSpriteFrame,
+  resolveLeaderCharacterSprite,
+  resolveLeaderCharacterSpriteUrl,
   resolveInitialMapSelection,
   shouldCloseEventOverlayOnConfirm,
   shouldResumeMapPosition,
@@ -68,6 +73,98 @@ test("deriveInitialMapState always starts from map spawn", () => {
     steps_since_reset: 0,
     switch_states: {},
     opened_treasures: {},
+  });
+});
+
+test("resolveCharacterSpriteFrame maps first-row walking frames and mirrors right", () => {
+  assert.deepEqual(resolveCharacterSpriteFrame("up", 0), {
+    frameIndex: 0,
+    facingScale: 1,
+  });
+  assert.deepEqual(resolveCharacterSpriteFrame("up", 1), {
+    frameIndex: 1,
+    facingScale: 1,
+  });
+  assert.deepEqual(resolveCharacterSpriteFrame("left", 0), {
+    frameIndex: 2,
+    facingScale: 1,
+  });
+  assert.deepEqual(resolveCharacterSpriteFrame("left", 1), {
+    frameIndex: 3,
+    facingScale: 1,
+  });
+  assert.deepEqual(resolveCharacterSpriteFrame("down", 0), {
+    frameIndex: 4,
+    facingScale: 1,
+  });
+  assert.deepEqual(resolveCharacterSpriteFrame("down", 1), {
+    frameIndex: 5,
+    facingScale: 1,
+  });
+  assert.deepEqual(resolveCharacterSpriteFrame("right", 1), {
+    frameIndex: 3,
+    facingScale: -1,
+  });
+});
+
+test("normalizeCharacterJobKey builds sprite lookup keys from job names", () => {
+  assert.equal(normalizeCharacterJobKey("Sage"), "sage");
+  assert.equal(normalizeCharacterJobKey("Mystic Knight"), "mystic-knight");
+  assert.equal(normalizeCharacterJobKey("Devil's Knight"), "devils-knight");
+});
+
+test("resolveLeaderCharacterSpriteUrl prefers leader job and falls back to onion knight", () => {
+  assert.match(resolveLeaderCharacterSpriteUrl({
+    menuState: {
+      party: [{ name: "Runeth", job: "Sage" }],
+    },
+  }), /\/assets\/images\/characters\/sage\.png$/);
+
+  assert.match(resolveLeaderCharacterSpriteUrl({
+    menuState: {
+      party: [{ name: "Runeth", current_job: "Mystic Knight", job: "Sage" }],
+    },
+  }), /\/assets\/images\/characters\/mystic_knight\.png$/);
+
+  assert.match(resolveLeaderCharacterSpriteUrl({
+    menuState: { party: [] },
+    saveEnvelope: {
+      save: {
+        party: [{ name: "Runeth", job: "Sage" }],
+      },
+    },
+  }), /\/assets\/images\/characters\/sage\.png$/);
+
+  assert.match(resolveLeaderCharacterSpriteUrl({
+    menuState: {
+      party: [{ name: "Runeth", job: "Unknown Job" }],
+    },
+  }), /\/assets\/images\/characters\/onion_knight\.png$/);
+});
+
+test("resolveLeaderCharacterSprite returns sheet row metadata per sprite", () => {
+  assert.deepEqual({
+    ...resolveLeaderCharacterSprite({
+      menuState: {
+        party: [{ name: "Runeth", job: "Sage" }],
+      },
+    }),
+    url: "sage.png",
+  }, {
+    rows: 1,
+    url: "sage.png",
+  });
+
+  assert.deepEqual({
+    ...resolveLeaderCharacterSprite({
+      menuState: {
+        party: [{ name: "Runeth", job: "Onion Knight" }],
+      },
+    }),
+    url: "onion_knight.png",
+  }, {
+    rows: 4,
+    url: "onion_knight.png",
   });
 });
 
@@ -309,6 +406,24 @@ test("moveMapPosition advances only onto passable tiles", () => {
   const blocked = moveMapPosition(stubMap, moved.nextState, "left");
   assert.equal(blocked.moved, false);
   assert.equal(blocked.reason, "blocked");
+});
+
+test("interpolateMapPosition returns intermediate fractional tile positions", () => {
+  assert.deepEqual(
+    interpolateMapPosition({ x: 3, y: 4 }, { x: 4, y: 6 }, 0.25),
+    { x: 3.25, y: 4.5 },
+  );
+});
+
+test("interpolateMapPosition clamps progress to the animation range", () => {
+  assert.deepEqual(
+    interpolateMapPosition({ x: 3, y: 4 }, { x: 4, y: 6 }, -1),
+    { x: 3, y: 4 },
+  );
+  assert.deepEqual(
+    interpolateMapPosition({ x: 3, y: 4 }, { x: 4, y: 6 }, 2),
+    { x: 4, y: 6 },
+  );
 });
 
 test("createDirectionalHoldRepeater runs immediately, repeats while held, and stops cleanly", () => {
