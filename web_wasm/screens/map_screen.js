@@ -38,21 +38,42 @@ const ALTER_CAVE_CRYSTAL_BOSS_NAME = "Land Turtle";
 const CRYSTAL_SPRITE_FRAMES = 4;
 const CRYSTAL_SPRITE_FRAME_MS = 500;
 const CRYSTAL_IMAGE_URL = new URL("../../assets/images/maps/Crystal.png", import.meta.url).href;
-const ONION_KNIGHT_IMAGE_URL = new URL("../../assets/images/characters/onion_knight.png", import.meta.url).href;
+const ONION_KNIGHT_IMAGE_URL = new URL("../../assets/images/characters/fs_onion_knight.png", import.meta.url).href;
 const ONION_KNIGHT_CHARACTER_SPRITE = {
   rows: 4,
   url: ONION_KNIGHT_IMAGE_URL,
 };
+function buildFieldCharacterSprite(jobKey) {
+  const fileKey = String(jobKey || "").replace(/-/g, "_");
+  return {
+    rows: 1,
+    url: new URL(`../../assets/images/characters/fs_${fileKey}.png`, import.meta.url).href,
+  };
+}
+
 const CHARACTER_SPRITES_BY_JOB_KEY = {
-  "mystic-knight": {
-    rows: 1,
-    url: new URL("../../assets/images/characters/mystic_knight.png", import.meta.url).href,
-  },
+  bard: buildFieldCharacterSprite("bard"),
+  "black-belt": buildFieldCharacterSprite("black-belt"),
+  "black-mage": buildFieldCharacterSprite("black-mage"),
+  devout: buildFieldCharacterSprite("devout"),
+  dragoon: buildFieldCharacterSprite("dragoon"),
+  evoker: buildFieldCharacterSprite("evoker"),
+  geomancer: buildFieldCharacterSprite("geomancer"),
+  knight: buildFieldCharacterSprite("knight"),
+  magus: buildFieldCharacterSprite("magus"),
+  monk: buildFieldCharacterSprite("monk"),
+  "mystic-knight": buildFieldCharacterSprite("mystic-knight"),
+  ninja: buildFieldCharacterSprite("ninja"),
   "onion-knight": ONION_KNIGHT_CHARACTER_SPRITE,
-  sage: {
-    rows: 1,
-    url: new URL("../../assets/images/characters/sage.png", import.meta.url).href,
-  },
+  ranger: buildFieldCharacterSprite("ranger"),
+  "red-mage": buildFieldCharacterSprite("red-mage"),
+  sage: buildFieldCharacterSprite("sage"),
+  scholar: buildFieldCharacterSprite("scholar"),
+  summoner: buildFieldCharacterSprite("summoner"),
+  thief: buildFieldCharacterSprite("thief"),
+  viking: buildFieldCharacterSprite("viking"),
+  warrior: buildFieldCharacterSprite("warrior"),
+  "white-mage": buildFieldCharacterSprite("white-mage"),
 };
 let spellLevelByNamePromise = null;
 let mergedFixedContentPromise = null;

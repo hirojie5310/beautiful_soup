@@ -118,13 +118,19 @@ test("resolveLeaderCharacterSpriteUrl prefers leader job and falls back to onion
     menuState: {
       party: [{ name: "Runeth", job: "Sage" }],
     },
-  }), /\/assets\/images\/characters\/sage\.png$/);
+  }), /\/assets\/images\/characters\/fs_sage\.png$/);
 
   assert.match(resolveLeaderCharacterSpriteUrl({
     menuState: {
       party: [{ name: "Runeth", current_job: "Mystic Knight", job: "Sage" }],
     },
-  }), /\/assets\/images\/characters\/mystic_knight\.png$/);
+  }), /\/assets\/images\/characters\/fs_mystic_knight\.png$/);
+
+  assert.match(resolveLeaderCharacterSpriteUrl({
+    menuState: {
+      party: [{ name: "Runeth", job: "Bard" }],
+    },
+  }), /\/assets\/images\/characters\/fs_bard\.png$/);
 
   assert.match(resolveLeaderCharacterSpriteUrl({
     menuState: { party: [] },
@@ -133,13 +139,13 @@ test("resolveLeaderCharacterSpriteUrl prefers leader job and falls back to onion
         party: [{ name: "Runeth", job: "Sage" }],
       },
     },
-  }), /\/assets\/images\/characters\/sage\.png$/);
+  }), /\/assets\/images\/characters\/fs_sage\.png$/);
 
   assert.match(resolveLeaderCharacterSpriteUrl({
     menuState: {
       party: [{ name: "Runeth", job: "Unknown Job" }],
     },
-  }), /\/assets\/images\/characters\/onion_knight\.png$/);
+  }), /\/assets\/images\/characters\/fs_onion_knight\.png$/);
 });
 
 test("resolveLeaderCharacterSprite returns sheet row metadata per sprite", () => {
