@@ -1,7 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { findCompatibleMapDefinition, normalizeMapDefinition } from "./map_data.js";
+import {
+  findCompatibleMapDefinition,
+  isInEncounterArea,
+  normalizeMapDefinition,
+  shouldTriggerEncounter,
+} from "./map_data.js";
 
 test("normalizeMapDefinition adds render padding without changing logical spawn", () => {
   const result = normalizeMapDefinition({
@@ -25,6 +30,9 @@ test("normalizeMapDefinition adds render padding without changing logical spawn"
       "5,5",
       "5,19",
     ],
+    encounter_areas: [
+      { x_min: 0, y_min: 0, x_max: 24, y_max: 14 },
+    ],
     tileset: {
       columns: 1,
       tile_count: 1,
@@ -40,6 +48,7 @@ test("normalizeMapDefinition adds render padding without changing logical spawn"
   assert.equal(result.renderRows[0][0], 19);
   assert.equal(result.renderRows[1][2], 5);
   assert.equal(result.renderRows[2][3], 19);
+  assert.deepEqual(result.encounterAreas, [{ xMin: 0, yMin: 0, xMax: 24, yMax: 14 }]);
 });
 
 test("normalizeMapDefinition resolves NPC sprite image URLs", () => {
@@ -59,12 +68,35 @@ test("normalizeMapDefinition resolves NPC sprite image URLs", () => {
         y: 1,
         sprite_image: "../assets/images/NPCs/fs_man1.png",
         dialogue_index: 493,
+        movement: "fixed",
+        direction: "down",
       },
     ],
   });
 
   assert.match(result.objects[0].spriteImageUrl, /\/assets\/images\/NPCs\/fs_man1\.png$/);
   assert.equal(result.objects[0].dialogue_index, 493);
+  assert.equal(result.objects[0].movement, "fixed");
+  assert.equal(result.objects[0].direction, "down");
+});
+
+test("encounter areas restrict random encounters by tile position", () => {
+  const result = normalizeMapDefinition({
+    id: "test",
+    width: 32,
+    height: 32,
+    encounter_rate: 1,
+    encounter_areas: [
+      { x_min: 0, y_min: 0, x_max: 24, y_max: 14 },
+    ],
+    rows: Array.from({ length: 32 }, () => "1"),
+  });
+
+  assert.equal(isInEncounterArea(result, { tile_x: 24, tile_y: 14 }), true);
+  assert.equal(isInEncounterArea(result, { tile_x: 25, tile_y: 14 }), false);
+  assert.equal(isInEncounterArea(result, { tile_x: 24, tile_y: 15 }), false);
+  assert.equal(shouldTriggerEncounter(result, 0, 6, { tile_x: 24, tile_y: 14 }), true);
+  assert.equal(shouldTriggerEncounter(result, 0, 6, { tile_x: 25, tile_y: 14 }), false);
 });
 
 test("findCompatibleMapDefinition returns the map that matches selected location", async () => {

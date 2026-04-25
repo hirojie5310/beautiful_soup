@@ -51,6 +51,8 @@ function normalizeObject(row) {
     target_map: String(row?.target_map || ""),
     target_spawn: targetSpawn,
     sprite_image: spriteImage,
+    movement: String(row?.movement || row?.npc_movement || ""),
+    direction: String(row?.direction || row?.facing_direction || row?.initial_direction || ""),
     spriteImageUrl: spriteImage ? new URL(spriteImage, import.meta.url).href : "",
   };
 }
@@ -63,6 +65,22 @@ function normalizeLocationRequirement(rawValue) {
       ? source.locations.map((value) => String(value || "")).filter(Boolean)
       : [],
   };
+}
+
+function normalizeEncounterArea(row) {
+  const source = row && typeof row === "object" ? row : {};
+  return {
+    xMin: asNumber(source.x_min ?? source.xMin, 0),
+    yMin: asNumber(source.y_min ?? source.yMin, 0),
+    xMax: asNumber(source.x_max ?? source.xMax, 0),
+    yMax: asNumber(source.y_max ?? source.yMax, 0),
+  };
+}
+
+function normalizeEncounterAreas(rawValue) {
+  return Array.isArray(rawValue)
+    ? rawValue.map(normalizeEncounterArea).filter((row) => row.xMax >= row.xMin && row.yMax >= row.yMin)
+    : [];
 }
 
 export function buildRenderRows(rows, width, height, padding) {
@@ -142,6 +160,7 @@ export function normalizeMapDefinition(rawMap) {
     },
     locationRequirement: normalizeLocationRequirement(rawMap?.location_requirement),
     encounterRate: Math.min(1, Math.max(0, asNumber(rawMap?.encounter_rate, 0))),
+    encounterAreas: normalizeEncounterAreas(rawMap?.encounter_areas),
     objects: Array.isArray(rawMap?.objects) ? rawMap.objects.map(normalizeObject) : [],
     tileset: {
       name: String(tileset?.name || ""),
@@ -199,11 +218,27 @@ export function getEncounterRateForStep(mapDefinition, stepCountSinceReset = 0) 
   return baseRate;
 }
 
+export function isInEncounterArea(mapDefinition, position) {
+  const areas = Array.isArray(mapDefinition?.encounterAreas) ? mapDefinition.encounterAreas : [];
+  if (!areas.length) return true;
+  const x = asNumber(position?.tile_x ?? position?.x, NaN);
+  const y = asNumber(position?.tile_y ?? position?.y, NaN);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return false;
+  return areas.some((area) => (
+    x >= area.xMin
+    && x <= area.xMax
+    && y >= area.yMin
+    && y <= area.yMax
+  ));
+}
+
 export function shouldTriggerEncounter(
   mapDefinition,
   randomValue = Math.random(),
   stepCountSinceReset = 0,
+  position = null,
 ) {
+  if (position && !isInEncounterArea(mapDefinition, position)) return false;
   const rate = getEncounterRateForStep(mapDefinition, stepCountSinceReset);
   return Number(randomValue) < rate;
 }
