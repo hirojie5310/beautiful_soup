@@ -138,6 +138,86 @@
         "x": 5,
         "y": 20
       }
+    },
+    {
+      "type": "npc",
+      "name": "Ur NPC 493",
+      "x": 8,
+      "y": 27,
+      "sprite_image": "../assets/images/NPCs/fs_man1.png",
+      "dialogue_index": 493
+    },
+    {
+      "type": "npc",
+      "name": "Ur NPC 491",
+      "x": 10,
+      "y": 28,
+      "sprite_image": "../assets/images/NPCs/fs_old_man1.png",
+      "dialogue_index": 491
+    },
+    {
+      "type": "npc",
+      "name": "Ur NPC 498",
+      "x": 16,
+      "y": 25,
+      "sprite_image": "../assets/images/NPCs/fs_man1.png",
+      "dialogue_index": 498
+    },
+    {
+      "type": "npc",
+      "name": "Ur NPC 492",
+      "x": 17,
+      "y": 28,
+      "sprite_image": "../assets/images/NPCs/fs_old_woman1.png",
+      "dialogue_index": 492
+    },
+    {
+      "type": "npc",
+      "name": "Ur NPC 500",
+      "x": 15,
+      "y": 22,
+      "sprite_image": "../assets/images/NPCs/fs_woman1.png",
+      "dialogue_index": 500
+    },
+    {
+      "type": "npc",
+      "name": "Ur NPC 499",
+      "x": 9,
+      "y": 21,
+      "sprite_image": "../assets/images/NPCs/fs_man1.png",
+      "dialogue_index": 499
+    },
+    {
+      "type": "npc",
+      "name": "Ur NPC 495",
+      "x": 21,
+      "y": 15,
+      "sprite_image": "../assets/images/NPCs/fs_old_man1.png",
+      "dialogue_index": 495
+    },
+    {
+      "type": "npc",
+      "name": "Ur NPC 501",
+      "x": 21,
+      "y": 17,
+      "sprite_image": "../assets/images/NPCs/fs_man1.png",
+      "dialogue_index": 501
+    },
+    {
+      "type": "npc",
+      "name": "Ur NPC 496",
+      "x": 29,
+      "y": 10,
+      "sprite_image": "../assets/images/NPCs/fs_girl1.png",
+      "dialogue_index": 496
+    },
+    {
+      "type": "npc",
+      "name": "Ur NPC 494",
+      "x": 28,
+      "y": 28,
+      "sprite_image": "../assets/images/NPCs/fs_old_woman1.png",
+      "dialogue_index": 494
     }
   ],
   "rows": [

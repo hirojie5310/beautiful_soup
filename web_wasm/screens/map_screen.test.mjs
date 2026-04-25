@@ -9,13 +9,20 @@ import {
   deriveInitialMapState,
   findAdjacentTileWithGid,
   findAdjacentObject,
+  findAdjacentNpc,
+  findBlockingObjectAt,
   findCrystalSpriteOrigin,
   isAdjacentToCrystalSprite,
   interpolateMapPosition,
   findStandingObject,
   moveMapPosition,
   normalizeCharacterJobKey,
+  normalizeMergedFixedContent,
   openAdjacentTreasure,
+  chooseNextNpcDirection,
+  resolveNpcFacingScale,
+  resolveNpcNextDirectionDelay,
+  resolveNpcSpriteFrame,
   resolveCharacterSpriteFrame,
   resolveLeaderCharacterSprite,
   resolveLeaderCharacterSpriteUrl,
@@ -105,6 +112,38 @@ test("resolveCharacterSpriteFrame maps first-row walking frames and mirrors righ
     frameIndex: 3,
     facingScale: -1,
   });
+});
+
+test("resolveNpcSpriteFrame maps six-column NPC sheets", () => {
+  assert.equal(resolveNpcSpriteFrame("up", 0), 0);
+  assert.equal(resolveNpcSpriteFrame("up", 1), 1);
+  assert.equal(resolveNpcSpriteFrame("left", 0), 2);
+  assert.equal(resolveNpcSpriteFrame("left", 1), 3);
+  assert.equal(resolveNpcSpriteFrame("right", 0), 2);
+  assert.equal(resolveNpcSpriteFrame("right", 1), 3);
+  assert.equal(resolveNpcSpriteFrame("down", 0), 4);
+  assert.equal(resolveNpcSpriteFrame("down", 1), 5);
+  assert.equal(resolveNpcSpriteFrame("unknown", 0), 4);
+});
+
+test("resolveNpcFacingScale mirrors left-facing frames for right-facing NPCs", () => {
+  assert.equal(resolveNpcFacingScale("right"), -1);
+  assert.equal(resolveNpcFacingScale("left"), 1);
+  assert.equal(resolveNpcFacingScale("up"), 1);
+  assert.equal(resolveNpcFacingScale("down"), 1);
+});
+
+test("chooseNextNpcDirection switches to a different supported direction", () => {
+  assert.equal(chooseNextNpcDirection("up", 0), "left");
+  assert.equal(chooseNextNpcDirection("up", 0.99), "down");
+  assert.equal(chooseNextNpcDirection("left", 0), "up");
+  assert.equal(chooseNextNpcDirection("", 0.99), "down");
+});
+
+test("resolveNpcNextDirectionDelay returns a few-second random delay", () => {
+  assert.equal(resolveNpcNextDirectionDelay(0), 3000);
+  assert.equal(resolveNpcNextDirectionDelay(1), 6000);
+  assert.equal(resolveNpcNextDirectionDelay(0.5), 4500);
 });
 
 test("normalizeCharacterJobKey builds sprite lookup keys from job names", () => {
@@ -398,6 +437,21 @@ test("canOccupyTile rejects collision gids and bounds", () => {
   assert.equal(canOccupyTile(stubMap, -1, 1), false);
 });
 
+test("canOccupyTile rejects blocking NPC object tiles", () => {
+  const mapWithNpc = {
+    ...stubMap,
+    objects: [
+      { type: "npc", name: "Villager", x: 1, y: 1, dialogue_index: 493 },
+      { type: "npc", name: "Ghost", x: 2, y: 2, dialogue_index: 494, blocking: false },
+    ],
+  };
+
+  assert.deepEqual(findBlockingObjectAt(mapWithNpc, 1, 1), mapWithNpc.objects[0]);
+  assert.equal(findBlockingObjectAt(mapWithNpc, 2, 2), null);
+  assert.equal(canOccupyTile(mapWithNpc, 1, 1), false);
+  assert.equal(canOccupyTile(mapWithNpc, 2, 2), true);
+});
+
 test("moveMapPosition advances only onto passable tiles", () => {
   const start = { current_map_id: "Alter_Cave_B1", tile_x: 1, tile_y: 1, steps_since_reset: 0 };
   const moved = moveMapPosition(stubMap, start, "down");
@@ -522,6 +576,29 @@ test("findAdjacentObject returns switch next to player", () => {
     tile_x: 1,
     tile_y: 1,
   }, (row) => row.type === "switch"), mapWithSwitch.objects[0]);
+});
+
+test("findAdjacentNpc returns neighboring NPC with dialogue index", () => {
+  const mapWithNpc = {
+    ...stubMap,
+    objects: [
+      { type: "npc", name: "Villager", x: 2, y: 1, dialogue_index: 493 },
+      { type: "npc", name: "Silent", x: 1, y: 0 },
+    ],
+  };
+
+  assert.deepEqual(findAdjacentNpc(mapWithNpc, {
+    current_map_id: "Alter_Cave_B1",
+    tile_x: 1,
+    tile_y: 1,
+  }), mapWithNpc.objects[0]);
+});
+
+test("normalizeMergedFixedContent strips merged_fixed control notation for map dialogue", () => {
+  assert.equal(
+    normalizeMergedFixedContent("'>-\n    \\n\\t[0x04]こんにちは\\nまたね'\n"),
+    "こんにちは\nまたね",
+  );
 });
 
 test("findAdjacentTileWithGid detects a matching neighboring tile", () => {
