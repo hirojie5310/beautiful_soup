@@ -42,6 +42,31 @@ test("normalizeMapDefinition adds render padding without changing logical spawn"
   assert.equal(result.renderRows[2][3], 19);
 });
 
+test("normalizeMapDefinition resolves NPC sprite image URLs", () => {
+  const result = normalizeMapDefinition({
+    id: "test",
+    width: 2,
+    height: 2,
+    rows: [
+      "1,1",
+      "1,1",
+    ],
+    objects: [
+      {
+        type: "npc",
+        name: "Villager",
+        x: 1,
+        y: 1,
+        sprite_image: "../assets/images/NPCs/fs_man1.png",
+        dialogue_index: 493,
+      },
+    ],
+  });
+
+  assert.match(result.objects[0].spriteImageUrl, /\/assets\/images\/NPCs\/fs_man1\.png$/);
+  assert.equal(result.objects[0].dialogue_index, 493);
+});
+
 test("findCompatibleMapDefinition returns the map that matches selected location", async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (url) => {

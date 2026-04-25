@@ -41,6 +41,7 @@ function normalizeObject(row) {
       y: asNumber(row.target_spawn.y, 0),
     }
     : null;
+  const spriteImage = String(row?.sprite_image || "");
   return {
     ...row,
     type: String(row?.type || ""),
@@ -49,6 +50,8 @@ function normalizeObject(row) {
     y: asNumber(row?.y, 0),
     target_map: String(row?.target_map || ""),
     target_spawn: targetSpawn,
+    sprite_image: spriteImage,
+    spriteImageUrl: spriteImage ? new URL(spriteImage, import.meta.url).href : "",
   };
 }
 

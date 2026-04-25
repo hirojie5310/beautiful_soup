@@ -22,6 +22,14 @@ const CHARACTER_SOURCE_TILE_SIZE = 16;
 const CHARACTER_DISPLAY_SCALE = 1.5;
 const CHARACTER_DISPLAY_TILE_SIZE = CHARACTER_SOURCE_TILE_SIZE * CHARACTER_DISPLAY_SCALE;
 const CHARACTER_SHEET_COLUMNS = 6;
+const NPC_SOURCE_TILE_SIZE = 16;
+const NPC_DISPLAY_SCALE = 1.5;
+const NPC_DISPLAY_TILE_SIZE = NPC_SOURCE_TILE_SIZE * NPC_DISPLAY_SCALE;
+const NPC_SHEET_COLUMNS = 6;
+const NPC_FRAME_MS = 1000;
+const NPC_DIRECTION_MIN_MS = 3000;
+const NPC_DIRECTION_MAX_MS = 6000;
+const NPC_DIRECTIONS = ["up", "left", "right", "down"];
 const MAP_MOVE_ANIMATION_MS = 140;
 const HOLD_MOVE_INITIAL_DELAY_MS = 220;
 const HOLD_MOVE_REPEAT_MS = 110;
@@ -108,6 +116,37 @@ export function resolveCharacterSpriteFrame(direction, walkFrame = 0) {
     frameIndex: baseFrame + frameOffset,
     facingScale: normalizedDirection === "right" ? -1 : 1,
   };
+}
+
+export function resolveNpcSpriteFrame(direction, walkFrame = 0) {
+  const normalizedDirection = NPC_DIRECTIONS.includes(String(direction || ""))
+    ? String(direction)
+    : "down";
+  const frameOffset = Math.abs(Number(walkFrame || 0)) % 2;
+  const baseFrame = {
+    up: 0,
+    left: 2,
+    right: 2,
+    down: 4,
+  }[normalizedDirection] ?? 4;
+  return baseFrame + frameOffset;
+}
+
+export function resolveNpcFacingScale(direction) {
+  return String(direction || "") === "right" ? -1 : 1;
+}
+
+export function chooseNextNpcDirection(currentDirection, randomValue = Math.random()) {
+  const current = String(currentDirection || "");
+  const candidates = NPC_DIRECTIONS.filter((direction) => direction !== current);
+  const rows = candidates.length ? candidates : NPC_DIRECTIONS;
+  const index = clamp(Math.floor(Number(randomValue || 0) * rows.length), 0, rows.length - 1);
+  return rows[index] || "down";
+}
+
+export function resolveNpcNextDirectionDelay(randomValue = Math.random()) {
+  const normalized = clamp(Number(randomValue || 0), 0, 1);
+  return NPC_DIRECTION_MIN_MS + Math.floor((NPC_DIRECTION_MAX_MS - NPC_DIRECTION_MIN_MS) * normalized);
 }
 
 export function normalizeCharacterJobKey(jobName) {
@@ -284,7 +323,7 @@ async function loadMergedFixedContentByIndex(index) {
   const hit = Array.isArray(rows)
     ? rows.find((row) => Number(row?.index) === Number(index))
     : null;
-  return String(hit?.content || "");
+  return normalizeMergedFixedContent(hit?.content ?? hit?.sontent ?? "");
 }
 
 async function loadMergedFixedContentByIndices(indices) {
@@ -292,6 +331,21 @@ async function loadMergedFixedContentByIndices(indices) {
   return Promise.all(
     rows.map((index) => loadMergedFixedContentByIndex(index)),
   );
+}
+
+export function normalizeMergedFixedContent(rawContent) {
+  const normalized = String(rawContent || "")
+    .trim()
+    .replace(/^['"]|['"]$/g, "")
+    .replace(/^>-\s*/, "")
+    .replace(/\\r\\n|\\n|\\r/g, "\n")
+    .replace(/\\t/g, "")
+    .replace(/\[0x[0-9a-fA-F]+\]/g, "");
+  return normalized
+    .split("\n")
+    .map((line) => line.replace(/^\t+/, "").trimEnd())
+    .filter((line) => line.trim().length > 0)
+    .join("\n");
 }
 
 function normalizeMapSaveShape(mapState, mapDefinition) {
@@ -345,8 +399,20 @@ export function canOccupyTile(mapDefinition, x, y) {
   if (x < 0 || y < 0 || x >= mapDefinition.width || y >= mapDefinition.height) {
     return false;
   }
+  if (findBlockingObjectAt(mapDefinition, x, y)) {
+    return false;
+  }
   const gid = Number(mapDefinition.rows?.[y]?.[x] ?? 0);
   return !mapDefinition.collisionGids.has(gid);
+}
+
+export function findBlockingObjectAt(mapDefinition, x, y) {
+  return (mapDefinition?.objects || []).find((row) => (
+    row?.type === "npc"
+    && row?.blocking !== false
+    && Number(row?.x) === Number(x)
+    && Number(row?.y) === Number(y)
+  )) || null;
 }
 
 export function moveMapPosition(mapDefinition, mapState, direction) {
@@ -480,6 +546,19 @@ function renderLayout() {
       [data-screen="map"] .map-object > span {
         position: relative;
         z-index: 1;
+      }
+      [data-screen="map"] .map-object-npc::before {
+        display: none;
+      }
+      [data-screen="map"] .map-npc-sprite {
+        width: ${NPC_DISPLAY_TILE_SIZE}px;
+        height: ${NPC_DISPLAY_TILE_SIZE}px;
+        background-image: var(--npc-sprite-url);
+        background-repeat: no-repeat;
+        background-size: ${NPC_DISPLAY_TILE_SIZE * NPC_SHEET_COLUMNS}px ${NPC_DISPLAY_TILE_SIZE}px;
+        background-position: 0 0;
+        image-rendering: pixelated;
+        filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.45));
       }
       [data-screen="map"] .map-decoration {
         position: absolute;
@@ -675,6 +754,7 @@ function objectLabel(type) {
   if (type === "exit") return "EXIT";
   if (type === "switch") return "SW";
   if (type === "chest" || type === "treasure") return "宝";
+  if (type === "npc") return "";
   return "OBJ";
 }
 
@@ -694,6 +774,7 @@ function mapRenderSignature(mapDefinition) {
           name: String(row?.name || ""),
           x: Number(row?.x || 0),
           y: Number(row?.y || 0),
+          spriteImageUrl: String(row?.spriteImageUrl || ""),
         }))
         : [],
     ),
@@ -732,11 +813,18 @@ function ensureMapRenderState(mapLayer, mapDefinition) {
   const renderPadding = mapDefinition.renderPadding || { left: 0, top: 0 };
   (mapDefinition.objects || []).forEach((row) => {
     const marker = document.createElement("div");
-    marker.className = "map-object";
+    marker.className = `map-object${row?.type === "npc" ? " map-object-npc" : ""}`;
     marker.style.left = `${(Number(row.x || 0) + renderPadding.left) * tileSize}px`;
     marker.style.top = `${(Number(row.y || 0) + renderPadding.top) * tileSize}px`;
     marker.title = String(row?.name || row?.type || "");
-    marker.innerHTML = `<span>${objectLabel(row?.type)}</span>`;
+    if (row?.type === "npc" && row?.spriteImageUrl) {
+      marker.innerHTML = `<span class="map-npc-sprite" aria-hidden="true"></span>`;
+      const npcSprite = marker.querySelector(".map-npc-sprite");
+      npcSprite?.style.setProperty("--npc-sprite-url", `url("${row.spriteImageUrl}")`);
+      npcSprite?.setAttribute("data-npc-key", `${row.x},${row.y},${row.dialogue_index || row.name || ""}`);
+    } else {
+      marker.innerHTML = `<span>${objectLabel(row?.type)}</span>`;
+    }
     mapLayer.appendChild(marker);
   });
 
@@ -783,6 +871,14 @@ export function findAdjacentObject(mapDefinition, mapState, predicate = () => tr
     const objectY = Number(row?.y);
     return Math.abs(tileX - objectX) + Math.abs(tileY - objectY) === 1 && predicate(row);
   }) || null;
+}
+
+export function findAdjacentNpc(mapDefinition, mapState) {
+  return findAdjacentObject(
+    mapDefinition,
+    mapState,
+    (row) => row?.type === "npc" && Number.isFinite(Number(row?.dialogue_index)),
+  );
 }
 
 export function findAdjacentTileWithGid(mapDefinition, mapState, gid) {
@@ -1020,6 +1116,13 @@ function updateMapPlayerSprite(mapPlayer, direction, walkFrame) {
   mapPlayer.style.setProperty("--player-facing-scale", String(facingScale));
 }
 
+function updateNpcSpriteFrame(node, direction, walkFrame) {
+  if (!node) return;
+  const frameIndex = resolveNpcSpriteFrame(direction, walkFrame);
+  node.style.backgroundPosition = `${-frameIndex * NPC_DISPLAY_TILE_SIZE}px 0`;
+  node.style.transform = `scaleX(${resolveNpcFacingScale(direction)})`;
+}
+
 function updateMapPlayerSpriteImage(mapPlayer, appState) {
   if (!mapPlayer) return;
   const sprite = resolveLeaderCharacterSprite(appState);
@@ -1158,8 +1261,10 @@ export async function mountScreen({ mountNode, store, navigate }) {
   let visualMapPosition = null;
   let moveAnimationFrameId = null;
   let moveAnimation = null;
+  let npcAnimationIntervalId = null;
   let playerDirection = "down";
   let playerWalkFrame = 0;
+  const npcAnimationStates = new Map();
   const holdRepeater = createDirectionalHoldRepeater((direction) => tryMove(direction));
 
   function isEventOverlayOpen() {
@@ -1322,6 +1427,51 @@ export async function mountScreen({ mountNode, store, navigate }) {
     };
     moveAnimationFrameId = requestAnimationFrame(tick);
   }
+
+  function tickNpcSprites(now = performance.now()) {
+    const seenKeys = new Set();
+    mapLayer.querySelectorAll(".map-npc-sprite").forEach((node) => {
+      const key = String(node.dataset.npcKey || "");
+      if (!key) return;
+      seenKeys.add(key);
+      let npcState = npcAnimationStates.get(key);
+      if (!npcState) {
+        const direction = chooseNextNpcDirection("", Math.random());
+        npcState = {
+          direction,
+          walkFrame: 0,
+          nextFrameAt: now + NPC_FRAME_MS,
+          nextDirectionAt: now + resolveNpcNextDirectionDelay(Math.random()),
+        };
+        npcAnimationStates.set(key, npcState);
+      }
+      if (now >= npcState.nextDirectionAt) {
+        npcState.direction = chooseNextNpcDirection(npcState.direction, Math.random());
+        npcState.nextDirectionAt = now + resolveNpcNextDirectionDelay(Math.random());
+      }
+      if (now >= npcState.nextFrameAt) {
+        npcState.walkFrame = npcState.walkFrame === 0 ? 1 : 0;
+        npcState.nextFrameAt = now + NPC_FRAME_MS;
+      }
+      updateNpcSpriteFrame(node, npcState.direction, npcState.walkFrame);
+    });
+    Array.from(npcAnimationStates.keys()).forEach((key) => {
+      if (!seenKeys.has(key)) npcAnimationStates.delete(key);
+    });
+  }
+
+  function startNpcAnimation() {
+    if (npcAnimationIntervalId !== null) return;
+    tickNpcSprites();
+    npcAnimationIntervalId = window.setInterval(() => tickNpcSprites(), 250);
+  }
+
+  function stopNpcAnimation() {
+    if (npcAnimationIntervalId === null) return;
+    window.clearInterval(npcAnimationIntervalId);
+    npcAnimationIntervalId = null;
+  }
+
   async function runAlterCaveRecoveryEvent() {
     if (!pyodide) {
       const pyodideRuntime = await import("../pyodide_runtime.js");
@@ -1395,11 +1545,23 @@ export async function mountScreen({ mountNode, store, navigate }) {
       await runAlterCaveRecoveryEvent();
       return;
     }
+    const adjacentNpc = findAdjacentNpc(mapDefinition, mapState);
+    if (adjacentNpc) {
+      const message = await loadMergedFixedContentByIndex(adjacentNpc.dialogue_index);
+      if (message) {
+        openEventOverlay(message);
+        mapStatus.textContent = `${adjacentNpc.name || "NPC"} と話しました。`;
+      } else {
+        mapStatus.textContent = "このNPCの会話テキストが見つかりません。";
+      }
+      return;
+    }
     const switchResult = toggleAdjacentSwitch(mapDefinition, mapState);
     if (switchResult.toggled) {
       mapDefinition = switchResult.mapDefinition;
       mapState = switchResult.mapState;
       renderMapTiles(mapLayer, mapDefinition);
+      tickNpcSprites();
       persistCurrentMapState(mapState);
       redraw();
       mapStatus.textContent = `${switchResult.switchId} を ${switchResult.enabled ? "ON" : "OFF"} にしました。`;
@@ -1415,6 +1577,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       mapDefinition = treasureResult.mapDefinition;
       mapState = treasureResult.mapState;
       renderMapTiles(mapLayer, mapDefinition);
+      tickNpcSprites();
       const currentState = store.getState();
       const nextEnvelope = {
         ...(treasureResult.saveEnvelope || currentState.saveEnvelope || { save: {}, menu_state: {} }),
@@ -1484,6 +1647,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
         mapState.switch_states,
       );
       renderMapTiles(mapLayer, mapDefinition);
+      tickNpcSprites();
       setVisualMapPosition(mapState.tile_x, mapState.tile_y);
       persistCurrentMapState(mapState);
       mapStatus.textContent = `${mapDefinition.name} に移動しました。`;
@@ -1684,6 +1848,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
           button.removeEventListener("pointerleave", handlers.onPointerLeave);
         });
         holdRepeater.stop();
+        stopNpcAnimation();
         window.removeEventListener("keydown", onKeyDown);
       };
     }
@@ -1719,6 +1884,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       };
     }
     renderMapTiles(mapLayer, mapDefinition);
+    startNpcAnimation();
     persistCurrentMapState(mapState);
     setVisualMapPosition(mapState.tile_x, mapState.tile_y);
     if (postBattleOverlayIndices.length) {
@@ -1755,6 +1921,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       button.removeEventListener("pointerleave", handlers.onPointerLeave);
     });
     holdRepeater.stop();
+    stopNpcAnimation();
     stopMoveAnimation();
     window.removeEventListener("keydown", onKeyDown);
     if (resizeObserver) {
