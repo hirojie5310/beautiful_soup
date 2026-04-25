@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   applySwitchStateToMap,
   createDirectionalHoldRepeater,
+  canNpcOccupyTile,
   deriveMapLaunchContext,
   canOccupyTile,
   deriveInitialMapState,
@@ -18,6 +19,8 @@ import {
   moveMapPosition,
   normalizeCharacterJobKey,
   normalizeMergedFixedContent,
+  normalizeNpcMovement,
+  normalizeNpcDirection,
   openAdjacentTreasure,
   chooseNextNpcDirection,
   resolveNpcFacingScale,
@@ -26,6 +29,7 @@ import {
   resolveCharacterSpriteFrame,
   resolveLeaderCharacterSprite,
   resolveLeaderCharacterSpriteUrl,
+  resolveNpcInitialDirection,
   resolveInitialMapSelection,
   shouldCloseEventOverlayOnConfirm,
   shouldResumeMapPosition,
@@ -144,6 +148,16 @@ test("resolveNpcNextDirectionDelay returns a few-second random delay", () => {
   assert.equal(resolveNpcNextDirectionDelay(0), 3000);
   assert.equal(resolveNpcNextDirectionDelay(1), 6000);
   assert.equal(resolveNpcNextDirectionDelay(0.5), 4500);
+});
+
+test("NPC movement config supports fixed facing and random movement", () => {
+  assert.equal(normalizeNpcMovement("random"), "random");
+  assert.equal(normalizeNpcMovement("fixed"), "fixed");
+  assert.equal(normalizeNpcMovement(""), "fixed");
+  assert.equal(normalizeNpcDirection("right"), "right");
+  assert.equal(normalizeNpcDirection("bad", "down"), "down");
+  assert.equal(resolveNpcInitialDirection({ direction: "left" }, 0.99), "left");
+  assert.equal(resolveNpcInitialDirection({ movement: "random" }, 0.99), "down");
 });
 
 test("normalizeCharacterJobKey builds sprite lookup keys from job names", () => {
@@ -450,6 +464,24 @@ test("canOccupyTile rejects blocking NPC object tiles", () => {
   assert.equal(findBlockingObjectAt(mapWithNpc, 2, 2), null);
   assert.equal(canOccupyTile(mapWithNpc, 1, 1), false);
   assert.equal(canOccupyTile(mapWithNpc, 2, 2), true);
+});
+
+test("canNpcOccupyTile ignores itself but avoids player and blocking NPCs", () => {
+  const walker = { type: "npc", name: "Walker", x: 1, y: 1, dialogue_index: 501 };
+  const mapWithNpc = {
+    ...stubMap,
+    objects: [
+      walker,
+      { type: "npc", name: "Guard", x: 2, y: 2, dialogue_index: 502 },
+      { type: "exit", name: "Door", x: 1, y: 2 },
+    ],
+  };
+
+  assert.equal(canNpcOccupyTile(mapWithNpc, walker, { tile_x: 0, tile_y: 0 }, 1, 1), true);
+  assert.equal(canNpcOccupyTile(mapWithNpc, walker, { tile_x: 1, tile_y: 2 }, 2, 1), false);
+  assert.equal(canNpcOccupyTile(mapWithNpc, walker, { tile_x: 0, tile_y: 0 }, 2, 2), false);
+  assert.equal(canNpcOccupyTile(mapWithNpc, walker, { tile_x: 0, tile_y: 0 }, 1, 2), false);
+  assert.equal(canNpcOccupyTile(mapWithNpc, walker, { tile_x: 0, tile_y: 0 }, 0, 1), false);
 });
 
 test("moveMapPosition advances only onto passable tiles", () => {

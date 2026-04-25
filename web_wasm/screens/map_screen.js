@@ -30,6 +30,9 @@ const NPC_FRAME_MS = 1000;
 const NPC_DIRECTION_MIN_MS = 3000;
 const NPC_DIRECTION_MAX_MS = 6000;
 const NPC_DIRECTIONS = ["up", "left", "right", "down"];
+const NPC_MOVEMENT_RANDOM = "random";
+const WATER_ANIMATION_GIDS = new Set([9, 10, 11]);
+const WATER_HIGHLIGHT_SHIFT_PX = 4;
 const MAP_MOVE_ANIMATION_MS = 140;
 const HOLD_MOVE_INITIAL_DELAY_MS = 220;
 const HOLD_MOVE_REPEAT_MS = 110;
@@ -86,6 +89,7 @@ const CHARACTER_SPRITES_BY_JOB_KEY = {
 let spellLevelByNamePromise = null;
 let mergedFixedContentPromise = null;
 const mapRenderStateCache = new WeakMap();
+const waterHighlightMaskCache = new Map();
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
@@ -142,6 +146,22 @@ export function chooseNextNpcDirection(currentDirection, randomValue = Math.rand
   const rows = candidates.length ? candidates : NPC_DIRECTIONS;
   const index = clamp(Math.floor(Number(randomValue || 0) * rows.length), 0, rows.length - 1);
   return rows[index] || "down";
+}
+
+export function normalizeNpcDirection(direction, fallback = "down") {
+  const normalizedDirection = String(direction || "").trim().toLowerCase();
+  return NPC_DIRECTIONS.includes(normalizedDirection) ? normalizedDirection : fallback;
+}
+
+export function normalizeNpcMovement(movement) {
+  const normalizedMovement = String(movement || "").trim().toLowerCase();
+  return normalizedMovement === NPC_MOVEMENT_RANDOM ? NPC_MOVEMENT_RANDOM : "fixed";
+}
+
+export function resolveNpcInitialDirection(row, randomValue = Math.random()) {
+  const configuredDirection = normalizeNpcDirection(row?.direction, "");
+  if (configuredDirection) return configuredDirection;
+  return chooseNextNpcDirection("", randomValue);
 }
 
 export function resolveNpcNextDirectionDelay(randomValue = Math.random()) {
@@ -415,13 +435,41 @@ export function findBlockingObjectAt(mapDefinition, x, y) {
   )) || null;
 }
 
-export function moveMapPosition(mapDefinition, mapState, direction) {
-  const delta = {
+function directionDelta(direction) {
+  return {
     up: { x: 0, y: -1 },
     down: { x: 0, y: 1 },
     left: { x: -1, y: 0 },
     right: { x: 1, y: 0 },
-  }[direction];
+  }[direction] || null;
+}
+
+export function canNpcOccupyTile(mapDefinition, npcRow, mapState, x, y) {
+  if (!mapDefinition) return false;
+  if (x < 0 || y < 0 || x >= mapDefinition.width || y >= mapDefinition.height) {
+    return false;
+  }
+  if (
+    Number(mapState?.tile_x) === Number(x)
+    && Number(mapState?.tile_y) === Number(y)
+  ) {
+    return false;
+  }
+  const occupiedObject = (mapDefinition?.objects || []).find((row) => (
+    row !== npcRow
+    && row?.blocking !== false
+    && Number(row?.x) === Number(x)
+    && Number(row?.y) === Number(y)
+  ));
+  if (occupiedObject) {
+    return false;
+  }
+  const gid = Number(mapDefinition.rows?.[y]?.[x] ?? 0);
+  return !mapDefinition.collisionGids.has(gid);
+}
+
+export function moveMapPosition(mapDefinition, mapState, direction) {
+  const delta = directionDelta(direction);
   if (!delta) {
     return { moved: false, nextState: mapState, reason: "invalid" };
   }
@@ -522,6 +570,19 @@ function renderLayout() {
         height: var(--map-tile-size);
         background-repeat: no-repeat;
         image-rendering: pixelated;
+        overflow: hidden;
+      }
+      [data-screen="map"] .map-water-highlight {
+        position: absolute;
+        inset: 0;
+        background-image: var(--water-highlight-url);
+        background-repeat: no-repeat;
+        background-size: var(--map-tile-size) var(--map-tile-size);
+        image-rendering: pixelated;
+        opacity: 0.82;
+        pointer-events: none;
+        animation: map-water-highlight 1800ms steps(${WATER_HIGHLIGHT_SHIFT_PX}) infinite;
+        will-change: transform;
       }
       [data-screen="map"] .map-object {
         position: absolute;
@@ -534,6 +595,13 @@ function renderLayout() {
         color: #f7f2cc;
         text-shadow: 0 1px 0 rgba(0, 0, 0, 0.8);
         pointer-events: none;
+      }
+      [data-screen="map"] .map-object-npc {
+        width: ${NPC_DISPLAY_TILE_SIZE}px;
+        height: ${NPC_DISPLAY_TILE_SIZE}px;
+        contain: paint;
+        transition: transform ${MAP_MOVE_ANIMATION_MS}ms linear;
+        will-change: transform;
       }
       [data-screen="map"] .map-object::before {
         content: "";
@@ -647,6 +715,10 @@ function renderLayout() {
         from { background-position: 0 0; }
         to { background-position: calc(var(--map-tile-size) * -${CRYSTAL_SPRITE_FRAMES}) 0; }
       }
+      @keyframes map-water-highlight {
+        from { transform: translateX(0); }
+        to { transform: translateX(${WATER_HIGHLIGHT_SHIFT_PX}px); }
+      }
       [data-screen="map"] .map-meta {
         display: flex;
         justify-content: space-between;
@@ -758,6 +830,12 @@ function objectLabel(type) {
   return "OBJ";
 }
 
+function npcTileTransform(row, renderPadding = { left: 0, top: 0 }, tileSize = DISPLAY_TILE_SIZE) {
+  const x = (Number(row?.x || 0) + Number(renderPadding?.left || 0)) * tileSize;
+  const y = (Number(row?.y || 0) + Number(renderPadding?.top || 0)) * tileSize;
+  return `translate3d(${x}px, ${y}px, 0)`;
+}
+
 function mapRenderSignature(mapDefinition) {
   return [
     String(mapDefinition?.id || ""),
@@ -780,6 +858,109 @@ function mapRenderSignature(mapDefinition) {
     ),
     JSON.stringify(findCrystalSpriteOrigin(mapDefinition)),
   ].join("|");
+}
+
+function isWaterAnimationGid(gid) {
+  return WATER_ANIMATION_GIDS.has(Number(gid || 0));
+}
+
+function loadImageElement(url) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error(`image load failed: ${url}`));
+    image.src = url;
+  });
+}
+
+function createWaterHighlightMask(image, gid, tilesetColumns, tilesetRows) {
+  const displaySize = DISPLAY_TILE_SIZE;
+  const sourceTileWidth = Math.max(1, Math.floor(image.naturalWidth / tilesetColumns));
+  const sourceTileHeight = Math.max(1, Math.floor(image.naturalHeight / tilesetRows));
+  const localId = Math.max(0, Number(gid || 0) - 1);
+  const sourceX = (localId % tilesetColumns) * sourceTileWidth;
+  const sourceY = Math.floor(localId / tilesetColumns) * sourceTileHeight;
+  const canvas = document.createElement("canvas");
+  canvas.width = displaySize;
+  canvas.height = displaySize;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) return "";
+  context.imageSmoothingEnabled = false;
+  context.drawImage(
+    image,
+    sourceX,
+    sourceY,
+    sourceTileWidth,
+    sourceTileHeight,
+    0,
+    0,
+    displaySize,
+    displaySize,
+  );
+
+  const imageData = context.getImageData(0, 0, displaySize, displaySize);
+  const pixels = imageData.data;
+  let luminanceTotal = 0;
+  let pixelCount = 0;
+  for (let index = 0; index < pixels.length; index += 4) {
+    if (pixels[index + 3] <= 0) continue;
+    luminanceTotal += (pixels[index] * 0.299) + (pixels[index + 1] * 0.587) + (pixels[index + 2] * 0.114);
+    pixelCount += 1;
+  }
+  const averageLuminance = pixelCount ? luminanceTotal / pixelCount : 255;
+  const threshold = Math.max(108, averageLuminance + 22);
+  for (let index = 0; index < pixels.length; index += 4) {
+    const luminance = (pixels[index] * 0.299) + (pixels[index + 1] * 0.587) + (pixels[index + 2] * 0.114);
+    if (pixels[index + 3] <= 0 || luminance < threshold) {
+      pixels[index + 3] = 0;
+      continue;
+    }
+    pixels[index + 3] = Math.min(210, pixels[index + 3]);
+  }
+  context.putImageData(imageData, 0, 0);
+  return canvas.toDataURL("image/png");
+}
+
+function ensureWaterHighlightMasks(mapDefinition) {
+  const imageUrl = String(mapDefinition?.tileset?.imageUrl || "");
+  if (!imageUrl) return Promise.resolve(new Map());
+  const tilesetColumns = Math.max(1, Number(mapDefinition?.tileset?.columns || 1));
+  const tileCount = Math.max(1, Number(mapDefinition?.tileset?.tileCount || 1));
+  const tilesetRows = Math.max(1, Math.ceil(tileCount / tilesetColumns));
+  const cacheKey = [
+    imageUrl,
+    tilesetColumns,
+    tilesetRows,
+    Array.from(WATER_ANIMATION_GIDS).join(","),
+  ].join("|");
+  if (!waterHighlightMaskCache.has(cacheKey)) {
+    const request = loadImageElement(imageUrl)
+      .then((image) => {
+        const masks = new Map();
+        WATER_ANIMATION_GIDS.forEach((gid) => {
+          masks.set(gid, createWaterHighlightMask(image, gid, tilesetColumns, tilesetRows));
+        });
+        return masks;
+      })
+      .catch(() => new Map());
+    waterHighlightMaskCache.set(cacheKey, request);
+  }
+  return waterHighlightMaskCache.get(cacheKey);
+}
+
+function applyWaterHighlightMasks(mapLayer, masks) {
+  mapLayer.querySelectorAll(".map-water-highlight").forEach((node) => {
+    const maskUrl = masks.get(Number(node.dataset.waterGid || 0)) || "";
+    if (maskUrl) node.style.setProperty("--water-highlight-url", `url("${maskUrl}")`);
+  });
+}
+
+function scheduleWaterHighlightMasks(mapLayer, mapDefinition, signature) {
+  ensureWaterHighlightMasks(mapDefinition).then((masks) => {
+    const currentState = mapRenderStateCache.get(mapLayer);
+    if (!currentState || currentState.signature !== signature) return;
+    applyWaterHighlightMasks(mapLayer, masks);
+  });
 }
 
 function ensureMapRenderState(mapLayer, mapDefinition) {
@@ -811,17 +992,24 @@ function ensureMapRenderState(mapLayer, mapDefinition) {
   });
 
   const renderPadding = mapDefinition.renderPadding || { left: 0, top: 0 };
-  (mapDefinition.objects || []).forEach((row) => {
+  (mapDefinition.objects || []).forEach((row, index) => {
     const marker = document.createElement("div");
     marker.className = `map-object${row?.type === "npc" ? " map-object-npc" : ""}`;
-    marker.style.left = `${(Number(row.x || 0) + renderPadding.left) * tileSize}px`;
-    marker.style.top = `${(Number(row.y || 0) + renderPadding.top) * tileSize}px`;
+    if (row?.type === "npc") {
+      marker.style.left = "0px";
+      marker.style.top = "0px";
+      marker.style.transform = npcTileTransform(row, renderPadding, tileSize);
+    } else {
+      marker.style.left = `${(Number(row.x || 0) + renderPadding.left) * tileSize}px`;
+      marker.style.top = `${(Number(row.y || 0) + renderPadding.top) * tileSize}px`;
+    }
     marker.title = String(row?.name || row?.type || "");
     if (row?.type === "npc" && row?.spriteImageUrl) {
       marker.innerHTML = `<span class="map-npc-sprite" aria-hidden="true"></span>`;
+      marker.dataset.npcKey = String(row?.npc_key || row?.dialogue_index || row?.name || index);
       const npcSprite = marker.querySelector(".map-npc-sprite");
       npcSprite?.style.setProperty("--npc-sprite-url", `url("${row.spriteImageUrl}")`);
-      npcSprite?.setAttribute("data-npc-key", `${row.x},${row.y},${row.dialogue_index || row.name || ""}`);
+      npcSprite?.setAttribute("data-npc-key", marker.dataset.npcKey);
     } else {
       marker.innerHTML = `<span>${objectLabel(row?.type)}</span>`;
     }
@@ -855,6 +1043,19 @@ function updateRenderedTile(tile, gid, tilesetColumns) {
   const col = localId % tilesetColumns;
   const tileRow = Math.floor(localId / tilesetColumns);
   tile.style.backgroundPosition = `${-col * tileSize}px ${-tileRow * tileSize}px`;
+  tile.dataset.gid = String(Number(gid || 0));
+  let waterHighlight = tile.querySelector(".map-water-highlight");
+  if (isWaterAnimationGid(gid)) {
+    if (!waterHighlight) {
+      waterHighlight = document.createElement("span");
+      waterHighlight.className = "map-water-highlight";
+      waterHighlight.setAttribute("aria-hidden", "true");
+      tile.appendChild(waterHighlight);
+    }
+    waterHighlight.dataset.waterGid = String(Number(gid || 0));
+  } else if (waterHighlight) {
+    waterHighlight.remove();
+  }
 }
 
 export function findStandingObject(mapDefinition, mapState) {
@@ -954,6 +1155,7 @@ function renderMapTiles(mapLayer, mapDefinition) {
   });
 
   renderState.previousRenderRows = renderRows.map((row) => row.slice());
+  scheduleWaterHighlightMasks(mapLayer, mapDefinition, renderState.signature);
 }
 
 export function applySwitchStateToMap(mapDefinition, switchStates = {}) {
@@ -1434,9 +1636,14 @@ export async function mountScreen({ mountNode, store, navigate }) {
       const key = String(node.dataset.npcKey || "");
       if (!key) return;
       seenKeys.add(key);
+      const npcRow = (mapDefinition?.objects || []).find((row) => (
+        row?.type === "npc"
+        && String(row?.npc_key || row?.dialogue_index || row?.name || "") === key
+      ));
+      const movement = normalizeNpcMovement(npcRow?.movement);
       let npcState = npcAnimationStates.get(key);
       if (!npcState) {
-        const direction = chooseNextNpcDirection("", Math.random());
+        const direction = resolveNpcInitialDirection(npcRow, Math.random());
         npcState = {
           direction,
           walkFrame: 0,
@@ -1445,9 +1652,22 @@ export async function mountScreen({ mountNode, store, navigate }) {
         };
         npcAnimationStates.set(key, npcState);
       }
-      if (now >= npcState.nextDirectionAt) {
+      if (movement === NPC_MOVEMENT_RANDOM && now >= npcState.nextDirectionAt) {
         npcState.direction = chooseNextNpcDirection(npcState.direction, Math.random());
+        const delta = directionDelta(npcState.direction);
+        const nextX = Number(npcRow?.x || 0) + Number(delta?.x || 0);
+        const nextY = Number(npcRow?.y || 0) + Number(delta?.y || 0);
+        if (npcRow && canNpcOccupyTile(mapDefinition, npcRow, mapState, nextX, nextY)) {
+          npcRow.x = nextX;
+          npcRow.y = nextY;
+          const marker = node.closest(".map-object-npc");
+          const renderPadding = mapDefinition.renderPadding || { left: 0, top: 0 };
+          marker.style.transform = npcTileTransform(npcRow, renderPadding);
+        }
         npcState.nextDirectionAt = now + resolveNpcNextDirectionDelay(Math.random());
+      } else if (movement !== NPC_MOVEMENT_RANDOM) {
+        const configuredDirection = normalizeNpcDirection(npcRow?.direction, "");
+        if (configuredDirection) npcState.direction = configuredDirection;
       }
       if (now >= npcState.nextFrameAt) {
         npcState.walkFrame = npcState.walkFrame === 0 ? 1 : 0;
@@ -1721,6 +1941,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       mapDefinition,
       Math.random(),
       asNumber(mapState?.steps_since_reset, 0),
+      mapState,
     )) {
       mapStatus.textContent = "敵が現れた！ 戦闘へ移行します。";
       navigateToEncounter();
