@@ -42,13 +42,13 @@
     },
     {
       "type": "exit",
-      "name": "Ur",
+      "name": "Floating Continent",
       "x": 3,
       "y": 1,
-      "target_map": "Ur",
+      "target_map": "FloatingContinent",
       "target_spawn": {
-        "x": 15,
-        "y": 29
+        "x": 87,
+        "y": 10
       }
     },
     {

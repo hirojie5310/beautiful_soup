@@ -42,13 +42,13 @@
     },
     {
       "type": "exit",
-      "name": "Alter Cave B1",
+      "name": "Floating Continent",
       "x": 6,
       "y": 5,
-      "target_map": "Alter_Cave_B1",
+      "target_map": "FloatingContinent",
       "target_spawn": {
-        "x": 3,
-        "y": 1
+        "x": 87,
+        "y": 10
       }
     }
   ],
