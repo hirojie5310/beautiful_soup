@@ -214,7 +214,7 @@ def resolve_summon_spell_names_for_cast_code(
     for child in parent_spell.get("Spells") or []:
         if not isinstance(child, dict):
             continue
-        child_name = child.get("Name") or child.get("name")
+        child_name = child.get("name") or child.get("Name")
         if not isinstance(child_name, str) or not child_name:
             continue
         if allowed_set is not None and child_name not in allowed_set:
@@ -507,7 +507,11 @@ def allowed_spell_names_for_job(job: Job) -> set[str]:
     そのジョブが使用可能な魔法名の集合を返す。
     """
     spells = job.raw.get("Spells") or []
-    return {s.get("Name") for s in spells if s.get("Name")}
+    return {
+        s.get("name") or s.get("Name")
+        for s in spells
+        if s.get("name") or s.get("Name")
+    }
 
 
 # レベル別・黒白まとめ表示関数
@@ -572,7 +576,7 @@ def expand_spells_for_summons(
         # --- 親 Summon Magic（子配列を持つもの）だけ展開 ---
         if raw_type == "Summon Magic" and isinstance(child_list, list) and child_list:
             for child in child_list:
-                child_name = child.get("Name") or child.get("name")
+                child_name = child.get("name") or child.get("Name")
                 if not child_name:
                     continue
 

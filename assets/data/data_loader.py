@@ -6,7 +6,7 @@
 # load_weapons	武器JSONをname→dictにして返す
 # load_armors	防具JSONをname→dictにして返す
 # load_spells	魔法JSONをname→dictにして返す
-# load_items	アイテムJSONをName→dictにして返す
+# load_items	アイテムJSONをname→dictにして返す
 # load_jobs	ジョブJSONを読み込み、Jobオブジェクトの辞書を作成
 # load_savedata	セーブデータJSONを読み込む
 # MASTER_SPELLS_BY_NAME(代入)	ff3_calc内部から魔法定義を名前で引けるようにするための共有キャッシュ
@@ -128,13 +128,13 @@ def load_armors(path: Path) -> Dict[str, Dict[str, Any]]:
 
 
 def load_spells(path: Path) -> Dict[str, Dict[str, Any]]:
-    """魔法 JSON を Name 優先で dict にして返す"""
-    return _load_named_index(path, top_key="spells", name_keys=("Name", "name"))
+    """魔法 JSON を name 優先で dict にして返す"""
+    return _load_named_index(path, top_key="spells", name_keys=("name", "Name"))
 
 
 def load_items(path: Path) -> Dict[str, Dict[str, Any]]:
-    """アイテム JSON を Name → dict にして返す"""
-    return _load_named_index(path, top_key="items", name_keys=("Name",))
+    """アイテム JSON を name 優先で dict にして返す"""
+    return _load_named_index(path, top_key="items", name_keys=("name", "Name"))
 
 
 # ジョブJSONを読み込み、Jobオブジェクトの辞書を作成（データの“ロード”というより“ドメインモデルの組み立て）
@@ -159,8 +159,9 @@ def load_jobs(path: Path) -> Dict[str, Job]:
                 mp=mp,
             )
 
-        jobs[j["Name"]] = Job(
-            name=j["Name"],
+        job_name = j.get("name") or j.get("Name")
+        jobs[job_name] = Job(
+            name=job_name,
             slug=j["Slug"],
             earned=j.get("Earned", ""),
             stats_by_level=stats_by_level,

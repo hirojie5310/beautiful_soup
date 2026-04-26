@@ -198,17 +198,12 @@ export async function loadShopMasterData() {
 
   const itemTypeByName = {};
   asArray(itemsRaw?.items).forEach((item) => {
-    const name = String(item?.Name || "");
+    const name = String(item?.name || item?.Name || "");
     if (!name) return;
     itemTypeByName[name] = String(item?.ItemType || "");
   });
 
-  const spellLevelByName = {};
-  asArray(spellsRaw?.spells).forEach((spell) => {
-    const name = String(spell?.name || "");
-    const level = asNumber(spell?.Level, 0);
-    if (name && level > 0) spellLevelByName[name] = level;
-  });
+  const spellLevelByName = buildSpellLevelByName(spellsRaw);
 
   return {
     shopEntries: asArray(shopsRaw),
@@ -217,6 +212,16 @@ export async function loadShopMasterData() {
     armorNameSet: new Set(asArray(armorsRaw?.armors).map((row) => String(row?.name || "")).filter(Boolean)),
     spellLevelByName,
   };
+}
+
+export function buildSpellLevelByName(spellsRaw) {
+  const spellLevelByName = {};
+  asArray(spellsRaw?.spells).forEach((spell) => {
+    const name = String(spell?.name || spell?.Name || "");
+    const level = asNumber(spell?.Level ?? spell?.level, 0);
+    if (name && level > 0) spellLevelByName[name] = level;
+  });
+  return spellLevelByName;
 }
 
 export function normalizeShopTypeToInventoryBucket(masterData, shopRowOrType, itemName) {

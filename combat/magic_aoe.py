@@ -54,7 +54,7 @@ def enemy_cast_aoe_damage_spell_to_party(
     if rng is None:
         rng = random
 
-    spell_name = spell_json.get("Name") or "Spell"
+    spell_name = spell_json.get("name") or spell_json.get("Name") or "Spell"
     attack_elements = elements_from_monster_spell(spell_json or {})
     spell_type = normalize_text_basic(spell_json.get("Type") or "")
     auto_all_target = spell_is_aoe(spell_json)
@@ -254,7 +254,7 @@ def enemy_cast_aoe_status_spell_to_party(
         rng = random
 
     # name/Name 揺れ対策
-    spell_name = (spell_json.get("Name") or spell_json.get("name") or "Spell").strip()
+    spell_name = (spell_json.get("name") or spell_json.get("Name") or "Spell").strip()
 
     # StatusAilment が特徴（Mind Blast）
     ailment = (
@@ -303,7 +303,7 @@ def enemy_cast_aoe_status_spell_to_party(
 
 # AoE状態異常専用関数用 判定ヘルパ（表記ゆれ吸収込み）
 def spell_name(spell: dict) -> str:
-    return (spell.get("Name") or spell.get("name") or "").strip()
+    return (spell.get("name") or spell.get("Name") or "").strip()
 
 
 def spell_target(spell: dict) -> str:

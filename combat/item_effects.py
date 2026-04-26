@@ -104,7 +104,7 @@ def apply_item_effect_to_actor(
     ・主に「回復アイテム」「状態異常回復アイテム」「蘇生アイテム」を担当
     ・攻撃アイテム（Deal XXX damage）は別ヘルパーで魔法ダメージ計算に委譲する前提
     """
-    item_name = (item_json.get("Name") or "").strip()
+    item_name = (item_json.get("name") or item_json.get("Name") or "").strip()
 
     # ここで「主語」を決める
     if actor_name and actor_name != target_name:
@@ -344,7 +344,7 @@ def apply_item_effect_to_actor(
 
     if cured_any:
         logs.append(
-            f"{prefix}{target_name}の状態異常が回復した！（{item_json.get('Name')}）"
+            f"{prefix}{target_name}の状態異常が回復した！（{item_json.get('name') or item_json.get('Name')}）"
         )
         return
 
@@ -352,7 +352,7 @@ def apply_item_effect_to_actor(
     if recognized_any and not cured_any:
         logs.append(
             f"{prefix}{target_name}は回復対象の状態異常ではなかったため、"
-            f"{item_json.get('Name')}は効果がなかった。"
+            f"{item_json.get('name') or item_json.get('Name')}は効果がなかった。"
         )
         return
 
@@ -360,7 +360,9 @@ def apply_item_effect_to_actor(
     # 5) ここまでにマッチしないものは「攻撃アイテム or キーアイテムなど」とみなす
     #    → 戦闘中の攻撃効果は別ヘルパーに任せ、ここでは何もしない。
     # ------------------------------------------
-    logs.append(f"{item_json.get('Name')}はこの関数では効果が定義されていません。")
+    logs.append(
+        f"{item_json.get('name') or item_json.get('Name')}はこの関数では効果が定義されていません。"
+    )
 
 
 # ============================================================

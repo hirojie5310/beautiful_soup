@@ -7,7 +7,7 @@
   },
   "jobs": [
     {
-      "Name": "Onion Knight",
+      "name": "Onion Knight",
       "Slug": "onion-knight",
       "Earned": "Available at game start",
       "StrGrade": "F",
@@ -819,135 +819,135 @@
       ],
       "Weapons": [
         {
-          "Name": "Knife",
+          "name": "Knife",
           "Type": "Knife"
         },
         {
-          "Name": "Dagger",
+          "name": "Dagger",
           "Type": "Knife"
         },
         {
-          "Name": "Mythril Knife",
+          "name": "Mythril Knife",
           "Type": "Knife"
         },
         {
-          "Name": "Longsword",
+          "name": "Longsword",
           "Type": "Sword"
         },
         {
-          "Name": "Mythril Sword",
+          "name": "Mythril Sword",
           "Type": "Sword"
         },
         {
-          "Name": "Onion Sword",
+          "name": "Onion Sword",
           "Type": "Sword"
         },
         {
-          "Name": "Bow",
+          "name": "Bow",
           "Type": "Bow"
         },
         {
-          "Name": "Great Bow",
+          "name": "Great Bow",
           "Type": "Bow"
         },
         {
-          "Name": "Wooden Arrow",
+          "name": "Wooden Arrow",
           "Type": "Bow"
         },
         {
-          "Name": "Holy Arrow",
+          "name": "Holy Arrow",
           "Type": "Bow"
         },
         {
-          "Name": "Iron Arrow",
+          "name": "Iron Arrow",
           "Type": "Bow"
         }
       ],
       "Armors": [
         {
-          "Name": "Leather Shield",
+          "name": "Leather Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Onion Shield",
+          "name": "Onion Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Mythril Shield",
+          "name": "Mythril Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Ice Shield",
+          "name": "Ice Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Crystal Shield",
+          "name": "Crystal Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Leather Cap",
+          "name": "Leather Cap",
           "Type": "Helm"
         },
         {
-          "Name": "Onion Helm",
+          "name": "Onion Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Mythril Helm",
+          "name": "Mythril Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Shell Helm",
+          "name": "Shell Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Crystal Helm",
+          "name": "Crystal Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Ribbon",
+          "name": "Ribbon",
           "Type": "Helm"
         },
         {
-          "Name": "Vest",
+          "name": "Vest",
           "Type": "Armor"
         },
         {
-          "Name": "Leather Armor",
+          "name": "Leather Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Onion Armor",
+          "name": "Onion Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Mythril Armor",
+          "name": "Mythril Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Crystal Mail",
+          "name": "Crystal Mail",
           "Type": "Armor"
         },
         {
-          "Name": "Onion Gauntlets",
+          "name": "Onion Gauntlets",
           "Type": "Gloves"
         },
         {
-          "Name": "Mythril Gloves",
+          "name": "Mythril Gloves",
           "Type": "Gloves"
         },
         {
-          "Name": "Protect Ring",
+          "name": "Protect Ring",
           "Type": "Gloves"
         },
         {
-          "Name": "Crystal Gloves",
+          "name": "Crystal Gloves",
           "Type": "Gloves"
         }
       ]
     },
     {
-      "Name": "Warrior",
+      "name": "Warrior",
       "Slug": "warrior",
       "Earned": "Altar Cave Crystal Room",
       "StrGrade": "B-",
@@ -1767,163 +1767,163 @@
       ],
       "Weapons": [
         {
-          "Name": "Knife",
+          "name": "Knife",
           "Type": "Knife"
         },
         {
-          "Name": "Dagger",
+          "name": "Dagger",
           "Type": "Knife"
         },
         {
-          "Name": "Mythril Knife",
+          "name": "Mythril Knife",
           "Type": "Knife"
         },
         {
-          "Name": "Longsword",
+          "name": "Longsword",
           "Type": "Sword"
         },
         {
-          "Name": "Golden Sword",
+          "name": "Golden Sword",
           "Type": "Sword"
         },
         {
-          "Name": "Mythril Sword",
+          "name": "Mythril Sword",
           "Type": "Sword"
         },
         {
-          "Name": "Serpent Sword",
+          "name": "Serpent Sword",
           "Type": "Sword"
         },
         {
-          "Name": "Freezing Blade",
+          "name": "Freezing Blade",
           "Type": "Sword"
         },
         {
-          "Name": "Salamand Sword",
+          "name": "Salamand Sword",
           "Type": "Sword"
         },
         {
-          "Name": "Royal Sword",
+          "name": "Royal Sword",
           "Type": "Sword"
         },
         {
-          "Name": "Ancient Sword",
+          "name": "Ancient Sword",
           "Type": "Sword"
         },
         {
-          "Name": "Blood Sword",
+          "name": "Blood Sword",
           "Type": "Sword"
         },
         {
-          "Name": "Bow",
+          "name": "Bow",
           "Type": "Bow"
         },
         {
-          "Name": "Great Bow",
+          "name": "Great Bow",
           "Type": "Bow"
         },
         {
-          "Name": "Wooden Arrow",
+          "name": "Wooden Arrow",
           "Type": "Bow"
         },
         {
-          "Name": "Holy Arrow",
+          "name": "Holy Arrow",
           "Type": "Bow"
         },
         {
-          "Name": "Iron Arrow",
+          "name": "Iron Arrow",
           "Type": "Bow"
         }
       ],
       "Armors": [
         {
-          "Name": "Leather Shield",
+          "name": "Leather Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Mythril Shield",
+          "name": "Mythril Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Ice Shield",
+          "name": "Ice Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Crystal Shield",
+          "name": "Crystal Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Leather Cap",
+          "name": "Leather Cap",
           "Type": "Helm"
         },
         {
-          "Name": "Mythril Helm",
+          "name": "Mythril Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Shell Helm",
+          "name": "Shell Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Ice Helm",
+          "name": "Ice Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Crystal Helm",
+          "name": "Crystal Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Ribbon",
+          "name": "Ribbon",
           "Type": "Helm"
         },
         {
-          "Name": "Vest",
+          "name": "Vest",
           "Type": "Armor"
         },
         {
-          "Name": "Leather Armor",
+          "name": "Leather Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Mythril Armor",
+          "name": "Mythril Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Shell Armor",
+          "name": "Shell Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Ice Armor",
+          "name": "Ice Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Flame Mail",
+          "name": "Flame Mail",
           "Type": "Armor"
         },
         {
-          "Name": "Crystal Mail",
+          "name": "Crystal Mail",
           "Type": "Armor"
         },
         {
-          "Name": "Mythril Gloves",
+          "name": "Mythril Gloves",
           "Type": "Gloves"
         },
         {
-          "Name": "Power Bracers",
+          "name": "Power Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Protect Ring",
+          "name": "Protect Ring",
           "Type": "Gloves"
         },
         {
-          "Name": "Crystal Gloves",
+          "name": "Crystal Gloves",
           "Type": "Gloves"
         }
       ]
     },
     {
-      "Name": "Monk",
+      "name": "Monk",
       "Slug": "monk",
       "Earned": "Altar Cave Crystal Room",
       "StrGrade": "A-",
@@ -2743,67 +2743,67 @@
       ],
       "Weapons": [
         {
-          "Name": "Nunchaku",
+          "name": "Nunchaku",
           "Type": "Nunchaku"
         },
         {
-          "Name": "Tonfa",
+          "name": "Tonfa",
           "Type": "Nunchaku"
         },
         {
-          "Name": "Three-Section Staff",
+          "name": "Three-Section Staff",
           "Type": "Nunchaku"
         },
         {
-          "Name": "Three Section Staff",
+          "name": "Three Section Staff",
           "Type": "Nunchaku"
         }
       ],
       "Armors": [
         {
-          "Name": "Leather Cap",
+          "name": "Leather Cap",
           "Type": "Helm"
         },
         {
-          "Name": "Headband",
+          "name": "Headband",
           "Type": "Helm"
         },
         {
-          "Name": "Chakra Band",
+          "name": "Chakra Band",
           "Type": "Helm"
         },
         {
-          "Name": "Ribbon",
+          "name": "Ribbon",
           "Type": "Helm"
         },
         {
-          "Name": "Vest",
+          "name": "Vest",
           "Type": "Armor"
         },
         {
-          "Name": "Leather Armor",
+          "name": "Leather Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Kenpo Gi",
+          "name": "Kenpo Gi",
           "Type": "Armor"
         },
         {
-          "Name": "Black Belt Gi",
+          "name": "Black Belt Gi",
           "Type": "Armor"
         },
         {
-          "Name": "Power Bracers",
+          "name": "Power Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Protect Ring",
+          "name": "Protect Ring",
           "Type": "Gloves"
         }
       ]
     },
     {
-      "Name": "White Mage",
+      "name": "White Mage",
       "Slug": "white-mage",
       "Earned": "Altar Cave Crystal Room",
       "StrGrade": "C-",
@@ -4317,198 +4317,198 @@
       ],
       "Weapons": [
         {
-          "Name": "Mythril Rod",
+          "name": "Mythril Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Staff",
+          "name": "Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Fire Staff",
+          "name": "Fire Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Ice Staff",
+          "name": "Ice Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Light Staff",
+          "name": "Light Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Golem Staff",
+          "name": "Golem Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Rune Staff",
+          "name": "Rune Staff",
           "Type": "Rod"
         }
       ],
       "Armors": [
         {
-          "Name": "Leather Cap",
+          "name": "Leather Cap",
           "Type": "Helm"
         },
         {
-          "Name": "Scholar Hat",
+          "name": "Scholar Hat",
           "Type": "Helm"
         },
         {
-          "Name": "Ribbon",
+          "name": "Ribbon",
           "Type": "Helm"
         },
         {
-          "Name": "Vest",
+          "name": "Vest",
           "Type": "Armor"
         },
         {
-          "Name": "Leather Armor",
+          "name": "Leather Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Mage Robe",
+          "name": "Mage Robe",
           "Type": "Armor"
         },
         {
-          "Name": "Scholar Robe",
+          "name": "Scholar Robe",
           "Type": "Armor"
         },
         {
-          "Name": "White Robe",
+          "name": "White Robe",
           "Type": "Armor"
         },
         {
-          "Name": "Bronze Bracers",
+          "name": "Bronze Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Mythril Bracers",
+          "name": "Mythril Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Rune Bracers",
+          "name": "Rune Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Diamond Bracers",
+          "name": "Diamond Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Protect Ring",
+          "name": "Protect Ring",
           "Type": "Gloves"
         }
       ],
       "Spells": [
         {
-          "Name": "Cure",
+          "name": "Cure",
           "Type": "White",
           "Level": 1
         },
         {
-          "Name": "Poisona",
+          "name": "Poisona",
           "Type": "White",
           "Level": 1
         },
         {
-          "Name": "Sight",
+          "name": "Sight",
           "Type": "White",
           "Level": 1
         },
         {
-          "Name": "Aero",
+          "name": "Aero",
           "Type": "White",
           "Level": 2
         },
         {
-          "Name": "Mini",
+          "name": "Mini",
           "Type": "White",
           "Level": 2
         },
         {
-          "Name": "Toad",
+          "name": "Toad",
           "Type": "White",
           "Level": 2
         },
         {
-          "Name": "Blindna",
+          "name": "Blindna",
           "Type": "White",
           "Level": 3
         },
         {
-          "Name": "Cura",
+          "name": "Cura",
           "Type": "White",
           "Level": 3
         },
         {
-          "Name": "Teleport",
+          "name": "Teleport",
           "Type": "White",
           "Level": 3
         },
         {
-          "Name": "Confuse",
+          "name": "Confuse",
           "Type": "White",
           "Level": 4
         },
         {
-          "Name": "Libra",
+          "name": "Libra",
           "Type": "White",
           "Level": 4
         },
         {
-          "Name": "Silence",
+          "name": "Silence",
           "Type": "White",
           "Level": 4
         },
         {
-          "Name": "Curaga",
+          "name": "Curaga",
           "Type": "White",
           "Level": 5
         },
         {
-          "Name": "Protect",
+          "name": "Protect",
           "Type": "White",
           "Level": 5
         },
         {
-          "Name": "Raise",
+          "name": "Raise",
           "Type": "White",
           "Level": 5
         },
         {
-          "Name": "Aeroga",
+          "name": "Aeroga",
           "Type": "White",
           "Level": 6
         },
         {
-          "Name": "Haste",
+          "name": "Haste",
           "Type": "White",
           "Level": 6
         },
         {
-          "Name": "Stona",
+          "name": "Stona",
           "Type": "White",
           "Level": 6
         },
         {
-          "Name": "Curaja",
+          "name": "Curaja",
           "Type": "White",
           "Level": 7
         },
         {
-          "Name": "Esuna",
+          "name": "Esuna",
           "Type": "White",
           "Level": 7
         },
         {
-          "Name": "Reflect",
+          "name": "Reflect",
           "Type": "White",
           "Level": 7
         }
       ]
     },
     {
-      "Name": "Black Mage",
+      "name": "Black Mage",
       "Slug": "black-mage",
       "Earned": "Altar Cave Crystal Room",
       "StrGrade": "C-",
@@ -6022,218 +6022,218 @@
       ],
       "Weapons": [
         {
-          "Name": "Mythril Rod",
+          "name": "Mythril Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Fire Rod",
+          "name": "Fire Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Ice Rod",
+          "name": "Ice Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Light Rod",
+          "name": "Light Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Knife",
+          "name": "Knife",
           "Type": "Knife"
         },
         {
-          "Name": "Dagger",
+          "name": "Dagger",
           "Type": "Knife"
         },
         {
-          "Name": "Mythril Knife",
+          "name": "Mythril Knife",
           "Type": "Knife"
         },
         {
-          "Name": "Bow",
+          "name": "Bow",
           "Type": "Bow"
         },
         {
-          "Name": "Great Bow",
+          "name": "Great Bow",
           "Type": "Bow"
         },
         {
-          "Name": "Wooden Arrow",
+          "name": "Wooden Arrow",
           "Type": "Bow"
         },
         {
-          "Name": "Holy Arrow",
+          "name": "Holy Arrow",
           "Type": "Bow"
         },
         {
-          "Name": "Iron Arrow",
+          "name": "Iron Arrow",
           "Type": "Bow"
         }
       ],
       "Armors": [
         {
-          "Name": "Leather Cap",
+          "name": "Leather Cap",
           "Type": "Helm"
         },
         {
-          "Name": "Scholar Hat",
+          "name": "Scholar Hat",
           "Type": "Helm"
         },
         {
-          "Name": "Ribbon",
+          "name": "Ribbon",
           "Type": "Helm"
         },
         {
-          "Name": "Vest",
+          "name": "Vest",
           "Type": "Armor"
         },
         {
-          "Name": "Leather Armor",
+          "name": "Leather Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Mage Robe",
+          "name": "Mage Robe",
           "Type": "Armor"
         },
         {
-          "Name": "Scholar Robe",
+          "name": "Scholar Robe",
           "Type": "Armor"
         },
         {
-          "Name": "Black Robe",
+          "name": "Black Robe",
           "Type": "Armor"
         },
         {
-          "Name": "Bronze Bracers",
+          "name": "Bronze Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Mythril Bracers",
+          "name": "Mythril Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Rune Bracers",
+          "name": "Rune Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Diamond Bracers",
+          "name": "Diamond Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Protect Ring",
+          "name": "Protect Ring",
           "Type": "Gloves"
         }
       ],
       "Spells": [
         {
-          "Name": "Blizzard",
+          "name": "Blizzard",
           "Type": "Black",
           "Level": 1
         },
         {
-          "Name": "Fire",
+          "name": "Fire",
           "Type": "Black",
           "Level": 1
         },
         {
-          "Name": "Sleep",
+          "name": "Sleep",
           "Type": "Black",
           "Level": 1
         },
         {
-          "Name": "Blind",
+          "name": "Blind",
           "Type": "Black",
           "Level": 2
         },
         {
-          "Name": "Poison",
+          "name": "Poison",
           "Type": "Black",
           "Level": 2
         },
         {
-          "Name": "Thunder",
+          "name": "Thunder",
           "Type": "Black",
           "Level": 2
         },
         {
-          "Name": "Blizzara",
+          "name": "Blizzara",
           "Type": "Black",
           "Level": 3
         },
         {
-          "Name": "Fira",
+          "name": "Fira",
           "Type": "Black",
           "Level": 3
         },
         {
-          "Name": "Thundara",
+          "name": "Thundara",
           "Type": "Black",
           "Level": 3
         },
         {
-          "Name": "Blizzaga",
+          "name": "Blizzaga",
           "Type": "Black",
           "Level": 4
         },
         {
-          "Name": "Break",
+          "name": "Break",
           "Type": "Black",
           "Level": 4
         },
         {
-          "Name": "Shade",
+          "name": "Shade",
           "Type": "Black",
           "Level": 4
         },
         {
-          "Name": "Erase",
+          "name": "Erase",
           "Type": "Black",
           "Level": 5
         },
         {
-          "Name": "Raze",
+          "name": "Raze",
           "Type": "Black",
           "Level": 5
         },
         {
-          "Name": "Thundaga",
+          "name": "Thundaga",
           "Type": "Black",
           "Level": 5
         },
         {
-          "Name": "Bio",
+          "name": "Bio",
           "Type": "Black",
           "Level": 6
         },
         {
-          "Name": "Firaga",
+          "name": "Firaga",
           "Type": "Black",
           "Level": 6
         },
         {
-          "Name": "Warp",
+          "name": "Warp",
           "Type": "Black",
           "Level": 6
         },
         {
-          "Name": "Breakga",
+          "name": "Breakga",
           "Type": "Black",
           "Level": 7
         },
         {
-          "Name": "Drain",
+          "name": "Drain",
           "Type": "Black",
           "Level": 7
         },
         {
-          "Name": "Quake",
+          "name": "Quake",
           "Type": "Black",
           "Level": 7
         }
       ]
     },
     {
-      "Name": "Red Mage",
+      "name": "Red Mage",
       "Slug": "red-mage",
       "Earned": "Altar Cave Crystal Room",
       "StrGrade": "C-",
@@ -7450,309 +7450,309 @@
       ],
       "Weapons": [
         {
-          "Name": "Mythril Rod",
+          "name": "Mythril Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Fire Rod",
+          "name": "Fire Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Ice Rod",
+          "name": "Ice Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Light Rod",
+          "name": "Light Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Staff",
+          "name": "Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Fire Staff",
+          "name": "Fire Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Ice Staff",
+          "name": "Ice Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Light Staff",
+          "name": "Light Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Golem Staff",
+          "name": "Golem Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Rune Staff",
+          "name": "Rune Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Knife",
+          "name": "Knife",
           "Type": "Knife"
         },
         {
-          "Name": "Dagger",
+          "name": "Dagger",
           "Type": "Knife"
         },
         {
-          "Name": "Mythril Knife",
+          "name": "Mythril Knife",
           "Type": "Knife"
         },
         {
-          "Name": "Wightslayer",
+          "name": "Wightslayer",
           "Type": "Sword"
         },
         {
-          "Name": "Tyrfing",
+          "name": "Tyrfing",
           "Type": "Sword"
         },
         {
-          "Name": "Bow",
+          "name": "Bow",
           "Type": "Bow"
         },
         {
-          "Name": "Great Bow",
+          "name": "Great Bow",
           "Type": "Bow"
         },
         {
-          "Name": "Wooden Arrow",
+          "name": "Wooden Arrow",
           "Type": "Bow"
         },
         {
-          "Name": "Holy Arrow",
+          "name": "Holy Arrow",
           "Type": "Bow"
         },
         {
-          "Name": "Iron Arrow",
+          "name": "Iron Arrow",
           "Type": "Bow"
         }
       ],
       "Armors": [
         {
-          "Name": "Leather Shield",
+          "name": "Leather Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Mythril Shield",
+          "name": "Mythril Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Ice Shield",
+          "name": "Ice Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Crystal Shield",
+          "name": "Crystal Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Leather Cap",
+          "name": "Leather Cap",
           "Type": "Helm"
         },
         {
-          "Name": "Mythril Helm",
+          "name": "Mythril Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Ice Helm",
+          "name": "Ice Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Crystal Helm",
+          "name": "Crystal Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Ribbon",
+          "name": "Ribbon",
           "Type": "Helm"
         },
         {
-          "Name": "Vest",
+          "name": "Vest",
           "Type": "Armor"
         },
         {
-          "Name": "Leather Armor",
+          "name": "Leather Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Mythril Armor",
+          "name": "Mythril Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Mage Robe",
+          "name": "Mage Robe",
           "Type": "Armor"
         },
         {
-          "Name": "White Robe",
+          "name": "White Robe",
           "Type": "Armor"
         },
         {
-          "Name": "Black Robe",
+          "name": "Black Robe",
           "Type": "Armor"
         },
         {
-          "Name": "Crystal Mail",
+          "name": "Crystal Mail",
           "Type": "Armor"
         },
         {
-          "Name": "Bronze Bracers",
+          "name": "Bronze Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Mythril Gloves",
+          "name": "Mythril Gloves",
           "Type": "Gloves"
         },
         {
-          "Name": "Mythril Bracers",
+          "name": "Mythril Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Power Bracers",
+          "name": "Power Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Rune Bracers",
+          "name": "Rune Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Diamond Bracers",
+          "name": "Diamond Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Protect Ring",
+          "name": "Protect Ring",
           "Type": "Gloves"
         },
         {
-          "Name": "Crystal Gloves",
+          "name": "Crystal Gloves",
           "Type": "Gloves"
         }
       ],
       "Spells": [
         {
-          "Name": "Blizzard",
+          "name": "Blizzard",
           "Type": "Black",
           "Level": 1
         },
         {
-          "Name": "Fire",
+          "name": "Fire",
           "Type": "Black",
           "Level": 1
         },
         {
-          "Name": "Sleep",
+          "name": "Sleep",
           "Type": "Black",
           "Level": 1
         },
         {
-          "Name": "Blind",
+          "name": "Blind",
           "Type": "Black",
           "Level": 2
         },
         {
-          "Name": "Poison",
+          "name": "Poison",
           "Type": "Black",
           "Level": 2
         },
         {
-          "Name": "Thunder",
+          "name": "Thunder",
           "Type": "Black",
           "Level": 2
         },
         {
-          "Name": "Blizzara",
+          "name": "Blizzara",
           "Type": "Black",
           "Level": 3
         },
         {
-          "Name": "Fira",
+          "name": "Fira",
           "Type": "Black",
           "Level": 3
         },
         {
-          "Name": "Thundara",
+          "name": "Thundara",
           "Type": "Black",
           "Level": 3
         },
         {
-          "Name": "Blizzaga",
+          "name": "Blizzaga",
           "Type": "Black",
           "Level": 4
         },
         {
-          "Name": "Break",
+          "name": "Break",
           "Type": "Black",
           "Level": 4
         },
         {
-          "Name": "Shade",
+          "name": "Shade",
           "Type": "Black",
           "Level": 4
         },
         {
-          "Name": "Cure",
+          "name": "Cure",
           "Type": "White",
           "Level": 1
         },
         {
-          "Name": "Poisona",
+          "name": "Poisona",
           "Type": "White",
           "Level": 1
         },
         {
-          "Name": "Sight",
+          "name": "Sight",
           "Type": "White",
           "Level": 1
         },
         {
-          "Name": "Aero",
+          "name": "Aero",
           "Type": "White",
           "Level": 2
         },
         {
-          "Name": "Mini",
+          "name": "Mini",
           "Type": "White",
           "Level": 2
         },
         {
-          "Name": "Toad",
+          "name": "Toad",
           "Type": "White",
           "Level": 2
         },
         {
-          "Name": "Blindna",
+          "name": "Blindna",
           "Type": "White",
           "Level": 3
         },
         {
-          "Name": "Cura",
+          "name": "Cura",
           "Type": "White",
           "Level": 3
         },
         {
-          "Name": "Teleport",
+          "name": "Teleport",
           "Type": "White",
           "Level": 3
         },
         {
-          "Name": "Confuse",
+          "name": "Confuse",
           "Type": "White",
           "Level": 4
         },
         {
-          "Name": "Libra",
+          "name": "Libra",
           "Type": "White",
           "Level": 4
         },
         {
-          "Name": "Silence",
+          "name": "Silence",
           "Type": "White",
           "Level": 4
         }
       ]
     },
     {
-      "Name": "Ranger",
+      "name": "Ranger",
       "Slug": "ranger",
       "MinLevel": 10,
       "Earned": "Molten Cave Crystal Room",
@@ -8871,153 +8871,153 @@
       ],
       "Weapons": [
         {
-          "Name": "Bow",
+          "name": "Bow",
           "Type": "Bow"
         },
         {
-          "Name": "Great Bow",
+          "name": "Great Bow",
           "Type": "Bow"
         },
         {
-          "Name": "Killer Bow",
+          "name": "Killer Bow",
           "Type": "Bow"
         },
         {
-          "Name": "Rune Bow",
+          "name": "Rune Bow",
           "Type": "Bow"
         },
         {
-          "Name": "Yoichi Bow",
+          "name": "Yoichi Bow",
           "Type": "Bow"
         },
         {
-          "Name": "Wooden Arrow",
+          "name": "Wooden Arrow",
           "Type": "Bow"
         },
         {
-          "Name": "Holy Arrow",
+          "name": "Holy Arrow",
           "Type": "Bow"
         },
         {
-          "Name": "Iron Arrow",
+          "name": "Iron Arrow",
           "Type": "Bow"
         },
         {
-          "Name": "Light Arrow",
+          "name": "Light Arrow",
           "Type": "Bow"
         },
         {
-          "Name": "Fire Arrow",
+          "name": "Fire Arrow",
           "Type": "Bow"
         },
         {
-          "Name": "Ice Arrow",
+          "name": "Ice Arrow",
           "Type": "Bow"
         },
         {
-          "Name": "Medusa Arrow",
+          "name": "Medusa Arrow",
           "Type": "Bow"
         },
         {
-          "Name": "Yoichi Arrow",
+          "name": "Yoichi Arrow",
           "Type": "Bow"
         }
       ],
       "Armors": [
         {
-          "Name": "Leather Cap",
+          "name": "Leather Cap",
           "Type": "Helm"
         },
         {
-          "Name": "Ice Helm",
+          "name": "Ice Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Feathered Hat",
+          "name": "Feathered Hat",
           "Type": "Helm"
         },
         {
-          "Name": "Ribbon",
+          "name": "Ribbon",
           "Type": "Helm"
         },
         {
-          "Name": "Vest",
+          "name": "Vest",
           "Type": "Armor"
         },
         {
-          "Name": "Leather Armor",
+          "name": "Leather Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Mythril Armor",
+          "name": "Mythril Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Shell Armor",
+          "name": "Shell Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Ice Armor",
+          "name": "Ice Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Flame Mail",
+          "name": "Flame Mail",
           "Type": "Armor"
         },
         {
-          "Name": "Power Bracers",
+          "name": "Power Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Protect Ring",
+          "name": "Protect Ring",
           "Type": "Gloves"
         }
       ],
       "Spells": [
         {
-          "Name": "Cure",
+          "name": "Cure",
           "Type": "White",
           "Level": 1
         },
         {
-          "Name": "Poisona",
+          "name": "Poisona",
           "Type": "White",
           "Level": 1
         },
         {
-          "Name": "Sight",
+          "name": "Sight",
           "Type": "White",
           "Level": 1
         },
         {
-          "Name": "Mini",
+          "name": "Mini",
           "Type": "White",
           "Level": 2
         },
         {
-          "Name": "Toad",
+          "name": "Toad",
           "Type": "White",
           "Level": 2
         },
         {
-          "Name": "Blindna",
+          "name": "Blindna",
           "Type": "White",
           "Level": 3
         },
         {
-          "Name": "Cura",
+          "name": "Cura",
           "Type": "White",
           "Level": 3
         },
         {
-          "Name": "Teleport",
+          "name": "Teleport",
           "Type": "White",
           "Level": 3
         }
       ]
     },
     {
-      "Name": "Knight",
+      "name": "Knight",
       "Slug": "knight",
       "MinLevel": 10,
       "Earned": "Molten Cave Crystal Room",
@@ -9838,199 +9838,199 @@
       ],
       "Weapons": [
         {
-          "Name": "Knife",
+          "name": "Knife",
           "Type": "Knife"
         },
         {
-          "Name": "Dagger",
+          "name": "Dagger",
           "Type": "Knife"
         },
         {
-          "Name": "Mythril Knife",
+          "name": "Mythril Knife",
           "Type": "Knife"
         },
         {
-          "Name": "Longsword",
+          "name": "Longsword",
           "Type": "Sword"
         },
         {
-          "Name": "Golden Sword",
+          "name": "Golden Sword",
           "Type": "Sword"
         },
         {
-          "Name": "Mythril Sword",
+          "name": "Mythril Sword",
           "Type": "Sword"
         },
         {
-          "Name": "Serpent Sword",
+          "name": "Serpent Sword",
           "Type": "Sword"
         },
         {
-          "Name": "Freezing Blade",
+          "name": "Freezing Blade",
           "Type": "Sword"
         },
         {
-          "Name": "Salamand Sword",
+          "name": "Salamand Sword",
           "Type": "Sword"
         },
         {
-          "Name": "Royal Sword",
+          "name": "Royal Sword",
           "Type": "Sword"
         },
         {
-          "Name": "Ancient Sword",
+          "name": "Ancient Sword",
           "Type": "Sword"
         },
         {
-          "Name": "Blood Sword",
+          "name": "Blood Sword",
           "Type": "Sword"
         },
         {
-          "Name": "Defender",
+          "name": "Defender",
           "Type": "Sword"
         },
         {
-          "Name": "Break Blade",
+          "name": "Break Blade",
           "Type": "Sword"
         },
         {
-          "Name": "Excalibur",
+          "name": "Excalibur",
           "Type": "Sword"
         },
         {
-          "Name": "Ragnarok",
+          "name": "Ragnarok",
           "Type": "Sword"
         },
         {
-          "Name": "Moonring Blade",
+          "name": "Moonring Blade",
           "Type": "Boomerang"
         }
       ],
       "Armors": [
         {
-          "Name": "Leather Shield",
+          "name": "Leather Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Mythril Shield",
+          "name": "Mythril Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Ice Shield",
+          "name": "Ice Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Heroic Shield",
+          "name": "Heroic Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Diamond Shield",
+          "name": "Diamond Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Aegis Shield",
+          "name": "Aegis Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Crystal Shield",
+          "name": "Crystal Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Leather Cap",
+          "name": "Leather Cap",
           "Type": "Helm"
         },
         {
-          "Name": "Mythril Helm",
+          "name": "Mythril Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Shell Helm",
+          "name": "Shell Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Ice Helm",
+          "name": "Ice Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Diamond Helm",
+          "name": "Diamond Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Crystal Helm",
+          "name": "Crystal Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Ribbon",
+          "name": "Ribbon",
           "Type": "Helm"
         },
         {
-          "Name": "Vest",
+          "name": "Vest",
           "Type": "Armor"
         },
         {
-          "Name": "Leather Armor",
+          "name": "Leather Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Mythril Armor",
+          "name": "Mythril Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Shell Armor",
+          "name": "Shell Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Ice Armor",
+          "name": "Ice Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Flame Mail",
+          "name": "Flame Mail",
           "Type": "Armor"
         },
         {
-          "Name": "Knight Armor",
+          "name": "Knight Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Diamond Mail",
+          "name": "Diamond Mail",
           "Type": "Armor"
         },
         {
-          "Name": "Reflect Mail",
+          "name": "Reflect Mail",
           "Type": "Armor"
         },
         {
-          "Name": "Crystal Mail",
+          "name": "Crystal Mail",
           "Type": "Armor"
         },
         {
-          "Name": "Mythril Gloves",
+          "name": "Mythril Gloves",
           "Type": "Gloves"
         },
         {
-          "Name": "Gauntlets",
+          "name": "Gauntlets",
           "Type": "Gloves"
         },
         {
-          "Name": "Power Bracers",
+          "name": "Power Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Diamond Gloves",
+          "name": "Diamond Gloves",
           "Type": "Gloves"
         },
         {
-          "Name": "Protect Ring",
+          "name": "Protect Ring",
           "Type": "Gloves"
         },
         {
-          "Name": "Crystal Gloves",
+          "name": "Crystal Gloves",
           "Type": "Gloves"
         }
       ]
     },
     {
-      "Name": "Thief",
+      "name": "Thief",
       "Slug": "thief",
       "MinLevel": 10,
       "Earned": "Molten Cave Crystal Room",
@@ -10851,95 +10851,95 @@
       ],
       "Weapons": [
         {
-          "Name": "Knife",
+          "name": "Knife",
           "Type": "Knife"
         },
         {
-          "Name": "Dagger",
+          "name": "Dagger",
           "Type": "Knife"
         },
         {
-          "Name": "Mythril Knife",
+          "name": "Mythril Knife",
           "Type": "Knife"
         },
         {
-          "Name": "Main Gauche",
+          "name": "Main Gauche",
           "Type": "Knife"
         },
         {
-          "Name": "Orichalcum",
+          "name": "Orichalcum",
           "Type": "Knife"
         },
         {
-          "Name": "Air Knife",
+          "name": "Air Knife",
           "Type": "Knife"
         },
         {
-          "Name": "Boomerang",
+          "name": "Boomerang",
           "Type": "Boomerang"
         }
       ],
       "Armors": [
         {
-          "Name": "Leather Shield",
+          "name": "Leather Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Mythril Shield",
+          "name": "Mythril Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Ice Shield",
+          "name": "Ice Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Leather Cap",
+          "name": "Leather Cap",
           "Type": "Helm"
         },
         {
-          "Name": "Mythril Helm",
+          "name": "Mythril Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Ice Helm",
+          "name": "Ice Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Black Cowl",
+          "name": "Black Cowl",
           "Type": "Helm"
         },
         {
-          "Name": "Ribbon",
+          "name": "Ribbon",
           "Type": "Helm"
         },
         {
-          "Name": "Vest",
+          "name": "Vest",
           "Type": "Armor"
         },
         {
-          "Name": "Leather Armor",
+          "name": "Leather Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Black Garb",
+          "name": "Black Garb",
           "Type": "Armor"
         },
         {
-          "Name": "Thief Gloves",
+          "name": "Thief Gloves",
           "Type": "Gloves"
         },
         {
-          "Name": "Power Bracers",
+          "name": "Power Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Protect Ring",
+          "name": "Protect Ring",
           "Type": "Gloves"
         }
       ]
     },
     {
-      "Name": "Scholar",
+      "name": "Scholar",
       "Slug": "scholar",
       "MinLevel": 10,
       "Earned": "Molten Cave Crystal Room",
@@ -11760,111 +11760,111 @@
       ],
       "Weapons": [
         {
-          "Name": "Book of Fire",
+          "name": "Book of Fire",
           "Type": "Book"
         },
         {
-          "Name": "Book of Ice",
+          "name": "Book of Ice",
           "Type": "Book"
         },
         {
-          "Name": "Tome of Fire",
+          "name": "Tome of Fire",
           "Type": "Book"
         },
         {
-          "Name": "Book of Light",
+          "name": "Book of Light",
           "Type": "Book"
         },
         {
-          "Name": "Tome of Light",
+          "name": "Tome of Light",
           "Type": "Book"
         },
         {
-          "Name": "Tome of Ice",
+          "name": "Tome of Ice",
           "Type": "Book"
         },
         {
-          "Name": "Book Of Fire",
+          "name": "Book Of Fire",
           "Type": "Book"
         },
         {
-          "Name": "Book Of Ice",
+          "name": "Book Of Ice",
           "Type": "Book"
         },
         {
-          "Name": "Tome Of Fire",
+          "name": "Tome Of Fire",
           "Type": "Book"
         },
         {
-          "Name": "Book Of Light",
+          "name": "Book Of Light",
           "Type": "Book"
         },
         {
-          "Name": "Tome Of Light",
+          "name": "Tome Of Light",
           "Type": "Book"
         },
         {
-          "Name": "Tome Of Ice",
+          "name": "Tome Of Ice",
           "Type": "Book"
         }
       ],
       "Armors": [
         {
-          "Name": "Leather Cap",
+          "name": "Leather Cap",
           "Type": "Helm"
         },
         {
-          "Name": "Scholar Hat",
+          "name": "Scholar Hat",
           "Type": "Helm"
         },
         {
-          "Name": "Feathered Hat",
+          "name": "Feathered Hat",
           "Type": "Helm"
         },
         {
-          "Name": "Ribbon",
+          "name": "Ribbon",
           "Type": "Helm"
         },
         {
-          "Name": "Vest",
+          "name": "Vest",
           "Type": "Armor"
         },
         {
-          "Name": "Leather Armor",
+          "name": "Leather Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Scholar Robe",
+          "name": "Scholar Robe",
           "Type": "Armor"
         },
         {
-          "Name": "Bronze Bracers",
+          "name": "Bronze Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Mythril Bracers",
+          "name": "Mythril Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Power Bracers",
+          "name": "Power Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Rune Bracers",
+          "name": "Rune Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Diamond Bracers",
+          "name": "Diamond Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Protect Ring",
+          "name": "Protect Ring",
           "Type": "Gloves"
         }
       ]
     },
     {
-      "Name": "Geomancer",
+      "name": "Geomancer",
       "Slug": "geomancer",
       "MinLevel": 15,
       "Earned": "Cave of Tides Crystal Room",
@@ -12685,113 +12685,113 @@
       ],
       "Weapons": [
         {
-          "Name": "Diamond Bell",
+          "name": "Diamond Bell",
           "Type": "Bell"
         },
         {
-          "Name": "Earthen Bell",
+          "name": "Earthen Bell",
           "Type": "Bell"
         },
         {
-          "Name": "Rune Bell",
+          "name": "Rune Bell",
           "Type": "Bell"
         }
       ],
       "Armors": [
         {
-          "Name": "Leather Cap",
+          "name": "Leather Cap",
           "Type": "Helm"
         },
         {
-          "Name": "Feathered Hat",
+          "name": "Feathered Hat",
           "Type": "Helm"
         },
         {
-          "Name": "Ribbon",
+          "name": "Ribbon",
           "Type": "Helm"
         },
         {
-          "Name": "Vest",
+          "name": "Vest",
           "Type": "Armor"
         },
         {
-          "Name": "Leather Armor",
+          "name": "Leather Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Gaia Vest",
+          "name": "Gaia Vest",
           "Type": "Armor"
         },
         {
-          "Name": "Bronze Bracers",
+          "name": "Bronze Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Mythril Bracers",
+          "name": "Mythril Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Power Bracers",
+          "name": "Power Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Rune Bracers",
+          "name": "Rune Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Diamond Bracers",
+          "name": "Diamond Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Protect Ring",
+          "name": "Protect Ring",
           "Type": "Gloves"
         }
       ],
       "Spells": [
         {
-          "Name": "Cave-In",
+          "name": "Cave-In",
           "Type": "Terrain",
           "Level": 1
         },
         {
-          "Name": "Cyclone",
+          "name": "Cyclone",
           "Type": "Terrain",
           "Level": 1
         },
         {
-          "Name": "Earthquake",
+          "name": "Earthquake",
           "Type": "Terrain",
           "Level": 1
         },
         {
-          "Name": "Quicksand",
+          "name": "Quicksand",
           "Type": "Terrain",
           "Level": 1
         },
         {
-          "Name": "Sinkhole",
+          "name": "Sinkhole",
           "Type": "Terrain",
           "Level": 1
         },
         {
-          "Name": "Torrent",
+          "name": "Torrent",
           "Type": "Terrain",
           "Level": 1
         },
         {
-          "Name": "Whirlpool",
+          "name": "Whirlpool",
           "Type": "Terrain",
           "Level": 1
         },
         {
-          "Name": "Wind Slash",
+          "name": "Wind Slash",
           "Type": "Terrain",
           "Level": 1
         }
       ]
     },
     {
-      "Name": "Dragoon",
+      "name": "Dragoon",
       "Slug": "dragoon",
       "MinLevel": 15,
       "Earned": "Cave of Tides Crystal Room",
@@ -13612,151 +13612,151 @@
       ],
       "Weapons": [
         {
-          "Name": "Thunder Spear",
+          "name": "Thunder Spear",
           "Type": "Spear"
         },
         {
-          "Name": "Wind Spear",
+          "name": "Wind Spear",
           "Type": "Spear"
         },
         {
-          "Name": "Blood Lance",
+          "name": "Blood Lance",
           "Type": "Spear"
         },
         {
-          "Name": "Holy Lance",
+          "name": "Holy Lance",
           "Type": "Spear"
         }
       ],
       "Armors": [
         {
-          "Name": "Leather Shield",
+          "name": "Leather Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Mythril Shield",
+          "name": "Mythril Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Ice Shield",
+          "name": "Ice Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Heroic Shield",
+          "name": "Heroic Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Diamond Shield",
+          "name": "Diamond Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Aegis Shield",
+          "name": "Aegis Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Crystal Shield",
+          "name": "Crystal Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Leather Cap",
+          "name": "Leather Cap",
           "Type": "Helm"
         },
         {
-          "Name": "Mythril Helm",
+          "name": "Mythril Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Shell Helm",
+          "name": "Shell Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Ice Helm",
+          "name": "Ice Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Dragon Helm",
+          "name": "Dragon Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Diamond Helm",
+          "name": "Diamond Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Crystal Helm",
+          "name": "Crystal Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Ribbon",
+          "name": "Ribbon",
           "Type": "Helm"
         },
         {
-          "Name": "Vest",
+          "name": "Vest",
           "Type": "Armor"
         },
         {
-          "Name": "Leather Armor",
+          "name": "Leather Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Mythril Armor",
+          "name": "Mythril Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Shell Armor",
+          "name": "Shell Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Ice Armor",
+          "name": "Ice Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Flame Mail",
+          "name": "Flame Mail",
           "Type": "Helm"
         },
         {
-          "Name": "Dragon Mail",
+          "name": "Dragon Mail",
           "Type": "Helm"
         },
         {
-          "Name": "Diamond Mail",
+          "name": "Diamond Mail",
           "Type": "Helm"
         },
         {
-          "Name": "Reflect Mail",
+          "name": "Reflect Mail",
           "Type": "Armor"
         },
         {
-          "Name": "Crystal Mail",
+          "name": "Crystal Mail",
           "Type": "Armor"
         },
         {
-          "Name": "Mythril Gloves",
+          "name": "Mythril Gloves",
           "Type": "Gloves"
         },
         {
-          "Name": "Gauntlets",
+          "name": "Gauntlets",
           "Type": "Gloves"
         },
         {
-          "Name": "Power Bracers",
+          "name": "Power Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Diamond Gloves",
+          "name": "Diamond Gloves",
           "Type": "Gloves"
         },
         {
-          "Name": "Protect Ring",
+          "name": "Protect Ring",
           "Type": "Gloves"
         },
         {
-          "Name": "Crystal Gloves",
+          "name": "Crystal Gloves",
           "Type": "Gloves"
         }
       ]
     },
     {
-      "Name": "Viking",
+      "name": "Viking",
       "Slug": "viking",
       "MinLevel": 15,
       "Earned": "Cave of Tides Crystal Room",
@@ -14577,163 +14577,163 @@
       ],
       "Weapons": [
         {
-          "Name": "Thor's Hammer",
+          "name": "Thor's Hammer",
           "Type": "Axe"
         },
         {
-          "Name": "Battleaxe",
+          "name": "Battleaxe",
           "Type": "Axe"
         },
         {
-          "Name": "Great Axe",
+          "name": "Great Axe",
           "Type": "Axe"
         },
         {
-          "Name": "Morning Star",
+          "name": "Morning Star",
           "Type": "Axe"
         },
         {
-          "Name": "Dual Tomahawk",
+          "name": "Dual Tomahawk",
           "Type": "Axe"
         },
         {
-          "Name": "Triton Hammer",
+          "name": "Triton Hammer",
           "Type": "Axe"
         },
         {
-          "Name": "Thor'S Hammer",
+          "name": "Thor'S Hammer",
           "Type": "Axe"
         }
       ],
       "Armors": [
         {
-          "Name": "Leather Shield",
+          "name": "Leather Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Mythril Shield",
+          "name": "Mythril Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Ice Shield",
+          "name": "Ice Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Heroic Shield",
+          "name": "Heroic Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Diamond Shield",
+          "name": "Diamond Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Aegis Shield",
+          "name": "Aegis Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Crystal Shield",
+          "name": "Crystal Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Leather Cap",
+          "name": "Leather Cap",
           "Type": "Helm"
         },
         {
-          "Name": "Mythril Helm",
+          "name": "Mythril Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Shell Helm",
+          "name": "Shell Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Ice Helm",
+          "name": "Ice Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Viking Helm",
+          "name": "Viking Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Diamond Helm",
+          "name": "Diamond Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Crystal Helm",
+          "name": "Crystal Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Ribbon",
+          "name": "Ribbon",
           "Type": "Helm"
         },
         {
-          "Name": "Vest",
+          "name": "Vest",
           "Type": "Armor"
         },
         {
-          "Name": "Leather Armor",
+          "name": "Leather Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Mythril Armor",
+          "name": "Mythril Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Shell Armor",
+          "name": "Shell Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Ice Armor",
+          "name": "Ice Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Flame Mail",
+          "name": "Flame Mail",
           "Type": "Armor"
         },
         {
-          "Name": "Viking Mail",
+          "name": "Viking Mail",
           "Type": "Armor"
         },
         {
-          "Name": "Diamond Mail",
+          "name": "Diamond Mail",
           "Type": "Armor"
         },
         {
-          "Name": "Reflect Mail",
+          "name": "Reflect Mail",
           "Type": "Armor"
         },
         {
-          "Name": "Crystal Mail",
+          "name": "Crystal Mail",
           "Type": "Armor"
         },
         {
-          "Name": "Mythril Gloves",
+          "name": "Mythril Gloves",
           "Type": "Gloves"
         },
         {
-          "Name": "Gauntlets",
+          "name": "Gauntlets",
           "Type": "Gloves"
         },
         {
-          "Name": "Power Bracers",
+          "name": "Power Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Diamond Gloves",
+          "name": "Diamond Gloves",
           "Type": "Gloves"
         },
         {
-          "Name": "Protect Ring",
+          "name": "Protect Ring",
           "Type": "Gloves"
         },
         {
-          "Name": "Crystal Gloves",
+          "name": "Crystal Gloves",
           "Type": "Gloves"
         }
       ]
     },
     {
-      "Name": "Black Belt",
+      "name": "Black Belt",
       "Slug": "black-belt",
       "MinLevel": 15,
       "Earned": "Cave of Tides Crystal Room",
@@ -15554,71 +15554,71 @@
       ],
       "Weapons": [
         {
-          "Name": "Kaiser Knuckles",
+          "name": "Kaiser Knuckles",
           "Type": "Nunchaku"
         },
         {
-          "Name": "Cat Claws",
+          "name": "Cat Claws",
           "Type": "Nunchaku"
         },
         {
-          "Name": "Wyvern Claws",
+          "name": "Wyvern Claws",
           "Type": "Nunchaku"
         },
         {
-          "Name": "Faerie Claws",
+          "name": "Faerie Claws",
           "Type": "Nunchaku"
         },
         {
-          "Name": "Hellish Claws",
+          "name": "Hellish Claws",
           "Type": "Nunchaku"
         }
       ],
       "Armors": [
         {
-          "Name": "Leather Cap",
+          "name": "Leather Cap",
           "Type": "Helm"
         },
         {
-          "Name": "Headband",
+          "name": "Headband",
           "Type": "Helm"
         },
         {
-          "Name": "Chakra Band",
+          "name": "Chakra Band",
           "Type": "Helm"
         },
         {
-          "Name": "Ribbon",
+          "name": "Ribbon",
           "Type": "Helm"
         },
         {
-          "Name": "Vest",
+          "name": "Vest",
           "Type": "Armor"
         },
         {
-          "Name": "Leather Armor",
+          "name": "Leather Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Kenpo Gi",
+          "name": "Kenpo Gi",
           "Type": "Armor"
         },
         {
-          "Name": "Black Belt Gi",
+          "name": "Black Belt Gi",
           "Type": "Armor"
         },
         {
-          "Name": "Power Bracers",
+          "name": "Power Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Protect Ring",
+          "name": "Protect Ring",
           "Type": "Gloves"
         }
       ]
     },
     {
-      "Name": "Mystic Knight",
+      "name": "Mystic Knight",
       "Slug": "mystic-knight",
       "MinLevel": 15,
       "Earned": "Cave of Tides Crystal Room",
@@ -16737,125 +16737,125 @@
       ],
       "Weapons": [
         {
-          "Name": "Ragnarok",
+          "name": "Ragnarok",
           "Type": "Sword"
         },
         {
-          "Name": "Ashura",
+          "name": "Ashura",
           "Type": "Dark Blade"
         },
         {
-          "Name": "Kotetsu",
+          "name": "Kotetsu",
           "Type": "Dark Blade"
         },
         {
-          "Name": "Kiku-Ichimonji",
+          "name": "Kiku-Ichimonji",
           "Type": "Dark Blade"
         },
         {
-          "Name": "Masamune",
+          "name": "Masamune",
           "Type": "Dark Blade"
         },
         {
-          "Name": "Moonring Blade",
+          "name": "Moonring Blade",
           "Type": "Boomerang"
         },
         {
-          "Name": "Kiku Ichimonji",
+          "name": "Kiku Ichimonji",
           "Type": "Dark Blade"
         }
       ],
       "Armors": [
         {
-          "Name": "Demon Shield",
+          "name": "Demon Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Genji Shield",
+          "name": "Genji Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Crystal Shield",
+          "name": "Crystal Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Genji Helm",
+          "name": "Genji Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Crystal Helm",
+          "name": "Crystal Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Ribbon",
+          "name": "Ribbon",
           "Type": "Helm"
         },
         {
-          "Name": "Demon Mail",
+          "name": "Demon Mail",
           "Type": "Armor"
         },
         {
-          "Name": "Genji Armor",
+          "name": "Genji Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Crystal Mail",
+          "name": "Crystal Mail",
           "Type": "Armor"
         },
         {
-          "Name": "Genji Gloves",
+          "name": "Genji Gloves",
           "Type": "Gloves"
         },
         {
-          "Name": "Crystal Gloves",
+          "name": "Crystal Gloves",
           "Type": "Gloves"
         }
       ],
       "Spells": [
         {
-          "Name": "Cure",
+          "name": "Cure",
           "Type": "White",
           "Level": 1
         },
         {
-          "Name": "Poisona",
+          "name": "Poisona",
           "Type": "White",
           "Level": 1
         },
         {
-          "Name": "Sight",
+          "name": "Sight",
           "Type": "White",
           "Level": 1
         },
         {
-          "Name": "Mini",
+          "name": "Mini",
           "Type": "White",
           "Level": 2
         },
         {
-          "Name": "Toad",
+          "name": "Toad",
           "Type": "White",
           "Level": 2
         },
         {
-          "Name": "Blindna",
+          "name": "Blindna",
           "Type": "White",
           "Level": 3
         },
         {
-          "Name": "Cura",
+          "name": "Cura",
           "Type": "White",
           "Level": 3
         },
         {
-          "Name": "Teleport",
+          "name": "Teleport",
           "Type": "White",
           "Level": 3
         }
       ]
     },
     {
-      "Name": "Evoker",
+      "name": "Evoker",
       "Slug": "evoker",
       "MinLevel": 15,
       "Earned": "Cave of Tides Crystal Room",
@@ -18469,161 +18469,161 @@
       ],
       "Weapons": [
         {
-          "Name": "Mythril Rod",
+          "name": "Mythril Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Fire Rod",
+          "name": "Fire Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Ice Rod",
+          "name": "Ice Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Light Rod",
+          "name": "Light Rod",
           "Type": "Rod"
         }
       ],
       "Armors": [
         {
-          "Name": "Leather Cap",
+          "name": "Leather Cap",
           "Type": "Helm"
         },
         {
-          "Name": "Feathered Hat",
+          "name": "Feathered Hat",
           "Type": "Helm"
         },
         {
-          "Name": "Ribbon",
+          "name": "Ribbon",
           "Type": "Helm"
         },
         {
-          "Name": "Vest",
+          "name": "Vest",
           "Type": "Armor"
         },
         {
-          "Name": "Leather Armor",
+          "name": "Leather Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Mage Robe",
+          "name": "Mage Robe",
           "Type": "Armor"
         },
         {
-          "Name": "White Robe",
+          "name": "White Robe",
           "Type": "Armor"
         },
         {
-          "Name": "Black Robe",
+          "name": "Black Robe",
           "Type": "Armor"
         },
         {
-          "Name": "Bronze Bracers",
+          "name": "Bronze Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Mythril Bracers",
+          "name": "Mythril Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Rune Bracers",
+          "name": "Rune Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Diamond Bracers",
+          "name": "Diamond Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Protect Ring",
+          "name": "Protect Ring",
           "Type": "Gloves"
         }
       ],
       "Spells": [
         {
-          "Name": "Chocobo: Chocobo Dash",
+          "name": "Chocobo: Chocobo Dash",
           "Type": "Summon",
           "Level": 1
         },
         {
-          "Name": "Chocobo: Chocobo Kick?",
+          "name": "Chocobo: Chocobo Kick?",
           "Type": "Summon",
           "Level": 1
         },
         {
-          "Name": "Shiva: Icy Stare",
+          "name": "Shiva: Icy Stare",
           "Type": "Summon",
           "Level": 2
         },
         {
-          "Name": "Shiva: Mesmerize",
+          "name": "Shiva: Mesmerize",
           "Type": "Summon",
           "Level": 2
         },
         {
-          "Name": "Ramuh: Mind Blast",
+          "name": "Ramuh: Mind Blast",
           "Type": "Summon",
           "Level": 3
         },
         {
-          "Name": "Ramuh: Thunderstorm",
+          "name": "Ramuh: Thunderstorm",
           "Type": "Summon",
           "Level": 3
         },
         {
-          "Name": "Ifrit: Healing Light",
+          "name": "Ifrit: Healing Light",
           "Type": "Summon",
           "Level": 4
         },
         {
-          "Name": "Ifrit: Hellfire",
+          "name": "Ifrit: Hellfire",
           "Type": "Summon",
           "Level": 4
         },
         {
-          "Name": "Titan: Clobber",
+          "name": "Titan: Clobber",
           "Type": "Summon",
           "Level": 5
         },
         {
-          "Name": "Titan: Stomp",
+          "name": "Titan: Stomp",
           "Type": "Summon",
           "Level": 5
         },
         {
-          "Name": "Odin: Protective Light",
+          "name": "Odin: Protective Light",
           "Type": "Summon",
           "Level": 6
         },
         {
-          "Name": "Odin: Slash",
+          "name": "Odin: Slash",
           "Type": "Summon",
           "Level": 6
         },
         {
-          "Name": "Leviathan: Cyclone",
+          "name": "Leviathan: Cyclone",
           "Type": "Summon",
           "Level": 7
         },
         {
-          "Name": "Leviathan: Demon Eye",
+          "name": "Leviathan: Demon Eye",
           "Type": "Summon",
           "Level": 7
         },
         {
-          "Name": "Bahamut: Aura",
+          "name": "Bahamut: Aura",
           "Type": "Summon",
           "Level": 8
         },
         {
-          "Name": "Bahamut: Rend",
+          "name": "Bahamut: Rend",
           "Type": "Summon",
           "Level": 8
         }
       ]
     },
     {
-      "Name": "Bard",
+      "name": "Bard",
       "Slug": "bard",
       "MinLevel": 15,
       "Earned": "Cave of Tides Crystal Room",
@@ -19444,55 +19444,55 @@
       ],
       "Weapons": [
         {
-          "Name": "Madhura Harp",
+          "name": "Madhura Harp",
           "Type": "Harp"
         },
         {
-          "Name": "Lamia Harp",
+          "name": "Lamia Harp",
           "Type": "Harp"
         },
         {
-          "Name": "Loki Harp",
+          "name": "Loki Harp",
           "Type": "Harp"
         }
       ],
       "Armors": [
         {
-          "Name": "Leather Cap",
+          "name": "Leather Cap",
           "Type": "Helm"
         },
         {
-          "Name": "Feathered Hat",
+          "name": "Feathered Hat",
           "Type": "Helm"
         },
         {
-          "Name": "Ribbon",
+          "name": "Ribbon",
           "Type": "Helm"
         },
         {
-          "Name": "Vest",
+          "name": "Vest",
           "Type": "Armor"
         },
         {
-          "Name": "Leather Armor",
+          "name": "Leather Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Bard Vest",
+          "name": "Bard Vest",
           "Type": "Armor"
         },
         {
-          "Name": "Power Bracers",
+          "name": "Power Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Protect Ring",
+          "name": "Protect Ring",
           "Type": "Gloves"
         }
       ]
     },
     {
-      "Name": "Magus",
+      "name": "Magus",
       "Slug": "magus",
       "MinLevel": 30,
       "Earned": "Ancient's Maze Crystal Room",
@@ -21106,209 +21106,209 @@
       ],
       "Weapons": [
         {
-          "Name": "Mythril Rod",
+          "name": "Mythril Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Fire Rod",
+          "name": "Fire Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Ice Rod",
+          "name": "Ice Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Light Rod",
+          "name": "Light Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Omnirod",
+          "name": "Omnirod",
           "Type": "Rod"
         }
       ],
       "Armors": [
         {
-          "Name": "Leather Cap",
+          "name": "Leather Cap",
           "Type": "Helm"
         },
         {
-          "Name": "Scholar Hat",
+          "name": "Scholar Hat",
           "Type": "Helm"
         },
         {
-          "Name": "Feathered Hat",
+          "name": "Feathered Hat",
           "Type": "Helm"
         },
         {
-          "Name": "Ribbon",
+          "name": "Ribbon",
           "Type": "Helm"
         },
         {
-          "Name": "Vest",
+          "name": "Vest",
           "Type": "Armor"
         },
         {
-          "Name": "Leather Armor",
+          "name": "Leather Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Mage Robe",
+          "name": "Mage Robe",
           "Type": "Armor"
         },
         {
-          "Name": "Scholar Robe",
+          "name": "Scholar Robe",
           "Type": "Armor"
         },
         {
-          "Name": "Black Robe",
+          "name": "Black Robe",
           "Type": "Armor"
         },
         {
-          "Name": "Bronze Bracers",
+          "name": "Bronze Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Mythril Bracers",
+          "name": "Mythril Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Rune Bracers",
+          "name": "Rune Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Diamond Bracers",
+          "name": "Diamond Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Protect Ring",
+          "name": "Protect Ring",
           "Type": "Gloves"
         }
       ],
       "Spells": [
         {
-          "Name": "Blizzard",
+          "name": "Blizzard",
           "Type": "Black",
           "Level": 1
         },
         {
-          "Name": "Fire",
+          "name": "Fire",
           "Type": "Black",
           "Level": 1
         },
         {
-          "Name": "Sleep",
+          "name": "Sleep",
           "Type": "Black",
           "Level": 1
         },
         {
-          "Name": "Blind",
+          "name": "Blind",
           "Type": "Black",
           "Level": 2
         },
         {
-          "Name": "Poison",
+          "name": "Poison",
           "Type": "Black",
           "Level": 2
         },
         {
-          "Name": "Thunder",
+          "name": "Thunder",
           "Type": "Black",
           "Level": 2
         },
         {
-          "Name": "Blizzara",
+          "name": "Blizzara",
           "Type": "Black",
           "Level": 3
         },
         {
-          "Name": "Fira",
+          "name": "Fira",
           "Type": "Black",
           "Level": 3
         },
         {
-          "Name": "Thundara",
+          "name": "Thundara",
           "Type": "Black",
           "Level": 3
         },
         {
-          "Name": "Blizzaga",
+          "name": "Blizzaga",
           "Type": "Black",
           "Level": 4
         },
         {
-          "Name": "Break",
+          "name": "Break",
           "Type": "Black",
           "Level": 4
         },
         {
-          "Name": "Shade",
+          "name": "Shade",
           "Type": "Black",
           "Level": 4
         },
         {
-          "Name": "Erase",
+          "name": "Erase",
           "Type": "Black",
           "Level": 5
         },
         {
-          "Name": "Raze",
+          "name": "Raze",
           "Type": "Black",
           "Level": 5
         },
         {
-          "Name": "Thundaga",
+          "name": "Thundaga",
           "Type": "Black",
           "Level": 5
         },
         {
-          "Name": "Bio",
+          "name": "Bio",
           "Type": "Black",
           "Level": 6
         },
         {
-          "Name": "Firaga",
+          "name": "Firaga",
           "Type": "Black",
           "Level": 6
         },
         {
-          "Name": "Warp",
+          "name": "Warp",
           "Type": "Black",
           "Level": 6
         },
         {
-          "Name": "Breakga",
+          "name": "Breakga",
           "Type": "Black",
           "Level": 7
         },
         {
-          "Name": "Drain",
+          "name": "Drain",
           "Type": "Black",
           "Level": 7
         },
         {
-          "Name": "Quake",
+          "name": "Quake",
           "Type": "Black",
           "Level": 7
         },
         {
-          "Name": "Death",
+          "name": "Death",
           "Type": "Black",
           "Level": 8
         },
         {
-          "Name": "Flare",
+          "name": "Flare",
           "Type": "Black",
           "Level": 8
         },
         {
-          "Name": "Meteor",
+          "name": "Meteor",
           "Type": "Black",
           "Level": 8
         }
       ]
     },
     {
-      "Name": "Devout",
+      "name": "Devout",
       "Slug": "devout",
       "MinLevel": 30,
       "Earned": "Ancient's Maze Crystal Room",
@@ -22922,221 +22922,221 @@
       ],
       "Weapons": [
         {
-          "Name": "Mythril Rod",
+          "name": "Mythril Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Staff",
+          "name": "Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Fire Staff",
+          "name": "Fire Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Ice Staff",
+          "name": "Ice Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Light Staff",
+          "name": "Light Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Golem Staff",
+          "name": "Golem Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Rune Staff",
+          "name": "Rune Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Elder Staff",
+          "name": "Elder Staff",
           "Type": "Rod"
         }
       ],
       "Armors": [
         {
-          "Name": "Leather Cap",
+          "name": "Leather Cap",
           "Type": "Helm"
         },
         {
-          "Name": "Scholar Hat",
+          "name": "Scholar Hat",
           "Type": "Helm"
         },
         {
-          "Name": "Feathered Hat",
+          "name": "Feathered Hat",
           "Type": "Helm"
         },
         {
-          "Name": "Ribbon",
+          "name": "Ribbon",
           "Type": "Helm"
         },
         {
-          "Name": "Vest",
+          "name": "Vest",
           "Type": "Armor"
         },
         {
-          "Name": "Leather Armor",
+          "name": "Leather Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Mage Robe",
+          "name": "Mage Robe",
           "Type": "Armor"
         },
         {
-          "Name": "Scholar Robe",
+          "name": "Scholar Robe",
           "Type": "Armor"
         },
         {
-          "Name": "White Robe",
+          "name": "White Robe",
           "Type": "Armor"
         },
         {
-          "Name": "Bronze Bracers",
+          "name": "Bronze Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Mythril Bracers",
+          "name": "Mythril Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Rune Bracers",
+          "name": "Rune Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Diamond Bracers",
+          "name": "Diamond Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Protect Ring",
+          "name": "Protect Ring",
           "Type": "Gloves"
         }
       ],
       "Spells": [
         {
-          "Name": "Cure",
+          "name": "Cure",
           "Type": "White",
           "Level": 1
         },
         {
-          "Name": "Poisona",
+          "name": "Poisona",
           "Type": "White",
           "Level": 1
         },
         {
-          "Name": "Sight",
+          "name": "Sight",
           "Type": "White",
           "Level": 1
         },
         {
-          "Name": "Aero",
+          "name": "Aero",
           "Type": "White",
           "Level": 2
         },
         {
-          "Name": "Mini",
+          "name": "Mini",
           "Type": "White",
           "Level": 2
         },
         {
-          "Name": "Toad",
+          "name": "Toad",
           "Type": "White",
           "Level": 2
         },
         {
-          "Name": "Blindna",
+          "name": "Blindna",
           "Type": "White",
           "Level": 3
         },
         {
-          "Name": "Cura",
+          "name": "Cura",
           "Type": "White",
           "Level": 3
         },
         {
-          "Name": "Teleport",
+          "name": "Teleport",
           "Type": "White",
           "Level": 3
         },
         {
-          "Name": "Confuse",
+          "name": "Confuse",
           "Type": "White",
           "Level": 4
         },
         {
-          "Name": "Libra",
+          "name": "Libra",
           "Type": "White",
           "Level": 4
         },
         {
-          "Name": "Silence",
+          "name": "Silence",
           "Type": "White",
           "Level": 4
         },
         {
-          "Name": "Curaga",
+          "name": "Curaga",
           "Type": "White",
           "Level": 5
         },
         {
-          "Name": "Protect",
+          "name": "Protect",
           "Type": "White",
           "Level": 5
         },
         {
-          "Name": "Raise",
+          "name": "Raise",
           "Type": "White",
           "Level": 5
         },
         {
-          "Name": "Aeroga",
+          "name": "Aeroga",
           "Type": "White",
           "Level": 6
         },
         {
-          "Name": "Haste",
+          "name": "Haste",
           "Type": "White",
           "Level": 6
         },
         {
-          "Name": "Stona",
+          "name": "Stona",
           "Type": "White",
           "Level": 6
         },
         {
-          "Name": "Curaja",
+          "name": "Curaja",
           "Type": "White",
           "Level": 7
         },
         {
-          "Name": "Esuna",
+          "name": "Esuna",
           "Type": "White",
           "Level": 7
         },
         {
-          "Name": "Reflect",
+          "name": "Reflect",
           "Type": "White",
           "Level": 7
         },
         {
-          "Name": "Arise",
+          "name": "Arise",
           "Type": "White",
           "Level": 8
         },
         {
-          "Name": "Holy",
+          "name": "Holy",
           "Type": "White",
           "Level": 8
         },
         {
-          "Name": "Tornado",
+          "name": "Tornado",
           "Type": "White",
           "Level": 8
         }
       ]
     },
     {
-      "Name": "Summoner",
+      "name": "Summoner",
       "Slug": "summoner",
       "MinLevel": 30,
       "Earned": "Ancient's Maze Crystal Room",
@@ -24750,125 +24750,125 @@
       ],
       "Weapons": [
         {
-          "Name": "Mythril Rod",
+          "name": "Mythril Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Fire Rod",
+          "name": "Fire Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Ice Rod",
+          "name": "Ice Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Light Rod",
+          "name": "Light Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Omnirod",
+          "name": "Omnirod",
           "Type": "Rod"
         }
       ],
       "Armors": [
         {
-          "Name": "Leather Cap",
+          "name": "Leather Cap",
           "Type": "Helm"
         },
         {
-          "Name": "Feathered Hat",
+          "name": "Feathered Hat",
           "Type": "Helm"
         },
         {
-          "Name": "Ribbon",
+          "name": "Ribbon",
           "Type": "Helm"
         },
         {
-          "Name": "Vest",
+          "name": "Vest",
           "Type": "Armor"
         },
         {
-          "Name": "Leather Armor",
+          "name": "Leather Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Mage Robe",
+          "name": "Mage Robe",
           "Type": "Armor"
         },
         {
-          "Name": "White Robe",
+          "name": "White Robe",
           "Type": "Armor"
         },
         {
-          "Name": "Black Robe",
+          "name": "Black Robe",
           "Type": "Armor"
         },
         {
-          "Name": "Bronze Bracers",
+          "name": "Bronze Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Mythril Bracers",
+          "name": "Mythril Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Rune Bracers",
+          "name": "Rune Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Diamond Bracers",
+          "name": "Diamond Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Protect Ring",
+          "name": "Protect Ring",
           "Type": "Gloves"
         }
       ],
       "Spells": [
         {
-          "Name": "Chocobo: Chocobo Kick",
+          "name": "Chocobo: Chocobo Kick",
           "Type": "Summon",
           "Level": 1
         },
         {
-          "Name": "Shiva: Diamond Dust",
+          "name": "Shiva: Diamond Dust",
           "Type": "Summon",
           "Level": 2
         },
         {
-          "Name": "Ramuh: Judgment Bolt",
+          "name": "Ramuh: Judgment Bolt",
           "Type": "Summon",
           "Level": 3
         },
         {
-          "Name": "Ifrit: Inferno",
+          "name": "Ifrit: Inferno",
           "Type": "Summon",
           "Level": 4
         },
         {
-          "Name": "Titan: Earthen Fury",
+          "name": "Titan: Earthen Fury",
           "Type": "Summon",
           "Level": 5
         },
         {
-          "Name": "Odin: Zantetsuken",
+          "name": "Odin: Zantetsuken",
           "Type": "Summon",
           "Level": 6
         },
         {
-          "Name": "Leviathan: Tidal Wave",
+          "name": "Leviathan: Tidal Wave",
           "Type": "Summon",
           "Level": 7
         },
         {
-          "Name": "Bahamut: Mega Flare",
+          "name": "Bahamut: Mega Flare",
           "Type": "Summon",
           "Level": 8
         }
       ]
     },
     {
-      "Name": "Sage",
+      "name": "Sage",
       "Slug": "sage",
       "MinLevel": 40,
       "Earned": "Eureka B7",
@@ -26482,449 +26482,449 @@
       ],
       "Weapons": [
         {
-          "Name": "Mythril Rod",
+          "name": "Mythril Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Fire Rod",
+          "name": "Fire Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Ice Rod",
+          "name": "Ice Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Light Rod",
+          "name": "Light Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Omnirod",
+          "name": "Omnirod",
           "Type": "Rod"
         },
         {
-          "Name": "Staff",
+          "name": "Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Fire Staff",
+          "name": "Fire Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Ice Staff",
+          "name": "Ice Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Light Staff",
+          "name": "Light Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Golem Staff",
+          "name": "Golem Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Rune Staff",
+          "name": "Rune Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Elder Staff",
+          "name": "Elder Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Book of Fire",
+          "name": "Book of Fire",
           "Type": "Book"
         },
         {
-          "Name": "Book of Ice",
+          "name": "Book of Ice",
           "Type": "Book"
         },
         {
-          "Name": "Tome of Fire",
+          "name": "Tome of Fire",
           "Type": "Book"
         },
         {
-          "Name": "Book of Light",
+          "name": "Book of Light",
           "Type": "Book"
         },
         {
-          "Name": "Tome of Light",
+          "name": "Tome of Light",
           "Type": "Book"
         },
         {
-          "Name": "Tome of Ice",
+          "name": "Tome of Ice",
           "Type": "Book"
         },
         {
-          "Name": "Book Of Fire",
+          "name": "Book Of Fire",
           "Type": "Book"
         },
         {
-          "Name": "Book Of Ice",
+          "name": "Book Of Ice",
           "Type": "Book"
         },
         {
-          "Name": "Tome Of Fire",
+          "name": "Tome Of Fire",
           "Type": "Book"
         },
         {
-          "Name": "Book Of Light",
+          "name": "Book Of Light",
           "Type": "Book"
         },
         {
-          "Name": "Tome Of Light",
+          "name": "Tome Of Light",
           "Type": "Book"
         },
         {
-          "Name": "Tome Of Ice",
+          "name": "Tome Of Ice",
           "Type": "Book"
         }
       ],
       "Armors": [
         {
-          "Name": "Leather Cap",
+          "name": "Leather Cap",
           "Type": "Helm"
         },
         {
-          "Name": "Scholar Hat",
+          "name": "Scholar Hat",
           "Type": "Helm"
         },
         {
-          "Name": "Feathered Hat",
+          "name": "Feathered Hat",
           "Type": "Helm"
         },
         {
-          "Name": "Ribbon",
+          "name": "Ribbon",
           "Type": "Helm"
         },
         {
-          "Name": "Vest",
+          "name": "Vest",
           "Type": "Armor"
         },
         {
-          "Name": "Leather Armor",
+          "name": "Leather Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Mage Robe",
+          "name": "Mage Robe",
           "Type": "Armor"
         },
         {
-          "Name": "Scholar Robe",
+          "name": "Scholar Robe",
           "Type": "Armor"
         },
         {
-          "Name": "White Robe",
+          "name": "White Robe",
           "Type": "Armor"
         },
         {
-          "Name": "Black Robe",
+          "name": "Black Robe",
           "Type": "Armor"
         },
         {
-          "Name": "Bronze Bracers",
+          "name": "Bronze Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Mythril Bracers",
+          "name": "Mythril Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Rune Bracers",
+          "name": "Rune Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Diamond Bracers",
+          "name": "Diamond Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Protect Ring",
+          "name": "Protect Ring",
           "Type": "Gloves"
         }
       ],
       "Spells": [
         {
-          "Name": "Blizzard",
+          "name": "Blizzard",
           "Type": "Black",
           "Level": 1
         },
         {
-          "Name": "Fire",
+          "name": "Fire",
           "Type": "Black",
           "Level": 1
         },
         {
-          "Name": "Sleep",
+          "name": "Sleep",
           "Type": "Black",
           "Level": 1
         },
         {
-          "Name": "Blind",
+          "name": "Blind",
           "Type": "Black",
           "Level": 2
         },
         {
-          "Name": "Poison",
+          "name": "Poison",
           "Type": "Black",
           "Level": 2
         },
         {
-          "Name": "Thunder",
+          "name": "Thunder",
           "Type": "Black",
           "Level": 2
         },
         {
-          "Name": "Blizzara",
+          "name": "Blizzara",
           "Type": "Black",
           "Level": 3
         },
         {
-          "Name": "Fira",
+          "name": "Fira",
           "Type": "Black",
           "Level": 3
         },
         {
-          "Name": "Thundara",
+          "name": "Thundara",
           "Type": "Black",
           "Level": 3
         },
         {
-          "Name": "Blizzaga",
+          "name": "Blizzaga",
           "Type": "Black",
           "Level": 4
         },
         {
-          "Name": "Break",
+          "name": "Break",
           "Type": "Black",
           "Level": 4
         },
         {
-          "Name": "Shade",
+          "name": "Shade",
           "Type": "Black",
           "Level": 4
         },
         {
-          "Name": "Erase",
+          "name": "Erase",
           "Type": "Black",
           "Level": 5
         },
         {
-          "Name": "Raze",
+          "name": "Raze",
           "Type": "Black",
           "Level": 5
         },
         {
-          "Name": "Thundaga",
+          "name": "Thundaga",
           "Type": "Black",
           "Level": 5
         },
         {
-          "Name": "Bio",
+          "name": "Bio",
           "Type": "Black",
           "Level": 6
         },
         {
-          "Name": "Firaga",
+          "name": "Firaga",
           "Type": "Black",
           "Level": 6
         },
         {
-          "Name": "Warp",
+          "name": "Warp",
           "Type": "Black",
           "Level": 6
         },
         {
-          "Name": "Breakga",
+          "name": "Breakga",
           "Type": "Black",
           "Level": 7
         },
         {
-          "Name": "Drain",
+          "name": "Drain",
           "Type": "Black",
           "Level": 7
         },
         {
-          "Name": "Quake",
+          "name": "Quake",
           "Type": "Black",
           "Level": 7
         },
         {
-          "Name": "Death",
+          "name": "Death",
           "Type": "Black",
           "Level": 8
         },
         {
-          "Name": "Flare",
+          "name": "Flare",
           "Type": "Black",
           "Level": 8
         },
         {
-          "Name": "Meteor",
+          "name": "Meteor",
           "Type": "Black",
           "Level": 8
         },
         {
-          "Name": "Cure",
+          "name": "Cure",
           "Type": "White",
           "Level": 1
         },
         {
-          "Name": "Poisona",
+          "name": "Poisona",
           "Type": "White",
           "Level": 1
         },
         {
-          "Name": "Sight",
+          "name": "Sight",
           "Type": "White",
           "Level": 1
         },
         {
-          "Name": "Aero",
+          "name": "Aero",
           "Type": "White",
           "Level": 2
         },
         {
-          "Name": "Mini",
+          "name": "Mini",
           "Type": "White",
           "Level": 2
         },
         {
-          "Name": "Toad",
+          "name": "Toad",
           "Type": "White",
           "Level": 2
         },
         {
-          "Name": "Blindna",
+          "name": "Blindna",
           "Type": "White",
           "Level": 3
         },
         {
-          "Name": "Cura",
+          "name": "Cura",
           "Type": "White",
           "Level": 3
         },
         {
-          "Name": "Teleport",
+          "name": "Teleport",
           "Type": "White",
           "Level": 3
         },
         {
-          "Name": "Confuse",
+          "name": "Confuse",
           "Type": "White",
           "Level": 4
         },
         {
-          "Name": "Libra",
+          "name": "Libra",
           "Type": "White",
           "Level": 4
         },
         {
-          "Name": "Silence",
+          "name": "Silence",
           "Type": "White",
           "Level": 4
         },
         {
-          "Name": "Curaga",
+          "name": "Curaga",
           "Type": "White",
           "Level": 5
         },
         {
-          "Name": "Protect",
+          "name": "Protect",
           "Type": "White",
           "Level": 5
         },
         {
-          "Name": "Raise",
+          "name": "Raise",
           "Type": "White",
           "Level": 5
         },
         {
-          "Name": "Aeroga",
+          "name": "Aeroga",
           "Type": "White",
           "Level": 6
         },
         {
-          "Name": "Haste",
+          "name": "Haste",
           "Type": "White",
           "Level": 6
         },
         {
-          "Name": "Stona",
+          "name": "Stona",
           "Type": "White",
           "Level": 6
         },
         {
-          "Name": "Curaja",
+          "name": "Curaja",
           "Type": "White",
           "Level": 7
         },
         {
-          "Name": "Esuna",
+          "name": "Esuna",
           "Type": "White",
           "Level": 7
         },
         {
-          "Name": "Reflect",
+          "name": "Reflect",
           "Type": "White",
           "Level": 7
         },
         {
-          "Name": "Arise",
+          "name": "Arise",
           "Type": "White",
           "Level": 8
         },
         {
-          "Name": "Holy",
+          "name": "Holy",
           "Type": "White",
           "Level": 8
         },
         {
-          "Name": "Tornado",
+          "name": "Tornado",
           "Type": "White",
           "Level": 8
         },
         {
-          "Name": "Chocobo: Chocobo Kick",
+          "name": "Chocobo: Chocobo Kick",
           "Type": "Summon",
           "Level": 1
         },
         {
-          "Name": "Shiva: Diamond Dust",
+          "name": "Shiva: Diamond Dust",
           "Type": "Summon",
           "Level": 2
         },
         {
-          "Name": "Ramuh: Judgment Bolt",
+          "name": "Ramuh: Judgment Bolt",
           "Type": "Summon",
           "Level": 3
         },
         {
-          "Name": "Ifrit: Inferno",
+          "name": "Ifrit: Inferno",
           "Type": "Summon",
           "Level": 4
         },
         {
-          "Name": "Titan: Earthen Fury",
+          "name": "Titan: Earthen Fury",
           "Type": "Summon",
           "Level": 5
         },
         {
-          "Name": "Odin: Zantetsuken",
+          "name": "Odin: Zantetsuken",
           "Type": "Summon",
           "Level": 6
         },
         {
-          "Name": "Leviathan: Tidal Wave",
+          "name": "Leviathan: Tidal Wave",
           "Type": "Summon",
           "Level": 7
         },
         {
-          "Name": "Bahamut: Mega Flare",
+          "name": "Bahamut: Mega Flare",
           "Type": "Summon",
           "Level": 8
         }
       ]
     },
     {
-      "Name": "Ninja",
+      "name": "Ninja",
       "Slug": "ninja",
       "MinLevel": 40,
       "Earned": "Eureka B7",
@@ -27745,577 +27745,577 @@
       ],
       "Weapons": [
         {
-          "Name": "Kaiser Knuckles",
+          "name": "Kaiser Knuckles",
           "Type": "Nunchaku"
         },
         {
-          "Name": "Cat Claws",
+          "name": "Cat Claws",
           "Type": "Nunchaku"
         },
         {
-          "Name": "Wyvern Claws",
+          "name": "Wyvern Claws",
           "Type": "Nunchaku"
         },
         {
-          "Name": "Faerie Claws",
+          "name": "Faerie Claws",
           "Type": "Nunchaku"
         },
         {
-          "Name": "Hellish Claws",
+          "name": "Hellish Claws",
           "Type": "Nunchaku"
         },
         {
-          "Name": "Nunchaku",
+          "name": "Nunchaku",
           "Type": "Nunchaku"
         },
         {
-          "Name": "Tonfa",
+          "name": "Tonfa",
           "Type": "Nunchaku"
         },
         {
-          "Name": "Three-Section Staff",
+          "name": "Three-Section Staff",
           "Type": "Nunchaku"
         },
         {
-          "Name": "Mythril Rod",
+          "name": "Mythril Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Fire Rod",
+          "name": "Fire Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Ice Rod",
+          "name": "Ice Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Light Rod",
+          "name": "Light Rod",
           "Type": "Rod"
         },
         {
-          "Name": "Omnirod",
+          "name": "Omnirod",
           "Type": "Rod"
         },
         {
-          "Name": "Staff",
+          "name": "Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Fire Staff",
+          "name": "Fire Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Ice Staff",
+          "name": "Ice Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Light Staff",
+          "name": "Light Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Golem Staff",
+          "name": "Golem Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Rune Staff",
+          "name": "Rune Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Elder Staff",
+          "name": "Elder Staff",
           "Type": "Rod"
         },
         {
-          "Name": "Three Section Staff",
+          "name": "Three Section Staff",
           "Type": "Nunchaku"
         },
         {
-          "Name": "Thor'S Hammer",
+          "name": "Thor'S Hammer",
           "Type": "Axe"
         },
         {
-          "Name": "Battleaxe",
+          "name": "Battleaxe",
           "Type": "Axe"
         },
         {
-          "Name": "Great Axe",
+          "name": "Great Axe",
           "Type": "Axe"
         },
         {
-          "Name": "Morning Star",
+          "name": "Morning Star",
           "Type": "Axe"
         },
         {
-          "Name": "Dual Tomahawk",
+          "name": "Dual Tomahawk",
           "Type": "Axe"
         },
         {
-          "Name": "Triton Hammer",
+          "name": "Triton Hammer",
           "Type": "Axe"
         },
         {
-          "Name": "Thunder Spear",
+          "name": "Thunder Spear",
           "Type": "Spear"
         },
         {
-          "Name": "Wind Spear",
+          "name": "Wind Spear",
           "Type": "Spear"
         },
         {
-          "Name": "Blood Lance",
+          "name": "Blood Lance",
           "Type": "Spear"
         },
         {
-          "Name": "Holy Lance",
+          "name": "Holy Lance",
           "Type": "Spear"
         },
         {
-          "Name": "Knife",
+          "name": "Knife",
           "Type": "Knife"
         },
         {
-          "Name": "Dagger",
+          "name": "Dagger",
           "Type": "Knife"
         },
         {
-          "Name": "Mythril Knife",
+          "name": "Mythril Knife",
           "Type": "Knife"
         },
         {
-          "Name": "Main Gauche",
+          "name": "Main Gauche",
           "Type": "Knife"
         },
         {
-          "Name": "Orichalcum",
+          "name": "Orichalcum",
           "Type": "Knife"
         },
         {
-          "Name": "Air Knife",
+          "name": "Air Knife",
           "Type": "Knife"
         },
         {
-          "Name": "Longsword",
+          "name": "Longsword",
           "Type": "Sword"
         },
         {
-          "Name": "Wightslayer",
+          "name": "Wightslayer",
           "Type": "Sword"
         },
         {
-          "Name": "Golden Sword",
+          "name": "Golden Sword",
           "Type": "Sword"
         },
         {
-          "Name": "Mythril Sword",
+          "name": "Mythril Sword",
           "Type": "Sword"
         },
         {
-          "Name": "Serpent Sword",
+          "name": "Serpent Sword",
           "Type": "Sword"
         },
         {
-          "Name": "Freezing Blade",
+          "name": "Freezing Blade",
           "Type": "Sword"
         },
         {
-          "Name": "Tyrfing",
+          "name": "Tyrfing",
           "Type": "Sword"
         },
         {
-          "Name": "Salamand Sword",
+          "name": "Salamand Sword",
           "Type": "Sword"
         },
         {
-          "Name": "Royal Sword",
+          "name": "Royal Sword",
           "Type": "Sword"
         },
         {
-          "Name": "Ancient Sword",
+          "name": "Ancient Sword",
           "Type": "Sword"
         },
         {
-          "Name": "Blood Sword",
+          "name": "Blood Sword",
           "Type": "Sword"
         },
         {
-          "Name": "Defender",
+          "name": "Defender",
           "Type": "Sword"
         },
         {
-          "Name": "Break Blade",
+          "name": "Break Blade",
           "Type": "Sword"
         },
         {
-          "Name": "Excalibur",
+          "name": "Excalibur",
           "Type": "Sword"
         },
         {
-          "Name": "Ragnarok",
+          "name": "Ragnarok",
           "Type": "Sword"
         },
         {
-          "Name": "Ashura",
+          "name": "Ashura",
           "Type": "Dark Blade"
         },
         {
-          "Name": "Kotetsu",
+          "name": "Kotetsu",
           "Type": "Dark Blade"
         },
         {
-          "Name": "Kiku Ichimonji",
+          "name": "Kiku Ichimonji",
           "Type": "Dark Blade"
         },
         {
-          "Name": "Masamune",
+          "name": "Masamune",
           "Type": "Dark Blade"
         },
         {
-          "Name": "Book Of Fire",
+          "name": "Book Of Fire",
           "Type": "Book"
         },
         {
-          "Name": "Book Of Ice",
+          "name": "Book Of Ice",
           "Type": "Book"
         },
         {
-          "Name": "Tome Of Fire",
+          "name": "Tome Of Fire",
           "Type": "Book"
         },
         {
-          "Name": "Book Of Light",
+          "name": "Book Of Light",
           "Type": "Book"
         },
         {
-          "Name": "Tome Of Light",
+          "name": "Tome Of Light",
           "Type": "Book"
         },
         {
-          "Name": "Tome Of Ice",
+          "name": "Tome Of Ice",
           "Type": "Book"
         },
         {
-          "Name": "Boomerang",
+          "name": "Boomerang",
           "Type": "Boomerang"
         },
         {
-          "Name": "Moonring Blade",
+          "name": "Moonring Blade",
           "Type": "Boomerang"
         },
         {
-          "Name": "Shuriken",
+          "name": "Shuriken",
           "Type": "Shuriken"
         },
         {
-          "Name": "Diamond Bell",
+          "name": "Diamond Bell",
           "Type": "Bell"
         },
         {
-          "Name": "Earthen Bell",
+          "name": "Earthen Bell",
           "Type": "Bell"
         },
         {
-          "Name": "Rune Bell",
+          "name": "Rune Bell",
           "Type": "Bell"
         },
         {
-          "Name": "Madhura Harp",
+          "name": "Madhura Harp",
           "Type": "Harp"
         },
         {
-          "Name": "Lamia Harp",
+          "name": "Lamia Harp",
           "Type": "Harp"
         },
         {
-          "Name": "Loki Harp",
+          "name": "Loki Harp",
           "Type": "Harp"
         },
         {
-          "Name": "Bow",
+          "name": "Bow",
           "Type": "Bow"
         },
         {
-          "Name": "Great Bow",
+          "name": "Great Bow",
           "Type": "Bow"
         },
         {
-          "Name": "Killer Bow",
+          "name": "Killer Bow",
           "Type": "Bow"
         },
         {
-          "Name": "Rune Bow",
+          "name": "Rune Bow",
           "Type": "Bow"
         },
         {
-          "Name": "Yoichi Bow",
+          "name": "Yoichi Bow",
           "Type": "Bow"
         },
         {
-          "Name": "Wooden Arrow",
+          "name": "Wooden Arrow",
           "Type": "Bow"
         },
         {
-          "Name": "Holy Arrow",
+          "name": "Holy Arrow",
           "Type": "Bow"
         },
         {
-          "Name": "Iron Arrow",
+          "name": "Iron Arrow",
           "Type": "Bow"
         },
         {
-          "Name": "Light Arrow",
+          "name": "Light Arrow",
           "Type": "Bow"
         },
         {
-          "Name": "Fire Arrow",
+          "name": "Fire Arrow",
           "Type": "Bow"
         },
         {
-          "Name": "Ice Arrow",
+          "name": "Ice Arrow",
           "Type": "Bow"
         },
         {
-          "Name": "Medusa Arrow",
+          "name": "Medusa Arrow",
           "Type": "Bow"
         },
         {
-          "Name": "Yoichi Arrow",
+          "name": "Yoichi Arrow",
           "Type": "Bow"
         }
       ],
       "Armors": [
         {
-          "Name": "Leather Shield",
+          "name": "Leather Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Mythril Shield",
+          "name": "Mythril Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Ice Shield",
+          "name": "Ice Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Heroic Shield",
+          "name": "Heroic Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Demon Shield",
+          "name": "Demon Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Diamond Shield",
+          "name": "Diamond Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Aegis Shield",
+          "name": "Aegis Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Genji Shield",
+          "name": "Genji Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Crystal Shield",
+          "name": "Crystal Shield",
           "Type": "Shield"
         },
         {
-          "Name": "Leather Cap",
+          "name": "Leather Cap",
           "Type": "Helm"
         },
         {
-          "Name": "Mythril Helm",
+          "name": "Mythril Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Shell Helm",
+          "name": "Shell Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Ice Helm",
+          "name": "Ice Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Headband",
+          "name": "Headband",
           "Type": "Helm"
         },
         {
-          "Name": "Scholar Hat",
+          "name": "Scholar Hat",
           "Type": "Helm"
         },
         {
-          "Name": "Black Cowl",
+          "name": "Black Cowl",
           "Type": "Helm"
         },
         {
-          "Name": "Chakra Band",
+          "name": "Chakra Band",
           "Type": "Helm"
         },
         {
-          "Name": "Viking Helm",
+          "name": "Viking Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Dragon Helm",
+          "name": "Dragon Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Feathered Hat",
+          "name": "Feathered Hat",
           "Type": "Helm"
         },
         {
-          "Name": "Diamond Helm",
+          "name": "Diamond Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Genji Helm",
+          "name": "Genji Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Crystal Helm",
+          "name": "Crystal Helm",
           "Type": "Helm"
         },
         {
-          "Name": "Ribbon",
+          "name": "Ribbon",
           "Type": "Helm"
         },
         {
-          "Name": "Vest",
+          "name": "Vest",
           "Type": "Armor"
         },
         {
-          "Name": "Leather Armor",
+          "name": "Leather Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Mythril Armor",
+          "name": "Mythril Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Shell Armor",
+          "name": "Shell Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Ice Armor",
+          "name": "Ice Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Flame Mail",
+          "name": "Flame Mail",
           "Type": "Armor"
         },
         {
-          "Name": "Kenpo Gi",
+          "name": "Kenpo Gi",
           "Type": "Armor"
         },
         {
-          "Name": "Black Garb",
+          "name": "Black Garb",
           "Type": "Armor"
         },
         {
-          "Name": "Mage Robe",
+          "name": "Mage Robe",
           "Type": "Armor"
         },
         {
-          "Name": "Viking Mail",
+          "name": "Viking Mail",
           "Type": "Armor"
         },
         {
-          "Name": "Black Belt Gi",
+          "name": "Black Belt Gi",
           "Type": "Armor"
         },
         {
-          "Name": "Knight Armor",
+          "name": "Knight Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Dragon Mail",
+          "name": "Dragon Mail",
           "Type": "Armor"
         },
         {
-          "Name": "Bard Vest",
+          "name": "Bard Vest",
           "Type": "Armor"
         },
         {
-          "Name": "Scholar Robe",
+          "name": "Scholar Robe",
           "Type": "Armor"
         },
         {
-          "Name": "Gaia Vest",
+          "name": "Gaia Vest",
           "Type": "Armor"
         },
         {
-          "Name": "Demon Mail",
+          "name": "Demon Mail",
           "Type": "Armor"
         },
         {
-          "Name": "Diamond Mail",
+          "name": "Diamond Mail",
           "Type": "Armor"
         },
         {
-          "Name": "Reflect Mail",
+          "name": "Reflect Mail",
           "Type": "Armor"
         },
         {
-          "Name": "White Robe",
+          "name": "White Robe",
           "Type": "Armor"
         },
         {
-          "Name": "Black Robe",
+          "name": "Black Robe",
           "Type": "Armor"
         },
         {
-          "Name": "Genji Armor",
+          "name": "Genji Armor",
           "Type": "Armor"
         },
         {
-          "Name": "Crystal Mail",
+          "name": "Crystal Mail",
           "Type": "Armor"
         },
         {
-          "Name": "Bronze Bracers",
+          "name": "Bronze Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Mythril Gloves",
+          "name": "Mythril Gloves",
           "Type": "Gloves"
         },
         {
-          "Name": "Mythril Bracers",
+          "name": "Mythril Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Thief Gloves",
+          "name": "Thief Gloves",
           "Type": "Gloves"
         },
         {
-          "Name": "Gauntlets",
+          "name": "Gauntlets",
           "Type": "Gloves"
         },
         {
-          "Name": "Power Bracers",
+          "name": "Power Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Rune Bracers",
+          "name": "Rune Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Diamond Bracers",
+          "name": "Diamond Bracers",
           "Type": "Gloves"
         },
         {
-          "Name": "Diamond Gloves",
+          "name": "Diamond Gloves",
           "Type": "Gloves"
         },
         {
-          "Name": "Protect Ring",
+          "name": "Protect Ring",
           "Type": "Gloves"
         },
         {
-          "Name": "Genji Gloves",
+          "name": "Genji Gloves",
           "Type": "Gloves"
         },
         {
-          "Name": "Crystal Gloves",
+          "name": "Crystal Gloves",
           "Type": "Gloves"
         }
       ]

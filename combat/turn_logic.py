@@ -144,7 +144,7 @@ def _resolve_enemy_summon_target_name(
     summon_casters = spell_def.get("Monsters") or []
     if summon_casters:
         caster_names = {
-            normalize_text_basic(entry.get("Name") or "")
+            normalize_text_basic(entry.get("name") or entry.get("Name") or "")
             for entry in summon_casters
             if isinstance(entry, dict)
         }
@@ -2395,7 +2395,7 @@ def run_character_turn(
         if char_item is None:
             raise ValueError("char_attack_kind='item' のときは char_item が必要です")
 
-        item_name = (char_item.get("Name") or "").strip()
+        item_name = (char_item.get("name") or char_item.get("Name") or "").strip()
 
         # =========================
         # ターゲット解決
@@ -2481,7 +2481,7 @@ def run_character_turn(
 
                         log_hp_change(
                             logs,
-                            f"{char_name}は{char_item.get('Name')}を使った！ "
+                            f"{char_name}は{item_name}を使った！ "
                             f"{relation_msg + ' ' if relation_msg else ''}",
                             runtime_enemy_name,
                             actual_enemy_change,
@@ -2605,7 +2605,7 @@ def run_character_turn(
 
                 log_hp_change(
                     logs,
-                    f"{char_name}は{char_item.get('Name')}を使った！ "
+                    f"{char_name}は{item_name}を使った！ "
                     f"{relation_msg + ' ' if relation_msg else ''}",
                     enemy_name,
                     actual_enemy_change,
@@ -3761,7 +3761,11 @@ def run_enemy_turn(
             and enemy_attack.attack_name is not None
         ):
             spell_def = _find_spell_json_for_enemy_attack(enemy_json, enemy_attack)
-            spell_name = (spell_def or {}).get("Name") or enemy_attack.attack_name
+            spell_name = (
+                (spell_def or {}).get("name")
+                or (spell_def or {}).get("Name")
+                or enemy_attack.attack_name
+            )
             effect_category = spell_effect_category(spell_def or {})
             battle_behavior = spell_battle_behavior(spell_def or {})
 
@@ -4310,7 +4314,7 @@ def enemy_attack_to_char_with_special(
                 attack_name = sa.get("Attack")
                 spell_def = None
                 for s in spell_list:
-                    if s.get("Name") == attack_name:
+                    if (s.get("name") or s.get("Name")) == attack_name:
                         spell_def = s
                         break
                 if spell_def is None:
@@ -4341,7 +4345,7 @@ def enemy_attack_to_char_with_special(
                     attacker_is_blind=attacker_is_blind,
                     target_is_mini_or_toad=target_is_mini_or_toad,
                     target_state=target_state,  # ★ ここ！
-                    spell_name=str(spell_def.get("Name") or ""),
+                    spell_name=str(spell_def.get("name") or spell_def.get("Name") or ""),
                     auto_all_target=False,
                     magic_type=normalize_text_basic(spell_def.get("Type") or ""),
                 )
@@ -4446,7 +4450,7 @@ def enemy_attack_to_char_with_special(
                 attacker_is_blind=attacker_is_blind,
                 target_is_mini_or_toad=target_is_mini_or_toad,
                 target_state=target_state,  # ★ ここ！
-                spell_name=str(spell_def.get("Name") or ""),
+                spell_name=str(spell_def.get("name") or spell_def.get("Name") or ""),
                 auto_all_target=False,
                 magic_type=normalize_text_basic(spell_def.get("Type") or ""),
             )
@@ -4470,7 +4474,9 @@ def enemy_attack_to_char_with_special(
             # 2) 無ければ spells.json 側（state.spells）から補完
             if reflectable_raw is None:
                 try:
-                    base_spell = state.spells.get(spell_def.get("Name", ""))
+                    base_spell = state.spells.get(
+                        spell_def.get("name") or spell_def.get("Name", "")
+                    )
                 except NameError:
                     base_spell = None  # state.spells が未セットの場合
 
@@ -4483,7 +4489,7 @@ def enemy_attack_to_char_with_special(
             return EnemyAttackResult(
                 damage=max(int(dmg_spec), 0),
                 attack_type="special",
-                attack_name=spell_def.get("Name"),
+                attack_name=spell_def.get("name") or spell_def.get("Name"),
                 inflicted_status=inflicted_status,
                 status_success_prob=status_prob,
                 is_crit=False,

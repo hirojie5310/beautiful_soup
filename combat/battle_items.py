@@ -7,7 +7,7 @@ from combat.spell_metadata import spell_target_scope
 
 
 def _weapon_name(weapon_json: dict[str, Any]) -> str:
-    raw = weapon_json.get("Name") or weapon_json.get("name") or ""
+    raw = weapon_json.get("name") or weapon_json.get("Name") or ""
     return str(raw).strip()
 
 
@@ -48,7 +48,7 @@ def build_weapon_spell_item_definition(
         spell_info["MagicType"] = spell_json.get("Type")
 
     weapon_item = {
-        "Name": weapon_name,
+        "name": weapon_name,
         "ItemType": "Weapon",
         "BattleUseSource": "weapon",
         "SpellCast": spell_name,

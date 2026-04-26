@@ -269,7 +269,14 @@ def apply_status_spell_to_enemy(
         children = spell_json.get("Spells", [])
 
         # ① 完全一致（最優先）
-        child = next((c for c in children if c.get("Name") == summon_child_name), None)
+        child = next(
+            (
+                c
+                for c in children
+                if (c.get("name") or c.get("Name")) == summon_child_name
+            ),
+            None,
+        )
 
         # ② フル名 "Ramuh: Mind Blast" と suffix "Mind Blast" ともに対応
         if child is None:
@@ -280,7 +287,14 @@ def apply_status_spell_to_enemy(
                 suffix = summon_child_name.strip()
 
             # ③ suffix 完全一致
-            child = next((c for c in children if c.get("Name") == suffix), None)
+            child = next(
+                (
+                    c
+                    for c in children
+                    if (c.get("name") or c.get("Name")) == suffix
+                ),
+                None,
+            )
 
             # ④ 子スペルが "Ramuh: XXX" 形式なら suffix で比較
             if child is None:
@@ -288,8 +302,11 @@ def apply_status_spell_to_enemy(
                     (
                         c
                         for c in children
-                        if ":" in c.get("Name", "")
-                        and c["Name"].split(":", 1)[1].strip() == suffix
+                        if ":" in (c.get("name") or c.get("Name") or "")
+                        and (c.get("name") or c.get("Name") or "")
+                        .split(":", 1)[1]
+                        .strip()
+                        == suffix
                     ),
                     None,
                 )
@@ -301,7 +318,7 @@ def apply_status_spell_to_enemy(
                 spell_json = dict(spell_json)  # shallow copy
                 spell_json["StatusAilment"] = child_status
 
-    spell_label = str(spell_json.get("Name") or spell_json.get("name") or "Spell")
+    spell_label = str(spell_json.get("name") or spell_json.get("Name") or "Spell")
     dispel_keys = _dispel_effect_keys(spell_json)
     if dispel_keys:
         if enemy_stats is None:
@@ -381,7 +398,11 @@ def apply_status_spell_to_enemy(
         hit_percent = max(0.0, min(hit_percent, 100.0))
 
         roll = rng.random() * 100.0
-        spell_label = spell_json.get("Name") or ("Toad" if ail == "toad" else "Mini")
+        spell_label = (
+            spell_json.get("name")
+            or spell_json.get("Name")
+            or ("Toad" if ail == "toad" else "Mini")
+        )
 
         if roll < hit_percent:
             enemy_state.statuses.add(Status.KO)
@@ -416,7 +437,9 @@ def apply_status_spell_to_enemy(
 
         hit_percent = max(0.0, min(hit_percent, 100.0))
         roll = rng.random() * 100.0
-        spell_label = spell_json.get("Name") or instant_ko_rule.title()
+        spell_label = (
+            spell_json.get("name") or spell_json.get("Name") or instant_ko_rule.title()
+        )
 
         if roll < hit_percent:
             enemy_state.statuses.add(Status.KO)
@@ -593,7 +616,7 @@ def apply_status_spell_to_char(
     """
 
     # 1) まずは敵用と同じように ailments_list を抽出する（ほぼコピペでOK）
-    spell_label = str(spell_json.get("Name") or spell_json.get("name") or "Spell")
+    spell_label = str(spell_json.get("name") or spell_json.get("Name") or "Spell")
     dispel_keys = _dispel_effect_keys(spell_json)
     if dispel_keys:
         return _remove_dispellable_buffs(
@@ -660,7 +683,11 @@ def apply_status_spell_to_char(
         caster_lv = int(spell_json.get("AttackerLevel", 1) or 1)  # ★敵側から埋める
 
         if "ko" in immune_set:
-            spell_label = str(spell_json.get("Name") or instant_ko_rule.title())
+            spell_label = str(
+                spell_json.get("name")
+                or spell_json.get("Name")
+                or instant_ko_rule.title()
+            )
             logs.append(f"{char_name}には《{spell_label}》が効かなかった！（無効）")
             return True
 
@@ -673,7 +700,9 @@ def apply_status_spell_to_char(
             hit_percent = max(0.0, min(base_acc, 100.0))
 
         roll = rng.random() * 100.0
-        spell_label = str(spell_json.get("Name") or instant_ko_rule.title())
+        spell_label = str(
+            spell_json.get("name") or spell_json.get("Name") or instant_ko_rule.title()
+        )
         if roll < hit_percent:
             char_state.statuses.add(Status.KO)
             char_state.hp = 0

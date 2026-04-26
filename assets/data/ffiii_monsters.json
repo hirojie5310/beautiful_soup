@@ -34,7 +34,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Dropped Items": [
@@ -97,7 +97,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Dropped Items": [
@@ -158,7 +158,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -198,7 +198,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Dropped Items": [
@@ -260,7 +260,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Status Attack": "Poison",
@@ -297,7 +297,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -333,7 +333,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -370,7 +370,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Monster Type": "Undead",
@@ -423,7 +423,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Monster Type": "Undead",
@@ -446,12 +446,12 @@
       "Special Attacks": [
         {
           "Attack": "Blind",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Blind",
+          "name": "Blind",
           "Type": "Black",
           "Power": 16,
           "Accuracy": 0.66,
@@ -493,7 +493,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Monster Type": "Undead",
@@ -544,7 +544,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Monster Type": "Undead",
@@ -567,12 +567,12 @@
       "Special Attacks": [
         {
           "Attack": "Poison",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Poison",
+          "name": "Poison",
           "Type": "Black",
           "Power": 20,
           "Accuracy": 0.6,
@@ -619,7 +619,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Monster Type": "Undead",
@@ -676,7 +676,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Monster Type": "Undead",
@@ -699,12 +699,12 @@
       "Special Attacks": [
         {
           "Attack": "Glare",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Glare",
+          "name": "Glare",
           "Type": "Ability",
           "Power": 3,
           "Accuracy": 0.83,
@@ -787,12 +787,12 @@
       "Special Attacks": [
         {
           "Attack": "Blind",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Blind",
+          "name": "Blind",
           "Type": "Black",
           "Power": 16,
           "Accuracy": 0.66,
@@ -875,12 +875,12 @@
       "Special Attacks": [
         {
           "Attack": "Blind",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Blind",
+          "name": "Blind",
           "Type": "Black",
           "Power": 19,
           "Accuracy": 0.69,
@@ -993,7 +993,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -1017,15 +1017,15 @@
       "Special Attacks": [
         {
           "Attack": "Fire",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Fire",
+          "name": "Fire",
           "Type": "Black",
           "Power": 25,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 1,
           "Target": "One/All Enemies",
           "Status": "-",
@@ -1064,7 +1064,7 @@
       "Stolen Items": [
         {
           "Item": "Gold Needle",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -1107,7 +1107,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -1119,12 +1119,12 @@
       "Special Attacks": [
         {
           "Attack": "Glare",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Glare",
+          "name": "Glare",
           "Type": "Ability",
           "Power": 3,
           "Accuracy": 0.83,
@@ -1166,7 +1166,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Dropped Items": [
@@ -1226,7 +1226,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -1263,7 +1263,7 @@
       ],
       "Spells": [
         {
-          "Name": "Tornado",
+          "name": "Tornado",
           "Type": "White",
           "Power": 19,
           "Accuracy": 0.55,
@@ -1273,7 +1273,7 @@
           "Element": "Air"
         },
         {
-          "Name": "Reflect",
+          "name": "Reflect",
           "Type": "White",
           "Power": 15,
           "Accuracy": 0.9,
@@ -1283,10 +1283,10 @@
           "Element": "-"
         },
         {
-          "Name": "Snowstorm",
+          "name": "Snowstorm",
           "Type": "Ability",
           "Power": 61,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 5,
           "Target": "All Enemies",
           "Status": "-",
@@ -1396,7 +1396,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -1493,30 +1493,30 @@
       ],
       "Spells": [
         {
-          "Name": "Thunder",
+          "name": "Thunder",
           "Type": "Black",
           "Power": 38,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 1,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Lightning"
         },
         {
-          "Name": "Fire",
+          "name": "Fire",
           "Type": "Black",
           "Power": 28,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 1,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Fire"
         },
         {
-          "Name": "Blizzard",
+          "name": "Blizzard",
           "Type": "Black",
           "Power": 28,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 1,
           "Target": "One/All Enemies",
           "Status": "-",
@@ -1556,7 +1556,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Status Attack": "Poison",
@@ -1594,7 +1594,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Dropped Items": [
@@ -1632,30 +1632,30 @@
       ],
       "Spells": [
         {
-          "Name": "Thunder",
+          "name": "Thunder",
           "Type": "Black",
           "Power": 38,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 1,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Lightning"
         },
         {
-          "Name": "Fire",
+          "name": "Fire",
           "Type": "Black",
           "Power": 28,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 1,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Fire"
         },
         {
-          "Name": "Blizzard",
+          "name": "Blizzard",
           "Type": "Black",
           "Power": 28,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 1,
           "Target": "One/All Enemies",
           "Status": "-",
@@ -1695,7 +1695,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -1730,7 +1730,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -1766,7 +1766,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -1806,7 +1806,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -1849,7 +1849,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -1891,7 +1891,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -1903,12 +1903,12 @@
       "Special Attacks": [
         {
           "Attack": "Glare",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Glare",
+          "name": "Glare",
           "Type": "Ability",
           "Power": 3,
           "Accuracy": 0.83,
@@ -1950,7 +1950,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -2051,12 +2051,12 @@
       "Special Attacks": [
         {
           "Attack": "Bad Breath",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Bad Breath",
+          "name": "Bad Breath",
           "Type": "Ability",
           "Power": 3,
           "Accuracy": 0.63,
@@ -2152,8 +2152,8 @@
       "Level": 14,
       "JobLevel": 1,
       "Gil": 76,
-       "CP": 1,
-     "Experience": 108,
+      "CP": 1,
+      "Experience": 108,
       "AttackPower": 21,
       "Attack": {
         "Count": 3,
@@ -2172,7 +2172,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -2207,7 +2207,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Status Attack": "Poison",
@@ -2310,7 +2310,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -2322,12 +2322,12 @@
       "Special Attacks": [
         {
           "Attack": "Glare",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Glare",
+          "name": "Glare",
           "Type": "Ability",
           "Power": 3,
           "Accuracy": 0.83,
@@ -2369,7 +2369,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -2404,7 +2404,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -2478,12 +2478,12 @@
       "Special Attacks": [
         {
           "Attack": "Glare",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Glare",
+          "name": "Glare",
           "Type": "Ability",
           "Power": 3,
           "Accuracy": 0.83,
@@ -2527,7 +2527,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Status Attack": "Paralysis",
@@ -2535,12 +2535,12 @@
       "Special Attacks": [
         {
           "Attack": "Bad Breath",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Bad Breath",
+          "name": "Bad Breath",
           "Type": "Ability",
           "Power": 3,
           "Accuracy": 0.63,
@@ -2584,7 +2584,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -2619,7 +2619,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -2654,7 +2654,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -2753,7 +2753,7 @@
       ],
       "Spells": [
         {
-          "Name": "Poison",
+          "name": "Poison",
           "Type": "Black",
           "Power": 23,
           "Accuracy": 0.63,
@@ -2763,7 +2763,7 @@
           "Element": "-"
         },
         {
-          "Name": "Blind",
+          "name": "Blind",
           "Type": "Black",
           "Power": 13,
           "Accuracy": 0.63,
@@ -2773,27 +2773,27 @@
           "Element": "-"
         },
         {
-          "Name": "Fire",
+          "name": "Fire",
           "Type": "Black",
           "Power": 28,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 1,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Fire"
         },
         {
-          "Name": "Blizzard",
+          "name": "Blizzard",
           "Type": "Black",
           "Power": 28,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 1,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Ice"
         },
         {
-          "Name": "Sleep",
+          "name": "Sleep",
           "Type": "Black",
           "Power": 3,
           "Accuracy": 0.18,
@@ -2840,7 +2840,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "SpecialAttackRate": 0.45,
@@ -2864,17 +2864,17 @@
       ],
       "Spells": [
         {
-          "Name": "Blizzara",
+          "name": "Blizzara",
           "Type": "Black",
           "Power": 58,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 1,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Ice"
         },
         {
-          "Name": "Poison",
+          "name": "Poison",
           "Type": "Black",
           "Power": 23,
           "Accuracy": 0.63,
@@ -2884,7 +2884,7 @@
           "Element": "-"
         },
         {
-          "Name": "Blind",
+          "name": "Blind",
           "Type": "Black",
           "Power": 13,
           "Accuracy": 0.63,
@@ -2894,7 +2894,7 @@
           "Element": "-"
         },
         {
-          "Name": "Toad",
+          "name": "Toad",
           "Type": "White",
           "Power": 3,
           "Accuracy": 0.03,
@@ -2944,7 +2944,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -3036,17 +3036,17 @@
       ],
       "Spells": [
         {
-          "Name": "Blizzara",
+          "name": "Blizzara",
           "Type": "Black",
           "Power": 58,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 1,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Ice"
         },
         {
-          "Name": "Silence",
+          "name": "Silence",
           "Type": "White",
           "Power": 3,
           "Accuracy": 0.63,
@@ -3097,7 +3097,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -3158,15 +3158,15 @@
       "Special Attacks": [
         {
           "Attack": "Self-Destruct",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Self-Destruct",
+          "name": "Self-Destruct",
           "Type": "Ability",
           "Power": null,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 1,
           "Target": "One Enemy",
           "Status": "-",
@@ -3205,22 +3205,22 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "SpecialAttackRate": 0.6,
       "Special Attacks": [
         {
           "Attack": "Blizzard",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Blizzard",
+          "name": "Blizzard",
           "Type": "Black",
           "Power": 25,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 2,
           "Target": "One/All Enemies",
           "Status": "-",
@@ -3262,7 +3262,7 @@
       "Stolen Items": [
         {
           "Item": "Gold Needle",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -3275,12 +3275,12 @@
       "Special Attacks": [
         {
           "Attack": "Stare",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Stare",
+          "name": "Stare",
           "Type": "Ability",
           "Power": 3,
           "Accuracy": 0.83,
@@ -3323,7 +3323,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -3365,7 +3365,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -3377,15 +3377,15 @@
       "Special Attacks": [
         {
           "Attack": "Blizzard",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Blizzard",
+          "name": "Blizzard",
           "Type": "Black",
           "Power": 31,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 2,
           "Target": "One/All Enemies",
           "Status": "-",
@@ -3426,7 +3426,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -3439,12 +3439,12 @@
       "Special Attacks": [
         {
           "Attack": "Bad Breath",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Bad Breath",
+          "name": "Bad Breath",
           "Type": "Ability",
           "Power": 3,
           "Accuracy": 0.63,
@@ -3534,15 +3534,15 @@
       "Special Attacks": [
         {
           "Attack": "Self-Destruct",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Self-Destruct",
+          "name": "Self-Destruct",
           "Type": "Ability",
           "Power": 3,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 1,
           "Target": "One Enemy",
           "Status": "-",
@@ -3582,7 +3582,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -3624,7 +3624,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -3743,7 +3743,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -3824,12 +3824,12 @@
       "Special Attacks": [
         {
           "Attack": "Glare",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Glare",
+          "name": "Glare",
           "Type": "Ability",
           "Power": 6,
           "Accuracy": 0.86,
@@ -3991,12 +3991,12 @@
       "Special Attacks": [
         {
           "Attack": "Glare",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Glare",
+          "name": "Glare",
           "Type": "Ability",
           "Power": 6,
           "Accuracy": 0.86,
@@ -4133,7 +4133,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Dropped Items": [
@@ -4188,7 +4188,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -4230,7 +4230,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -4272,7 +4272,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -4312,7 +4312,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -4352,7 +4352,7 @@
       "Stolen Items": [
         {
           "Item": "Gold Needle",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Status Attack": "Partial Petrification (1/3)",
@@ -4390,7 +4390,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -4434,7 +4434,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -4566,7 +4566,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -4607,7 +4607,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -4651,7 +4651,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -4693,7 +4693,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -4783,12 +4783,12 @@
       "Special Attacks": [
         {
           "Attack": "Glare",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Glare",
+          "name": "Glare",
           "Type": "Ability",
           "Power": 15,
           "Accuracy": 0.95,
@@ -4888,12 +4888,12 @@
       "Special Attacks": [
         {
           "Attack": "Bad Breath",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Bad Breath",
+          "name": "Bad Breath",
           "Type": "Ability",
           "Power": null,
           "Accuracy": 0.6,
@@ -4935,19 +4935,19 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "SpecialAttackRate": 0.15,
       "Special Attacks": [
         {
           "Attack": "Blind",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Blind",
+          "name": "Blind",
           "Type": "Black",
           "Power": 10,
           "Accuracy": 0.6,
@@ -5056,30 +5056,30 @@
       ],
       "Spells": [
         {
-          "Name": "Fira",
+          "name": "Fira",
           "Type": "Black",
           "Power": 55,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 2,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Fire"
         },
         {
-          "Name": "Blizzara",
+          "name": "Blizzara",
           "Type": "Black",
           "Power": 55,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 2,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Ice"
         },
         {
-          "Name": "Thundara",
+          "name": "Thundara",
           "Type": "Black",
           "Power": 55,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 2,
           "Target": "One/All Enemies",
           "Status": "-",
@@ -5118,7 +5118,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Status Attack": "Sleep",
@@ -5214,30 +5214,30 @@
       ],
       "Spells": [
         {
-          "Name": "Fira",
+          "name": "Fira",
           "Type": "Black",
           "Power": 64,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 2,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Fire"
         },
         {
-          "Name": "Blizzara",
+          "name": "Blizzara",
           "Type": "Black",
           "Power": 64,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 2,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Ice"
         },
         {
-          "Name": "Thundara",
+          "name": "Thundara",
           "Type": "Black",
           "Power": 64,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 2,
           "Target": "One/All Enemies",
           "Status": "-",
@@ -5276,7 +5276,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -5316,7 +5316,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -5328,15 +5328,15 @@
       "Special Attacks": [
         {
           "Attack": "Thunder",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Thunder",
+          "name": "Thunder",
           "Type": "Black",
           "Power": 35,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 2,
           "Target": "One/All Enemies",
           "Status": "-",
@@ -5375,7 +5375,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -5387,12 +5387,12 @@
       "Special Attacks": [
         {
           "Attack": "Break",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Break",
+          "name": "Break",
           "Type": "Black",
           "Power": null,
           "Accuracy": 0.5,
@@ -5435,7 +5435,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -5486,7 +5486,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Status Attack": "Confusion",
@@ -5494,12 +5494,12 @@
       "Special Attacks": [
         {
           "Attack": "Glare",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Glare",
+          "name": "Glare",
           "Type": "Ability",
           "Power": 15,
           "Accuracy": 0.95,
@@ -5544,7 +5544,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "SpecialAttackRate": 0.99,
@@ -5572,7 +5572,7 @@
       ],
       "Spells": [
         {
-          "Name": "Break",
+          "name": "Break",
           "Type": "Black",
           "Power": 12,
           "Accuracy": 0.62,
@@ -5582,7 +5582,7 @@
           "Element": "Earth"
         },
         {
-          "Name": "Shade",
+          "name": "Shade",
           "Type": "Black",
           "Power": 12,
           "Accuracy": 0.92,
@@ -5592,30 +5592,30 @@
           "Element": "-"
         },
         {
-          "Name": "Fira",
+          "name": "Fira",
           "Type": "Black",
           "Power": 67,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 4,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Fire"
         },
         {
-          "Name": "Blizzara",
+          "name": "Blizzara",
           "Type": "Black",
           "Power": 67,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 4,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Ice"
         },
         {
-          "Name": "Thundara",
+          "name": "Thundara",
           "Type": "Black",
           "Power": 67,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 4,
           "Target": "One/All Enemies",
           "Status": "-",
@@ -5734,7 +5734,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -5826,30 +5826,30 @@
       ],
       "Spells": [
         {
-          "Name": "Fira",
+          "name": "Fira",
           "Type": "Black",
           "Power": 64,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 3,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Fire"
         },
         {
-          "Name": "Blizzara",
+          "name": "Blizzara",
           "Type": "Black",
           "Power": 64,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 3,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Ice"
         },
         {
-          "Name": "Thundara",
+          "name": "Thundara",
           "Type": "Black",
           "Power": 64,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 3,
           "Target": "One/All Enemies",
           "Status": "-",
@@ -5889,7 +5889,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -5926,7 +5926,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -5950,15 +5950,15 @@
       "Special Attacks": [
         {
           "Attack": "Blizzara",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Blizzara",
+          "name": "Blizzara",
           "Type": "Black",
           "Power": 55,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 3,
           "Target": "One/All Enemies",
           "Status": "-",
@@ -5997,7 +5997,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -6037,7 +6037,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -6077,7 +6077,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -6117,7 +6117,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Status Attack": "Partial Petrification (1/3)",
@@ -6155,7 +6155,7 @@
       "Stolen Items": [
         {
           "Item": "Hi Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Dropped Items": [
@@ -6249,12 +6249,12 @@
       "Special Attacks": [
         {
           "Attack": "Breakga",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Breakga",
+          "name": "Breakga",
           "Type": "Black",
           "Power": null,
           "Accuracy": 0.4,
@@ -6296,7 +6296,7 @@
       "Stolen Items": [
         {
           "Item": "Hi Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Dropped Items": [
@@ -6431,7 +6431,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -6456,30 +6456,30 @@
       ],
       "Spells": [
         {
-          "Name": "Fira",
+          "name": "Fira",
           "Type": "Black",
           "Power": 61,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 2,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Fire"
         },
         {
-          "Name": "Blizzara",
+          "name": "Blizzara",
           "Type": "Black",
           "Power": 61,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 2,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Ice"
         },
         {
-          "Name": "Thundara",
+          "name": "Thundara",
           "Type": "Black",
           "Power": 61,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 2,
           "Target": "One/All Enemies",
           "Status": "-",
@@ -6522,7 +6522,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -6557,7 +6557,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -6592,7 +6592,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -6636,7 +6636,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -6671,7 +6671,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -6708,7 +6708,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -6752,7 +6752,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "StatusAilmentVulnerability": {
@@ -6765,15 +6765,15 @@
       "Special Attacks": [
         {
           "Attack": "Lightning",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Lightning",
+          "name": "Lightning",
           "Type": "Ability",
           "Power": 46,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 3,
           "Target": "All Enemies",
           "Status": "-",
@@ -6814,7 +6814,7 @@
       "Stolen Items": [
         {
           "Item": "Hi Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Dropped Items": [
@@ -6865,7 +6865,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -6905,7 +6905,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -6942,7 +6942,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -6981,7 +6981,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "StatusAilmentVulnerability": {
@@ -6994,15 +6994,15 @@
       "Special Attacks": [
         {
           "Attack": "Flame",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Flame",
+          "name": "Flame",
           "Type": "Ability",
           "Power": 49,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 4,
           "Target": "All Enemies",
           "Status": "-",
@@ -7226,12 +7226,12 @@
       "Special Attacks": [
         {
           "Attack": "Breakga",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Breakga",
+          "name": "Breakga",
           "Type": "Black",
           "Power": null,
           "Accuracy": 0.4,
@@ -7275,7 +7275,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -7312,7 +7312,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -7350,7 +7350,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -7388,7 +7388,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -7428,7 +7428,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -7470,7 +7470,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -7507,7 +7507,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -7544,7 +7544,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -7579,7 +7579,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -7618,7 +7618,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Monster Type": "Dividing",
@@ -7675,7 +7675,7 @@
       "Stolen Items": [
         {
           "Item": "Hi Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Dropped Items": [
@@ -7813,15 +7813,15 @@
       "Special Attacks": [
         {
           "Attack": "Divide",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Divide",
+          "name": "Divide",
           "Type": "Ability",
           "Power": 30,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 6,
           "Target": "One Enemy",
           "Status": "-",
@@ -7862,22 +7862,22 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "SpecialAttackRate": 0.4,
       "Special Attacks": [
         {
           "Attack": "Divide",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Divide",
+          "name": "Divide",
           "Type": "Ability",
           "Power": null,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 3,
           "Target": "One Enemy",
           "Status": "-",
@@ -7917,7 +7917,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Monster Type": "Undead",
@@ -8060,7 +8060,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -8101,7 +8101,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Monster Type": "Dividing",
@@ -8158,7 +8158,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Monster Type": "Dividing",
@@ -8217,7 +8217,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Monster Type": "Dividing",
@@ -8278,7 +8278,7 @@
       "Stolen Items": [
         {
           "Item": "Hi Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Dropped Items": [
@@ -8349,7 +8349,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -8387,7 +8387,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -8422,7 +8422,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -8459,7 +8459,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Status Attack": "Paralysis",
@@ -8467,12 +8467,12 @@
       "Special Attacks": [
         {
           "Attack": "Glare",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Glare",
+          "name": "Glare",
           "Type": "Ability",
           "Power": null,
           "Accuracy": 0.8,
@@ -8516,7 +8516,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -8551,7 +8551,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Status Attack": "Poison",
@@ -8587,7 +8587,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -8624,7 +8624,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -8665,40 +8665,40 @@
       ],
       "Spells": [
         {
-          "Name": "Meteor",
+          "name": "Meteor",
           "Type": "Black",
           "Power": 210,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 12,
           "Target": "All Enemies",
           "Status": "-",
           "Element": "-"
         },
         {
-          "Name": "Quake",
+          "name": "Quake",
           "Type": "Black",
           "Power": 163,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 12,
           "Target": "All Enemies",
           "Status": "-",
           "Element": "Earth"
         },
         {
-          "Name": "Libra",
+          "name": "Libra",
           "Type": "White",
           "Power": 30,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 12,
           "Target": "One Enemy",
           "Status": "-",
           "Element": "-"
         },
         {
-          "Name": "Flame",
+          "name": "Flame",
           "Type": "Ability",
           "Power": 70,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 12,
           "Target": "All Enemies",
           "Status": "-",
@@ -8742,22 +8742,22 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "SpecialAttackRate": 0.9,
       "Special Attacks": [
         {
           "Attack": "Earthquake",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Earthquake",
+          "name": "Earthquake",
           "Type": "Ability",
           "Power": 92,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 5,
           "Target": "All Enemies",
           "Status": "-",
@@ -8797,7 +8797,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -8832,7 +8832,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -8874,7 +8874,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -8886,12 +8886,12 @@
       "Special Attacks": [
         {
           "Attack": "Glare",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Glare",
+          "name": "Glare",
           "Type": "Ability",
           "Power": null,
           "Accuracy": 0.8,
@@ -8936,7 +8936,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -8978,7 +8978,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -9020,22 +9020,22 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "SpecialAttackRate": 0.5,
       "Special Attacks": [
         {
           "Attack": "Self-Destruct",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Self-Destruct",
+          "name": "Self-Destruct",
           "Type": "Ability",
           "Power": null,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 4,
           "Target": "One Enemy",
           "Status": "-",
@@ -9075,7 +9075,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -9113,7 +9113,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Status Attack": "Poison",
@@ -9150,7 +9150,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -9188,7 +9188,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -9201,15 +9201,15 @@
       "Special Attacks": [
         {
           "Attack": "Glare",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Glare",
+          "name": "Glare",
           "Type": "Ability",
           "Power": 24,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 7,
           "Target": "One Enemy",
           "Status": "Confusion",
@@ -9248,7 +9248,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -9286,22 +9286,22 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "SpecialAttackRate": 0.2,
       "Special Attacks": [
         {
           "Attack": "Summon",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Summon",
+          "name": "Summon",
           "Type": "Ability",
           "Power": null,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": "",
           "Target": "Enemies",
           "Status": "-",
@@ -9343,19 +9343,19 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "SpecialAttackRate": 0.21,
       "Special Attacks": [
         {
           "Attack": "Breakga",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Breakga",
+          "name": "Breakga",
           "Type": "Black",
           "Power": 24,
           "Accuracy": 0.64,
@@ -9400,7 +9400,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Monster Type": "Undead",
@@ -9453,7 +9453,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -9492,7 +9492,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -9529,17 +9529,17 @@
       ],
       "Spells": [
         {
-          "Name": "Quake",
+          "name": "Quake",
           "Type": "Black",
           "Power": 148,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 5,
           "Target": "All Enemies",
           "Status": "-",
           "Element": "Earth"
         },
         {
-          "Name": "Breakga",
+          "name": "Breakga",
           "Type": "Black",
           "Power": 15,
           "Accuracy": 0.55,
@@ -9549,10 +9549,10 @@
           "Element": "Earth"
         },
         {
-          "Name": "Drain",
+          "name": "Drain",
           "Type": "Black",
           "Power": 175,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 5,
           "Target": "One Enemy",
           "Status": "-",
@@ -9593,7 +9593,7 @@
       "Stolen Items": [
         {
           "Item": "Elixir",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Dropped Items": [
@@ -9659,7 +9659,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -9699,7 +9699,7 @@
       "Stolen Items": [
         {
           "Item": "Hi Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Dropped Items": [
@@ -9737,17 +9737,17 @@
       ],
       "Spells": [
         {
-          "Name": "Blizzara",
+          "name": "Blizzara",
           "Type": "Black",
           "Power": 76,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 7,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Ice"
         },
         {
-          "Name": "Poison",
+          "name": "Poison",
           "Type": "Black",
           "Power": 41,
           "Accuracy": 0.81,
@@ -9757,7 +9757,7 @@
           "Element": "-"
         },
         {
-          "Name": "Blind",
+          "name": "Blind",
           "Type": "Black",
           "Power": 31,
           "Accuracy": 0.81,
@@ -9767,7 +9767,7 @@
           "Element": "-"
         },
         {
-          "Name": "Toad",
+          "name": "Toad",
           "Type": "White",
           "Power": 33,
           "Accuracy": 0.33,
@@ -9814,7 +9814,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -9835,15 +9835,15 @@
       "Special Attacks": [
         {
           "Attack": "Lightning",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Lightning",
+          "name": "Lightning",
           "Type": "Ability",
           "Power": 58,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 7,
           "Target": "All Enemies",
           "Status": "-",
@@ -9883,7 +9883,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -9919,7 +9919,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -9957,7 +9957,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -9984,29 +9984,29 @@
       "Special Attacks": [
         {
           "Attack": "Flame",
-          "Rate": 1.0
+          "Rate": 1
         },
         {
           "Attack": "Barrier Shift (every third round)",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Flame",
+          "name": "Flame",
           "Type": "Ability",
           "Power": 73,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 9,
           "Target": "All Enemies",
           "Status": "-",
           "Element": "Fire"
         },
         {
-          "Name": "Barrier Shift",
+          "name": "Barrier Shift",
           "Type": "Ability",
           "Power": 33,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 9,
           "Target": "One Enemy",
           "Status": "-",
@@ -10045,22 +10045,22 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "SpecialAttackRate": 0.3,
       "Special Attacks": [
         {
           "Attack": "Drain",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Drain",
+          "name": "Drain",
           "Type": "Black",
           "Power": 160,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 5,
           "Target": "One Enemy",
           "Status": "-",
@@ -10101,22 +10101,22 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "SpecialAttackRate": 0.25,
       "Special Attacks": [
         {
           "Attack": "Summon",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Summon",
+          "name": "Summon",
           "Type": "Ability",
           "Power": null,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": "",
           "Target": "Enemies",
           "Status": "-",
@@ -10157,7 +10157,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -10181,15 +10181,15 @@
       "Special Attacks": [
         {
           "Attack": "Flame",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Flame",
+          "name": "Flame",
           "Type": "Ability",
           "Power": 79,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 9,
           "Target": "All Enemies",
           "Status": "-",
@@ -10231,19 +10231,19 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "SpecialAttackRate": 0.26,
       "Special Attacks": [
         {
           "Attack": "Breakga",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Breakga",
+          "name": "Breakga",
           "Type": "Black",
           "Power": 27,
           "Accuracy": 0.67,
@@ -10288,7 +10288,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Status Attack": "Partial Petrification (1/2)",
@@ -10317,7 +10317,7 @@
       ],
       "Spells": [
         {
-          "Name": "Death",
+          "name": "Death",
           "Type": "Black",
           "Power": 42,
           "Accuracy": 0.77,
@@ -10327,7 +10327,7 @@
           "Element": "-"
         },
         {
-          "Name": "Breakga",
+          "name": "Breakga",
           "Type": "Black",
           "Power": 42,
           "Accuracy": 0.82,
@@ -10337,30 +10337,30 @@
           "Element": "Earth"
         },
         {
-          "Name": "Firaga",
+          "name": "Firaga",
           "Type": "Black",
           "Power": 192,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 9,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Fire"
         },
         {
-          "Name": "Thundaga",
+          "name": "Thundaga",
           "Type": "Black",
           "Power": 152,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 9,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Lightning"
         },
         {
-          "Name": "Blizzaga",
+          "name": "Blizzaga",
           "Type": "Black",
           "Power": 127,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 9,
           "Target": "One/All Enemies",
           "Status": "-",
@@ -10402,7 +10402,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -10450,7 +10450,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -10468,12 +10468,12 @@
       "Special Attacks": [
         {
           "Attack": "Protect",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Protect",
+          "name": "Protect",
           "Type": "White",
           "Power": 5,
           "Accuracy": 0.75,
@@ -10517,19 +10517,19 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "SpecialAttackRate": 0.15,
       "Special Attacks": [
         {
           "Attack": "Blind",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Blind",
+          "name": "Blind",
           "Type": "Black",
           "Power": 10,
           "Accuracy": 0.6,
@@ -10577,7 +10577,7 @@
       "Stolen Items": [
         {
           "Item": "Hi Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Dropped Items": [
@@ -10711,19 +10711,19 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "SpecialAttackRate": 0.3,
       "Special Attacks": [
         {
           "Attack": "Protect",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Protect",
+          "name": "Protect",
           "Type": "White",
           "Power": 5,
           "Accuracy": 0.75,
@@ -10824,15 +10824,15 @@
       "Special Attacks": [
         {
           "Attack": "Lightning",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Lightning",
+          "name": "Lightning",
           "Type": "Ability",
           "Power": 40,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 7,
           "Target": "All Enemies",
           "Status": "-",
@@ -10874,7 +10874,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -10916,7 +10916,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -10953,7 +10953,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Status Attack": "Confusion",
@@ -10961,15 +10961,15 @@
       "Special Attacks": [
         {
           "Attack": "Drain",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Drain",
+          "name": "Drain",
           "Type": "Black",
           "Power": 160,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 6,
           "Target": "One Enemy",
           "Status": "-",
@@ -11012,7 +11012,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Maps": [
@@ -11049,7 +11049,7 @@
       "Stolen Items": [
         {
           "Item": "Elixir",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Dropped Items": [
@@ -11109,7 +11109,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "StatusAilmentVulnerability": {
@@ -11168,7 +11168,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "StatusAilmentVulnerability": {
@@ -11190,15 +11190,15 @@
       "Special Attacks": [
         {
           "Attack": "Zantetsuken",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Zantetsuken",
+          "name": "Zantetsuken",
           "Type": "Ability",
           "Power": 62,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 50,
           "Target": "All Enemies",
           "Status": "-",
@@ -11246,7 +11246,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "StatusAilmentVulnerability": {
@@ -11268,15 +11268,15 @@
       "Special Attacks": [
         {
           "Attack": "Tidal Wave",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Tidal Wave",
+          "name": "Tidal Wave",
           "Type": "Ability",
           "Power": 70,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 10,
           "Target": "All Enemies",
           "Status": "-",
@@ -11322,7 +11322,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "StatusAilmentVulnerability": {
@@ -11379,7 +11379,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -11409,15 +11409,15 @@
       "Special Attacks": [
         {
           "Attack": "Fire",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Fire",
+          "name": "Fire",
           "Type": "Black",
           "Power": 25,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 1,
           "Target": "One/All Enemies",
           "Status": "-",
@@ -11465,7 +11465,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "StatusAilmentVulnerability": {
@@ -11500,30 +11500,30 @@
       ],
       "Spells": [
         {
-          "Name": "Fira",
+          "name": "Fira",
           "Type": "Black",
           "Power": 58,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 1,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Fire"
         },
         {
-          "Name": "Blizzara",
+          "name": "Blizzara",
           "Type": "Black",
           "Power": 58,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 1,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Ice"
         },
         {
-          "Name": "Thundara",
+          "name": "Thundara",
           "Type": "Black",
           "Power": 58,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 1,
           "Target": "One/All Enemies",
           "Status": "-",
@@ -11571,7 +11571,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -11599,12 +11599,12 @@
       "Special Attacks": [
         {
           "Attack": "Break",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Break",
+          "name": "Break",
           "Type": "Black",
           "Power": 15,
           "Accuracy": 0.65,
@@ -11655,7 +11655,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "StatusAilmentVulnerability": {
@@ -11677,15 +11677,15 @@
       "Special Attacks": [
         {
           "Attack": "Fira",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Fira",
+          "name": "Fira",
           "Type": "Black",
           "Power": 61,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 1,
           "Target": "One/All Enemies",
           "Status": "-",
@@ -11733,7 +11733,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -11763,15 +11763,15 @@
       "Special Attacks": [
         {
           "Attack": "Flame",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Flame",
+          "name": "Flame",
           "Type": "Ability",
           "Power": 52,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 3,
           "Target": "All Enemies",
           "Status": "-",
@@ -11819,7 +11819,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -11865,45 +11865,45 @@
         },
         {
           "Attack": "Barrier Shift (every third round)",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Fira",
+          "name": "Fira",
           "Type": "Black",
           "Power": 70,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 2,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Fire"
         },
         {
-          "Name": "Blizzara",
+          "name": "Blizzara",
           "Type": "Black",
           "Power": 70,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 2,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Ice"
         },
         {
-          "Name": "Thundara",
+          "name": "Thundara",
           "Type": "Black",
           "Power": 70,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 2,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Lightning"
         },
         {
-          "Name": "Barrier Shift",
+          "name": "Barrier Shift",
           "Type": "Ability",
           "Power": 15,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 2,
           "Target": "One Enemy",
           "Status": "-",
@@ -11951,7 +11951,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "StatusAilmentVulnerability": {
@@ -11986,30 +11986,30 @@
       ],
       "Spells": [
         {
-          "Name": "Fira",
+          "name": "Fira",
           "Type": "Black",
           "Power": 73,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 4,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Fire"
         },
         {
-          "Name": "Blizzara",
+          "name": "Blizzara",
           "Type": "Black",
           "Power": 73,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 4,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Ice"
         },
         {
-          "Name": "Thundara",
+          "name": "Thundara",
           "Type": "Black",
           "Power": 73,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 4,
           "Target": "One/All Enemies",
           "Status": "-",
@@ -12057,7 +12057,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "StatusAilmentVulnerability": {
@@ -12092,30 +12092,30 @@
       ],
       "Spells": [
         {
-          "Name": "Fira",
+          "name": "Fira",
           "Type": "Black",
           "Power": 79,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 5,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Fire"
         },
         {
-          "Name": "Blizzara",
+          "name": "Blizzara",
           "Type": "Black",
           "Power": 79,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 5,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Ice"
         },
         {
-          "Name": "Thundara",
+          "name": "Thundara",
           "Type": "Black",
           "Power": 79,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 5,
           "Target": "One/All Enemies",
           "Status": "-",
@@ -12163,7 +12163,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -12190,15 +12190,15 @@
       "Special Attacks": [
         {
           "Attack": "Lightning",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Lightning",
+          "name": "Lightning",
           "Type": "Ability",
           "Power": 67,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 5,
           "Target": "All Enemies",
           "Status": "-",
@@ -12246,7 +12246,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -12279,15 +12279,15 @@
       "Special Attacks": [
         {
           "Attack": "Mega Flare",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Mega Flare",
+          "name": "Mega Flare",
           "Type": "Ability",
           "Power": 113,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 9,
           "Target": "All Enemies",
           "Status": "-",
@@ -12335,7 +12335,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -12381,17 +12381,17 @@
       ],
       "Spells": [
         {
-          "Name": "Quake",
+          "name": "Quake",
           "Type": "Black",
           "Power": 154,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 5,
           "Target": "All Enemies",
           "Status": "-",
           "Element": "Earth"
         },
         {
-          "Name": "Breakga",
+          "name": "Breakga",
           "Type": "Black",
           "Power": 21,
           "Accuracy": 0.61,
@@ -12401,10 +12401,10 @@
           "Element": "Earth"
         },
         {
-          "Name": "Drain",
+          "name": "Drain",
           "Type": "Black",
           "Power": 181,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 5,
           "Target": "One Enemy",
           "Status": "-",
@@ -12452,7 +12452,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -12498,7 +12498,7 @@
       ],
       "Spells": [
         {
-          "Name": "Tornado",
+          "name": "Tornado",
           "Type": "White",
           "Power": 25,
           "Accuracy": 0.61,
@@ -12508,7 +12508,7 @@
           "Element": "Air"
         },
         {
-          "Name": "Reflect",
+          "name": "Reflect",
           "Type": "White",
           "Power": 21,
           "Accuracy": 0.96,
@@ -12518,10 +12518,10 @@
           "Element": "-"
         },
         {
-          "Name": "Snowstorm",
+          "name": "Snowstorm",
           "Type": "Ability",
           "Power": 64,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 6,
           "Target": "All Enemies",
           "Status": "-",
@@ -12569,7 +12569,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -12602,15 +12602,15 @@
       "Special Attacks": [
         {
           "Attack": "Flare",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Flare",
+          "name": "Flare",
           "Type": "Black",
           "Power": 206,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 4,
           "Target": "One/All Enemies",
           "Status": "-",
@@ -12656,7 +12656,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -12689,12 +12689,12 @@
       "Special Attacks": [
         {
           "Attack": "Blind",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Blind",
+          "name": "Blind",
           "Type": "Black",
           "Power": 10,
           "Accuracy": 0.6,
@@ -12738,7 +12738,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -12771,12 +12771,12 @@
       "Special Attacks": [
         {
           "Attack": "Mind Blast",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Mind Blast",
+          "name": "Mind Blast",
           "Type": "Ability",
           "Power": null,
           "Accuracy": 0.8,
@@ -12818,7 +12818,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -12881,7 +12881,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "StatusAilmentVulnerability": {
@@ -12904,15 +12904,15 @@
       "Special Attacks": [
         {
           "Attack": "Flare",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Flare",
+          "name": "Flare",
           "Type": "Black",
           "Power": 224,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 8,
           "Target": "One/All Enemies",
           "Status": "-",
@@ -12953,7 +12953,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "StatusAilmentVulnerability": {
@@ -12988,17 +12988,17 @@
       ],
       "Spells": [
         {
-          "Name": "Quake",
+          "name": "Quake",
           "Type": "Black",
           "Power": 154,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 8,
           "Target": "All Enemies",
           "Status": "-",
           "Element": "Earth"
         },
         {
-          "Name": "Reflect",
+          "name": "Reflect",
           "Type": "White",
           "Power": 21,
           "Accuracy": 0.96,
@@ -13008,10 +13008,10 @@
           "Element": "-"
         },
         {
-          "Name": "Cura",
+          "name": "Cura",
           "Type": "White",
           "Power": 146,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 8,
           "Target": "One/All Enemies",
           "Status": "-",
@@ -13052,7 +13052,7 @@
       "Stolen Items": [
         {
           "Item": "Elixir",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "Dropped Items": [
@@ -13130,7 +13130,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -13180,40 +13180,40 @@
       ],
       "Spells": [
         {
-          "Name": "Meteor",
+          "name": "Meteor",
           "Type": "Black",
           "Power": 216,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 15,
           "Target": "All Enemies",
           "Status": "-",
           "Element": "-"
         },
         {
-          "Name": "Quake",
+          "name": "Quake",
           "Type": "Black",
           "Power": 169,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 15,
           "Target": "All Enemies",
           "Status": "-",
           "Element": "Earth"
         },
         {
-          "Name": "Libra",
+          "name": "Libra",
           "Type": "White",
           "Power": 36,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 15,
           "Target": "One Enemy",
           "Status": "-",
           "Element": "-"
         },
         {
-          "Name": "Flame",
+          "name": "Flame",
           "Type": "Ability",
           "Power": 76,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 15,
           "Target": "All Enemies",
           "Status": "-",
@@ -13261,7 +13261,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -13295,15 +13295,15 @@
       "Special Attacks": [
         {
           "Attack": "Lightning",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Lightning",
+          "name": "Lightning",
           "Type": "Ability",
           "Power": 85,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 12,
           "Target": "All Enemies",
           "Status": "-",
@@ -13351,7 +13351,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -13421,7 +13421,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -13480,17 +13480,17 @@
       ],
       "Spells": [
         {
-          "Name": "Flare",
+          "name": "Flare",
           "Type": "Black",
           "Power": 233,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 13,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "-"
         },
         {
-          "Name": "Death",
+          "name": "Death",
           "Type": "Black",
           "Power": 33,
           "Accuracy": 0.68,
@@ -13500,27 +13500,27 @@
           "Element": "-"
         },
         {
-          "Name": "Meteor",
+          "name": "Meteor",
           "Type": "Black",
           "Power": 213,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 13,
           "Target": "All Enemies",
           "Status": "-",
           "Element": "-"
         },
         {
-          "Name": "Quake",
+          "name": "Quake",
           "Type": "Black",
           "Power": 166,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 13,
           "Target": "All Enemies",
           "Status": "-",
           "Element": "Earth"
         },
         {
-          "Name": "Breakga",
+          "name": "Breakga",
           "Type": "Black",
           "Power": 33,
           "Accuracy": 0.73,
@@ -13530,10 +13530,10 @@
           "Element": "Earth"
         },
         {
-          "Name": "Drain",
+          "name": "Drain",
           "Type": "Black",
           "Power": 193,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 13,
           "Target": "One Enemy",
           "Status": "-",
@@ -13581,7 +13581,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -13639,60 +13639,60 @@
       ],
       "Spells": [
         {
-          "Name": "Meteor",
+          "name": "Meteor",
           "Type": "Black",
           "Power": 213,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 14,
           "Target": "All Enemies",
           "Status": "-",
           "Element": "-"
         },
         {
-          "Name": "Quake",
+          "name": "Quake",
           "Type": "Black",
           "Power": 166,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 14,
           "Target": "All Enemies",
           "Status": "-",
           "Element": "Earth"
         },
         {
-          "Name": "Cura",
+          "name": "Cura",
           "Type": "White",
           "Power": 158,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 14,
           "Target": "One/All Enemies",
           "Status": "-",
           "Element": "Recovery"
         },
         {
-          "Name": "Flame",
+          "name": "Flame",
           "Type": "Ability",
           "Power": 73,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 14,
           "Target": "All Enemies",
           "Status": "-",
           "Element": "Fire"
         },
         {
-          "Name": "Snowstorm",
+          "name": "Snowstorm",
           "Type": "Ability",
           "Power": 73,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 14,
           "Target": "All Enemies",
           "Status": "-",
           "Element": "Ice"
         },
         {
-          "Name": "Lightning",
+          "name": "Lightning",
           "Type": "Ability",
           "Power": 73,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 14,
           "Target": "All Enemies",
           "Status": "-",
@@ -13738,7 +13738,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -13767,19 +13767,19 @@
           "Partial Petrification"
         ]
       },
-      "SpecialAttackRate": 1.0,
+      "SpecialAttackRate": 1,
       "Special Attacks": [
         {
           "Attack": "Particle Beam",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Particle Beam",
+          "name": "Particle Beam",
           "Type": "Ability",
           "Power": 125,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 15,
           "Target": "All Enemies",
           "Status": "-",
@@ -13825,7 +13825,7 @@
       "Stolen Items": [
         {
           "Item": "Potion",
-          "StealRate": 1.0
+          "StealRate": 1
         }
       ],
       "ElementalVulnerability": {
@@ -13858,15 +13858,15 @@
       "Special Attacks": [
         {
           "Attack": "Particle Beam",
-          "Rate": 1.0
+          "Rate": 1
         }
       ],
       "Spells": [
         {
-          "Name": "Particle Beam",
+          "name": "Particle Beam",
           "Type": "Ability",
           "Power": 125,
-          "Accuracy": 1.0,
+          "Accuracy": 1,
           "Multiplier": 16,
           "Target": "All Enemies",
           "Status": "-",
