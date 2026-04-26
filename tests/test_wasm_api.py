@@ -35,6 +35,34 @@ def test_create_from_state_reflects_updated_party_magic_slots() -> None:
     assert engine.session.party_members[0].magic_slots[7][1] == "Esuna"
 
 
+def test_create_from_state_preserves_current_hp_and_mp_at_battle_start() -> None:
+    state = init_runtime_state()
+    save_copy = json.loads(json.dumps(state.save))
+    save_copy["party"][0]["hp"] = 123
+    save_copy["party"][0]["mp"] = {f"L{level}MP": 0 for level in range(1, 9)}
+    save_copy["party"][0]["mp"]["L1MP"] = 1
+    state.save = save_copy
+
+    engine = WasmBattleEngine.create_from_state(
+        state=state,
+        enemy_names=["Goblin"],
+        seed=5,
+        selected_location_group="Mythril Mines",
+        selected_location="Mythril Mines B1",
+    )
+    payload = engine.build_initial_payload()
+    first_member = payload["session_status"]["party"][0]
+
+    assert first_member["hp"] == 123
+    assert first_member["hp"] < first_member["max_hp"]
+    assert first_member["mp_levels"]["1"]["current"] == 1
+    assert (
+        first_member["mp_levels"]["1"]["current"]
+        < first_member["mp_levels"]["1"]["max"]
+    )
+    assert first_member["mp_levels"]["2"]["current"] == 0
+
+
 def test_wasm_engine_round_json_returns_browser_ready_payload(monkeypatch) -> None:
     engine = WasmBattleEngine.create_default(seed=7)
 
@@ -195,9 +223,15 @@ def test_wasm_engine_applies_drop_item_stock_to_inventory_on_victory(
 
     assert payload["victory_rewards"]["dropped_item"] == ["Potion"]
     assert payload["victory_rewards"]["gil_before"] >= 0
-    assert payload["victory_rewards"]["gil_after"] >= payload["victory_rewards"]["gil_before"]
+    assert (
+        payload["victory_rewards"]["gil_after"]
+        >= payload["victory_rewards"]["gil_before"]
+    )
     assert payload["victory_rewards"]["cp_before"] >= 0
-    assert payload["victory_rewards"]["cp_after"] >= payload["victory_rewards"]["cp_before"]
+    assert (
+        payload["victory_rewards"]["cp_after"]
+        >= payload["victory_rewards"]["cp_before"]
+    )
     assert any("Gil +10 (" in row for row in payload["logs"])
     assert any("CP +1 (" in row for row in payload["logs"])
     assert calls == [engine.session.state.save]

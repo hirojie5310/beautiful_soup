@@ -484,7 +484,6 @@ def boot_engine_for_location(location_group, location, seed=7, enemy_names_json=
         )
 
     globals()["engine"] = created_engine
-    created_engine.full_recover_party_payload()
     return json.dumps(created_engine.build_initial_payload(), ensure_ascii=False)
 
 
@@ -1026,12 +1025,6 @@ def run_battle_round_wasm(js_input_json):
             ensure_ascii=False,
         )
     return engine.execute_round_json(js_input_json)
-
-
-def full_recover_party_json():
-    if engine is None:
-        return json.dumps({"session_status": None}, ensure_ascii=False)
-    return json.dumps(engine.full_recover_party_payload(), ensure_ascii=False)
 
 
 def get_session_status_json():

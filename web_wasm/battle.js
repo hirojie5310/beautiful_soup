@@ -2320,18 +2320,6 @@ async function bootEngine() {
   rerenderAll();
 }
 
-function applyFullRecoverParty() {
-  if (!pyodide) return;
-  const fullRecover = pyodide.globals.get("full_recover_party_json");
-  if (!fullRecover) return;
-  const payload = JSON.parse(fullRecover());
-  const nextStatus = payload?.session_status;
-  if (nextStatus && typeof nextStatus === "object") {
-    sessionStatus = nextStatus;
-  }
-  refreshMenuStateFromPyodide();
-}
-
 function resolveSaveDataForBoot() {
   if (appStore?.getState()?.saveEnvelope?.save && typeof appStore.getState().saveEnvelope.save === "object") {
     // Battle boot trusts saveEnvelope.save as the source of truth.
@@ -2396,7 +2384,6 @@ function bootLocationAndSyncSession() {
   lifecycleState = "ready_for_actions";
   battleFinished = false;
   resetBattleLogInteractionState();
-  applyFullRecoverParty();
   refreshMenuStateFromPyodide();
   syncNormalizedRuntimeSaveToStorage();
   return payload;
