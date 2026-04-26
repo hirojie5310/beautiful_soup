@@ -1027,6 +1027,42 @@ def run_battle_round_wasm(js_input_json):
     return engine.execute_round_json(js_input_json)
 
 
+def _full_recover_engine_party():
+    if engine is None:
+        return
+    for member in engine.session.party_members:
+        member_state = getattr(member, "state", None)
+        if member_state is None:
+            continue
+
+        max_hp_raw = getattr(member_state, "max_hp", None)
+        if max_hp_raw is not None:
+            member_state.hp = _safe_int(
+                max_hp_raw,
+                _safe_int(getattr(member_state, "hp", 0), 0),
+            )
+
+        mp_pool = getattr(member_state, "mp_pool", None)
+        max_mp_pool = getattr(member_state, "max_mp_pool", None)
+        if isinstance(mp_pool, dict) and isinstance(max_mp_pool, dict):
+            for level, max_uses in max_mp_pool.items():
+                mp_pool[level] = _safe_int(
+                    max_uses,
+                    _safe_int(mp_pool.get(level, 0), 0),
+                )
+
+
+def recover_party_for_save_json(location_group, location, save_json, seed=7):
+    boot_engine_for_location_with_save_json(location_group, location, save_json, seed)
+    _full_recover_engine_party()
+    if engine is None:
+        return json.dumps({"session_status": None}, ensure_ascii=False)
+    return json.dumps(
+        {"session_status": build_session_status_snapshot(engine.session)},
+        ensure_ascii=False,
+    )
+
+
 def get_session_status_json():
     if engine is None:
         return json.dumps({"session_status": None}, ensure_ascii=False)

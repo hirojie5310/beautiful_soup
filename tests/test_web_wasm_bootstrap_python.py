@@ -142,3 +142,49 @@ def test_boot_engine_for_location_uses_forced_enemy_names_when_provided() -> Non
     parsed = module.json.loads(payload)
     enemies = parsed.get("session_status", {}).get("enemies", [])
     assert [enemy.get("name") for enemy in enemies] == ["Land Turtle"]
+
+
+def test_recover_party_for_save_json_restores_hp_and_mp_without_changing_boot() -> None:
+    path = Path("web_wasm/bootstrap_runtime.py")
+    spec = importlib.util.spec_from_file_location("bootstrap_runtime_for_test", path)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    original_save = module._merge_save_data(None, module.state.save)
+    original_engine = module.engine
+    damaged_save = module._merge_save_data(None, original_save)
+    damaged_save["party"][0]["hp"] = 1
+    damaged_save["party"][0]["mp"] = {f"L{level}MP": 0 for level in range(1, 9)}
+
+    try:
+        boot_payload = module.json.loads(
+            module.boot_engine_for_location_with_save_json(
+                module.default_group,
+                module.default_location,
+                module.json.dumps(damaged_save, ensure_ascii=False),
+                7,
+            )
+        )
+        boot_member = boot_payload["session_status"]["party"][0]
+        assert boot_member["hp"] == 1
+        assert boot_member["mp_levels"]["1"]["current"] == 0
+
+        recover_payload = module.json.loads(
+            module.recover_party_for_save_json(
+                module.default_group,
+                module.default_location,
+                module.json.dumps(damaged_save, ensure_ascii=False),
+                7,
+            )
+        )
+        recovered_member = recover_payload["session_status"]["party"][0]
+        assert recovered_member["hp"] == recovered_member["max_hp"]
+        assert (
+            recovered_member["mp_levels"]["1"]["current"]
+            == recovered_member["mp_levels"]["1"]["max"]
+        )
+    finally:
+        module.state.save = original_save
+        module.engine = original_engine

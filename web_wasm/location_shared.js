@@ -368,10 +368,10 @@ export function syncMenuPartyRecovery(menuState, recoveredParty) {
 
 export async function buildRecoveredPartySnapshot(pyodide, save, selectedLocationGroup, selectedLocation) {
   if (!pyodide || !save || typeof save !== "object") return [];
-  const bootForLocation = pyodide.globals.get("boot_engine_for_location_with_save_json");
-  if (!bootForLocation) return [];
+  const recoverForLocation = pyodide.globals.get("recover_party_for_save_json");
+  if (!recoverForLocation) return [];
   const payloadText = String(
-    bootForLocation(
+    recoverForLocation(
       String(selectedLocationGroup || ""),
       String(selectedLocation || ""),
       JSON.stringify(save),
