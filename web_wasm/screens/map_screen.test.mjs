@@ -14,18 +14,22 @@ import {
   findBlockingObjectAt,
   findCrystalSpriteOrigin,
   isAdjacentToCrystalSprite,
+  isAdjacentToTileCoordinate,
   interpolateMapPosition,
   findStandingObject,
+  isWaterAnimationGid,
   moveMapPosition,
   normalizeCharacterJobKey,
   normalizeMergedFixedContent,
   normalizeNpcMovement,
   normalizeNpcDirection,
+  npcDialogueIndices,
   openAdjacentTreasure,
   chooseNextNpcDirection,
   resolveNpcFacingScale,
   resolveNpcNextDirectionDelay,
   resolveNpcSpriteFrame,
+  reviveZeroHpPartyMembersToOneHp,
   resolveCharacterSpriteFrame,
   resolveLeaderCharacterSprite,
   resolveLeaderCharacterSpriteUrl,
@@ -626,11 +630,68 @@ test("findAdjacentNpc returns neighboring NPC with dialogue index", () => {
   }), mapWithNpc.objects[0]);
 });
 
+test("findAdjacentNpc returns neighboring NPC with dialogue indices", () => {
+  const mapWithNpc = {
+    ...stubMap,
+    objects: [
+      { type: "npc", name: "Elder", x: 2, y: 1, dialogue_indices: [505, 506, 507] },
+      { type: "npc", name: "Silent", x: 1, y: 0 },
+    ],
+  };
+
+  assert.deepEqual(findAdjacentNpc(mapWithNpc, {
+    current_map_id: "Alter_Cave_B1",
+    tile_x: 1,
+    tile_y: 1,
+  }), mapWithNpc.objects[0]);
+  assert.deepEqual(npcDialogueIndices(mapWithNpc.objects[0]), [505, 506, 507]);
+});
+
+test("isAdjacentToTileCoordinate checks only neighboring map tiles", () => {
+  assert.equal(isAdjacentToTileCoordinate({ tile_x: 2, tile_y: 9 }, { x: 3, y: 9 }), true);
+  assert.equal(isAdjacentToTileCoordinate({ tile_x: 3, tile_y: 8 }, { x: 3, y: 9 }), true);
+  assert.equal(isAdjacentToTileCoordinate({ tile_x: 3, tile_y: 9 }, { x: 3, y: 9 }), false);
+  assert.equal(isAdjacentToTileCoordinate({ tile_x: 1, tile_y: 9 }, { x: 3, y: 9 }), false);
+});
+
+test("reviveZeroHpPartyMembersToOneHp revives only KO members and clears KO status", () => {
+  const save = {
+    party: [
+      { name: "Luneth", hp: 0, max_hp: 20, status_icons: ["ko", "poison"], status_effects: { KO: true, Poison: true } },
+      { name: "Arc", hp: 5, max_hp: 18, status_icons: ["poison"], status_effects: { Poison: true } },
+    ],
+  };
+  const menuState = {
+    party: [
+      { name: "Luneth", hp: 0, max_hp: 20, status_icons: ["ko"], status: { hp: 0, status_icons: ["ko"], status_line: "KO" } },
+      { name: "Arc", hp: 5, max_hp: 18, status_icons: ["poison"], status: { hp: 5, status_icons: ["poison"], status_line: "poison" } },
+    ],
+  };
+
+  assert.equal(reviveZeroHpPartyMembersToOneHp(save, menuState), 1);
+  assert.equal(save.party[0].hp, 1);
+  assert.deepEqual(save.party[0].status_icons, ["poison"]);
+  assert.deepEqual(save.party[0].status_effects, { KO: false, Poison: true });
+  assert.equal(save.party[1].hp, 5);
+  assert.equal(menuState.party[0].hp, 1);
+  assert.deepEqual(menuState.party[0].status_icons, []);
+  assert.deepEqual(menuState.party[0].status.status_icons, []);
+  assert.equal(menuState.party[0].status.status_line, "-");
+  assert.equal(menuState.party[1].hp, 5);
+});
+
 test("normalizeMergedFixedContent strips merged_fixed control notation for map dialogue", () => {
   assert.equal(
     normalizeMergedFixedContent("'>-\n    \\n\\t[0x04]こんにちは\\nまたね'\n"),
     "こんにちは\nまたね",
   );
+});
+
+test("water highlight animation covers Ur and Elder House water tiles", () => {
+  [9, 10, 11, 43, 46].forEach((gid) => {
+    assert.equal(isWaterAnimationGid(gid), true);
+  });
+  assert.equal(isWaterAnimationGid(94), false);
 });
 
 test("findAdjacentTileWithGid detects a matching neighboring tile", () => {
@@ -718,6 +779,41 @@ test("applySwitchStateToMap flips linked barrier gid between 1 and 49", () => {
   assert.equal(toggled.rows[1][1], 1);
   const reverted = applySwitchStateToMap(mapWithBarrier, { switch1: false });
   assert.equal(reverted.rows[1][1], 49);
+});
+
+test("applySwitchStateToMap supports custom barrier gids", () => {
+  const mapWithBarrier = {
+    ...stubMap,
+    width: 3,
+    height: 3,
+    baseRows: [
+      [1, 1, 1],
+      [1, 112, 1],
+      [1, 1, 1],
+    ],
+    rows: [
+      [1, 1, 1],
+      [1, 112, 1],
+      [1, 1, 1],
+    ],
+    renderPadding: { top: 0, right: 0, bottom: 0, left: 0, fillGid: 1 },
+    objects: [
+      {
+        type: "barrier",
+        name: "custom barrier",
+        x: 1,
+        y: 1,
+        trigger_by: "switch1",
+        closed_gid: 112,
+        open_gid: 68,
+      },
+    ],
+  };
+
+  const toggled = applySwitchStateToMap(mapWithBarrier, { switch1: true });
+  assert.equal(toggled.rows[1][1], 68);
+  const reverted = applySwitchStateToMap(mapWithBarrier, { switch1: false });
+  assert.equal(reverted.rows[1][1], 112);
 });
 
 test("toggleAdjacentSwitch toggles switch state and linked barrier", () => {

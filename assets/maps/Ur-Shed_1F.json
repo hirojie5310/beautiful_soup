@@ -50,6 +50,63 @@
         "x": 10,
         "y": 5
       }
+    },
+    {
+      "type": "barrier",
+      "name": "Ur Shed switch barrier",
+      "x": 10,
+      "y": 4,
+      "trigger_by": "ur_shed_1f_switch",
+      "closed_gid": 112,
+      "open_gid": 68
+    },
+    {
+      "type": "switch",
+      "name": "Ur Shed switch",
+      "x": 8,
+      "y": 2,
+      "switch_id": "ur_shed_1f_switch"
+    },
+    {
+      "type": "switch",
+      "name": "Ur Shed switch",
+      "x": 11,
+      "y": 3,
+      "switch_id": "ur_shed_1f_switch"
+    },
+    {
+      "type": "treasure",
+      "name": "treasure_left_antidote",
+      "x": 2,
+      "y": 4,
+      "treasure_id": "ur_shed_1f_treasure_left_antidote",
+      "item_name": "Antidote",
+      "inventory_bucket": "Anywhere",
+      "quantity": 1,
+      "closed_gid": 5,
+      "open_gid": 5
+    },
+    {
+      "type": "treasure",
+      "name": "treasure_lower_antidote",
+      "x": 4,
+      "y": 6,
+      "treasure_id": "ur_shed_1f_treasure_lower_antidote",
+      "item_name": "Antidote",
+      "inventory_bucket": "Anywhere",
+      "quantity": 1,
+      "closed_gid": 5,
+      "open_gid": 5
+    },
+    {
+      "type": "npc",
+      "name": "Ur Shed NPC 497",
+      "x": 6,
+      "y": 4,
+      "sprite_image": "../assets/images/NPCs/fs_old_man1.png",
+      "dialogue_index": 497,
+      "movement": "fixed",
+      "direction": "down"
     }
   ],
   "rows": [
@@ -57,8 +114,8 @@
     "112,2,2,2,2,2,2,2,2,2,112,73,73,73,73,73,73,73,73,112,112,112,112,89,112",
     "112,2,2,2,51,2,51,2,51,2,112,73,73,73,73,73,73,73,73,2,2,2,2,102,112",
     "112,5,5,97,97,97,97,97,97,97,112,73,73,73,73,73,73,73,73,2,2,2,2,66,112",
-    "112,5,5,97,97,97,97,97,97,97,112,73,73,73,73,73,73,73,80,97,97,97,97,97,112",
-    "112,5,5,5,97,97,97,97,97,97,68,80,80,80,80,80,80,80,80,112,97,97,97,97,112",
+    "112,5,5,97,97,97,97,97,97,97,112,80,80,80,80,80,80,80,80,97,97,97,97,97,112",
+    "112,5,5,5,97,97,97,97,97,97,112,73,73,73,73,73,73,73,80,112,97,97,97,97,112",
     "112,5,5,5,5,97,97,97,97,97,112,73,73,73,73,73,73,73,73,112,112,112,112,112,112",
     "112,112,112,112,112,112,112,112,120,112,112,73,73,73,73,73,73,73,73,2,2,2,2,2,2",
     "2,2,2,2,2,2,2,2,94,2,2,73,73,73,73,73,73,73,73,2,2,2,2,2,2",

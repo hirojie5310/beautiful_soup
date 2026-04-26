@@ -39,6 +39,16 @@
         "x": 10,
         "y": 19
       }
+    },
+    {
+      "type": "npc",
+      "name": "Ur Magic Shop NPC 285",
+      "x": 4,
+      "y": 4,
+      "sprite_image": "../assets/images/NPCs/fs_black_mage.png",
+      "dialogue_index": 285,
+      "movement": "fixed",
+      "direction": "down"
     }
   ],
   "rows": [

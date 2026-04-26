@@ -39,6 +39,65 @@
         "x": 4,
         "y": 13
       }
+    },
+    {
+      "type": "npc",
+      "name": "Ur Pub NPC Wanderer",
+      "x": 2,
+      "y": 3,
+      "sprite_image": "../assets/images/NPCs/fs_man1.png",
+      "movement": "random"
+    },
+    {
+      "type": "npc",
+      "name": "Ur Pub NPC 514",
+      "x": 1,
+      "y": 7,
+      "sprite_image": "../assets/images/NPCs/fs_crudeness1.png",
+      "dialogue_index": 514,
+      "movement": "fixed",
+      "direction": "right"
+    },
+    {
+      "type": "npc",
+      "name": "Ur Pub NPC 515",
+      "x": 3,
+      "y": 7,
+      "sprite_image": "../assets/images/NPCs/fs_woman1.png",
+      "dialogue_index": 515,
+      "movement": "fixed",
+      "direction": "left"
+    },
+    {
+      "type": "npc",
+      "name": "Ur Pub NPC 105",
+      "x": 8,
+      "y": 5,
+      "sprite_image": "../assets/images/NPCs/fs_lady1.png",
+      "dialogue_index": 105,
+      "movement": "fixed",
+      "direction": "down"
+    },
+    {
+      "type": "npc",
+      "name": "Ur Pub NPC 513",
+      "x": 8,
+      "y": 4,
+      "sprite_image": "../assets/images/NPCs/fs_merchant1.png",
+      "dialogue_index": 513,
+      "movement": "random"
+    },
+    {
+      "type": "treasure",
+      "name": "Ur Pub Potion",
+      "x": 9,
+      "y": 7,
+      "treasure_id": "ur_pub_treasure_potion",
+      "item_name": "Potion",
+      "inventory_bucket": "Anywhere",
+      "quantity": 1,
+      "closed_gid": 124,
+      "open_gid": 126
     }
   ],
   "rows": [

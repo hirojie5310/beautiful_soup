@@ -1,0 +1,116 @@
+{
+  "id": "Ur_Shed_2F",
+  "name": "Ur Shed 2F",
+  "tile_width": 24,
+  "tile_height": 24,
+  "width": 12,
+  "height": 10,
+  "tileset": {
+    "name": "TILESET - Ur_Shed",
+    "image": "../assets/images/maps/TILESET - Ur_Shed.png",
+    "columns": 16,
+    "tile_count": 128
+  },
+  "collision_gids": [2, 73, 112, 125, 126],
+  "location_requirement": {
+    "group": "Ur",
+    "locations": ["Ur"]
+  },
+  "encounter_rate": 0,
+  "padding": {
+    "top": 10,
+    "right": 10,
+    "bottom": 10,
+    "left": 10,
+    "fill_gid": 73
+  },
+  "spawn": {
+    "x": 10,
+    "y": 5
+  },
+  "objects": [
+    {
+      "type": "exit",
+      "name": "Ur Shed 1F",
+      "x": 10,
+      "y": 6,
+      "target_map": "Ur_Shed_1F",
+      "target_spawn": {
+        "x": 23,
+        "y": 4
+      }
+    },
+    {
+      "type": "treasure",
+      "name": "treasure_longsword",
+      "x": 1,
+      "y": 3,
+      "treasure_id": "ur_shed_2f_treasure_longsword",
+      "item_name": "Longsword",
+      "inventory_bucket": "Weapon",
+      "quantity": 1,
+      "closed_gid": 125,
+      "open_gid": 126
+    },
+    {
+      "type": "treasure",
+      "name": "treasure_left_leather_armor",
+      "x": 1,
+      "y": 4,
+      "treasure_id": "ur_shed_2f_treasure_left_leather_armor",
+      "item_name": "Leather Armor",
+      "inventory_bucket": "Armor",
+      "quantity": 1,
+      "closed_gid": 125,
+      "open_gid": 126
+    },
+    {
+      "type": "treasure",
+      "name": "treasure_cure",
+      "x": 1,
+      "y": 6,
+      "treasure_id": "ur_shed_2f_treasure_cure",
+      "item_name": "Cure",
+      "inventory_bucket": "Magic",
+      "quantity": 1,
+      "closed_gid": 125,
+      "open_gid": 126
+    },
+    {
+      "type": "treasure",
+      "name": "treasure_dagger",
+      "x": 2,
+      "y": 6,
+      "treasure_id": "ur_shed_2f_treasure_dagger",
+      "item_name": "Dagger",
+      "inventory_bucket": "Weapon",
+      "quantity": 1,
+      "closed_gid": 125,
+      "open_gid": 126
+    },
+    {
+      "type": "treasure",
+      "name": "treasure_right_leather_armor",
+      "x": 4,
+      "y": 6,
+      "treasure_id": "ur_shed_2f_treasure_right_leather_armor",
+      "item_name": "Leather Armor",
+      "inventory_bucket": "Armor",
+      "quantity": 1,
+      "closed_gid": 125,
+      "open_gid": 126
+    }
+  ],
+  "rows": [
+    "112,112,112,112,112,112,112,112,112,112,112,112",
+    "112,2,2,2,2,2,2,2,2,2,2,112",
+    "112,2,2,2,2,2,2,2,2,2,2,112",
+    "112,125,97,97,97,97,97,97,97,97,97,112",
+    "112,125,97,97,97,97,112,112,112,112,97,112",
+    "112,97,97,97,97,97,112,2,2,2,102,2",
+    "112,125,125,97,125,97,112,2,2,2,63,2",
+    "112,112,112,112,112,112,112,73,73,73,73,73",
+    "2,2,2,2,2,2,2,73,73,73,73,73",
+    "2,2,2,2,2,2,2,73,73,73,73,73"
+  ]
+}

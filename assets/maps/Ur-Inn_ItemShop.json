@@ -11,7 +11,7 @@
     "columns": 16,
     "tile_count": 128
   },
-  "collision_gids": [3, 11, 30, 41, 42, 94, 99, 112, 124],
+  "collision_gids": [3, 11, 30, 41, 42, 94, 112, 124],
   "location_requirement": {
     "group": "Ur",
     "locations": ["Ur"]
@@ -50,6 +50,67 @@
         "x": 4,
         "y": 10
       }
+    },
+    {
+      "type": "npc",
+      "name": "Ur Inn ItemShop NPC 508",
+      "x": 3,
+      "y": 14,
+      "sprite_image": "../assets/images/NPCs/fs_woman1.png",
+      "dialogue_index": 508,
+      "movement": "fixed",
+      "direction": "down"
+    },
+    {
+      "type": "npc",
+      "name": "Ur Inn ItemShop NPC 285",
+      "x": 8,
+      "y": 14,
+      "sprite_image": "../assets/images/NPCs/fs_old_man1.png",
+      "dialogue_index": 285,
+      "movement": "fixed",
+      "direction": "down"
+    },
+    {
+      "type": "npc",
+      "name": "Ur Inn ItemShop NPC 510",
+      "x": 9,
+      "y": 4,
+      "sprite_image": "../assets/images/NPCs/fs_old_man1.png",
+      "dialogue_index": 510,
+      "movement": "random"
+    },
+    {
+      "type": "npc",
+      "name": "Ur Inn ItemShop NPC 511 A",
+      "x": 7,
+      "y": 2,
+      "sprite_image": "../assets/images/NPCs/fs_man1.png",
+      "dialogue_index": 511,
+      "movement": "fixed",
+      "direction": "down"
+    },
+    {
+      "type": "npc",
+      "name": "Ur Inn ItemShop NPC 511 B",
+      "x": 9,
+      "y": 2,
+      "sprite_image": "../assets/images/NPCs/fs_man1.png",
+      "dialogue_index": 511,
+      "movement": "fixed",
+      "direction": "down"
+    },
+    {
+      "type": "treasure",
+      "name": "Ur Inn ItemShop Potion",
+      "x": 4,
+      "y": 7,
+      "treasure_id": "ur_inn_itemshop_treasure_potion",
+      "item_name": "Potion",
+      "inventory_bucket": "Anywhere",
+      "quantity": 1,
+      "closed_gid": 124,
+      "open_gid": 126
     }
   ],
   "rows": [

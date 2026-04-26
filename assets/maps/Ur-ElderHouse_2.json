@@ -39,6 +39,36 @@
         "x": 12,
         "y": 13
        }
+     },
+    {
+      "type": "npc",
+      "name": "Ur Elder House NPC 505",
+      "x": 4,
+      "y": 3,
+      "sprite_image": "../assets/images/NPCs/fs_elder_person1.png",
+      "dialogue_indices": [505, 506, 507],
+      "movement": "fixed",
+      "direction": "down"
+    },
+    {
+      "type": "npc",
+      "name": "Ur Elder House NPC 503",
+      "x": 2,
+      "y": 4,
+      "sprite_image": "../assets/images/NPCs/fs_woman1.png",
+      "dialogue_index": 503,
+      "movement": "fixed",
+      "direction": "right"
+    },
+    {
+      "type": "npc",
+      "name": "Ur Elder House NPC 504",
+      "x": 6,
+      "y": 4,
+      "sprite_image": "../assets/images/NPCs/fs_old_man1.png",
+      "dialogue_index": 504,
+      "movement": "fixed",
+      "direction": "left"
      }
   ],
   "rows": [
