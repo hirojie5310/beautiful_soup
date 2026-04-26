@@ -39,46 +39,46 @@
   "objects": [
     {
       "type": "exit",
-      "name": "Alter Cave B1",
+      "name": "Floating Continent",
       "x": 16,
       "y": 31,
-      "target_map": "Alter_Cave_B1",
+      "target_map": "FloatingContinent",
       "target_spawn": {
-        "x": 3,
-        "y": 1
+        "x": 87,
+        "y": 17
       }
     },
     {
       "type": "exit",
-      "name": "Alter Cave B1",
+      "name": "Floating Continent",
       "x": 17,
       "y": 31,
-      "target_map": "Alter_Cave_B1",
+      "target_map": "FloatingContinent",
       "target_spawn": {
-        "x": 3,
-        "y": 1
+        "x": 87,
+        "y": 17
       }
     },
     {
       "type": "exit",
-      "name": "Alter Cave B1",
+      "name": "Floating Continent",
       "x": 0,
       "y": 19,
-      "target_map": "Alter_Cave_B1",
+      "target_map": "FloatingContinent",
       "target_spawn": {
-        "x": 3,
-        "y": 1
+        "x": 87,
+        "y": 17
       }
     },
     {
       "type": "exit",
-      "name": "Alter Cave B1",
+      "name": "Floating Continent",
       "x": 0,
       "y": 20,
-      "target_map": "Alter_Cave_B1",
+      "target_map": "FloatingContinent",
       "target_spawn": {
-        "x": 3,
-        "y": 1
+        "x": 87,
+        "y": 17
       }
     },
     {

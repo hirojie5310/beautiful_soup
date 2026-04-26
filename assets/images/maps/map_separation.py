@@ -6,16 +6,20 @@ from PIL import Image
 
 TILE_SIZE = 24
 INNER_MARGIN = 1
-SUSPICIOUS_SCORE_THRESHOLD = 5000
+SUSPICIOUS_SCORE_THRESHOLD = 500
 INNER_SCORE_TIE_THRESHOLD = 32
+MAP_OFFSET_X = 10
+MAP_OFFSET_Y = 5
+MAP_TILE_COLUMNS = 116
+MAP_TILE_ROWS = None
 BASE_DIR = Path(__file__).resolve().parent
-TILESET_PATH = BASE_DIR / "TILESET - Ur_Well.png"
-MAP_PATH = BASE_DIR / "Ur-Well.png"
-RECONSTRUCTED_PATH = BASE_DIR / "Ur-Well_reconstructed.png"
-COMPARISON_PATH = BASE_DIR / "Ur-Well_comparison.png"
-CSV_PATH = BASE_DIR / "Ur-Well_tiles.csv"
-DEBUG_CSV_PATH = BASE_DIR / "Ur-Well_tiles_debug.csv"
-SUSPICIOUS_PATH = BASE_DIR / "Ur-Well_suspicious_tiles.png"
+TILESET_PATH = BASE_DIR / "TILESET - FloatingContinent.png"
+MAP_PATH = BASE_DIR / "FloatingContinent.png"
+RECONSTRUCTED_PATH = BASE_DIR / "FloatingContinent_reconstructed.png"
+COMPARISON_PATH = BASE_DIR / "FloatingContinent_comparison.png"
+CSV_PATH = BASE_DIR / "FloatingContinent_tiles.csv"
+DEBUG_CSV_PATH = BASE_DIR / "FloatingContinent_tiles_debug.csv"
+SUSPICIOUS_PATH = BASE_DIR / "FloatingContinent_suspicious_tiles.png"
 
 
 def open_image(path: Path) -> Image.Image:
@@ -47,10 +51,6 @@ def inner_view(tile: np.ndarray, margin: int = INNER_MARGIN) -> np.ndarray:
 def find_tile(chunk: np.ndarray) -> tuple[int, str, int]:
     inner_chunk = inner_view(chunk)
 
-    for index, tile in enumerate(tiles):
-        if np.array_equal(inner_chunk, inner_view(tile)):
-            return index + 1, "inner_exact", 0
-
     scored_tiles = []
     for index, tile in enumerate(tiles):
         diff = inner_chunk.astype(np.int32) - inner_view(tile).astype(np.int32)
@@ -65,11 +65,25 @@ def find_tile(chunk: np.ndarray) -> tuple[int, str, int]:
         item for item in scored_tiles if item[1] <= best_inner_score + INNER_SCORE_TIE_THRESHOLD
     ]
     chosen_tile_id, chosen_inner_score, _ = min(near_ties, key=lambda item: (item[2], item[1], item[0]))
-    return chosen_tile_id, "nearest", chosen_inner_score
+    match_mode = "inner_exact" if chosen_inner_score == 0 else "nearest"
+    return chosen_tile_id, match_mode, chosen_inner_score
 
 
 # マップ分割
-map_np = np.array(map_img)
+source_map_np = np.array(map_img)
+source_mh, source_mw = source_map_np.shape[:2]
+available_columns = (source_mw - MAP_OFFSET_X) // TILE_SIZE
+available_rows = (source_mh - MAP_OFFSET_Y) // TILE_SIZE
+tile_columns = MAP_TILE_COLUMNS if MAP_TILE_COLUMNS is not None else available_columns
+tile_rows = MAP_TILE_ROWS if MAP_TILE_ROWS is not None else available_rows
+tile_columns = min(tile_columns, available_columns)
+tile_rows = min(tile_rows, available_rows)
+cropped_width = tile_columns * TILE_SIZE
+cropped_height = tile_rows * TILE_SIZE
+map_np = source_map_np[
+    MAP_OFFSET_Y : MAP_OFFSET_Y + cropped_height,
+    MAP_OFFSET_X : MAP_OFFSET_X + cropped_width,
+]
 mh, mw = map_np.shape[:2]
 
 result = []
@@ -106,9 +120,10 @@ for row_index, reconstructed_row in enumerate(reconstructed_rows):
 reconstructed_img = Image.fromarray(reconstructed)
 reconstructed_img.save(RECONSTRUCTED_PATH)
 
-comparison = Image.new("RGBA", (map_img.width * 2, map_img.height), (0, 0, 0, 255))
-comparison.paste(map_img, (0, 0))
-comparison.paste(reconstructed_img, (map_img.width, 0))
+cropped_map_img = Image.fromarray(map_np)
+comparison = Image.new("RGBA", (cropped_map_img.width * 2, cropped_map_img.height), (0, 0, 0, 255))
+comparison.paste(cropped_map_img, (0, 0))
+comparison.paste(reconstructed_img, (cropped_map_img.width, 0))
 comparison.save(COMPARISON_PATH)
 
 with CSV_PATH.open("w", newline="", encoding="utf-8") as csv_file:
@@ -130,8 +145,8 @@ with DEBUG_CSV_PATH.open("w", newline="", encoding="utf-8") as csv_file:
                 ]
             )
 
-suspicious_img = map_img.copy()
-suspicious_overlay = Image.new("RGBA", map_img.size, (0, 0, 0, 0))
+suspicious_img = cropped_map_img.copy()
+suspicious_overlay = Image.new("RGBA", cropped_map_img.size, (0, 0, 0, 0))
 suspicious_np = np.array(suspicious_overlay)
 for row_index, row in enumerate(debug_rows):
     for col_index, cell in enumerate(row):

@@ -102,6 +102,7 @@ test("encounter areas restrict random encounters by tile position", () => {
 
 test("getMapManifestUrl resolves Ur Well map without falling back", () => {
   assert.match(String(getMapManifestUrl("Ur_Well")), /\/assets\/maps\/Ur-Well\.json$/);
+  assert.match(String(getMapManifestUrl("FloatingContinent")), /\/assets\/maps\/FloatingContinent\.json$/);
 });
 
 test("findCompatibleMapDefinition returns the map that matches selected location", async () => {
@@ -143,6 +144,13 @@ test("findCompatibleMapDefinition returns the map that matches selected location
         height: 1,
         rows: ["1"],
         location_requirement: { group: "Altar Cave", locations: ["Altar Cave Crystal Room"] },
+      },
+      FloatingContinent: {
+        id: "FloatingContinent",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Floating Continent", locations: ["Floating Continent Near Ur"] },
       },
       Ur: {
         id: "Ur",
@@ -276,6 +284,13 @@ test("findCompatibleMapDefinition returns null when no map matches selected loca
         height: 1,
         rows: ["1"],
         location_requirement: { group: "Altar Cave", locations: ["Altar Cave Crystal Room"] },
+      },
+      FloatingContinent: {
+        id: "FloatingContinent",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Floating Continent", locations: ["Floating Continent Near Ur"] },
       },
       Ur: {
         id: "Ur",
