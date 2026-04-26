@@ -39,6 +39,7 @@ const HOLD_MOVE_REPEAT_MS = 110;
 const BATTLE_START_SELECTION_KEY = "ff3_wasm_battle_start_selection_v1";
 const BATTLE_RETURN_CONTEXT_KEY = "ff3_wasm_battle_return_context_v1";
 const MAP_ENTRY_CONTEXT_KEY = "ff3_wasm_map_entry_context_v1";
+const SHOP_START_CONTEXT_KEY = "ff3_wasm_shop_start_context_v1";
 const ALTER_CAVE_RECOVERY_MAP_ID = "Alter_Cave_B4";
 const ALTER_CAVE_RECOVERY_GID = 36;
 const ALTER_CAVE_RECOVERY_TEXT_INDEX = 582;
@@ -47,10 +48,22 @@ const UR_ELDER_HOUSE_FULL_RECOVERY_SPRING = { x: 3, y: 9 };
 const UR_ELDER_HOUSE_FULL_RECOVERY_TEXT_INDEX = 891;
 const UR_ELDER_HOUSE_REVIVE_SPRING = { x: 21, y: 9 };
 const UR_ELDER_HOUSE_REVIVE_TEXT_INDEX = 890;
+const UR_INN_ITEMSHOP_MAP_ID = "Ur_Inn_ItemShop";
+const UR_INN_ITEMSHOP_RECOVERY_TILES = [
+  { x: 7, y: 8 },
+  { x: 9, y: 8 },
+];
+const UR_INN_ITEMSHOP_RECOVERY_TEXT_INDEX = 223;
 const ALTER_CAVE_CRYSTAL_ROOM_MAP_ID = "Alter_Cave_Crystal_Room";
 const ALTER_CAVE_CRYSTAL_EVENT_TEXT_INDEX = 10;
 const ALTER_CAVE_CRYSTAL_POST_BATTLE_TEXT_INDICES = [30, 31];
 const ALTER_CAVE_CRYSTAL_BOSS_NAME = "Land Turtle";
+const UR_SHOP_ACTIVATIONS = [
+  { mapId: "Ur_ArmorShop", x: 3, y: 5, shopMap: "Ur", shopType: "Armor" },
+  { mapId: "Ur_MagicShop", x: 4, y: 4, shopMap: "Ur", shopType: "Magic" },
+  { mapId: "Ur_WeaponShop", x: 3, y: 4, shopMap: "Ur", shopType: "Weapons" },
+  { mapId: "Ur_Inn_ItemShop", x: 8, y: 15, shopMap: "Ur", shopType: "Items" },
+];
 const CRYSTAL_SPRITE_FRAMES = 4;
 const CRYSTAL_SPRITE_FRAME_MS = 500;
 const CRYSTAL_IMAGE_URL = new URL("../../assets/images/maps/Crystal.png", import.meta.url).href;
@@ -1111,12 +1124,38 @@ export function findAdjacentTileWithGid(mapDefinition, mapState, gid) {
   )) || null;
 }
 
+export function findShopActivation(mapDefinition, mapState) {
+  const mapId = String(mapDefinition?.id || mapState?.current_map_id || "");
+  const tileX = Number(mapState?.tile_x);
+  const tileY = Number(mapState?.tile_y);
+  return UR_SHOP_ACTIVATIONS.find((row) => (
+    row.mapId === mapId
+    && Math.abs(tileX - Number(row.x)) + Math.abs(tileY - Number(row.y)) === 1
+  )) || null;
+}
+
 export function isAdjacentToTileCoordinate(mapState, coordinate) {
   const tileX = Number(mapState?.tile_x);
   const tileY = Number(mapState?.tile_y);
   const targetX = Number(coordinate?.x);
   const targetY = Number(coordinate?.y);
   return Math.abs(tileX - targetX) + Math.abs(tileY - targetY) === 1;
+}
+
+export function isStandingOnTileCoordinate(mapState, coordinate) {
+  return (
+    Number(mapState?.tile_x) === Number(coordinate?.x)
+    && Number(mapState?.tile_y) === Number(coordinate?.y)
+  );
+}
+
+export function isUrInnItemShopRecoveryTile(mapDefinition, mapState) {
+  if (String(mapDefinition?.id || mapState?.current_map_id || "") !== UR_INN_ITEMSHOP_MAP_ID) {
+    return false;
+  }
+  return UR_INN_ITEMSHOP_RECOVERY_TILES.some((coordinate) => (
+    isStandingOnTileCoordinate(mapState, coordinate)
+  ));
 }
 
 function withoutKoStatusIcons(value) {
@@ -1853,6 +1892,19 @@ export async function mountScreen({ mountNode, store, navigate }) {
 
   async function tryConfirm() {
     if (!mapDefinition || !mapState || mapTransitionLocked || isEventOverlayOpen()) return;
+    const shopActivation = findShopActivation(mapDefinition, mapState);
+    if (shopActivation) {
+      sessionStorage.setItem(SHOP_START_CONTEXT_KEY, JSON.stringify({
+        return_route: "map",
+        map_id: mapDefinition.id,
+        map: shopActivation.shopMap,
+        type: shopActivation.shopType,
+      }));
+      patchMapMenuState({ map_return_pending: true });
+      mapStatus.textContent = `${shopActivation.shopType} shop を開きます。`;
+      navigate("shop");
+      return;
+    }
     if (isAdjacentToCrystalSprite(mapDefinition, mapState)) {
       const message = await loadMergedFixedContentByIndex(ALTER_CAVE_CRYSTAL_EVENT_TEXT_INDEX);
       openEventOverlay(message, {
@@ -2066,6 +2118,13 @@ export async function mountScreen({ mountNode, store, navigate }) {
       if (!moved) {
         mapStatus.textContent = "出入口の移動に失敗しました。";
       }
+      return;
+    }
+    if (isUrInnItemShopRecoveryTile(mapDefinition, mapState)) {
+      await runFullRecoveryEvent(
+        UR_INN_ITEMSHOP_RECOVERY_TEXT_INDEX,
+        "HP・MP と状態異常が回復した。",
+      );
       return;
     }
     const standing = describeStandingObject(mapDefinition, mapState);
