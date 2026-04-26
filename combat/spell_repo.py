@@ -159,7 +159,7 @@ def _choose_monster_special_spell(
 
     spell_list = monster.get("Spells") or []
     for s in spell_list:
-        if s.get("Name") == chosen_attack_name:
+        if (s.get("name") or s.get("Name")) == chosen_attack_name:
             return s
 
     return None
@@ -196,7 +196,7 @@ def _find_monster_spell_definition(
     # 1) モンスターの Spells セクションを探す（最優先）
     spells = monster.get("Spells") or monster.get("spells") or []
     for sp in spells:
-        nm = normalize_text_basic(sp.get("Name") or sp.get("name") or "")
+        nm = normalize_text_basic(sp.get("name") or sp.get("Name") or "")
         if nm == sname:
             return sp
 
@@ -219,7 +219,7 @@ def _find_monster_spell_definition(
 # 魔法DBを参照してモンスター側スペル定義を正規化・補完する
 # =========================
 def _spell_name_of(d: Dict[str, Any]) -> Optional[str]:
-    return (d.get("Name") or d.get("name") or "").strip() or None
+    return (d.get("name") or d.get("Name") or "").strip() or None
 
 
 def _merge_spell_defs(
@@ -232,11 +232,9 @@ def _merge_spell_defs(
     merged = dict(master_def or {})
     merged.update(monster_def or {})
 
-    # Name は揃えておく（どちらかに寄せる）
-    if "Name" not in merged and "name" in merged:
-        merged["Name"] = merged["name"]
     if "name" not in merged and "Name" in merged:
         merged["name"] = merged["Name"]
+    merged.pop("Name", None)
 
     return merged
 

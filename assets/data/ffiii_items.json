@@ -7,7 +7,7 @@
   },
   "items": [
     {
-      "Name": "Potion",
+      "name": "Potion",
       "ItemType": "Anywhere",
       "Price": 150,
       "Value": 75,
@@ -19,130 +19,130 @@
         "Effect": "Restore target's HP",
         "Element": "Recovery",
         "BasePower": 30,
-        "BaseAccuracy": 1.0,
+        "BaseAccuracy": 1,
         "Reflectable": "No",
         "Target": "One Enemy",
         "Multiplier": 3
       },
       "Monsters": [
         {
-          "Name": "Blue Wisp",
+          "name": "Blue Wisp",
           "HP": 10,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": 0.047
         },
         {
-          "Name": "Carbuncle",
+          "name": "Carbuncle",
           "HP": 7,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": 0.047
         },
         {
-          "Name": "Dullahan",
+          "name": "Dullahan",
           "HP": 350,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": 0.047
         },
         {
-          "Name": "Goblin",
+          "name": "Goblin",
           "HP": 5,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": 0.047
         },
         {
-          "Name": "Lilliputian",
+          "name": "Lilliputian",
           "HP": 58,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": 0.047
         },
         {
-          "Name": "Rukh",
+          "name": "Rukh",
           "HP": 120,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": 0.047
         },
         {
-          "Name": "Abaia",
+          "name": "Abaia",
           "HP": 990,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": null
         },
         {
-          "Name": "Abtu",
+          "name": "Abtu",
           "HP": 385,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": null
         },
         {
-          "Name": "Acheron",
+          "name": "Acheron",
           "HP": 1020,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": null
         },
         {
-          "Name": "Aegir",
+          "name": "Aegir",
           "HP": 590,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": null
         },
         {
-          "Name": "Aeon",
+          "name": "Aeon",
           "HP": 1200,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": null
         },
         {
-          "Name": "Agaliarept",
+          "name": "Agaliarept",
           "HP": 215,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": null
         },
         {
-          "Name": "Ahriman",
+          "name": "Ahriman",
           "HP": 35000,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": null
         },
         {
-          "Name": "Amon",
+          "name": "Amon",
           "HP": 7040,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": null
         },
         {
-          "Name": "Anet",
+          "name": "Anet",
           "HP": 179,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": null
         },
         {
-          "Name": "Aughisky",
+          "name": "Aughisky",
           "HP": 122,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": null
         },
         {
-          "Name": "Azer",
+          "name": "Azer",
           "HP": 1570,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": null
         },
         {
-          "Name": "Bahamut",
+          "name": "Bahamut",
           "HP": 60000,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": null
         },
         {
-          "Name": "Bahamut",
+          "name": "Bahamut",
           "HP": 7500,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": null
         },
         {
-          "Name": "Balor",
+          "name": "Balor",
           "HP": 530,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": null
         }
       ],
@@ -265,7 +265,7 @@
       ]
     },
     {
-      "Name": "Hi Potion",
+      "name": "Hi Potion",
       "ItemType": "Anywhere",
       "Price": 1200,
       "Value": 600,
@@ -277,128 +277,128 @@
         "Effect": "Restore target's HP",
         "Element": "Recovery",
         "BasePower": 30,
-        "BaseAccuracy": 1.0,
+        "BaseAccuracy": 1,
         "Reflectable": "No",
         "Target": "One Enemy",
         "Multiplier": 12
       },
       "Monsters": [
         {
-          "Name": "Bovian",
+          "name": "Bovian",
           "HP": 365,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": 0.047
         },
         {
-          "Name": "Dark General",
+          "name": "Dark General",
           "HP": 1130,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": 0.047
         },
         {
-          "Name": "Demon Horse",
+          "name": "Demon Horse",
           "HP": 355,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": 0.047
         },
         {
-          "Name": "Gaap",
+          "name": "Gaap",
           "HP": 1000,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": 0.047
         },
         {
-          "Name": "King Lizard",
+          "name": "King Lizard",
           "HP": 430,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": 0.047
         },
         {
-          "Name": "Sleipnir",
+          "name": "Sleipnir",
           "HP": 1000,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": 0.047
         },
         {
-          "Name": "Vassago",
+          "name": "Vassago",
           "HP": 720,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": 0.047
         },
         {
-          "Name": "Boss Troll",
+          "name": "Boss Troll",
           "HP": 500,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Death Claw",
+          "name": "Death Claw",
           "HP": 1400,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Fachan",
+          "name": "Fachan",
           "HP": 510,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Glasya Labolas",
+          "name": "Glasya Labolas",
           "HP": 2160,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Kyklops",
+          "name": "Kyklops",
           "HP": 490,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Magician",
+          "name": "Magician",
           "HP": 260,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Needle Monkey",
+          "name": "Needle Monkey",
           "HP": 300,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Rock Gargoyle",
+          "name": "Rock Gargoyle",
           "HP": 360,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Sorceror",
+          "name": "Sorceror",
           "HP": 310,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Stroper",
+          "name": "Stroper",
           "HP": 400,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Thor",
+          "name": "Thor",
           "HP": 2180,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Vulcan",
+          "name": "Vulcan",
           "HP": 250,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Bomb",
+          "name": "Bomb",
           "HP": 125,
           "StealRate": 0.188,
           "DropChance": null
@@ -509,7 +509,7 @@
       ]
     },
     {
-      "Name": "Elixir",
+      "name": "Elixir",
       "ItemType": "Anywhere",
       "Value": 1500,
       "SpellEffect": "Elixir",
@@ -520,104 +520,104 @@
         "Effect": "Restore target to full HP and MP",
         "Element": null,
         "BasePower": 0,
-        "BaseAccuracy": 1.0,
+        "BaseAccuracy": 1,
         "Reflectable": "No",
         "Target": "One Enemy",
         "Multiplier": 1
       },
       "Monsters": [
         {
-          "Name": "Green Dragon",
+          "name": "Green Dragon",
           "HP": 10000,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": 0.75
         },
         {
-          "Name": "Red Dragon",
+          "name": "Red Dragon",
           "HP": 15000,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": 0.75
         },
         {
-          "Name": "Yellow Dragon",
+          "name": "Yellow Dragon",
           "HP": 10000,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": 0.75
         },
         {
-          "Name": "Bovian",
+          "name": "Bovian",
           "HP": 365,
           "StealRate": null,
           "DropChance": 0.004
         },
         {
-          "Name": "Dark General",
+          "name": "Dark General",
           "HP": 1130,
           "StealRate": null,
           "DropChance": 0.004
         },
         {
-          "Name": "Demon Horse",
+          "name": "Demon Horse",
           "HP": 355,
           "StealRate": null,
           "DropChance": 0.004
         },
         {
-          "Name": "Gaap",
+          "name": "Gaap",
           "HP": 1000,
           "StealRate": null,
           "DropChance": 0.004
         },
         {
-          "Name": "King Lizard",
+          "name": "King Lizard",
           "HP": 430,
           "StealRate": null,
           "DropChance": 0.004
         },
         {
-          "Name": "Sleipnir",
+          "name": "Sleipnir",
           "HP": 1000,
           "StealRate": null,
           "DropChance": 0.004
         },
         {
-          "Name": "Vassago",
+          "name": "Vassago",
           "HP": 720,
           "StealRate": null,
           "DropChance": 0.004
         },
         {
-          "Name": "Blue Wisp",
+          "name": "Blue Wisp",
           "HP": 10,
           "StealRate": null,
           "DropChance": 0.001
         },
         {
-          "Name": "Carbuncle",
+          "name": "Carbuncle",
           "HP": 7,
           "StealRate": null,
           "DropChance": 0.001
         },
         {
-          "Name": "Dullahan",
+          "name": "Dullahan",
           "HP": 350,
           "StealRate": null,
           "DropChance": 0.001
         },
         {
-          "Name": "Goblin",
+          "name": "Goblin",
           "HP": 5,
           "StealRate": null,
           "DropChance": 0.001
         },
         {
-          "Name": "Lilliputian",
+          "name": "Lilliputian",
           "HP": 58,
           "StealRate": null,
           "DropChance": 0.001
         },
         {
-          "Name": "Rukh",
+          "name": "Rukh",
           "HP": 120,
           "StealRate": null,
           "DropChance": 0.001
@@ -727,7 +727,7 @@
       ]
     },
     {
-      "Name": "Phoenix Down",
+      "name": "Phoenix Down",
       "ItemType": "Anywhere",
       "Value": 1500,
       "SpellEffect": "Raise",
@@ -745,79 +745,79 @@
       },
       "Monsters": [
         {
-          "Name": "Bovian",
+          "name": "Bovian",
           "HP": 365,
           "StealRate": null,
           "DropChance": 0.012
         },
         {
-          "Name": "Dark General",
+          "name": "Dark General",
           "HP": 1130,
           "StealRate": null,
           "DropChance": 0.012
         },
         {
-          "Name": "Demon Horse",
+          "name": "Demon Horse",
           "HP": 355,
           "StealRate": null,
           "DropChance": 0.012
         },
         {
-          "Name": "Gaap",
+          "name": "Gaap",
           "HP": 1000,
           "StealRate": null,
           "DropChance": 0.012
         },
         {
-          "Name": "King Lizard",
+          "name": "King Lizard",
           "HP": 430,
           "StealRate": null,
           "DropChance": 0.012
         },
         {
-          "Name": "Sleipnir",
+          "name": "Sleipnir",
           "HP": 1000,
           "StealRate": null,
           "DropChance": 0.012
         },
         {
-          "Name": "Vassago",
+          "name": "Vassago",
           "HP": 720,
           "StealRate": null,
           "DropChance": 0.012
         },
         {
-          "Name": "Blue Wisp",
+          "name": "Blue Wisp",
           "HP": 10,
           "StealRate": null,
           "DropChance": 0.003
         },
         {
-          "Name": "Carbuncle",
+          "name": "Carbuncle",
           "HP": 7,
           "StealRate": null,
           "DropChance": 0.003
         },
         {
-          "Name": "Dullahan",
+          "name": "Dullahan",
           "HP": 350,
           "StealRate": null,
           "DropChance": 0.003
         },
         {
-          "Name": "Goblin",
+          "name": "Goblin",
           "HP": 5,
           "StealRate": null,
           "DropChance": 0.003
         },
         {
-          "Name": "Lilliputian",
+          "name": "Lilliputian",
           "HP": 58,
           "StealRate": null,
           "DropChance": 0.003
         },
         {
-          "Name": "Rukh",
+          "name": "Rukh",
           "HP": 120,
           "StealRate": null,
           "DropChance": 0.003
@@ -927,7 +927,7 @@
       ]
     },
     {
-      "Name": "Gold Needle",
+      "name": "Gold Needle",
       "ItemType": "Anywhere",
       "Price": 300,
       "Value": 150,
@@ -947,21 +947,21 @@
       },
       "Monsters": [
         {
-          "Name": "Cockatrice",
+          "name": "Cockatrice",
           "HP": 195,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": 0.062
         },
         {
-          "Name": "Helldiver",
+          "name": "Helldiver",
           "HP": 85,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": 0.062
         },
         {
-          "Name": "Stalagmite",
+          "name": "Stalagmite",
           "HP": 130,
-          "StealRate": 1.0,
+          "StealRate": 1,
           "DropChance": 0.062
         }
       ],
@@ -1056,7 +1056,7 @@
       ]
     },
     {
-      "Name": "Maiden's Kiss",
+      "name": "Maiden's Kiss",
       "ItemType": "Anywhere",
       "Price": 100,
       "Value": 50,
@@ -1069,20 +1069,20 @@
         "Effect": "Cure Toad",
         "Element": "Recovery",
         "BasePower": 0,
-        "BaseAccuracy": 1.0,
+        "BaseAccuracy": 1,
         "Reflectable": "No",
         "Target": "One Enemy",
         "Multiplier": 1
       },
       "Monsters": [
         {
-          "Name": "Petit Mage",
+          "name": "Petit Mage",
           "HP": 118,
           "StealRate": 0.188,
           "DropChance": 0.018000000000000002
         },
         {
-          "Name": "Pugman",
+          "name": "Pugman",
           "HP": 109,
           "StealRate": 0.188,
           "DropChance": 0.018000000000000002
@@ -1132,7 +1132,7 @@
       ]
     },
     {
-      "Name": "Echo Herbs",
+      "name": "Echo Herbs",
       "ItemType": "Anywhere",
       "Price": 100,
       "Value": 50,
@@ -1145,20 +1145,20 @@
         "Effect": "Cure Silence",
         "Element": "Recovery",
         "BasePower": 0,
-        "BaseAccuracy": 1.0,
+        "BaseAccuracy": 1,
         "Reflectable": "No",
         "Target": "One Enemy",
         "Multiplier": 1
       },
       "Monsters": [
         {
-          "Name": "Petit Mage",
+          "name": "Petit Mage",
           "HP": 118,
           "StealRate": 0.188,
           "DropChance": 0.018000000000000002
         },
         {
-          "Name": "Pugman",
+          "name": "Pugman",
           "HP": 109,
           "StealRate": 0.188,
           "DropChance": 0.018000000000000002
@@ -1230,7 +1230,7 @@
       ]
     },
     {
-      "Name": "Mallet",
+      "name": "Mallet",
       "ItemType": "Anywhere",
       "Price": 100,
       "Value": 50,
@@ -1243,20 +1243,20 @@
         "Effect": "Cure or inflict Mini",
         "Element": "Recovery",
         "BasePower": 0,
-        "BaseAccuracy": 1.0,
+        "BaseAccuracy": 1,
         "Reflectable": "No",
         "Target": "One Enemy",
         "Multiplier": 1
       },
       "Monsters": [
         {
-          "Name": "Petit Mage",
+          "name": "Petit Mage",
           "HP": 118,
           "StealRate": 0.43799999999999994,
           "DropChance": 0.015
         },
         {
-          "Name": "Pugman",
+          "name": "Pugman",
           "HP": 109,
           "StealRate": 0.43799999999999994,
           "DropChance": 0.015
@@ -1306,7 +1306,7 @@
       ]
     },
     {
-      "Name": "Eye Drops",
+      "name": "Eye Drops",
       "ItemType": "Anywhere",
       "Price": 40,
       "Value": 20,
@@ -1326,25 +1326,25 @@
       },
       "Monsters": [
         {
-          "Name": "Larva",
+          "name": "Larva",
           "HP": 38,
           "StealRate": 0.375,
           "DropChance": 0.035
         },
         {
-          "Name": "Pharaoh",
+          "name": "Pharaoh",
           "HP": 160,
           "StealRate": 0.375,
           "DropChance": 0.035
         },
         {
-          "Name": "Revenant",
+          "name": "Revenant",
           "HP": 70,
           "StealRate": 0.375,
           "DropChance": 0.035
         },
         {
-          "Name": "Shadow",
+          "name": "Shadow",
           "HP": 65,
           "StealRate": 0.375,
           "DropChance": 0.035
@@ -1421,7 +1421,7 @@
       ]
     },
     {
-      "Name": "Antidote",
+      "name": "Antidote",
       "ItemType": "Anywhere",
       "Price": 80,
       "Value": 40,
@@ -1441,25 +1441,25 @@
       },
       "Monsters": [
         {
-          "Name": "Larva",
+          "name": "Larva",
           "HP": 38,
           "StealRate": 0.625,
           "DropChance": 0.027000000000000003
         },
         {
-          "Name": "Pharaoh",
+          "name": "Pharaoh",
           "HP": 160,
           "StealRate": 0.625,
           "DropChance": 0.027000000000000003
         },
         {
-          "Name": "Revenant",
+          "name": "Revenant",
           "HP": 70,
           "StealRate": 0.625,
           "DropChance": 0.027000000000000003
         },
         {
-          "Name": "Shadow",
+          "name": "Shadow",
           "HP": 65,
           "StealRate": 0.625,
           "DropChance": 0.027000000000000003
@@ -1541,7 +1541,7 @@
       ]
     },
     {
-      "Name": "Magic Key",
+      "name": "Magic Key",
       "ItemType": "Field",
       "Price": 100,
       "Value": 50,
@@ -1570,7 +1570,7 @@
       ]
     },
     {
-      "Name": "Gysahl Greens",
+      "name": "Gysahl Greens",
       "ItemType": "Field",
       "Price": 150,
       "Value": 75,
@@ -1715,7 +1715,7 @@
       ]
     },
     {
-      "Name": "Gnomish Bread",
+      "name": "Gnomish Bread",
       "ItemType": "Field",
       "Price": 200,
       "Value": 100,
@@ -1727,20 +1727,20 @@
         "Effect": "View local map",
         "Element": null,
         "BasePower": 0,
-        "BaseAccuracy": 1.0,
+        "BaseAccuracy": 1,
         "Reflectable": "No",
         "Target": "One Enemy",
         "Multiplier": null
       },
       "Monsters": [
         {
-          "Name": "Adamantoise",
+          "name": "Adamantoise",
           "HP": 153,
           "StealRate": 0.43799999999999994,
           "DropChance": 0.012
         },
         {
-          "Name": "Lemur",
+          "name": "Lemur",
           "HP": 164,
           "StealRate": 0.43799999999999994,
           "DropChance": null
@@ -1787,7 +1787,7 @@
       ]
     },
     {
-      "Name": "Ottershroom",
+      "name": "Ottershroom",
       "ItemType": "Field",
       "Price": 2000,
       "Value": 1000,
@@ -1806,85 +1806,85 @@
       },
       "Monsters": [
         {
-          "Name": "Adamantoise",
+          "name": "Adamantoise",
           "HP": 153,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Balloon",
+          "name": "Balloon",
           "HP": 143,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Boss Troll",
+          "name": "Boss Troll",
           "HP": 500,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Fachan",
+          "name": "Fachan",
           "HP": 510,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Knocker",
+          "name": "Knocker",
           "HP": 185,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Kyklops",
+          "name": "Kyklops",
           "HP": 490,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Leprechaun",
+          "name": "Leprechaun",
           "HP": 36,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Magician",
+          "name": "Magician",
           "HP": 260,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Red Cap",
+          "name": "Red Cap",
           "HP": 210,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Rock Gargoyle",
+          "name": "Rock Gargoyle",
           "HP": 360,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Sorceror",
+          "name": "Sorceror",
           "HP": 310,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Stroper",
+          "name": "Stroper",
           "HP": 400,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Thor",
+          "name": "Thor",
           "HP": 2180,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Vulcan",
+          "name": "Vulcan",
           "HP": 250,
           "StealRate": null,
           "DropChance": 0.006
@@ -1913,7 +1913,7 @@
       ]
     },
     {
-      "Name": "Antarctic Wind",
+      "name": "Antarctic Wind",
       "ItemType": "Combat",
       "Value": 500,
       "SpellEffect": "Blizzara",
@@ -1924,38 +1924,38 @@
         "Effect": "Deal Ice damage",
         "Element": "Ice",
         "BasePower": 55,
-        "BaseAccuracy": 1.0,
+        "BaseAccuracy": 1,
         "Reflectable": "Yes",
         "Target": "One/All Enemies",
         "Multiplier": 2
       },
       "Monsters": [
         {
-          "Name": "Adamantoise",
+          "name": "Adamantoise",
           "HP": 153,
           "StealRate": 0.375,
           "DropChance": 0.023
         },
         {
-          "Name": "Lemur",
+          "name": "Lemur",
           "HP": 164,
           "StealRate": 0.375,
           "DropChance": null
         },
         {
-          "Name": "Griffon",
+          "name": "Griffon",
           "HP": 150,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Lamia",
+          "name": "Lamia",
           "HP": 168,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Petit",
+          "name": "Petit",
           "HP": 45,
           "StealRate": 0.188,
           "DropChance": 0.012
@@ -1995,7 +1995,7 @@
       ]
     },
     {
-      "Name": "Zeus's Wrath",
+      "name": "Zeus's Wrath",
       "ItemType": "Combat",
       "Value": 500,
       "SpellEffect": "Thundara",
@@ -2006,38 +2006,38 @@
         "Effect": "Deal Lightning damage",
         "Element": "Lightning",
         "BasePower": 55,
-        "BaseAccuracy": 1.0,
+        "BaseAccuracy": 1,
         "Reflectable": "Yes",
         "Target": "One/All Enemies",
         "Multiplier": 2
       },
       "Monsters": [
         {
-          "Name": "Knocker",
+          "name": "Knocker",
           "HP": 185,
           "StealRate": 0.375,
           "DropChance": 0.023
         },
         {
-          "Name": "Red Cap",
+          "name": "Red Cap",
           "HP": 210,
           "StealRate": 0.375,
           "DropChance": 0.023
         },
         {
-          "Name": "Griffon",
+          "name": "Griffon",
           "HP": 150,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Lamia",
+          "name": "Lamia",
           "HP": 168,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Petit",
+          "name": "Petit",
           "HP": 45,
           "StealRate": 0.188,
           "DropChance": 0.012
@@ -2077,7 +2077,7 @@
       ]
     },
     {
-      "Name": "Bomb Arm",
+      "name": "Bomb Arm",
       "ItemType": "Combat",
       "Value": 750,
       "SpellEffect": "Firaga",
@@ -2088,68 +2088,68 @@
         "Effect": "Deal Fire damage",
         "Element": "Fire",
         "BasePower": 150,
-        "BaseAccuracy": 1.0,
+        "BaseAccuracy": 1,
         "Reflectable": "Yes",
         "Target": "One/All Enemies",
         "Multiplier": 3
       },
       "Monsters": [
         {
-          "Name": "Fachan",
+          "name": "Fachan",
           "HP": 510,
           "StealRate": 0.375,
           "DropChance": 0.023
         },
         {
-          "Name": "Rock Gargoyle",
+          "name": "Rock Gargoyle",
           "HP": 360,
           "StealRate": 0.375,
           "DropChance": 0.023
         },
         {
-          "Name": "Vulcan",
+          "name": "Vulcan",
           "HP": 250,
           "StealRate": 0.375,
           "DropChance": 0.023
         },
         {
-          "Name": "Bomb",
+          "name": "Bomb",
           "HP": 125,
           "StealRate": 0.375,
           "DropChance": null
         },
         {
-          "Name": "Azrael",
+          "name": "Azrael",
           "HP": 1100,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Black Flan",
+          "name": "Black Flan",
           "HP": 240,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Dread Knight",
+          "name": "Dread Knight",
           "HP": 370,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Roper",
+          "name": "Roper",
           "HP": 210,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Balloon",
+          "name": "Balloon",
           "HP": 143,
           "StealRate": null,
           "DropChance": 0.004
         },
         {
-          "Name": "Leprechaun",
+          "name": "Leprechaun",
           "HP": 36,
           "StealRate": null,
           "DropChance": 0.004
@@ -2169,7 +2169,7 @@
       ]
     },
     {
-      "Name": "Arctic Wind",
+      "name": "Arctic Wind",
       "ItemType": "Combat",
       "Value": 750,
       "SpellEffect": "Blizzaga",
@@ -2180,50 +2180,50 @@
         "Effect": "Deal Ice damage",
         "Element": "Ice",
         "BasePower": 85,
-        "BaseAccuracy": 1.0,
+        "BaseAccuracy": 1,
         "Reflectable": "Yes",
         "Target": "One/All Enemies",
         "Multiplier": 3
       },
       "Monsters": [
         {
-          "Name": "Boss Troll",
+          "name": "Boss Troll",
           "HP": 500,
           "StealRate": 0.375,
           "DropChance": 0.023
         },
         {
-          "Name": "Sorceror",
+          "name": "Sorceror",
           "HP": 310,
           "StealRate": 0.375,
           "DropChance": 0.023
         },
         {
-          "Name": "Azrael",
+          "name": "Azrael",
           "HP": 1100,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Black Flan",
+          "name": "Black Flan",
           "HP": 240,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Dread Knight",
+          "name": "Dread Knight",
           "HP": 370,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Roper",
+          "name": "Roper",
           "HP": 210,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Adamantoise",
+          "name": "Adamantoise",
           "HP": 153,
           "StealRate": null,
           "DropChance": 0.004
@@ -2253,7 +2253,7 @@
       ]
     },
     {
-      "Name": "Heavenly Wrath",
+      "name": "Heavenly Wrath",
       "ItemType": "Combat",
       "Value": 750,
       "SpellEffect": "Thundaga",
@@ -2264,68 +2264,68 @@
         "Effect": "Deal Lightning damage",
         "Element": "Lightning",
         "BasePower": 110,
-        "BaseAccuracy": 1.0,
+        "BaseAccuracy": 1,
         "Reflectable": "Yes",
         "Target": "One/All Enemies",
         "Multiplier": 3
       },
       "Monsters": [
         {
-          "Name": "Kyklops",
+          "name": "Kyklops",
           "HP": 490,
           "StealRate": 0.375,
           "DropChance": 0.023
         },
         {
-          "Name": "Magician",
+          "name": "Magician",
           "HP": 260,
           "StealRate": 0.375,
           "DropChance": 0.023
         },
         {
-          "Name": "Stroper",
+          "name": "Stroper",
           "HP": 400,
           "StealRate": 0.375,
           "DropChance": 0.023
         },
         {
-          "Name": "Thor",
+          "name": "Thor",
           "HP": 2180,
           "StealRate": 0.375,
           "DropChance": 0.023
         },
         {
-          "Name": "Azrael",
+          "name": "Azrael",
           "HP": 1100,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Black Flan",
+          "name": "Black Flan",
           "HP": 240,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Dread Knight",
+          "name": "Dread Knight",
           "HP": 370,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Roper",
+          "name": "Roper",
           "HP": 210,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Knocker",
+          "name": "Knocker",
           "HP": 185,
           "StealRate": null,
           "DropChance": 0.004
         },
         {
-          "Name": "Red Cap",
+          "name": "Red Cap",
           "HP": 210,
           "StealRate": null,
           "DropChance": 0.004
@@ -2355,7 +2355,7 @@
       ]
     },
     {
-      "Name": "Earthen Drums",
+      "name": "Earthen Drums",
       "ItemType": "Combat",
       "Value": 1250,
       "SpellEffect": "Quake",
@@ -2366,32 +2366,32 @@
         "Effect": "Deal Earth damage",
         "Element": "Earth",
         "BasePower": 133,
-        "BaseAccuracy": 1.0,
+        "BaseAccuracy": 1,
         "Reflectable": "No",
         "Target": "All Enemies",
         "Multiplier": 3
       },
       "Monsters": [
         {
-          "Name": "Azrael",
+          "name": "Azrael",
           "HP": 1100,
           "StealRate": null,
           "DropChance": 0.001
         },
         {
-          "Name": "Black Flan",
+          "name": "Black Flan",
           "HP": 240,
           "StealRate": null,
           "DropChance": 0.001
         },
         {
-          "Name": "Dread Knight",
+          "name": "Dread Knight",
           "HP": 370,
           "StealRate": null,
           "DropChance": 0.001
         },
         {
-          "Name": "Roper",
+          "name": "Roper",
           "HP": 210,
           "StealRate": null,
           "DropChance": 0.001
@@ -2426,7 +2426,7 @@
       ]
     },
     {
-      "Name": "Lamia Scale",
+      "name": "Lamia Scale",
       "ItemType": "Combat",
       "Value": 1500,
       "SpellEffect": "Confuse",
@@ -2445,37 +2445,37 @@
       },
       "Monsters": [
         {
-          "Name": "Azrael",
+          "name": "Azrael",
           "HP": 1100,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Balloon",
+          "name": "Balloon",
           "HP": 143,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Black Flan",
+          "name": "Black Flan",
           "HP": 240,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Dread Knight",
+          "name": "Dread Knight",
           "HP": 370,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Leprechaun",
+          "name": "Leprechaun",
           "HP": 36,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Roper",
+          "name": "Roper",
           "HP": 210,
           "StealRate": null,
           "DropChance": 0.006
@@ -2505,7 +2505,7 @@
       ]
     },
     {
-      "Name": "Bacchus's Cider",
+      "name": "Bacchus's Cider",
       "ItemType": "Combat",
       "Value": 1500,
       "SpellEffect": "Haste",
@@ -2523,31 +2523,31 @@
       },
       "Monsters": [
         {
-          "Name": "Adamantoise",
+          "name": "Adamantoise",
           "HP": 153,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Azrael",
+          "name": "Azrael",
           "HP": 1100,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Black Flan",
+          "name": "Black Flan",
           "HP": 240,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Dread Knight",
+          "name": "Dread Knight",
           "HP": 370,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Roper",
+          "name": "Roper",
           "HP": 210,
           "StealRate": null,
           "DropChance": 0.006
@@ -2582,7 +2582,7 @@
       ]
     },
     {
-      "Name": "Turtle Shell",
+      "name": "Turtle Shell",
       "ItemType": "Combat",
       "Value": 1500,
       "SpellEffect": "Protect",
@@ -2600,37 +2600,37 @@
       },
       "Monsters": [
         {
-          "Name": "Boss Troll",
+          "name": "Boss Troll",
           "HP": 500,
           "StealRate": 0.43799999999999994,
           "DropChance": 0.012
         },
         {
-          "Name": "Sorceror",
+          "name": "Sorceror",
           "HP": 310,
           "StealRate": 0.43799999999999994,
           "DropChance": 0.012
         },
         {
-          "Name": "Azrael",
+          "name": "Azrael",
           "HP": 1100,
           "StealRate": null,
           "DropChance": 0.003
         },
         {
-          "Name": "Black Flan",
+          "name": "Black Flan",
           "HP": 240,
           "StealRate": null,
           "DropChance": 0.003
         },
         {
-          "Name": "Dread Knight",
+          "name": "Dread Knight",
           "HP": 370,
           "StealRate": null,
           "DropChance": 0.003
         },
         {
-          "Name": "Roper",
+          "name": "Roper",
           "HP": 210,
           "StealRate": null,
           "DropChance": 0.003
@@ -2660,7 +2660,7 @@
       ]
     },
     {
-      "Name": "Devil's Sigh",
+      "name": "Devil's Sigh",
       "ItemType": "Combat",
       "Value": 1500,
       "SpellEffect": "Raze",
@@ -2672,38 +2672,38 @@
         "Effect": "Inflict KO",
         "Element": null,
         "BasePower": 100,
-        "BaseAccuracy": 1.0,
+        "BaseAccuracy": 1,
         "Reflectable": "No",
         "Target": "All Enemies",
         "Multiplier": 3
       },
       "Monsters": [
         {
-          "Name": "Knocker",
+          "name": "Knocker",
           "HP": 185,
           "StealRate": 0.43799999999999994,
           "DropChance": 0.012
         },
         {
-          "Name": "Red Cap",
+          "name": "Red Cap",
           "HP": 210,
           "StealRate": 0.43799999999999994,
           "DropChance": 0.012
         },
         {
-          "Name": "Griffon",
+          "name": "Griffon",
           "HP": 150,
           "StealRate": null,
           "DropChance": 0.004
         },
         {
-          "Name": "Lamia",
+          "name": "Lamia",
           "HP": 168,
           "StealRate": null,
           "DropChance": 0.004
         },
         {
-          "Name": "Petit",
+          "name": "Petit",
           "HP": 45,
           "StealRate": null,
           "DropChance": 0.004
@@ -2711,7 +2711,7 @@
       ]
     },
     {
-      "Name": "Black Hole",
+      "name": "Black Hole",
       "ItemType": "Combat",
       "Value": 2000,
       "SpellEffect": "Teleport",
@@ -2730,31 +2730,31 @@
       },
       "Monsters": [
         {
-          "Name": "Death Claw",
+          "name": "Death Claw",
           "HP": 1400,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Glasya Labolas",
+          "name": "Glasya Labolas",
           "HP": 2160,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Needle Monkey",
+          "name": "Needle Monkey",
           "HP": 300,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Boss Troll",
+          "name": "Boss Troll",
           "HP": 500,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Sorceror",
+          "name": "Sorceror",
           "HP": 310,
           "StealRate": null,
           "DropChance": 0.006
@@ -2774,7 +2774,7 @@
       ]
     },
     {
-      "Name": "Black Musk",
+      "name": "Black Musk",
       "ItemType": "Combat",
       "Value": 2500,
       "SpellEffect": "Death",
@@ -2793,43 +2793,43 @@
       },
       "Monsters": [
         {
-          "Name": "Death Claw",
+          "name": "Death Claw",
           "HP": 1400,
           "StealRate": null,
           "DropChance": 0.003
         },
         {
-          "Name": "Glasya Labolas",
+          "name": "Glasya Labolas",
           "HP": 2160,
           "StealRate": null,
           "DropChance": 0.003
         },
         {
-          "Name": "Needle Monkey",
+          "name": "Needle Monkey",
           "HP": 300,
           "StealRate": null,
           "DropChance": 0.003
         },
         {
-          "Name": "Kyklops",
+          "name": "Kyklops",
           "HP": 490,
           "StealRate": null,
           "DropChance": 0.001
         },
         {
-          "Name": "Magician",
+          "name": "Magician",
           "HP": 260,
           "StealRate": null,
           "DropChance": 0.001
         },
         {
-          "Name": "Stroper",
+          "name": "Stroper",
           "HP": 400,
           "StealRate": null,
           "DropChance": 0.001
         },
         {
-          "Name": "Thor",
+          "name": "Thor",
           "HP": 2180,
           "StealRate": null,
           "DropChance": 0.001
@@ -2854,7 +2854,7 @@
       ]
     },
     {
-      "Name": "Lilith's Kiss",
+      "name": "Lilith's Kiss",
       "ItemType": "Combat",
       "Value": 1500,
       "SpellEffect": "Drain",
@@ -2865,44 +2865,44 @@
         "Effect": "Absorb HP from target",
         "Element": "Recovery",
         "BasePower": 160,
-        "BaseAccuracy": 1.0,
+        "BaseAccuracy": 1,
         "Reflectable": "No",
         "Target": "One Enemy",
         "Multiplier": 3
       },
       "Monsters": [
         {
-          "Name": "Death Claw",
+          "name": "Death Claw",
           "HP": 1400,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Glasya Labolas",
+          "name": "Glasya Labolas",
           "HP": 2160,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Needle Monkey",
+          "name": "Needle Monkey",
           "HP": 300,
           "StealRate": 0.188,
           "DropChance": 0.012
         },
         {
-          "Name": "Fachan",
+          "name": "Fachan",
           "HP": 510,
           "StealRate": null,
           "DropChance": 0.004
         },
         {
-          "Name": "Rock Gargoyle",
+          "name": "Rock Gargoyle",
           "HP": 360,
           "StealRate": null,
           "DropChance": 0.004
         },
         {
-          "Name": "Vulcan",
+          "name": "Vulcan",
           "HP": 250,
           "StealRate": null,
           "DropChance": 0.004
@@ -2932,7 +2932,7 @@
       ]
     },
     {
-      "Name": "Raven's Yawn",
+      "name": "Raven's Yawn",
       "ItemType": "Combat",
       "Value": 1500,
       "SpellEffect": "Aeroga",
@@ -2943,38 +2943,38 @@
         "Effect": "Deal Air and Ice damage",
         "Element": null,
         "BasePower": 115,
-        "BaseAccuracy": 1.0,
+        "BaseAccuracy": 1,
         "Reflectable": "Yes",
         "Target": "One/All Enemies",
         "Multiplier": 3
       },
       "Monsters": [
         {
-          "Name": "Death Claw",
+          "name": "Death Claw",
           "HP": 1400,
           "StealRate": 0.43799999999999994,
           "DropChance": 0.012
         },
         {
-          "Name": "Glasya Labolas",
+          "name": "Glasya Labolas",
           "HP": 2160,
           "StealRate": 0.43799999999999994,
           "DropChance": 0.012
         },
         {
-          "Name": "Needle Monkey",
+          "name": "Needle Monkey",
           "HP": 300,
           "StealRate": 0.43799999999999994,
           "DropChance": 0.012
         },
         {
-          "Name": "Boss Troll",
+          "name": "Boss Troll",
           "HP": 500,
           "StealRate": null,
           "DropChance": 0.004
         },
         {
-          "Name": "Sorceror",
+          "name": "Sorceror",
           "HP": 310,
           "StealRate": null,
           "DropChance": 0.004
@@ -2989,7 +2989,7 @@
       ]
     },
     {
-      "Name": "Tranquilizer",
+      "name": "Tranquilizer",
       "ItemType": "Combat",
       "Value": 1500,
       "SpellEffect": "Shade",
@@ -3008,67 +3008,67 @@
       },
       "Monsters": [
         {
-          "Name": "Fachan",
+          "name": "Fachan",
           "HP": 510,
           "StealRate": 0.43799999999999994,
           "DropChance": 0.012
         },
         {
-          "Name": "Kyklops",
+          "name": "Kyklops",
           "HP": 490,
           "StealRate": 0.43799999999999994,
           "DropChance": 0.012
         },
         {
-          "Name": "Magician",
+          "name": "Magician",
           "HP": 260,
           "StealRate": 0.43799999999999994,
           "DropChance": 0.012
         },
         {
-          "Name": "Rock Gargoyle",
+          "name": "Rock Gargoyle",
           "HP": 360,
           "StealRate": 0.43799999999999994,
           "DropChance": 0.012
         },
         {
-          "Name": "Stroper",
+          "name": "Stroper",
           "HP": 400,
           "StealRate": 0.43799999999999994,
           "DropChance": 0.012
         },
         {
-          "Name": "Thor",
+          "name": "Thor",
           "HP": 2180,
           "StealRate": 0.43799999999999994,
           "DropChance": 0.012
         },
         {
-          "Name": "Vulcan",
+          "name": "Vulcan",
           "HP": 250,
           "StealRate": 0.43799999999999994,
           "DropChance": 0.012
         },
         {
-          "Name": "Bomb",
+          "name": "Bomb",
           "HP": 125,
           "StealRate": 0.43799999999999994,
           "DropChance": null
         },
         {
-          "Name": "Griffon",
+          "name": "Griffon",
           "HP": 150,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Lamia",
+          "name": "Lamia",
           "HP": 168,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Petit",
+          "name": "Petit",
           "HP": 45,
           "StealRate": null,
           "DropChance": 0.006
@@ -3088,7 +3088,7 @@
       ]
     },
     {
-      "Name": "Sheep Pillow",
+      "name": "Sheep Pillow",
       "ItemType": "Combat",
       "Value": 1000,
       "SpellEffect": "Sleep",
@@ -3107,13 +3107,13 @@
       },
       "Monsters": [
         {
-          "Name": "Balloon",
+          "name": "Balloon",
           "HP": 143,
           "StealRate": 0.43799999999999994,
           "DropChance": 0.012
         },
         {
-          "Name": "Leprechaun",
+          "name": "Leprechaun",
           "HP": 36,
           "StealRate": 0.43799999999999994,
           "DropChance": 0.012
@@ -3121,7 +3121,7 @@
       ]
     },
     {
-      "Name": "Shining Curtain",
+      "name": "Shining Curtain",
       "ItemType": "Combat",
       "Value": 2500,
       "SpellEffect": "Reflect",
@@ -3139,43 +3139,43 @@
       },
       "Monsters": [
         {
-          "Name": "Death Claw",
+          "name": "Death Claw",
           "HP": 1400,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Glasya Labolas",
+          "name": "Glasya Labolas",
           "HP": 2160,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Kyklops",
+          "name": "Kyklops",
           "HP": 490,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Magician",
+          "name": "Magician",
           "HP": 260,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Needle Monkey",
+          "name": "Needle Monkey",
           "HP": 300,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Stroper",
+          "name": "Stroper",
           "HP": 400,
           "StealRate": null,
           "DropChance": 0.006
         },
         {
-          "Name": "Thor",
+          "name": "Thor",
           "HP": 2180,
           "StealRate": null,
           "DropChance": 0.006
@@ -3215,7 +3215,7 @@
       ]
     },
     {
-      "Name": "Chocobo's Wrath",
+      "name": "Chocobo's Wrath",
       "ItemType": "Combat",
       "Value": 2500,
       "SpellEffect": "Flare",
@@ -3226,50 +3226,50 @@
         "Effect": "Deal damage",
         "Element": null,
         "BasePower": 200,
-        "BaseAccuracy": 1.0,
+        "BaseAccuracy": 1,
         "Reflectable": "Yes",
         "Target": "One/All Enemies",
         "Multiplier": 3
       },
       "Monsters": [
         {
-          "Name": "Kyklops",
+          "name": "Kyklops",
           "HP": 490,
           "StealRate": null,
           "DropChance": 0.003
         },
         {
-          "Name": "Magician",
+          "name": "Magician",
           "HP": 260,
           "StealRate": null,
           "DropChance": 0.003
         },
         {
-          "Name": "Stroper",
+          "name": "Stroper",
           "HP": 400,
           "StealRate": null,
           "DropChance": 0.003
         },
         {
-          "Name": "Thor",
+          "name": "Thor",
           "HP": 2180,
           "StealRate": null,
           "DropChance": 0.003
         },
         {
-          "Name": "Death Claw",
+          "name": "Death Claw",
           "HP": 1400,
           "StealRate": null,
           "DropChance": 0.001
         },
         {
-          "Name": "Glasya Labolas",
+          "name": "Glasya Labolas",
           "HP": 2160,
           "StealRate": null,
           "DropChance": 0.001
         },
         {
-          "Name": "Needle Monkey",
+          "name": "Needle Monkey",
           "HP": 300,
           "StealRate": null,
           "DropChance": 0.001
@@ -3294,7 +3294,7 @@
       ]
     },
     {
-      "Name": "White Musk",
+      "name": "White Musk",
       "ItemType": "Combat",
       "Value": 2500,
       "SpellEffect": "Holy",
@@ -3305,7 +3305,7 @@
         "Effect": "Deal Holy damage",
         "Element": "Holy",
         "BasePower": 160,
-        "BaseAccuracy": 1.0,
+        "BaseAccuracy": 1,
         "Reflectable": "Yes",
         "Target": "One Enemy",
         "Multiplier": 3
@@ -3329,7 +3329,7 @@
       ]
     },
     {
-      "Name": "Horn Of Ice",
+      "name": "Horn Of Ice",
       "ItemType": "Key Item",
       "Treasures": [
         {
@@ -3340,7 +3340,7 @@
       ]
     },
     {
-      "Name": "Nepto Eye",
+      "name": "Nepto Eye",
       "ItemType": "Key Item",
       "Treasures": [
         {
@@ -3351,7 +3351,7 @@
       ]
     },
     {
-      "Name": "Wheel Of Time",
+      "name": "Wheel Of Time",
       "ItemType": "Key Item",
       "Treasures": [
         {
@@ -3362,7 +3362,7 @@
       ]
     },
     {
-      "Name": "Eureka Key",
+      "name": "Eureka Key",
       "ItemType": "Key Item",
       "Treasures": [
         {
@@ -3373,7 +3373,7 @@
       ]
     },
     {
-      "Name": "Fang Of Wind",
+      "name": "Fang Of Wind",
       "ItemType": "Key Item",
       "Treasures": [
         {
@@ -3384,7 +3384,7 @@
       ]
     },
     {
-      "Name": "Fang Of Fire",
+      "name": "Fang Of Fire",
       "ItemType": "Key Item",
       "Treasures": [
         {
@@ -3395,7 +3395,7 @@
       ]
     },
     {
-      "Name": "Fang Of Water",
+      "name": "Fang Of Water",
       "ItemType": "Key Item",
       "Treasures": [
         {
@@ -3406,7 +3406,7 @@
       ]
     },
     {
-      "Name": "Fang Of Earth",
+      "name": "Fang Of Earth",
       "ItemType": "Key Item",
       "Treasures": [
         {
@@ -3417,7 +3417,7 @@
       ]
     },
     {
-      "Name": "Noah's Lute",
+      "name": "Noah's Lute",
       "ItemType": "Key Item",
       "Treasures": [
         {
@@ -3428,7 +3428,7 @@
       ]
     },
     {
-      "Name": "Syrcus Key",
+      "name": "Syrcus Key",
       "ItemType": "Key Item",
       "Treasures": [
         {

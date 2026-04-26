@@ -297,8 +297,8 @@ def _get_spell_dict(enemy_json: dict) -> Dict[str, dict]:
         return {}
     out: Dict[str, dict] = {}
     for sp in spells:
-        if isinstance(sp, dict) and sp.get("Name"):
-            out[str(sp["Name"])] = sp
+        if isinstance(sp, dict) and (sp.get("name") or sp.get("Name")):
+            out[str(sp.get("name") or sp.get("Name"))] = sp
     return out
 
 

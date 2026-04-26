@@ -7,13 +7,13 @@
   },
   "spells": [
     {
-      "Name": "Flare",
+      "name": "Flare",
       "Type": "Black Magic",
       "Level": 8,
       "Effect": "Deal damage",
       "effect_category": "damage",
       "BasePower": 200,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 60000,
       "Value": 30000,
       "Reflectable": "Yes",
@@ -21,7 +21,7 @@
       "Weight": 10,
       "Items": [
         {
-          "Name": "Chocobo's Wrath",
+          "name": "Chocobo's Wrath",
           "Type": "Combat",
           "Price": null,
           "Value": 2500,
@@ -31,19 +31,19 @@
       ],
       "Monsters": [
         {
-          "Name": "Titan",
+          "name": "Titan",
           "HP": 7800,
           "Exp": 4400,
           "Gil": 4500
         },
         {
-          "Name": "Scylla",
+          "name": "Scylla",
           "HP": 10000,
           "Exp": 5200,
           "Gil": 5400
         },
         {
-          "Name": "Echidna",
+          "name": "Echidna",
           "HP": 32000,
           "Exp": 7000,
           "Gil": 7000
@@ -63,7 +63,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Death",
+      "name": "Death",
       "Type": "Black Magic",
       "Level": 8,
       "Effect": "Inflict KO",
@@ -79,7 +79,7 @@
       "Weight": 10,
       "Items": [
         {
-          "Name": "Black Musk",
+          "name": "Black Musk",
           "Type": "Combat",
           "Price": null,
           "Value": 2500,
@@ -89,13 +89,13 @@
       ],
       "Monsters": [
         {
-          "Name": "Kum Kum",
+          "name": "Kum Kum",
           "HP": 2090,
           "Exp": 4400,
           "Gil": 3900
         },
         {
-          "Name": "Echidna",
+          "name": "Echidna",
           "HP": 32000,
           "Exp": 7000,
           "Gil": 7000
@@ -115,13 +115,13 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Meteor",
+      "name": "Meteor",
       "Type": "Black Magic",
       "Level": 8,
       "Effect": "Deal damage",
       "effect_category": "damage",
       "BasePower": 180,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 60000,
       "Value": 30000,
       "Reflectable": "No",
@@ -129,25 +129,25 @@
       "Weight": 11,
       "Monsters": [
         {
-          "Name": "Xande's Clone",
+          "name": "Xande's Clone",
           "HP": 10000,
           "Exp": 3400,
           "Gil": 1550
         },
         {
-          "Name": "Xande",
+          "name": "Xande",
           "HP": 21000,
           "Exp": null,
           "Gil": null
         },
         {
-          "Name": "Echidna",
+          "name": "Echidna",
           "HP": 32000,
           "Exp": 7000,
           "Gil": 7000
         },
         {
-          "Name": "Ahriman",
+          "name": "Ahriman",
           "HP": 35000,
           "Exp": 8000,
           "Gil": 7200
@@ -167,14 +167,14 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Quake",
+      "name": "Quake",
       "Type": "Black Magic",
       "Level": 7,
       "Effect": "Deal Earth damage",
       "effect_category": "damage",
       "Element": "Earth",
       "BasePower": 133,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 20000,
       "Value": 10000,
       "Reflectable": "No",
@@ -182,7 +182,7 @@
       "Weight": 8,
       "Items": [
         {
-          "Name": "Earthen Drums",
+          "name": "Earthen Drums",
           "Type": "Combat",
           "Price": null,
           "Value": 1250,
@@ -192,43 +192,43 @@
       ],
       "Monsters": [
         {
-          "Name": "Xande's Clone",
+          "name": "Xande's Clone",
           "HP": 10000,
           "Exp": 3400,
           "Gil": 1550
         },
         {
-          "Name": "Doga's Clone",
+          "name": "Doga's Clone",
           "HP": 1500,
           "Exp": 4000,
           "Gil": 2800
         },
         {
-          "Name": "Doga",
+          "name": "Doga",
           "HP": 4500,
           "Exp": 3400,
           "Gil": 4000
         },
         {
-          "Name": "Guardian",
+          "name": "Guardian",
           "HP": 12000,
           "Exp": 5400,
           "Gil": 5600
         },
         {
-          "Name": "Xande",
+          "name": "Xande",
           "HP": 21000,
           "Exp": null,
           "Gil": null
         },
         {
-          "Name": "Echidna",
+          "name": "Echidna",
           "HP": 32000,
           "Exp": 7000,
           "Gil": 7000
         },
         {
-          "Name": "Ahriman",
+          "name": "Ahriman",
           "HP": 35000,
           "Exp": 8000,
           "Gil": 7200
@@ -253,7 +253,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Breakga",
+      "name": "Breakga",
       "Type": "Black Magic",
       "Level": 7,
       "Effect": "Inflict Petrification",
@@ -270,49 +270,49 @@
       "Weight": 7,
       "Monsters": [
         {
-          "Name": "Rock Gargoyle",
+          "name": "Rock Gargoyle",
           "HP": 360,
           "Exp": 1320,
           "Gil": 490
         },
         {
-          "Name": "Fachan",
+          "name": "Fachan",
           "HP": 510,
           "Exp": 2800,
           "Gil": 745
         },
         {
-          "Name": "Thanatos",
+          "name": "Thanatos",
           "HP": 2200,
           "Exp": 3800,
           "Gil": 2500
         },
         {
-          "Name": "Doga's Clone",
+          "name": "Doga's Clone",
           "HP": 1500,
           "Exp": 4000,
           "Gil": 2800
         },
         {
-          "Name": "Platinal",
+          "name": "Platinal",
           "HP": 4580,
           "Exp": 4400,
           "Gil": 3800
         },
         {
-          "Name": "Kum Kum",
+          "name": "Kum Kum",
           "HP": 2090,
           "Exp": 4400,
           "Gil": 3900
         },
         {
-          "Name": "Doga",
+          "name": "Doga",
           "HP": 4500,
           "Exp": 3400,
           "Gil": 4000
         },
         {
-          "Name": "Echidna",
+          "name": "Echidna",
           "HP": 32000,
           "Exp": 7000,
           "Gil": 7000
@@ -337,14 +337,14 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Drain",
+      "name": "Drain",
       "Type": "Black Magic",
       "Level": 7,
       "Effect": "Absorb HP from target",
       "effect_category": "drain",
       "Element": "Recovery",
       "BasePower": 160,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 20000,
       "Value": 10000,
       "Reflectable": "No",
@@ -352,7 +352,7 @@
       "Weight": 9,
       "Items": [
         {
-          "Name": "Lilith's Kiss",
+          "name": "Lilith's Kiss",
           "Type": "Combat",
           "Price": null,
           "Value": 1500,
@@ -362,31 +362,31 @@
       ],
       "Monsters": [
         {
-          "Name": "Doga's Clone",
+          "name": "Doga's Clone",
           "HP": 1500,
           "Exp": 4000,
           "Gil": 2800
         },
         {
-          "Name": "Gomory",
+          "name": "Gomory",
           "HP": 4050,
           "Exp": 4200,
           "Gil": 181
         },
         {
-          "Name": "Garm",
+          "name": "Garm",
           "HP": 4240,
           "Exp": 4800,
           "Gil": 5200
         },
         {
-          "Name": "Doga",
+          "name": "Doga",
           "HP": 4500,
           "Exp": 3400,
           "Gil": 4000
         },
         {
-          "Name": "Echidna",
+          "name": "Echidna",
           "HP": 32000,
           "Exp": 7000,
           "Gil": 7000
@@ -411,14 +411,14 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Firaga",
+      "name": "Firaga",
       "Type": "Black Magic",
       "Level": 6,
       "Effect": "Deal Fire damage",
       "effect_category": "damage",
       "Element": "Fire",
       "BasePower": 150,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 10000,
       "Value": 5000,
       "Reflectable": "Yes",
@@ -426,7 +426,7 @@
       "Weight": 7,
       "Items": [
         {
-          "Name": "Bomb Arm",
+          "name": "Bomb Arm",
           "Type": "Combat",
           "Price": null,
           "Value": 750,
@@ -436,7 +436,7 @@
       ],
       "Monsters": [
         {
-          "Name": "Kum Kum",
+          "name": "Kum Kum",
           "HP": 2090,
           "Exp": 4400,
           "Gil": 3900
@@ -461,13 +461,13 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Bio",
+      "name": "Bio",
       "Type": "Black Magic",
       "Level": 6,
       "Effect": "Deal damage",
       "effect_category": "damage",
       "BasePower": 130,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 10000,
       "Value": 5000,
       "Reflectable": "Yes",
@@ -492,7 +492,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Warp",
+      "name": "Warp",
       "Type": "Black Magic",
       "Level": 6,
       "Effect": "Teleport to any previous dungeon floor, or inflict KO in battle",
@@ -524,14 +524,14 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Thundaga",
+      "name": "Thundaga",
       "Type": "Black Magic",
       "Level": 5,
       "Effect": "Deal Lightning damage",
       "effect_category": "damage",
       "Element": "Lightning",
       "BasePower": 110,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 5000,
       "Value": 2500,
       "Reflectable": "Yes",
@@ -539,7 +539,7 @@
       "Weight": 6,
       "Items": [
         {
-          "Name": "Heavenly Wrath",
+          "name": "Heavenly Wrath",
           "Type": "Combat",
           "Price": null,
           "Value": 750,
@@ -549,7 +549,7 @@
       ],
       "Monsters": [
         {
-          "Name": "Kum Kum",
+          "name": "Kum Kum",
           "HP": 2090,
           "Exp": 4400,
           "Gil": 3900
@@ -574,7 +574,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Raze",
+      "name": "Raze",
       "Type": "Black Magic",
       "Level": 5,
       "Effect": "Inflict KO",
@@ -583,7 +583,7 @@
       "status_ailment": "KO",
       "StatusAilment": "KO",
       "BasePower": 100,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 5000,
       "Value": 2500,
       "Reflectable": "No",
@@ -591,7 +591,7 @@
       "Weight": 5,
       "Items": [
         {
-          "Name": "Devil's Sigh",
+          "name": "Devil's Sigh",
           "Type": "Combat",
           "Price": null,
           "Value": 1500,
@@ -618,7 +618,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Erase",
+      "name": "Erase",
       "Type": "Black Magic",
       "Level": 5,
       "Effect": "Remove Reflect (doesn't work)",
@@ -650,7 +650,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Break",
+      "name": "Break",
       "Type": "Black Magic",
       "Level": 4,
       "Effect": "Deal damage and inflict Partial Petrification (1/2)",
@@ -667,7 +667,7 @@
       "Weight": 4,
       "Weapons": [
         {
-          "Name": "Golem Staff",
+          "name": "Golem Staff",
           "Type": "Rod",
           "Multiplier": 1,
           "Equipped By": [
@@ -681,19 +681,19 @@
       ],
       "Monsters": [
         {
-          "Name": "Gold Bear",
+          "name": "Gold Bear",
           "HP": 280,
           "Exp": 600,
           "Gil": 340
         },
         {
-          "Name": "Hellgaroo Mage",
+          "name": "Hellgaroo Mage",
           "HP": 295,
           "Exp": 700,
           "Gil": 370
         },
         {
-          "Name": "Medusa",
+          "name": "Medusa",
           "HP": 980,
           "Exp": 360,
           "Gil": 1200
@@ -727,14 +727,14 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Blizzaga",
+      "name": "Blizzaga",
       "Type": "Black Magic",
       "Level": 4,
       "Effect": "Deal Ice damage",
       "effect_category": "damage",
       "Element": "Ice",
       "BasePower": 85,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 3000,
       "Value": 1500,
       "Reflectable": "Yes",
@@ -742,7 +742,7 @@
       "Weight": 5,
       "Items": [
         {
-          "Name": "Arctic Wind",
+          "name": "Arctic Wind",
           "Type": "Combat",
           "Price": null,
           "Value": 750,
@@ -752,7 +752,7 @@
       ],
       "Weapons": [
         {
-          "Name": "Rune Staff",
+          "name": "Rune Staff",
           "Type": "Rod",
           "Multiplier": 1,
           "Equipped By": [
@@ -766,7 +766,7 @@
       ],
       "Monsters": [
         {
-          "Name": "Kum Kum",
+          "name": "Kum Kum",
           "HP": 2090,
           "Exp": 4400,
           "Gil": 3900
@@ -796,7 +796,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Shade",
+      "name": "Shade",
       "Type": "Black Magic",
       "Level": 4,
       "Effect": "Inflict Paralysis",
@@ -812,7 +812,7 @@
       "Weight": 4,
       "Items": [
         {
-          "Name": "Tranquilizer",
+          "name": "Tranquilizer",
           "Type": "Combat",
           "Price": null,
           "Value": 1500,
@@ -822,7 +822,7 @@
       ],
       "Monsters": [
         {
-          "Name": "Hellgaroo Mage",
+          "name": "Hellgaroo Mage",
           "HP": 295,
           "Exp": 700,
           "Gil": 370
@@ -852,14 +852,14 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Fira",
+      "name": "Fira",
       "Type": "Black Magic",
       "Level": 3,
       "Effect": "Deal Fire damage",
       "effect_category": "damage",
       "Element": "Fire",
       "BasePower": 55,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 1500,
       "Value": 750,
       "Reflectable": "Yes",
@@ -867,7 +867,7 @@
       "Weight": 3,
       "Items": [
         {
-          "Name": "Bomb Fragment",
+          "name": "Bomb Fragment",
           "Type": "Combat",
           "Price": null,
           "Value": 500,
@@ -877,61 +877,61 @@
       ],
       "Monsters": [
         {
-          "Name": "Vulcan",
+          "name": "Vulcan",
           "HP": 250,
           "Exp": 500,
           "Gil": 280
         },
         {
-          "Name": "Magician",
+          "name": "Magician",
           "HP": 260,
           "Exp": 560,
           "Gil": 300
         },
         {
-          "Name": "Hellgaroo Mage",
+          "name": "Hellgaroo Mage",
           "HP": 295,
           "Exp": 700,
           "Gil": 370
         },
         {
-          "Name": "Sorceror",
+          "name": "Sorceror",
           "HP": 310,
           "Exp": 800,
           "Gil": 400
         },
         {
-          "Name": "Flyer Mage",
+          "name": "Flyer Mage",
           "HP": 555,
           "Exp": 1440,
           "Gil": 520
         },
         {
-          "Name": "Giant Rat",
+          "name": "Giant Rat",
           "HP": 450,
           "Exp": 240,
           "Gil": 1000
         },
         {
-          "Name": "Gutsco",
+          "name": "Gutsco",
           "HP": 1400,
           "Exp": 500,
           "Gil": 1500
         },
         {
-          "Name": "Hein",
+          "name": "Hein",
           "HP": 1600,
           "Exp": 1040,
           "Gil": 2100
         },
         {
-          "Name": "Kraken",
+          "name": "Kraken",
           "HP": 1950,
           "Exp": 1320,
           "Gil": 2500
         },
         {
-          "Name": "Goldor",
+          "name": "Goldor",
           "HP": 2250,
           "Exp": 1640,
           "Gil": 3300
@@ -973,14 +973,14 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Blizzara",
+      "name": "Blizzara",
       "Type": "Black Magic",
       "Level": 3,
       "Effect": "Deal Ice damage",
       "effect_category": "damage",
       "Element": "Ice",
       "BasePower": 55,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 1500,
       "Value": 750,
       "Reflectable": "Yes",
@@ -988,7 +988,7 @@
       "Weight": 3,
       "Items": [
         {
-          "Name": "Antarctic Wind",
+          "name": "Antarctic Wind",
           "Type": "Combat",
           "Price": null,
           "Value": 500,
@@ -998,79 +998,79 @@
       ],
       "Monsters": [
         {
-          "Name": "Far Darrig",
+          "name": "Far Darrig",
           "HP": 111,
           "Exp": 144,
           "Gil": 98
         },
         {
-          "Name": "Petit Mage",
+          "name": "Petit Mage",
           "HP": 118,
           "Exp": 152,
           "Gil": 101
         },
         {
-          "Name": "Vulcan",
+          "name": "Vulcan",
           "HP": 250,
           "Exp": 500,
           "Gil": 280
         },
         {
-          "Name": "Magician",
+          "name": "Magician",
           "HP": 260,
           "Exp": 560,
           "Gil": 300
         },
         {
-          "Name": "Hellgaroo Mage",
+          "name": "Hellgaroo Mage",
           "HP": 295,
           "Exp": 700,
           "Gil": 370
         },
         {
-          "Name": "Sorceror",
+          "name": "Sorceror",
           "HP": 310,
           "Exp": 800,
           "Gil": 400
         },
         {
-          "Name": "Frostfly",
+          "name": "Frostfly",
           "HP": 325,
           "Exp": 960,
           "Gil": 430
         },
         {
-          "Name": "Flyer Mage",
+          "name": "Flyer Mage",
           "HP": 555,
           "Exp": 1440,
           "Gil": 520
         },
         {
-          "Name": "Sleipnir",
+          "name": "Sleipnir",
           "HP": 1000,
           "Exp": 4000,
           "Gil": 3100
         },
         {
-          "Name": "Giant Rat",
+          "name": "Giant Rat",
           "HP": 450,
           "Exp": 240,
           "Gil": 1000
         },
         {
-          "Name": "Hein",
+          "name": "Hein",
           "HP": 1600,
           "Exp": 1040,
           "Gil": 2100
         },
         {
-          "Name": "Kraken",
+          "name": "Kraken",
           "HP": 1950,
           "Exp": 1320,
           "Gil": 2500
         },
         {
-          "Name": "Goldor",
+          "name": "Goldor",
           "HP": 2250,
           "Exp": 1640,
           "Gil": 3300
@@ -1112,14 +1112,14 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Thundara",
+      "name": "Thundara",
       "Type": "Black Magic",
       "Level": 3,
       "Effect": "Deal Lightning damage",
       "effect_category": "damage",
       "Element": "Lightning",
       "BasePower": 55,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 1500,
       "Value": 750,
       "Reflectable": "Yes",
@@ -1127,7 +1127,7 @@
       "Weight": 3,
       "Items": [
         {
-          "Name": "Zeus's Wrath",
+          "name": "Zeus's Wrath",
           "Type": "Combat",
           "Price": null,
           "Value": 500,
@@ -1137,7 +1137,7 @@
       ],
       "Weapons": [
         {
-          "Name": "Thor's Hammer",
+          "name": "Thor's Hammer",
           "Type": "Axe",
           "Multiplier": 1,
           "Equipped By": [
@@ -1146,7 +1146,7 @@
           ]
         },
         {
-          "Name": "Thunder Spear",
+          "name": "Thunder Spear",
           "Type": "Spear",
           "Multiplier": 1,
           "Equipped By": [
@@ -1157,55 +1157,55 @@
       ],
       "Monsters": [
         {
-          "Name": "Vulcan",
+          "name": "Vulcan",
           "HP": 250,
           "Exp": 500,
           "Gil": 280
         },
         {
-          "Name": "Magician",
+          "name": "Magician",
           "HP": 260,
           "Exp": 560,
           "Gil": 300
         },
         {
-          "Name": "Hellgaroo Mage",
+          "name": "Hellgaroo Mage",
           "HP": 295,
           "Exp": 700,
           "Gil": 370
         },
         {
-          "Name": "Sorceror",
+          "name": "Sorceror",
           "HP": 310,
           "Exp": 800,
           "Gil": 400
         },
         {
-          "Name": "Flyer Mage",
+          "name": "Flyer Mage",
           "HP": 555,
           "Exp": 1440,
           "Gil": 520
         },
         {
-          "Name": "Giant Rat",
+          "name": "Giant Rat",
           "HP": 450,
           "Exp": 240,
           "Gil": 1000
         },
         {
-          "Name": "Hein",
+          "name": "Hein",
           "HP": 1600,
           "Exp": 1040,
           "Gil": 2100
         },
         {
-          "Name": "Kraken",
+          "name": "Kraken",
           "HP": 1950,
           "Exp": 1320,
           "Gil": 2500
         },
         {
-          "Name": "Goldor",
+          "name": "Goldor",
           "HP": 2250,
           "Exp": 1640,
           "Gil": 3300
@@ -1247,14 +1247,14 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Thunder",
+      "name": "Thunder",
       "Type": "Black Magic",
       "Level": 2,
       "Effect": "Deal Lightning damage",
       "effect_category": "damage",
       "Element": "Lightning",
       "BasePower": 35,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 700,
       "Value": 350,
       "Reflectable": "Yes",
@@ -1262,7 +1262,7 @@
       "Weight": 2,
       "Weapons": [
         {
-          "Name": "Light Staff",
+          "name": "Light Staff",
           "Type": "Rod",
           "Multiplier": 1,
           "Equipped By": [
@@ -1276,19 +1276,19 @@
       ],
       "Monsters": [
         {
-          "Name": "Petit",
+          "name": "Petit",
           "HP": 45,
           "Exp": 80,
           "Gil": 54
         },
         {
-          "Name": "Lilliputian",
+          "name": "Lilliputian",
           "HP": 58,
           "Exp": 88,
           "Gil": 58
         },
         {
-          "Name": "Gold Warrior",
+          "name": "Gold Warrior",
           "HP": 275,
           "Exp": 600,
           "Gil": 330
@@ -1318,7 +1318,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Poison",
+      "name": "Poison",
       "Type": "Black Magic",
       "Level": 2,
       "Effect": "Deal damage and inflict Poison",
@@ -1334,25 +1334,25 @@
       "Weight": 2,
       "Monsters": [
         {
-          "Name": "Mummy",
+          "name": "Mummy",
           "HP": 48,
           "Exp": 40,
           "Gil": 24
         },
         {
-          "Name": "Pugman",
+          "name": "Pugman",
           "HP": 109,
           "Exp": 144,
           "Gil": 96
         },
         {
-          "Name": "Far Darrig",
+          "name": "Far Darrig",
           "HP": 111,
           "Exp": 144,
           "Gil": 98
         },
         {
-          "Name": "Sleipnir",
+          "name": "Sleipnir",
           "HP": 1000,
           "Exp": 4000,
           "Gil": 3100
@@ -1382,7 +1382,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Blind",
+      "name": "Blind",
       "Type": "Black Magic",
       "Level": 2,
       "Effect": "Inflict Blind",
@@ -1398,55 +1398,55 @@
       "Weight": 2,
       "Monsters": [
         {
-          "Name": "Dark Eye",
+          "name": "Dark Eye",
           "HP": 38,
           "Exp": 32,
           "Gil": 20
         },
         {
-          "Name": "Larva",
+          "name": "Larva",
           "HP": 38,
           "Exp": 48,
           "Gil": 30
         },
         {
-          "Name": "Shadow",
+          "name": "Shadow",
           "HP": 65,
           "Exp": 48,
           "Gil": 32
         },
         {
-          "Name": "Pugman",
+          "name": "Pugman",
           "HP": 109,
           "Exp": 144,
           "Gil": 96
         },
         {
-          "Name": "Far Darrig",
+          "name": "Far Darrig",
           "HP": 111,
           "Exp": 144,
           "Gil": 98
         },
         {
-          "Name": "Hellgaroo",
+          "name": "Hellgaroo",
           "HP": 245,
           "Exp": 500,
           "Gil": 270
         },
         {
-          "Name": "Sleipnir",
+          "name": "Sleipnir",
           "HP": 1000,
           "Exp": 4000,
           "Gil": 3100
         },
         {
-          "Name": "Shinobi",
+          "name": "Shinobi",
           "HP": 1100,
           "Exp": 4600,
           "Gil": 4200
         },
         {
-          "Name": "Ninja",
+          "name": "Ninja",
           "HP": 5500,
           "Exp": 4600,
           "Gil": 4800
@@ -1484,14 +1484,14 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Fire",
+      "name": "Fire",
       "Type": "Black Magic",
       "Level": 1,
       "Effect": "Deal Fire damage",
       "effect_category": "damage",
       "Element": "Fire",
       "BasePower": 25,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 100,
       "Value": 50,
       "Reflectable": "Yes",
@@ -1499,7 +1499,7 @@
       "Weight": 1,
       "Weapons": [
         {
-          "Name": "Fire Staff",
+          "name": "Fire Staff",
           "Type": "Rod",
           "Multiplier": 1,
           "Equipped By": [
@@ -1511,7 +1511,7 @@
           ]
         },
         {
-          "Name": "Salamand Sword",
+          "name": "Salamand Sword",
           "Type": "Sword",
           "Multiplier": 1,
           "Equipped By": [
@@ -1523,31 +1523,31 @@
       ],
       "Monsters": [
         {
-          "Name": "Firefly",
+          "name": "Firefly",
           "HP": 72,
           "Exp": 52,
           "Gil": 36
         },
         {
-          "Name": "Petit",
+          "name": "Petit",
           "HP": 45,
           "Exp": 80,
           "Gil": 54
         },
         {
-          "Name": "Lilliputian",
+          "name": "Lilliputian",
           "HP": 58,
           "Exp": 88,
           "Gil": 58
         },
         {
-          "Name": "Pugman",
+          "name": "Pugman",
           "HP": 109,
           "Exp": 144,
           "Gil": 96
         },
         {
-          "Name": "Djinn",
+          "name": "Djinn",
           "HP": 480,
           "Exp": 160,
           "Gil": 700
@@ -1577,14 +1577,14 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Blizzard",
+      "name": "Blizzard",
       "Type": "Black Magic",
       "Level": 1,
       "Effect": "Deal Ice damage",
       "effect_category": "damage",
       "Element": "Ice",
       "BasePower": 25,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 100,
       "Value": 50,
       "Reflectable": "Yes",
@@ -1592,7 +1592,7 @@
       "Weight": 1,
       "Weapons": [
         {
-          "Name": "Ice Staff",
+          "name": "Ice Staff",
           "Type": "Rod",
           "Multiplier": 1,
           "Equipped By": [
@@ -1604,7 +1604,7 @@
           ]
         },
         {
-          "Name": "Freezing Blade",
+          "name": "Freezing Blade",
           "Type": "Sword",
           "Multiplier": 1,
           "Equipped By": [
@@ -1616,31 +1616,31 @@
       ],
       "Monsters": [
         {
-          "Name": "Petit",
+          "name": "Petit",
           "HP": 45,
           "Exp": 80,
           "Gil": 54
         },
         {
-          "Name": "Lilliputian",
+          "name": "Lilliputian",
           "HP": 58,
           "Exp": 88,
           "Gil": 58
         },
         {
-          "Name": "Pugman",
+          "name": "Pugman",
           "HP": 109,
           "Exp": 144,
           "Gil": 96
         },
         {
-          "Name": "Manticore",
+          "name": "Manticore",
           "HP": 128,
           "Exp": 160,
           "Gil": 112
         },
         {
-          "Name": "Merman",
+          "name": "Merman",
           "HP": 136,
           "Exp": 180,
           "Gil": 118
@@ -1678,7 +1678,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Sleep",
+      "name": "Sleep",
       "Type": "Black Magic",
       "Level": 1,
       "Effect": "Inflict Sleep",
@@ -1694,7 +1694,7 @@
       "Weight": 1,
       "Items": [
         {
-          "Name": "Sheep Pillow",
+          "name": "Sheep Pillow",
           "Type": "Combat",
           "Price": null,
           "Value": 1000,
@@ -1704,7 +1704,7 @@
       ],
       "Monsters": [
         {
-          "Name": "Pugman",
+          "name": "Pugman",
           "HP": 109,
           "Exp": 144,
           "Gil": 96
@@ -1742,7 +1742,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Tornado",
+      "name": "Tornado",
       "Type": "White Magic",
       "Level": 8,
       "Effect": "Set target's HP to critical",
@@ -1757,13 +1757,13 @@
       "Weight": 10,
       "Monsters": [
         {
-          "Name": "Unei's Clone",
+          "name": "Unei's Clone",
           "HP": 1500,
           "Exp": 72,
           "Gil": 50
         },
         {
-          "Name": "Unei",
+          "name": "Unei",
           "HP": 4500,
           "Exp": 4000,
           "Gil": 4200
@@ -1783,7 +1783,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Arise",
+      "name": "Arise",
       "Type": "White Magic",
       "Level": 8,
       "Effect": "Revive from KO with full HP",
@@ -1812,14 +1812,14 @@
       ]
     },
     {
-      "Name": "Holy",
+      "name": "Holy",
       "Type": "White Magic",
       "Level": 8,
       "Effect": "Deal Holy damage",
       "effect_category": "damage",
       "Element": "Holy",
       "BasePower": 160,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 60000,
       "Value": 30000,
       "Reflectable": "Yes",
@@ -1827,7 +1827,7 @@
       "Weight": 7,
       "Items": [
         {
-          "Name": "White Musk",
+          "name": "White Musk",
           "Type": "Combat",
           "Price": null,
           "Value": 2500,
@@ -1849,7 +1849,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Curaja",
+      "name": "Curaja",
       "Type": "White Magic",
       "Level": 7,
       "Effect": "Restore target's HP",
@@ -1857,7 +1857,7 @@
       "field_heal_hp": 9999,
       "Element": "Recovery",
       "BasePower": 220,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 20000,
       "Value": 10000,
       "Reflectable": "No",
@@ -1882,7 +1882,7 @@
       ]
     },
     {
-      "Name": "Esuna",
+      "name": "Esuna",
       "Type": "White Magic",
       "Level": 7,
       "Effect": "Cure all status ailments",
@@ -1914,7 +1914,7 @@
       ]
     },
     {
-      "Name": "Reflect",
+      "name": "Reflect",
       "Type": "White Magic",
       "Level": 7,
       "Effect": "Grant Reflect",
@@ -1930,7 +1930,7 @@
       "Weight": 7,
       "Items": [
         {
-          "Name": "Shining Curtain",
+          "name": "Shining Curtain",
           "Type": "Combat",
           "Price": null,
           "Value": 2500,
@@ -1940,19 +1940,19 @@
       ],
       "Monsters": [
         {
-          "Name": "Unei's Clone",
+          "name": "Unei's Clone",
           "HP": 1500,
           "Exp": 72,
           "Gil": 50
         },
         {
-          "Name": "Unei",
+          "name": "Unei",
           "HP": 4500,
           "Exp": 4000,
           "Gil": 4200
         },
         {
-          "Name": "Guardian",
+          "name": "Guardian",
           "HP": 12000,
           "Exp": 5400,
           "Gil": 5600
@@ -1975,14 +1975,14 @@
       ]
     },
     {
-      "Name": "Aeroga",
+      "name": "Aeroga",
       "Type": "White Magic",
       "Level": 6,
       "Effect": "Deal Air and Ice damage",
       "effect_category": "damage",
       "Elements": "Air, Ice",
       "BasePower": 115,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 10000,
       "Value": 5000,
       "Reflectable": "Yes",
@@ -1990,7 +1990,7 @@
       "Weight": 6,
       "Items": [
         {
-          "Name": "Raven's Yawn",
+          "name": "Raven's Yawn",
           "Type": "Combat",
           "Price": null,
           "Value": 1500,
@@ -2017,7 +2017,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Stona",
+      "name": "Stona",
       "Type": "White Magic",
       "Level": 6,
       "Effect": "Cure Petrification and Partial Petrification",
@@ -2034,7 +2034,7 @@
       "Weight": 6,
       "Items": [
         {
-          "Name": "Gold Needle",
+          "name": "Gold Needle",
           "Type": "Anywhere",
           "Price": 300,
           "Value": 150,
@@ -2055,7 +2055,7 @@
       ]
     },
     {
-      "Name": "Haste",
+      "name": "Haste",
       "Type": "White Magic",
       "Level": 6,
       "Effect": "Enhance Accuracy and Attack Multiplier",
@@ -2071,7 +2071,7 @@
       "Weight": 5,
       "Items": [
         {
-          "Name": "Bacchus's Cider",
+          "name": "Bacchus's Cider",
           "Type": "Combat",
           "Price": null,
           "Value": 1500,
@@ -2096,7 +2096,7 @@
       ]
     },
     {
-      "Name": "Curaga",
+      "name": "Curaga",
       "Type": "White Magic",
       "Level": 5,
       "Effect": "Restore target's HP",
@@ -2104,7 +2104,7 @@
       "field_heal_hp": 400,
       "Element": "Recovery",
       "BasePower": 180,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 5000,
       "Value": 2500,
       "Reflectable": "No",
@@ -2137,7 +2137,7 @@
       ]
     },
     {
-      "Name": "Raise",
+      "name": "Raise",
       "Type": "White Magic",
       "Level": 5,
       "Effect": "Revive from KO",
@@ -2157,7 +2157,7 @@
       "Weight": 5,
       "Items": [
         {
-          "Name": "Phoenix Down",
+          "name": "Phoenix Down",
           "Type": "Anywhere",
           "Price": null,
           "Value": 1500,
@@ -2190,7 +2190,7 @@
       ]
     },
     {
-      "Name": "Protect",
+      "name": "Protect",
       "Type": "White Magic",
       "Level": 5,
       "Effect": "Enhance Defense and Magic Defense",
@@ -2206,7 +2206,7 @@
       "Weight": 4,
       "Items": [
         {
-          "Name": "Turtle Shell",
+          "name": "Turtle Shell",
           "Type": "Combat",
           "Price": null,
           "Value": 1500,
@@ -2216,7 +2216,7 @@
       ],
       "Weapons": [
         {
-          "Name": "Defender",
+          "name": "Defender",
           "Type": "Sword",
           "Multiplier": 1,
           "Equipped By": [
@@ -2227,13 +2227,13 @@
       ],
       "Monsters": [
         {
-          "Name": "Shadow Master",
+          "name": "Shadow Master",
           "HP": 2110,
           "Exp": 4400,
           "Gil": 4100
         },
         {
-          "Name": "Yormungand",
+          "name": "Yormungand",
           "HP": 2570,
           "Exp": 4600,
           "Gil": 4700
@@ -2256,13 +2256,13 @@
       ]
     },
     {
-      "Name": "Libra",
+      "name": "Libra",
       "Type": "White Magic",
       "Level": 4,
       "Effect": "View target's HP",
       "effect_category": "inspect",
       "BasePower": 0,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 3000,
       "Value": 1500,
       "Reflectable": "No",
@@ -2270,13 +2270,13 @@
       "Weight": 4,
       "Monsters": [
         {
-          "Name": "Xande's Clone",
+          "name": "Xande's Clone",
           "HP": 10000,
           "Exp": 3400,
           "Gil": 1550
         },
         {
-          "Name": "Xande",
+          "name": "Xande",
           "HP": 21000,
           "Exp": null,
           "Gil": null
@@ -2306,7 +2306,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Confuse",
+      "name": "Confuse",
       "Type": "White Magic",
       "Level": 4,
       "Effect": "Inflict Confusion",
@@ -2322,7 +2322,7 @@
       "Weight": 4,
       "Items": [
         {
-          "Name": "Lamia Scale",
+          "name": "Lamia Scale",
           "Type": "Combat",
           "Price": null,
           "Value": 1500,
@@ -2332,7 +2332,7 @@
       ],
       "Weapons": [
         {
-          "Name": "Faerie Claws",
+          "name": "Faerie Claws",
           "Type": "Nunchaku",
           "Multiplier": 1,
           "Equipped By": [
@@ -2365,7 +2365,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Silence",
+      "name": "Silence",
       "Type": "White Magic",
       "Level": 4,
       "Effect": "Inflict Silence",
@@ -2381,7 +2381,7 @@
       "Weight": 4,
       "Monsters": [
         {
-          "Name": "Petit Mage",
+          "name": "Petit Mage",
           "HP": 118,
           "Exp": 152,
           "Gil": 101
@@ -2411,7 +2411,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Cura",
+      "name": "Cura",
       "Type": "White Magic",
       "Level": 3,
       "Effect": "Restore target's HP",
@@ -2419,7 +2419,7 @@
       "field_heal_hp": 150,
       "Element": "Recovery",
       "BasePower": 125,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 1500,
       "Value": 750,
       "Reflectable": "No",
@@ -2429,13 +2429,13 @@
       "Weight": 3,
       "Monsters": [
         {
-          "Name": "Guardian",
+          "name": "Guardian",
           "HP": 12000,
           "Exp": 5400,
           "Gil": 5600
         },
         {
-          "Name": "Ahriman",
+          "name": "Ahriman",
           "HP": 35000,
           "Exp": 8000,
           "Gil": 7200
@@ -2477,7 +2477,7 @@
       ]
     },
     {
-      "Name": "Teleport",
+      "name": "Teleport",
       "Type": "White Magic",
       "Level": 3,
       "Effect": "Teleport to dungeon exit, or inflict KO in battle",
@@ -2494,7 +2494,7 @@
       "Weight": 3,
       "Items": [
         {
-          "Name": "Ottershroom",
+          "name": "Ottershroom",
           "Type": "Field",
           "Price": 2000,
           "Value": 1000,
@@ -2502,7 +2502,7 @@
           "Multiplier": null
         },
         {
-          "Name": "Black Hole",
+          "name": "Black Hole",
           "Type": "Combat",
           "Price": null,
           "Value": 2000,
@@ -2538,7 +2538,7 @@
       ]
     },
     {
-      "Name": "Blindna",
+      "name": "Blindna",
       "Type": "White Magic",
       "Level": 3,
       "Effect": "Cure Blind",
@@ -2554,7 +2554,7 @@
       "Weight": 3,
       "Items": [
         {
-          "Name": "Eye Drops",
+          "name": "Eye Drops",
           "Type": "Anywhere",
           "Price": 40,
           "Value": 20,
@@ -2592,14 +2592,14 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Aero",
+      "name": "Aero",
       "Type": "White Magic",
       "Level": 2,
       "Effect": "Deal Air and Ice damage",
       "effect_category": "damage",
       "Elements": "Air, Ice",
       "BasePower": 45,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 700,
       "Value": 350,
       "Reflectable": "Yes",
@@ -2607,7 +2607,7 @@
       "Weight": 2,
       "Weapons": [
         {
-          "Name": "Wyvern Claws",
+          "name": "Wyvern Claws",
           "Type": "Nunchaku",
           "Multiplier": 1,
           "Equipped By": [
@@ -2616,7 +2616,7 @@
           ]
         },
         {
-          "Name": "Wind Spear",
+          "name": "Wind Spear",
           "Type": "Spear",
           "Multiplier": 1,
           "Equipped By": [
@@ -2625,7 +2625,7 @@
           ]
         },
         {
-          "Name": "Air Knife",
+          "name": "Air Knife",
           "Type": "Knife",
           "Multiplier": 1,
           "Equipped By": [
@@ -2658,7 +2658,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Toad",
+      "name": "Toad",
       "Type": "White Magic",
       "Level": 2,
       "Effect": "Turn target into a toad",
@@ -2666,7 +2666,7 @@
       "status_ailment": "Toad",
       "StatusAilment": "Toad",
       "BasePower": 0,
-      "BaseAccuracy": 0.0,
+      "BaseAccuracy": 0,
       "Price": 700,
       "Value": 350,
       "Reflectable": "No",
@@ -2674,13 +2674,13 @@
       "Weight": 2,
       "Monsters": [
         {
-          "Name": "Far Darrig",
+          "name": "Far Darrig",
           "HP": 111,
           "Exp": 144,
           "Gil": 98
         },
         {
-          "Name": "Sleipnir",
+          "name": "Sleipnir",
           "HP": 1000,
           "Exp": 4000,
           "Gil": 3100
@@ -2712,7 +2712,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Mini",
+      "name": "Mini",
       "Type": "White Magic",
       "Level": 2,
       "Effect": "Miniaturize target",
@@ -2720,7 +2720,7 @@
       "status_ailment": "Mini",
       "StatusAilment": "Mini",
       "BasePower": 0,
-      "BaseAccuracy": 0.0,
+      "BaseAccuracy": 0,
       "Price": 700,
       "Value": 350,
       "Reflectable": "No",
@@ -2752,7 +2752,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Cure",
+      "name": "Cure",
       "Type": "White Magic",
       "Level": 1,
       "Effect": "Restore target's HP",
@@ -2760,7 +2760,7 @@
       "field_heal_hp": 50,
       "Element": "Recovery",
       "BasePower": 42,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 100,
       "Value": 50,
       "Reflectable": "No",
@@ -2770,7 +2770,7 @@
       "Weight": 1,
       "Weapons": [
         {
-          "Name": "Elder Staff",
+          "name": "Elder Staff",
           "Type": "Rod",
           "Multiplier": 1,
           "Equipped By": [
@@ -2810,7 +2810,7 @@
       ]
     },
     {
-      "Name": "Poisona",
+      "name": "Poisona",
       "Type": "White Magic",
       "Level": 1,
       "Effect": "Cure Poison",
@@ -2828,7 +2828,7 @@
       "Weight": 1,
       "Items": [
         {
-          "Name": "Antidote",
+          "name": "Antidote",
           "Type": "Anywhere",
           "Price": 80,
           "Value": 40,
@@ -2852,13 +2852,13 @@
       ]
     },
     {
-      "Name": "Sight",
+      "name": "Sight",
       "Type": "White Magic",
       "Level": 1,
       "Effect": "View local map",
       "effect_category": "field_utility",
       "BasePower": 0,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 100,
       "Value": 50,
       "Reflectable": "No",
@@ -2866,7 +2866,7 @@
       "Weight": 1,
       "Items": [
         {
-          "Name": "Gnomish Bread",
+          "name": "Gnomish Bread",
           "Type": "Field",
           "Price": 200,
           "Value": 100,
@@ -2892,7 +2892,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Bahamut",
+      "name": "Bahamut",
       "Type": "Summon Magic",
       "Level": 8,
       "Effect": "Summon Bahamut",
@@ -2902,7 +2902,7 @@
       "Reflectable": "No",
       "Spells": [
         {
-          "Name": "Bahamut: Aura",
+          "name": "Bahamut: Aura",
           "Type": "Summon",
           "Level": 8,
           "Power": null,
@@ -2923,7 +2923,7 @@
           "parent_spell_name": "Bahamut"
         },
         {
-          "Name": "Bahamut: Rend",
+          "name": "Bahamut: Rend",
           "Type": "Summon",
           "Level": 8,
           "Power": 144,
@@ -2940,7 +2940,7 @@
           "parent_spell_name": "Bahamut"
         },
         {
-          "Name": "Bahamut: Mega Flare",
+          "name": "Bahamut: Mega Flare",
           "Type": "Summon",
           "Level": 8,
           "Power": 255,
@@ -2981,7 +2981,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Leviathan",
+      "name": "Leviathan",
       "Type": "Summon Magic",
       "Level": 7,
       "Effect": "Summon Leviathan",
@@ -2991,7 +2991,7 @@
       "Reflectable": "No",
       "Spells": [
         {
-          "Name": "Leviathan: Demon Eye",
+          "name": "Leviathan: Demon Eye",
           "Type": "Summon",
           "Level": 7,
           "Power": null,
@@ -3013,7 +3013,7 @@
           "parent_spell_name": "Leviathan"
         },
         {
-          "Name": "Leviathan: Cyclone",
+          "name": "Leviathan: Cyclone",
           "Type": "Summon",
           "Level": 7,
           "Power": 133,
@@ -3030,7 +3030,7 @@
           "parent_spell_name": "Leviathan"
         },
         {
-          "Name": "Leviathan: Tidal Wave",
+          "name": "Leviathan: Tidal Wave",
           "Type": "Summon",
           "Level": 7,
           "Power": 202,
@@ -3071,7 +3071,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Odin",
+      "name": "Odin",
       "Type": "Summon Magic",
       "Level": 6,
       "Effect": "Summon Odin",
@@ -3081,7 +3081,7 @@
       "Reflectable": "No",
       "Spells": [
         {
-          "Name": "Odin: Protective Light",
+          "name": "Odin: Protective Light",
           "Type": "Summon",
           "Level": 6,
           "Power": null,
@@ -3102,7 +3102,7 @@
           "parent_spell_name": "Odin"
         },
         {
-          "Name": "Odin: Slash",
+          "name": "Odin: Slash",
           "Type": "Summon",
           "Level": 6,
           "Power": 117,
@@ -3119,7 +3119,7 @@
           "parent_spell_name": "Odin"
         },
         {
-          "Name": "Odin: Zantetsuken",
+          "name": "Odin: Zantetsuken",
           "Type": "Summon",
           "Level": 6,
           "Power": 195,
@@ -3160,7 +3160,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Titan",
+      "name": "Titan",
       "Type": "Summon Magic",
       "Level": 5,
       "Effect": "Summon Titan",
@@ -3170,7 +3170,7 @@
       "Reflectable": "No",
       "Spells": [
         {
-          "Name": "Titan: Clobber",
+          "name": "Titan: Clobber",
           "Type": "Summon",
           "Level": 5,
           "Power": 101,
@@ -3187,7 +3187,7 @@
           "parent_spell_name": "Titan"
         },
         {
-          "Name": "Titan: Stomp",
+          "name": "Titan: Stomp",
           "Type": "Summon",
           "Level": 5,
           "Power": 106,
@@ -3204,7 +3204,7 @@
           "parent_spell_name": "Titan"
         },
         {
-          "Name": "Titan: Earthen Fury",
+          "name": "Titan: Earthen Fury",
           "Type": "Summon",
           "Level": 5,
           "Power": 160,
@@ -3241,7 +3241,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Ifrit",
+      "name": "Ifrit",
       "Type": "Summon Magic",
       "Level": 4,
       "Effect": "Summon Ifrit",
@@ -3251,7 +3251,7 @@
       "Reflectable": "No",
       "Spells": [
         {
-          "Name": "Ifrit: Healing Light",
+          "name": "Ifrit: Healing Light",
           "Type": "Summon",
           "Level": 4,
           "Power": 90,
@@ -3272,7 +3272,7 @@
           "parent_spell_name": "Ifrit"
         },
         {
-          "Name": "Ifrit: Hellfire",
+          "name": "Ifrit: Hellfire",
           "Type": "Summon",
           "Level": 4,
           "Power": 85,
@@ -3289,7 +3289,7 @@
           "parent_spell_name": "Ifrit"
         },
         {
-          "Name": "Ifrit: Inferno",
+          "name": "Ifrit: Inferno",
           "Type": "Summon",
           "Level": 4,
           "Power": 128,
@@ -3326,7 +3326,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Ramuh",
+      "name": "Ramuh",
       "Type": "Summon Magic",
       "Level": 3,
       "Effect": "Summon Ramuh",
@@ -3336,7 +3336,7 @@
       "Reflectable": "No",
       "Spells": [
         {
-          "Name": "Ramuh: Mind Blast",
+          "name": "Ramuh: Mind Blast",
           "Type": "Summon",
           "Level": 3,
           "Power": null,
@@ -3358,7 +3358,7 @@
           "parent_spell_name": "Ramuh"
         },
         {
-          "Name": "Ramuh: Thunderstorm",
+          "name": "Ramuh: Thunderstorm",
           "Type": "Summon",
           "Level": 3,
           "Power": 48,
@@ -3375,7 +3375,7 @@
           "parent_spell_name": "Ramuh"
         },
         {
-          "Name": "Ramuh: Judgment Bolt",
+          "name": "Ramuh: Judgment Bolt",
           "Type": "Summon",
           "Level": 3,
           "Power": 96,
@@ -3412,7 +3412,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Shiva",
+      "name": "Shiva",
       "Type": "Summon Magic",
       "Level": 2,
       "Effect": "Summon Shiva",
@@ -3422,7 +3422,7 @@
       "Reflectable": "No",
       "Spells": [
         {
-          "Name": "Shiva: Mesmerize",
+          "name": "Shiva: Mesmerize",
           "Type": "Summon",
           "Level": 2,
           "Power": null,
@@ -3444,7 +3444,7 @@
           "parent_spell_name": "Shiva"
         },
         {
-          "Name": "Shiva: Icy Stare",
+          "name": "Shiva: Icy Stare",
           "Type": "Summon",
           "Level": 2,
           "Power": 53,
@@ -3461,7 +3461,7 @@
           "parent_spell_name": "Shiva"
         },
         {
-          "Name": "Shiva: Diamond Dust",
+          "name": "Shiva: Diamond Dust",
           "Type": "Summon",
           "Level": 2,
           "Power": 32,
@@ -3498,7 +3498,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Chocobo",
+      "name": "Chocobo",
       "Type": "Summon Magic",
       "Level": 1,
       "Effect": "Summon Chocobo",
@@ -3508,7 +3508,7 @@
       "Reflectable": "No",
       "Spells": [
         {
-          "Name": "Chocobo: Chocobo Dash",
+          "name": "Chocobo: Chocobo Dash",
           "Type": "Summon",
           "Level": 1,
           "Power": null,
@@ -3525,7 +3525,7 @@
           "parent_spell_name": "Chocobo"
         },
         {
-          "Name": "Chocobo: Chocobo Kick?",
+          "name": "Chocobo: Chocobo Kick?",
           "Type": "Summon",
           "Level": 1,
           "Power": null,
@@ -3542,7 +3542,7 @@
           "parent_spell_name": "Chocobo"
         },
         {
-          "Name": "Chocobo: Chocobo Kick",
+          "name": "Chocobo: Chocobo Kick",
           "Type": "Summon",
           "Level": 1,
           "Power": 16,
@@ -3579,19 +3579,19 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Recovery",
+      "name": "Recovery",
       "Type": "Item Magic",
       "Level": 1,
       "Effect": "Restore target's HP",
       "Element": "Recovery",
       "BasePower": 30,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Reflectable": "No",
       "Target": "One Enemy",
       "Weight": 0,
       "Items": [
         {
-          "Name": "Potion",
+          "name": "Potion",
           "Type": "Anywhere",
           "Price": 150,
           "Value": 75,
@@ -3599,7 +3599,7 @@
           "Multiplier": 3
         },
         {
-          "Name": "Hi Potion",
+          "name": "Hi Potion",
           "Type": "Anywhere",
           "Price": 1200,
           "Value": 600,
@@ -3611,18 +3611,18 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Elixir",
+      "name": "Elixir",
       "Type": "Item Magic",
       "Level": 1,
       "Effect": "Restore target to full HP and MP",
       "BasePower": 0,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Reflectable": "No",
       "Target": "One Enemy",
       "Weight": 0,
       "Items": [
         {
-          "Name": "Elixir",
+          "name": "Elixir",
           "Type": "Anywhere",
           "Price": null,
           "Value": 1500,
@@ -3634,20 +3634,20 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Echo Herbs",
+      "name": "Echo Herbs",
       "Type": "Item Magic",
       "Level": 1,
       "Effect": "Cure Silence",
       "Element": "Recovery",
       "StatusAilment": "Silence",
       "BasePower": 0,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Reflectable": "No",
       "Target": "One Enemy",
       "Weight": 0,
       "Items": [
         {
-          "Name": "Echo Herbs",
+          "name": "Echo Herbs",
           "Type": "Anywhere",
           "Price": 100,
           "Value": 50,
@@ -3659,20 +3659,20 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Mallet",
+      "name": "Mallet",
       "Type": "Item Magic",
       "Level": 1,
       "Effect": "Cure or inflict Mini",
       "Element": "Recovery",
       "StatusAilment": "Mini",
       "BasePower": 0,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Reflectable": "No",
       "Target": "One Enemy",
       "Weight": 0,
       "Items": [
         {
-          "Name": "Mallet",
+          "name": "Mallet",
           "Type": "Anywhere",
           "Price": 100,
           "Value": 50,
@@ -3684,20 +3684,20 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Maiden'S Kiss",
+      "name": "Maiden'S Kiss",
       "Type": "Item Magic",
       "Level": 1,
       "Effect": "Cure Toad",
       "Element": "Recovery",
       "StatusAilment": "Toad",
       "BasePower": 0,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Reflectable": "No",
       "Target": "One Enemy",
       "Weight": 0,
       "Items": [
         {
-          "Name": "Maiden's Kiss",
+          "name": "Maiden's Kiss",
           "Type": "Anywhere",
           "Price": 100,
           "Value": 50,
@@ -3709,12 +3709,12 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Zantetsuken",
+      "name": "Zantetsuken",
       "Type": "Black Magic (used only by monsters)",
       "Level": 8,
       "Effect": "Deal damage",
       "BasePower": 32,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Reflectable": "No",
       "Target": "All Enemies",
       "Weight": 8,
@@ -3722,55 +3722,55 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Flame",
+      "name": "Flame",
       "Type": "Black Magic (used only by monsters)",
       "Level": 6,
       "Effect": "Deal Fire damage",
       "Element": "Fire",
       "BasePower": 40,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Reflectable": "Yes",
       "Target": "All Enemies",
       "Weight": 6,
       "Monsters": [
         {
-          "Name": "Dragon",
+          "name": "Dragon",
           "HP": 480,
           "Exp": 2000,
           "Gil": 700
         },
         {
-          "Name": "Xande's Clone",
+          "name": "Xande's Clone",
           "HP": 10000,
           "Exp": 3400,
           "Gil": 1550
         },
         {
-          "Name": "Amon",
+          "name": "Amon",
           "HP": 7040,
           "Exp": 4200,
           "Gil": 3450
         },
         {
-          "Name": "Azer",
+          "name": "Azer",
           "HP": 1570,
           "Exp": 4400,
           "Gil": 3700
         },
         {
-          "Name": "Salamander",
+          "name": "Salamander",
           "HP": 2100,
           "Exp": 700,
           "Gil": 1800
         },
         {
-          "Name": "Xande",
+          "name": "Xande",
           "HP": 21000,
           "Exp": null,
           "Gil": null
         },
         {
-          "Name": "Ahriman",
+          "name": "Ahriman",
           "HP": 35000,
           "Exp": 8000,
           "Gil": 7200
@@ -3780,31 +3780,31 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Snowstorm",
+      "name": "Snowstorm",
       "Type": "Black Magic (used only by monsters)",
       "Level": 3,
       "Effect": "Deal Ice damage",
       "Element": "Ice",
       "BasePower": 40,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Reflectable": "Yes",
       "Target": "All Enemies",
       "Weight": 3,
       "Monsters": [
         {
-          "Name": "Unei's Clone",
+          "name": "Unei's Clone",
           "HP": 1500,
           "Exp": 72,
           "Gil": 50
         },
         {
-          "Name": "Unei",
+          "name": "Unei",
           "HP": 4500,
           "Exp": 4000,
           "Gil": 4200
         },
         {
-          "Name": "Ahriman",
+          "name": "Ahriman",
           "HP": 35000,
           "Exp": 8000,
           "Gil": 7200
@@ -3814,49 +3814,49 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Lightning",
+      "name": "Lightning",
       "Type": "Black Magic (used only by monsters)",
       "Level": 3,
       "Effect": "Deal Lightning damage",
       "Element": "Lightning",
       "BasePower": 40,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Reflectable": "Yes",
       "Target": "All Enemies",
       "Weight": 3,
       "Monsters": [
         {
-          "Name": "Chimera Mage",
+          "name": "Chimera Mage",
           "HP": 420,
           "Exp": 1640,
           "Gil": 615
         },
         {
-          "Name": "Haokah",
+          "name": "Haokah",
           "HP": 1010,
           "Exp": 4000,
           "Gil": 3200
         },
         {
-          "Name": "Thor",
+          "name": "Thor",
           "HP": 2180,
           "Exp": 4800,
           "Gil": 4800
         },
         {
-          "Name": "Garuda",
+          "name": "Garuda",
           "HP": 5000,
           "Exp": 2200,
           "Gil": 3400
         },
         {
-          "Name": "Cerberus",
+          "name": "Cerberus",
           "HP": 23000,
           "Exp": 5800,
           "Gil": 6400
         },
         {
-          "Name": "Ahriman",
+          "name": "Ahriman",
           "HP": 35000,
           "Exp": 8000,
           "Gil": 7200
@@ -3866,13 +3866,13 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Earthquake",
+      "name": "Earthquake",
       "Type": "Black Magic (used only by monsters)",
       "Level": 7,
       "Effect": "Deal Earth damage",
       "Element": "Earth",
       "BasePower": 80,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Reflectable": "No",
       "Target": "All Enemies",
       "Weight": 7,
@@ -3880,7 +3880,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Stare",
+      "name": "Stare",
       "Type": "Black Magic (used only by monsters)",
       "Level": 7,
       "Effect": "Inflict Petrification",
@@ -3893,7 +3893,7 @@
       "Weight": 7,
       "Monsters": [
         {
-          "Name": "Stalagmite",
+          "name": "Stalagmite",
           "HP": 130,
           "Exp": 160,
           "Gil": 115
@@ -3903,12 +3903,12 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Tidal Wave",
+      "name": "Tidal Wave",
       "Type": "Black Magic (used only by monsters)",
       "Level": 7,
       "Effect": "Deal damage",
       "BasePower": 37,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Reflectable": "No",
       "Target": "All Enemies",
       "Weight": 7,
@@ -3916,24 +3916,24 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Particle Beam",
+      "name": "Particle Beam",
       "Type": "Black Magic (used only by monsters)",
       "Level": 7,
       "Effect": "Deal damage",
       "BasePower": 80,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Reflectable": "No",
       "Target": "All Enemies",
       "Weight": 7,
       "Monsters": [
         {
-          "Name": "Cloud of Darkness",
+          "name": "Cloud of Darkness",
           "HP": 45000,
           "Exp": null,
           "Gil": null
         },
         {
-          "Name": "Cloud of Darkness",
+          "name": "Cloud of Darkness",
           "HP": 65000,
           "Exp": null,
           "Gil": null
@@ -3943,30 +3943,30 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Self Destruct",
+      "name": "Self Destruct",
       "Type": "Black Magic (used only by monsters)",
       "Level": 3,
       "Effect": "Explode for 4×HP damage if not at max HP",
       "BasePower": 0,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Reflectable": "No",
       "Target": "One Enemy",
       "Weight": 3,
       "Monsters": [
         {
-          "Name": "Bomb",
+          "name": "Bomb",
           "HP": 125,
           "Exp": 160,
           "Gil": 110
         },
         {
-          "Name": "Balloon",
+          "name": "Balloon",
           "HP": 143,
           "Exp": 180,
           "Gil": 125
         },
         {
-          "Name": "Grenade",
+          "name": "Grenade",
           "HP": 870,
           "Exp": 3800,
           "Gil": 1900
@@ -3976,7 +3976,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Glare",
+      "name": "Glare",
       "Type": "Black Magic (used only by monsters)",
       "Level": 1,
       "Effect": "Inflict Sleep",
@@ -3990,7 +3990,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Bad Breath",
+      "name": "Bad Breath",
       "Type": "Black Magic (used only by monsters)",
       "Level": 4,
       "Effect": "Inflict Paralysis",
@@ -4002,25 +4002,25 @@
       "Weight": 4,
       "Monsters": [
         {
-          "Name": "Parademon",
+          "name": "Parademon",
           "HP": 145,
           "Exp": 108,
           "Gil": 72
         },
         {
-          "Name": "Barometz",
+          "name": "Barometz",
           "HP": 220,
           "Exp": 132,
           "Gil": 88
         },
         {
-          "Name": "Ruinous Wave",
+          "name": "Ruinous Wave",
           "HP": 140,
           "Exp": 180,
           "Gil": 120
         },
         {
-          "Name": "Black Flan",
+          "name": "Black Flan",
           "HP": 240,
           "Exp": 440,
           "Gil": 260
@@ -4030,7 +4030,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Mind Blast",
+      "name": "Mind Blast",
       "Type": "Black Magic (used only by monsters)",
       "Level": 4,
       "Effect": "Inflict Paralysis",
@@ -4044,25 +4044,25 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Summon",
+      "name": "Summon",
       "Type": "Monster Ability",
       "Level": 1,
       "Effect": "Summon another monster",
       "effect_category": "monster_utility",
       "battle_behavior": "enemy_summon",
       "BasePower": 0,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Reflectable": "No",
       "Weight": 3,
       "Monsters": [
         {
-          "Name": "Greater Demon",
+          "name": "Greater Demon",
           "HP": 2250,
           "Exp": 3800,
           "Gil": 2400
         },
         {
-          "Name": "Bluck",
+          "name": "Bluck",
           "HP": 1760,
           "Exp": 4200,
           "Gil": 3600
@@ -4072,12 +4072,12 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Mega Flare",
+      "name": "Mega Flare",
       "Type": "Black Magic (used only by monsters)",
       "Level": 8,
       "Effect": "Deal damage",
       "BasePower": 80,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Reflectable": "Yes",
       "Target": "All Enemies",
       "Weight": 8,
@@ -4085,26 +4085,26 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Barrier Shift",
+      "name": "Barrier Shift",
       "Type": "Black Magic (used only by monsters)",
       "Level": 4,
       "Effect": "Change elemental weakness",
       "effect_category": "monster_utility",
       "battle_behavior": "barrier_shift",
       "BasePower": 0,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Reflectable": "No",
       "Target": "One Enemy",
       "Weight": 4,
       "Monsters": [
         {
-          "Name": "Amon",
+          "name": "Amon",
           "HP": 7040,
           "Exp": 4200,
           "Gil": 3450
         },
         {
-          "Name": "Hein",
+          "name": "Hein",
           "HP": 1600,
           "Exp": 1040,
           "Gil": 2100
@@ -4114,24 +4114,24 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Divide",
+      "name": "Divide",
       "Type": "Black Magic (used only by monsters)",
       "Level": 4,
       "Effect": "Create new monster with same HP",
       "BasePower": 0,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Reflectable": "No",
       "Target": "One Enemy",
       "Weight": 4,
       "Monsters": [
         {
-          "Name": "Azrael",
+          "name": "Azrael",
           "HP": 1100,
           "Exp": 320,
           "Gil": 940
         },
         {
-          "Name": "Eater",
+          "name": "Eater",
           "HP": 1150,
           "Exp": 320,
           "Gil": 945
@@ -4141,13 +4141,13 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Earthquake",
+      "name": "Earthquake",
       "Type": "Black Magic (used only by monsters)",
       "Level": 7,
       "Effect": "Deal Earth damage",
       "Element": "Earth",
       "BasePower": 80,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Reflectable": "No",
       "Target": "All Enemies",
       "Weight": 7,
@@ -4155,7 +4155,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Quicksand",
+      "name": "Quicksand",
       "Type": "Terrain Effect (Black Magic)",
       "BaseTerrain": "Desert",
       "Level": 1,
@@ -4173,7 +4173,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Wind Slash",
+      "name": "Wind Slash",
       "Type": "Terrain Effect (Black Magic)",
       "BaseTerrain": "Forest",
       "Level": 1,
@@ -4213,7 +4213,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Sinkhole",
+      "name": "Sinkhole",
       "Type": "Terrain Effect (Black Magic)",
       "BaseTerrain": "Marsh",
       "Level": 1,
@@ -4234,7 +4234,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Torrent",
+      "name": "Torrent",
       "Type": "Terrain Effect (Black Magic)",
       "BaseTerrain": "River",
       "Level": 1,
@@ -4263,7 +4263,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Whirlpool",
+      "name": "Whirlpool",
       "Type": "Terrain Effect (Black Magic)",
       "BaseTerrain": "Ocean",
       "Level": 1,
@@ -4293,7 +4293,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Cyclone",
+      "name": "Cyclone",
       "Type": "Terrain Effect (Black Magic)",
       "BaseTerrain": "Sky",
       "Level": 1,
@@ -4311,7 +4311,7 @@
       "default_target_side": "Enemy"
     },
     {
-      "Name": "Cave In",
+      "name": "Cave In",
       "Type": "Terrain Effect (Black Magic)",
       "Level": 1,
       "Effect": "Deal Earth damage",

@@ -10,7 +10,7 @@
       "name": "Kaiser Knuckles",
       "Type": "Nunchaku",
       "BasePower": 36,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 7000,
       "Value": 3500,
       "Weight": 0,
@@ -29,7 +29,7 @@
       "name": "Cat Claws",
       "Type": "Nunchaku",
       "BasePower": 42,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Value": 7000,
       "Weight": 0,
       "EquippedBy": [
@@ -49,7 +49,7 @@
       "name": "Wyvern Claws",
       "Type": "Nunchaku",
       "BasePower": 48,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Value": 9000,
       "SpellCast": "Aero",
       "Elements": "Fire, Lightning",
@@ -71,7 +71,7 @@
       "name": "Faerie Claws",
       "Type": "Nunchaku",
       "BasePower": 37,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Value": 9000,
       "SpellCast": "Confuse",
       "Weight": 0,
@@ -92,7 +92,7 @@
       "name": "Hellish Claws",
       "Type": "Nunchaku",
       "BasePower": 60,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Value": 20000,
       "StatusAilment": "Poison",
       "Element": "Dark",
@@ -972,7 +972,7 @@
       "name": "Main Gauche",
       "Type": "Knife",
       "BasePower": 30,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 7000,
       "Value": 3500,
       "Weight": 0,
@@ -1005,7 +1005,7 @@
       "name": "Orichalcum",
       "Type": "Knife",
       "BasePower": 45,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Value": 6000,
       "Element": "Recovery",
       "Weight": 0,
@@ -1033,7 +1033,7 @@
       "name": "Air Knife",
       "Type": "Knife",
       "BasePower": 60,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Value": 5000,
       "SpellCast": "Aero",
       "Element": "Air",
@@ -1533,7 +1533,7 @@
       "name": "Ragnarok",
       "Type": "Sword",
       "BasePower": 180,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Value": 32750,
       "Element": "Dark",
       "Weight": 1,
@@ -1560,7 +1560,7 @@
       "name": "Onion Sword",
       "Type": "Sword",
       "BasePower": 200,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Value": 32750,
       "Weight": 1,
       "Bonus": {
@@ -1573,21 +1573,21 @@
       ],
       "Monsters": [
         {
-          "Name": "Red Dragon",
+          "name": "Red Dragon",
           "HP": "15,000",
           "Gil": "5,800 gil",
           "Steal Rate": "-",
           "Drop Chance": "23.4%"
         },
         {
-          "Name": "Green Dragon",
+          "name": "Green Dragon",
           "HP": "10,000",
           "Gil": "2,900 gil",
           "Steal Rate": "-",
           "Drop Chance": "1.6%"
         },
         {
-          "Name": "Yellow Dragon",
+          "name": "Yellow Dragon",
           "HP": "10,000",
           "Gil": "5,400 gil",
           "Steal Rate": "-",
@@ -1599,7 +1599,7 @@
       "name": "Ashura",
       "Type": "Dark Blade",
       "BasePower": 65,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 20000,
       "Value": 10000,
       "Weight": 1,
@@ -1660,7 +1660,7 @@
       "name": "Kiku Ichimonji",
       "Type": "Dark Blade",
       "BasePower": 125,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Value": 11000,
       "Element": "Dark",
       "Weight": 1,
@@ -1901,7 +1901,7 @@
       "name": "Shuriken",
       "Type": "Shuriken",
       "BasePower": 200,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 65500,
       "Value": 32750,
       "LongRange": "This weapon has full accuracy when used in the back row",
@@ -1999,7 +1999,7 @@
       "name": "Rune Bell",
       "Type": "Bell",
       "BasePower": 40,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 5500,
       "Value": 2750,
       "Weight": 0,
@@ -2069,7 +2069,7 @@
       "name": "Loki Harp",
       "Type": "Harp",
       "BasePower": 60,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 40000,
       "Value": 20000,
       "Two-Handed": "This weapon requires both hands to wield",
@@ -2213,7 +2213,7 @@
       "name": "Yoichi Bow",
       "Type": "Bow",
       "BasePower": 50,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 42000,
       "Value": 21000,
       "Weight": 1,
@@ -2248,14 +2248,14 @@
       ],
       "Monsters": [
         {
-          "Name": "Demon",
+          "name": "Demon",
           "HP": "171",
           "Gil": "158 gil",
           "Steal Rate": "18.8%",
           "Drop Chance": "1.2%"
         },
         {
-          "Name": "Parademon",
+          "name": "Parademon",
           "HP": "145",
           "Gil": "72 gil",
           "Steal Rate": "18.8%",
@@ -2302,14 +2302,14 @@
       ],
       "Monsters": [
         {
-          "Name": "Demon",
+          "name": "Demon",
           "HP": "171",
           "Gil": "158 gil",
           "Steal Rate": "18.8%",
           "Drop Chance": "1.2%"
         },
         {
-          "Name": "Parademon",
+          "name": "Parademon",
           "HP": "145",
           "Gil": "72 gil",
           "Steal Rate": "18.8%",
@@ -2355,14 +2355,14 @@
       ],
       "Monsters": [
         {
-          "Name": "Demon",
+          "name": "Demon",
           "HP": "171",
           "Gil": "158 gil",
           "Steal Rate": "18.8%",
           "Drop Chance": "1.2%"
         },
         {
-          "Name": "Parademon",
+          "name": "Parademon",
           "HP": "145",
           "Gil": "72 gil",
           "Steal Rate": "18.8%",
@@ -2400,14 +2400,14 @@
       ],
       "Monsters": [
         {
-          "Name": "Demon",
+          "name": "Demon",
           "HP": "171",
           "Gil": "158 gil",
           "Steal Rate": "43.8%",
           "Drop Chance": "1.2%"
         },
         {
-          "Name": "Parademon",
+          "name": "Parademon",
           "HP": "145",
           "Gil": "72 gil",
           "Steal Rate": "43.8%",
@@ -2445,14 +2445,14 @@
       ],
       "Monsters": [
         {
-          "Name": "Demon",
+          "name": "Demon",
           "HP": "171",
           "Gil": "158 gil",
           "Steal Rate": "-",
           "Drop Chance": "0.6%"
         },
         {
-          "Name": "Parademon",
+          "name": "Parademon",
           "HP": "145",
           "Gil": "72 gil",
           "Steal Rate": "-",
@@ -2490,14 +2490,14 @@
       ],
       "Monsters": [
         {
-          "Name": "Demon",
+          "name": "Demon",
           "HP": "171",
           "Gil": "158 gil",
           "Steal Rate": "-",
           "Drop Chance": "0.6%"
         },
         {
-          "Name": "Parademon",
+          "name": "Parademon",
           "HP": "145",
           "Gil": "72 gil",
           "Steal Rate": "-",
@@ -2523,7 +2523,7 @@
       "name": "Medusa Arrow",
       "Type": "Bow",
       "BasePower": 20,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Value": 50,
       "StatusAilment": "Petrification",
       "Element": "Earth",
@@ -2535,14 +2535,14 @@
       ],
       "Monsters": [
         {
-          "Name": "Demon",
+          "name": "Demon",
           "HP": "171",
           "Gil": "158 gil",
           "Steal Rate": "-",
           "Drop Chance": "0.3%"
         },
         {
-          "Name": "Parademon",
+          "name": "Parademon",
           "HP": "145",
           "Gil": "72 gil",
           "Steal Rate": "-",
@@ -2568,7 +2568,7 @@
       "name": "Yoichi Arrow",
       "Type": "Bow",
       "BasePower": 70,
-      "BaseAccuracy": 1.0,
+      "BaseAccuracy": 1,
       "Price": 200,
       "Value": 100,
       "Weight": 0,
@@ -2579,14 +2579,14 @@
       ],
       "Monsters": [
         {
-          "Name": "Demon",
+          "name": "Demon",
           "HP": "171",
           "Gil": "158 gil",
           "Steal Rate": "-",
           "Drop Chance": "0.1%"
         },
         {
-          "Name": "Parademon",
+          "name": "Parademon",
           "HP": "145",
           "Gil": "72 gil",
           "Steal Rate": "-",

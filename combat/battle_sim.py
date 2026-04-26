@@ -242,7 +242,8 @@ def _plan_enemy_action(
         (
             spell
             for spell in spells
-            if normalize_text_basic(spell.get("Name") or "") == "barrier shift"
+            if normalize_text_basic(spell.get("name") or spell.get("Name") or "")
+            == "barrier shift"
         ),
         None,
     )
@@ -268,7 +269,7 @@ def _plan_enemy_action(
                 enemy_json["_battle_barrier_shift_applied_this_round"] = True
                 return PlannedEnemyAction(
                     kind="special",
-                    spell_name=barrier_spell.get("Name"),
+                    spell_name=barrier_spell.get("name") or barrier_spell.get("Name"),
                     spell_json=barrier_spell,
                 )
 
@@ -304,7 +305,7 @@ def _plan_enemy_action(
             return PlannedEnemyAction(kind="normal")
         return PlannedEnemyAction(
             kind="special",
-            spell_name=spell_def.get("Name"),
+            spell_name=spell_def.get("name") or spell_def.get("Name"),
             spell_json=spell_def,
         )
 
@@ -326,7 +327,7 @@ def _plan_enemy_action(
 
     return PlannedEnemyAction(
         kind="special",
-        spell_name=spell_def.get("Name"),
+        spell_name=spell_def.get("name") or spell_def.get("Name"),
         spell_json=spell_def,
     )
 
@@ -336,7 +337,9 @@ def _is_summon_enemy_action(action: Optional[PlannedEnemyAction]) -> bool:
         return False
     spell_name = ""
     if action.spell_json is not None:
-        spell_name = str(action.spell_json.get("Name") or "")
+        spell_name = str(
+            action.spell_json.get("name") or action.spell_json.get("Name") or ""
+        )
     if not spell_name:
         spell_name = str(action.spell_name or "")
     return normalize_text_basic(spell_name) == "summon"

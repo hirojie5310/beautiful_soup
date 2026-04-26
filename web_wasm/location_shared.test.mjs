@@ -2,10 +2,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  addPurchasedItemToInventory,
+  buildSpellLevelByName,
   clearStoredLocationSelection,
   LOCAL_LOCATION_SELECTION_KEY,
   LOCAL_SAVE_STORAGE_KEY,
   getStoredLocationSelection,
+  syncMenuStateAfterPurchase,
   syncStoredLocationSelection,
 } from "./location_shared.js";
 import { makeSaveEnvelope, restoreSaveEnvelopeFromStorage } from "./shared_storage.js";
@@ -91,4 +94,48 @@ test("clearStoredLocationSelection removes persisted location choice", () => {
     selected_location_group: "",
     selected_location: "",
   });
+});
+
+test("buildSpellLevelByName prefers lowercase spell master names", () => {
+  const spellLevelByName = buildSpellLevelByName({
+    spells: [
+      { name: "Fire", Level: 1 },
+      { Name: "Cura", level: 3 },
+      { Name: "", Level: 4 },
+    ],
+  });
+
+  assert.deepEqual(spellLevelByName, {
+    Fire: 1,
+    Cura: 3,
+  });
+});
+
+test("Magic shop purchase stores lowercase-master spells in level buckets", () => {
+  const spellLevelByName = buildSpellLevelByName({
+    spells: [{ name: "Sleep", Level: 1 }],
+  });
+  const save = { inventory: {} };
+
+  assert.equal(
+    addPurchasedItemToInventory(save, spellLevelByName, "Magic", "Sleep", 1),
+    true,
+  );
+
+  assert.equal(save.inventory.Magic.LV1.Sleep, 1);
+});
+
+test("syncMenuStateAfterPurchase stocks Magic from lowercase spell master names", () => {
+  const spellLevelByName = buildSpellLevelByName({
+    spells: [{ name: "Raise", Level: 5 }],
+  });
+  const envelope = {
+    save: { gil: 123, inventory: {} },
+    menu_state: { resources: { gil: 999 }, magic_setup: { stock_by_level: {} } },
+  };
+
+  syncMenuStateAfterPurchase(envelope, spellLevelByName, "Raise", "Magic");
+
+  assert.equal(envelope.menu_state.resources.gil, 123);
+  assert.deepEqual(envelope.menu_state.magic_setup.stock_by_level["5"], ["Raise"]);
 });

@@ -341,10 +341,14 @@ def apply_job_equipment_restrictions(
     logs: List[str] = []
 
     allowed_weapon_names = {
-        w["Name"] for w in job.raw.get("Weapons", []) if w.get("Name")
+        w.get("name") or w.get("Name")
+        for w in job.raw.get("Weapons", [])
+        if w.get("name") or w.get("Name")
     }
     allowed_armor_names = {
-        a["Name"] for a in job.raw.get("Armors", []) if a.get("Name")
+        a.get("name") or a.get("Name")
+        for a in job.raw.get("Armors", [])
+        if a.get("name") or a.get("Name")
     }
 
     new_eq = replace(eq)

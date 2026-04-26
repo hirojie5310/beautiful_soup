@@ -9,7 +9,7 @@ SUPPORT_HEALING_KINDS = {"hp", "status", "revive", "protect", "haste", "reflect"
 
 
 def spell_display_name(spell_json: Dict[str, Any]) -> str:
-    return str(spell_json.get("Name") or spell_json.get("name") or "")
+    return str(spell_json.get("name") or spell_json.get("Name") or "")
 
 
 def spell_effect_category(spell_json: Dict[str, Any]) -> str:

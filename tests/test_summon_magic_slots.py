@@ -182,7 +182,8 @@ def test_expand_summons_keeps_child_specific_cast_by() -> None:
 
     expanded = expand_spells_for_summons(spells)
 
-    assert "name" not in expanded["Shiva: Mesmerize"]
+    assert "Name" not in expanded["Shiva: Mesmerize"]
+    assert expanded["Shiva: Mesmerize"]["name"] == "Shiva: Mesmerize"
     assert expanded["Shiva: Mesmerize"]["cast_by"] == ["Ev"]
     assert expanded["Shiva: Icy Stare"]["cast_by"] == ["Ev"]
     assert expanded["Shiva: Diamond Dust"]["cast_by"] == ["Sa", "Su"]

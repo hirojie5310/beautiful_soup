@@ -7,6 +7,7 @@ import {
   shouldTriggerEncounter,
 } from "../map_data.js";
 import {
+  buildSpellLevelByName,
   buildRecoveredPartySnapshot,
   clone,
   loadJson,
@@ -341,14 +342,7 @@ async function loadSpellLevelByName() {
   if (!spellLevelByNamePromise) {
     spellLevelByNamePromise = loadJson("../assets/data/ffiii_spells.json")
       .then((payload) => {
-        const next = {};
-        const rows = Array.isArray(payload?.spells) ? payload.spells : [];
-        rows.forEach((spell) => {
-          const name = String(spell?.name || "");
-          const level = asNumber(spell?.Level, 0);
-          if (name && level > 0) next[name] = level;
-        });
-        return next;
+        return buildSpellLevelByName(payload);
       })
       .catch((error) => {
         spellLevelByNamePromise = null;
