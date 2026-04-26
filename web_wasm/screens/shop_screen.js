@@ -13,6 +13,8 @@ import {
 import { mergeMenuStateIntoSave } from "../menu_save_sync.js";
 import { selectedLocationText } from "./screen_shared.js";
 
+const SHOP_START_CONTEXT_KEY = "ff3_wasm_shop_start_context_v1";
+
 function renderLayout() {
   return `
     <div class="screen medium" data-screen="shop">
@@ -33,6 +35,7 @@ function renderLayout() {
 
         <div class="buttons">
           <button id="buyShopBtn" class="btn" type="button" disabled>購入</button>
+          <button id="mapBackBtn" class="btn" type="button" disabled>マップに戻る</button>
           <button id="backBtn" class="btn" type="button">Locationへ戻る</button>
           <button id="menuBtn" class="btn" type="button">メニュー</button>
         </div>
@@ -57,6 +60,26 @@ function setSelectOptions(select, values, selectedValue = "") {
   }
 }
 
+function readShopStartContext() {
+  try {
+    const raw = sessionStorage.getItem(SHOP_START_CONTEXT_KEY);
+    if (!raw) return null;
+    sessionStorage.removeItem(SHOP_START_CONTEXT_KEY);
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch (_error) {
+    return null;
+  }
+}
+
+function canReturnToStoredMap(startContext, appState) {
+  if (startContext?.return_route === "map" && startContext?.map_id) return true;
+  return Boolean(
+    appState?.menuState?.map_return_pending
+    && appState?.menuState?.map_state?.current_map_id
+  );
+}
+
 export async function mountScreen({ mountNode, store, navigate }) {
   mountNode.innerHTML = renderLayout();
 
@@ -68,10 +91,14 @@ export async function mountScreen({ mountNode, store, navigate }) {
   const shopGilLine = mountNode.querySelector("#shopGilLine");
   const shopStatusLine = mountNode.querySelector("#shopStatusLine");
   const buyShopBtn = mountNode.querySelector("#buyShopBtn");
+  const mapBackBtn = mountNode.querySelector("#mapBackBtn");
   const backBtn = mountNode.querySelector("#backBtn");
   const menuBtn = mountNode.querySelector("#menuBtn");
 
   let masterData = null;
+  const startContext = readShopStartContext();
+  const canReturnToMap = canReturnToStoredMap(startContext, store.getState());
+  mapBackBtn.disabled = !canReturnToMap;
 
   function selectedShopEntry() {
     return masterData?.shopEntries.find(
@@ -117,13 +144,16 @@ export async function mountScreen({ mountNode, store, navigate }) {
     buyShopBtn.disabled = !selectedGood;
   }
 
-  function renderShopTypes() {
+  function renderShopTypes(preferredType = "") {
     const entry = selectedShopEntry();
     const shops = asArray(entry?.shops);
+    const typeLabels = shops.map((row) => shopRowLabel(row)).filter(Boolean);
+    const currentType = String(preferredType || shopTypeSelect.value || "");
+    const selectedType = typeLabels.includes(currentType) ? currentType : "";
     setSelectOptions(
       shopTypeSelect,
-      shops.map((row) => shopRowLabel(row)).filter(Boolean),
-      shopTypeSelect.value || "",
+      typeLabels,
+      selectedType,
     );
     renderShopGoods();
   }
@@ -133,10 +163,11 @@ export async function mountScreen({ mountNode, store, navigate }) {
       .map((entry) => String(entry?.map || ""))
       .filter(Boolean);
     const state = store.getState();
-    const currentMap = String(shopMapSelect.value || state.selectedLocation || "");
+    const contextMap = String(startContext?.map || "");
+    const currentMap = String(contextMap || shopMapSelect.value || state.selectedLocation || "");
     const preferredMap = maps.includes(currentMap) ? currentMap : maps[0] || "";
     setSelectOptions(shopMapSelect, maps, preferredMap);
-    renderShopTypes();
+    renderShopTypes(String(startContext?.type || ""));
     renderGilDisplay();
   }
 
@@ -194,12 +225,17 @@ export async function mountScreen({ mountNode, store, navigate }) {
   const handleGoodsChange = () => renderShopGoods();
   const handleBuy = () => purchaseSelectedGoods();
   const handleBack = () => navigate("location");
+  const handleMapBack = () => {
+    if (!canReturnToMap) return;
+    navigate("map");
+  };
   const handleMenu = () => navigate("menu");
 
   shopMapSelect.addEventListener("change", handleMapChange);
   shopTypeSelect.addEventListener("change", handleTypeChange);
   shopGoodsSelect.addEventListener("change", handleGoodsChange);
   buyShopBtn.addEventListener("click", handleBuy);
+  mapBackBtn.addEventListener("click", handleMapBack);
   backBtn.addEventListener("click", handleBack);
   menuBtn.addEventListener("click", handleMenu);
 
@@ -218,6 +254,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     shopTypeSelect.removeEventListener("change", handleTypeChange);
     shopGoodsSelect.removeEventListener("change", handleGoodsChange);
     buyShopBtn.removeEventListener("click", handleBuy);
+    mapBackBtn.removeEventListener("click", handleMapBack);
     backBtn.removeEventListener("click", handleBack);
     menuBtn.removeEventListener("click", handleMenu);
   };

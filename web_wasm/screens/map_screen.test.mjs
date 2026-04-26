@@ -13,8 +13,11 @@ import {
   findAdjacentNpc,
   findBlockingObjectAt,
   findCrystalSpriteOrigin,
+  findShopActivation,
   isAdjacentToCrystalSprite,
   isAdjacentToTileCoordinate,
+  isStandingOnTileCoordinate,
+  isUrInnItemShopRecoveryTile,
   interpolateMapPosition,
   findStandingObject,
   isWaterAnimationGid,
@@ -652,6 +655,51 @@ test("isAdjacentToTileCoordinate checks only neighboring map tiles", () => {
   assert.equal(isAdjacentToTileCoordinate({ tile_x: 3, tile_y: 8 }, { x: 3, y: 9 }), true);
   assert.equal(isAdjacentToTileCoordinate({ tile_x: 3, tile_y: 9 }, { x: 3, y: 9 }), false);
   assert.equal(isAdjacentToTileCoordinate({ tile_x: 1, tile_y: 9 }, { x: 3, y: 9 }), false);
+});
+
+test("isStandingOnTileCoordinate checks the exact map tile", () => {
+  assert.equal(isStandingOnTileCoordinate({ tile_x: 7, tile_y: 8 }, { x: 7, y: 8 }), true);
+  assert.equal(isStandingOnTileCoordinate({ tile_x: 7, tile_y: 9 }, { x: 7, y: 8 }), false);
+});
+
+test("isUrInnItemShopRecoveryTile resolves inn recovery floor tiles", () => {
+  assert.equal(isUrInnItemShopRecoveryTile({ id: "Ur_Inn_ItemShop" }, { tile_x: 7, tile_y: 8 }), true);
+  assert.equal(isUrInnItemShopRecoveryTile({ id: "Ur_Inn_ItemShop" }, { tile_x: 9, tile_y: 8 }), true);
+  assert.equal(isUrInnItemShopRecoveryTile({ id: "Ur_Inn_ItemShop" }, { tile_x: 8, tile_y: 8 }), false);
+  assert.equal(isUrInnItemShopRecoveryTile({ id: "Ur" }, { tile_x: 7, tile_y: 8 }), false);
+});
+
+test("findShopActivation resolves tiles adjacent to Ur shop counters", () => {
+  assert.deepEqual(findShopActivation({ id: "Ur_ArmorShop" }, { tile_x: 3, tile_y: 6 }), {
+    mapId: "Ur_ArmorShop",
+    x: 3,
+    y: 5,
+    shopMap: "Ur",
+    shopType: "Armor",
+  });
+  assert.deepEqual(findShopActivation({ id: "Ur_MagicShop" }, { tile_x: 4, tile_y: 5 }), {
+    mapId: "Ur_MagicShop",
+    x: 4,
+    y: 4,
+    shopMap: "Ur",
+    shopType: "Magic",
+  });
+  assert.deepEqual(findShopActivation({ id: "Ur_WeaponShop" }, { tile_x: 3, tile_y: 5 }), {
+    mapId: "Ur_WeaponShop",
+    x: 3,
+    y: 4,
+    shopMap: "Ur",
+    shopType: "Weapons",
+  });
+  assert.deepEqual(findShopActivation({ id: "Ur_Inn_ItemShop" }, { tile_x: 8, tile_y: 14 }), {
+    mapId: "Ur_Inn_ItemShop",
+    x: 8,
+    y: 15,
+    shopMap: "Ur",
+    shopType: "Items",
+  });
+  assert.equal(findShopActivation({ id: "Ur_ArmorShop" }, { tile_x: 3, tile_y: 5 }), null);
+  assert.equal(findShopActivation({ id: "Ur_ArmorShop" }, { tile_x: 2, tile_y: 4 }), null);
 });
 
 test("reviveZeroHpPartyMembersToOneHp revives only KO members and clears KO status", () => {
