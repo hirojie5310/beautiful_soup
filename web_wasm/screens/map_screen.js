@@ -31,7 +31,7 @@ const NPC_DIRECTION_MIN_MS = 3000;
 const NPC_DIRECTION_MAX_MS = 6000;
 const NPC_DIRECTIONS = ["up", "left", "right", "down"];
 const NPC_MOVEMENT_RANDOM = "random";
-const WATER_ANIMATION_GIDS = new Set([9, 10, 11]);
+const WATER_ANIMATION_GIDS = new Set([9, 10, 11, 43, 46]);
 const WATER_HIGHLIGHT_SHIFT_PX = 4;
 const MAP_MOVE_ANIMATION_MS = 140;
 const HOLD_MOVE_INITIAL_DELAY_MS = 220;
@@ -42,6 +42,11 @@ const MAP_ENTRY_CONTEXT_KEY = "ff3_wasm_map_entry_context_v1";
 const ALTER_CAVE_RECOVERY_MAP_ID = "Alter_Cave_B4";
 const ALTER_CAVE_RECOVERY_GID = 36;
 const ALTER_CAVE_RECOVERY_TEXT_INDEX = 582;
+const UR_ELDER_HOUSE_1_MAP_ID = "Ur_ElderHouse_1";
+const UR_ELDER_HOUSE_FULL_RECOVERY_SPRING = { x: 3, y: 9 };
+const UR_ELDER_HOUSE_FULL_RECOVERY_TEXT_INDEX = 891;
+const UR_ELDER_HOUSE_REVIVE_SPRING = { x: 21, y: 9 };
+const UR_ELDER_HOUSE_REVIVE_TEXT_INDEX = 890;
 const ALTER_CAVE_CRYSTAL_ROOM_MAP_ID = "Alter_Cave_Crystal_Room";
 const ALTER_CAVE_CRYSTAL_EVENT_TEXT_INDEX = 10;
 const ALTER_CAVE_CRYSTAL_POST_BATTLE_TEXT_INDICES = [30, 31];
@@ -259,6 +264,15 @@ export function createDirectionalHoldRepeater(
 function asNumber(value, fallback = 0) {
   const num = Number(value);
   return Number.isFinite(num) ? num : fallback;
+}
+
+export function npcDialogueIndices(row) {
+  const rawIndices = Array.isArray(row?.dialogue_indices)
+    ? row.dialogue_indices
+    : [row?.dialogue_index];
+  return rawIndices
+    .map((index) => Number(index))
+    .filter((index) => Number.isFinite(index));
 }
 
 function normalizeSwitchStates(value) {
@@ -860,7 +874,7 @@ function mapRenderSignature(mapDefinition) {
   ].join("|");
 }
 
-function isWaterAnimationGid(gid) {
+export function isWaterAnimationGid(gid) {
   return WATER_ANIMATION_GIDS.has(Number(gid || 0));
 }
 
@@ -1078,7 +1092,7 @@ export function findAdjacentNpc(mapDefinition, mapState) {
   return findAdjacentObject(
     mapDefinition,
     mapState,
-    (row) => row?.type === "npc" && Number.isFinite(Number(row?.dialogue_index)),
+    (row) => row?.type === "npc" && npcDialogueIndices(row).length > 0,
   );
 }
 
@@ -1095,6 +1109,64 @@ export function findAdjacentTileWithGid(mapDefinition, mapState, gid) {
   return deltas.find((delta) => (
     Number(mapDefinition?.rows?.[tileY + delta.y]?.[tileX + delta.x] ?? NaN) === targetGid
   )) || null;
+}
+
+export function isAdjacentToTileCoordinate(mapState, coordinate) {
+  const tileX = Number(mapState?.tile_x);
+  const tileY = Number(mapState?.tile_y);
+  const targetX = Number(coordinate?.x);
+  const targetY = Number(coordinate?.y);
+  return Math.abs(tileX - targetX) + Math.abs(tileY - targetY) === 1;
+}
+
+function withoutKoStatusIcons(value) {
+  return Array.isArray(value)
+    ? value.filter((icon) => String(icon || "").trim().toLowerCase().replace(/[_-]/g, " ") !== "ko")
+    : [];
+}
+
+function clearKoStatusEffects(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  return {
+    ...value,
+    KO: false,
+  };
+}
+
+export function reviveZeroHpPartyMembersToOneHp(save, menuState) {
+  let saveRevivedCount = 0;
+  let menuRevivedCount = 0;
+  const saveParty = Array.isArray(save?.party) ? save.party : [];
+  saveParty.forEach((member) => {
+    if (!member || typeof member !== "object") return;
+    if (Number(member.hp ?? 0) > 0) return;
+    member.hp = 1;
+    member.status_icons = withoutKoStatusIcons(member.status_icons);
+    member.status_effects = clearKoStatusEffects(member.status_effects);
+    saveRevivedCount += 1;
+  });
+
+  const menuParty = Array.isArray(menuState?.party) ? menuState.party : [];
+  menuParty.forEach((member) => {
+    if (!member || typeof member !== "object") return;
+    if (Number(member.hp ?? 0) > 0) return;
+    member.hp = 1;
+    menuRevivedCount += 1;
+    member.status_icons = withoutKoStatusIcons(member.status_icons);
+    if (member.status && typeof member.status === "object") {
+      const statusIcons = withoutKoStatusIcons(member.status.status_icons);
+      member.status = {
+        ...member.status,
+        hp: 1,
+        status_icons: statusIcons,
+        status_line: statusIcons.length ? statusIcons.join("/") : "-",
+      };
+    }
+  });
+
+  if (save && typeof save === "object") save.party = saveParty;
+  if (menuState && typeof menuState === "object") menuState.party = menuParty;
+  return Math.max(saveRevivedCount, menuRevivedCount);
 }
 
 export function findCrystalSpriteOrigin(mapDefinition) {
@@ -1170,9 +1242,11 @@ export function applySwitchStateToMap(mapDefinition, switchStates = {}) {
     const x = Number(row?.x);
     const y = Number(row?.y);
     if (!Array.isArray(nextRows[y])) return;
+    const closedGid = Number(row?.closed_gid || 49);
+    const openGid = Number(row?.open_gid || 1);
     const current = Number(nextRows[y][x] ?? 0);
-    if (current === 1) nextRows[y][x] = 49;
-    else if (current === 49) nextRows[y][x] = 1;
+    if (current === closedGid) nextRows[y][x] = openGid;
+    else if (current === openGid) nextRows[y][x] = closedGid;
   });
 
   (mapDefinition?.objects || []).forEach((row) => {
@@ -1692,7 +1766,35 @@ export async function mountScreen({ mountNode, store, navigate }) {
     npcAnimationIntervalId = null;
   }
 
-  async function runAlterCaveRecoveryEvent() {
+  function ensureMutableSaveEnvelope(envelope) {
+    if (!envelope.save || typeof envelope.save !== "object") {
+      envelope.save = { gil: 0, inventory: {}, party: [] };
+    }
+    if (!envelope.menu_state || typeof envelope.menu_state !== "object") {
+      envelope.menu_state = {
+        party: [],
+        resources: { cp: 0, cp_max: 255, gil: envelope.save.gil || 0 },
+      };
+    }
+  }
+
+  function persistMapEventEnvelope(nextEnvelope) {
+    const currentState = store.getState();
+    nextEnvelope.saved_at = new Date().toISOString();
+    nextEnvelope.selected_location_group = currentState.selectedLocationGroup;
+    nextEnvelope.selected_location = currentState.selectedLocation;
+
+    if (!store.updateSaveEnvelope(nextEnvelope)) {
+      mapStatus.textContent = "イベント結果の保存に失敗しました。";
+      return false;
+    }
+
+    persistMenuStateFromEnvelope(nextEnvelope);
+    triggerAutoSaveFromEnvelope(nextEnvelope);
+    return true;
+  }
+
+  async function runFullRecoveryEvent(textIndex, statusText) {
     if (!pyodide) {
       const pyodideRuntime = await import("../pyodide_runtime.js");
       pyodide = await pyodideRuntime.getPyodideRuntime();
@@ -1702,15 +1804,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     const nextEnvelope = originalEnvelope
       ? clone(originalEnvelope)
       : store.createDefaultEnvelope();
-    if (!nextEnvelope.save || typeof nextEnvelope.save !== "object") {
-      nextEnvelope.save = { gil: 0, inventory: {}, party: [] };
-    }
-    if (!nextEnvelope.menu_state || typeof nextEnvelope.menu_state !== "object") {
-      nextEnvelope.menu_state = {
-        party: [],
-        resources: { cp: 0, cp_max: 255, gil: nextEnvelope.save.gil || 0 },
-      };
-    }
+    ensureMutableSaveEnvelope(nextEnvelope);
 
     const recoveredParty = await buildRecoveredPartySnapshot(
       pyodide,
@@ -1726,20 +1820,35 @@ export async function mountScreen({ mountNode, store, navigate }) {
     syncSavePartyRecovery(nextEnvelope.save, recoveredParty);
     syncMenuPartyRecovery(nextEnvelope.menu_state, recoveredParty);
     nextEnvelope.save = mergeMenuStateIntoSave(nextEnvelope.save, nextEnvelope.menu_state);
-    nextEnvelope.saved_at = new Date().toISOString();
-    nextEnvelope.selected_location_group = currentState.selectedLocationGroup;
-    nextEnvelope.selected_location = currentState.selectedLocation;
-
-    if (!store.updateSaveEnvelope(nextEnvelope)) {
-      mapStatus.textContent = "回復イベントの保存に失敗しました。";
-      return;
-    }
-
-    persistMenuStateFromEnvelope(nextEnvelope);
-    triggerAutoSaveFromEnvelope(nextEnvelope);
+    if (!persistMapEventEnvelope(nextEnvelope)) return;
     triggerFlash();
-    openEventOverlay(await loadMergedFixedContentByIndex(ALTER_CAVE_RECOVERY_TEXT_INDEX));
-    mapStatus.textContent = "不思議な力で HP・MP が回復した。";
+    openEventOverlay(await loadMergedFixedContentByIndex(textIndex));
+    mapStatus.textContent = statusText;
+  }
+
+  async function runAlterCaveRecoveryEvent() {
+    await runFullRecoveryEvent(
+      ALTER_CAVE_RECOVERY_TEXT_INDEX,
+      "不思議な力で HP・MP が回復した。",
+    );
+  }
+
+  async function runUrElderHouseReviveEvent() {
+    const currentState = store.getState();
+    const originalEnvelope = currentState.saveEnvelope;
+    const nextEnvelope = originalEnvelope
+      ? clone(originalEnvelope)
+      : store.createDefaultEnvelope();
+    ensureMutableSaveEnvelope(nextEnvelope);
+
+    const revivedCount = reviveZeroHpPartyMembersToOneHp(nextEnvelope.save, nextEnvelope.menu_state);
+    nextEnvelope.save = mergeMenuStateIntoSave(nextEnvelope.save, nextEnvelope.menu_state);
+    if (!persistMapEventEnvelope(nextEnvelope)) return;
+    triggerFlash();
+    openEventOverlay(await loadMergedFixedContentByIndex(UR_ELDER_HOUSE_REVIVE_TEXT_INDEX));
+    mapStatus.textContent = revivedCount > 0
+      ? "不思議な力で倒れた仲間がよみがえった。"
+      : "不思議な力があたりを満たしている。";
   }
 
   async function tryConfirm() {
@@ -1765,11 +1874,34 @@ export async function mountScreen({ mountNode, store, navigate }) {
       await runAlterCaveRecoveryEvent();
       return;
     }
+    if (
+      mapDefinition.id === UR_ELDER_HOUSE_1_MAP_ID
+      && isAdjacentToTileCoordinate(mapState, UR_ELDER_HOUSE_FULL_RECOVERY_SPRING)
+    ) {
+      await runFullRecoveryEvent(
+        UR_ELDER_HOUSE_FULL_RECOVERY_TEXT_INDEX,
+        "不思議な力で HP・MP が回復した。",
+      );
+      return;
+    }
+    if (
+      mapDefinition.id === UR_ELDER_HOUSE_1_MAP_ID
+      && isAdjacentToTileCoordinate(mapState, UR_ELDER_HOUSE_REVIVE_SPRING)
+    ) {
+      await runUrElderHouseReviveEvent();
+      return;
+    }
     const adjacentNpc = findAdjacentNpc(mapDefinition, mapState);
     if (adjacentNpc) {
-      const message = await loadMergedFixedContentByIndex(adjacentNpc.dialogue_index);
-      if (message) {
-        openEventOverlay(message);
+      const dialogueIndices = npcDialogueIndices(adjacentNpc);
+      const messages = await loadMergedFixedContentByIndices(dialogueIndices);
+      const visibleMessages = messages.filter((message) => Boolean(message));
+      if (visibleMessages.length > 0) {
+        if (visibleMessages.length === 1) {
+          openEventOverlay(visibleMessages[0]);
+        } else {
+          openEventOverlaySequence(visibleMessages);
+        }
         mapStatus.textContent = `${adjacentNpc.name || "NPC"} と話しました。`;
       } else {
         mapStatus.textContent = "このNPCの会話テキストが見つかりません。";
