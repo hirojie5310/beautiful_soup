@@ -1,4 +1,9 @@
 const DEFAULT_ROUTE = "title";
+const SCREEN_MODULE_VERSION = "20260426-ur-shop-map1";
+
+function versionedModule(path) {
+  return `${path}?v=${SCREEN_MODULE_VERSION}`;
+}
 
 function normalizeRoute(rawRoute) {
   const route = String(rawRoute || "")
@@ -11,31 +16,31 @@ function normalizeRoute(rawRoute) {
 async function loadScreenModule(routeName) {
   switch (routeName) {
     case "title":
-      return import("./screens/title_screen.js");
+      return import(versionedModule("./screens/title_screen.js"));
     case "location":
-      return import("./screens/location_screen.js");
+      return import(versionedModule("./screens/location_screen.js"));
     case "menu":
-      return import("./screens/menu_screen.js");
+      return import(versionedModule("./screens/menu_screen.js"));
     case "map":
-      return import("./screens/map_screen.js");
+      return import(versionedModule("./screens/map_screen.js"));
     case "shop":
-      return import("./screens/shop_screen.js");
+      return import(versionedModule("./screens/shop_screen.js"));
     case "inn":
-      return import("./screens/inn_screen.js");
+      return import(versionedModule("./screens/inn_screen.js"));
     case "battle":
-      return import("./screens/battle_screen.js");
+      return import(versionedModule("./screens/battle_screen.js"));
     case "item":
-      return import("./screens/item_screen.js");
+      return import(versionedModule("./screens/item_screen.js"));
     case "equip":
-      return import("./screens/equip_screen.js");
+      return import(versionedModule("./screens/equip_screen.js"));
     case "magic":
-      return import("./screens/magic_screen.js");
+      return import(versionedModule("./screens/magic_screen.js"));
     case "status":
-      return import("./screens/status_screen.js");
+      return import(versionedModule("./screens/status_screen.js"));
     case "job":
-      return import("./screens/job_screen.js");
+      return import(versionedModule("./screens/job_screen.js"));
     default:
-      return import("./screens/title_screen.js");
+      return import(versionedModule("./screens/title_screen.js"));
   }
 }
 
