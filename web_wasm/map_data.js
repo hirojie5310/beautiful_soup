@@ -14,6 +14,7 @@ const MAP_MANIFEST = {
   Ur_WeaponShop: new URL("../assets/maps/Ur-WeaponShop.json", import.meta.url).href,
   Ur_Inn_ItemShop: new URL("../assets/maps/Ur-Inn_ItemShop.json", import.meta.url).href,
   Ur_Pub: new URL("../assets/maps/Ur-Pub.json", import.meta.url).href,
+  Ur_Well: new URL("../assets/maps/Ur-Well.json", import.meta.url).href,
   Ur_Shed_1F: new URL("../assets/maps/Ur-Shed_1F.json", import.meta.url).href,
   Ur_Shed_2F: new URL("../assets/maps/Ur-Shed_2F.json", import.meta.url).href,
 };

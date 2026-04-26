@@ -1,0 +1,93 @@
+{
+  "id": "Ur_Well",
+  "name": "Ur Well",
+  "tile_width": 24,
+  "tile_height": 24,
+  "width": 9,
+  "height": 11,
+  "tileset": {
+    "name": "TILESET - Ur_Well",
+    "image": "../assets/images/maps/TILESET - Ur_Well.png",
+    "columns": 16,
+    "tile_count": 128
+  },
+  "collision_gids": [1, 2, 5, 6, 125],
+  "location_requirement": {
+    "group": "Ur",
+    "locations": ["Ur"]
+  },
+  "encounter_rate": 0,
+  "padding": {
+    "top": 10,
+    "right": 10,
+    "bottom": 10,
+    "left": 10,
+    "fill_gid": 8
+  },
+  "spawn": {
+    "x": 7,
+    "y": 4
+  },
+  "objects": [
+    {
+      "type": "exit",
+      "name": "Ur",
+      "x": 7,
+      "y": 1,
+      "target_map": "Ur",
+      "target_spawn": {
+        "x": 28,
+        "y": 29
+      }
+    },
+    {
+      "type": "treasure",
+      "name": "Ur Well Potion 1",
+      "x": 1,
+      "y": 6,
+      "treasure_id": "ur_well_treasure_potion_1",
+      "item_name": "Potion",
+      "inventory_bucket": "Anywhere",
+      "quantity": 1,
+      "closed_gid": 125,
+      "open_gid": 125
+    },
+    {
+      "type": "treasure",
+      "name": "Ur Well Potion 2",
+      "x": 4,
+      "y": 7,
+      "treasure_id": "ur_well_treasure_potion_2",
+      "item_name": "Potion",
+      "inventory_bucket": "Anywhere",
+      "quantity": 1,
+      "closed_gid": 125,
+      "open_gid": 125
+    },
+    {
+      "type": "treasure",
+      "name": "Ur Well Potion 3",
+      "x": 7,
+      "y": 7,
+      "treasure_id": "ur_well_treasure_potion_3",
+      "item_name": "Potion",
+      "inventory_bucket": "Anywhere",
+      "quantity": 1,
+      "closed_gid": 125,
+      "open_gid": 125
+    }
+  ],
+  "rows": [
+    "8,8,8,8,8,8,1,1,1",
+    "8,8,8,1,1,1,1,8,1",
+    "8,8,8,1,2,2,2,66,1",
+    "1,1,1,1,2,2,2,74,1",
+    "1,2,2,2,49,49,49,49,1",
+    "1,2,2,2,49,6,6,49,1",
+    "1,125,49,49,49,5,5,49,1",
+    "1,1,1,1,125,5,5,125,1",
+    "2,2,2,1,1,1,1,1,1",
+    "2,2,2,2,2,2,2,2,2",
+    "8,8,8,2,2,2,2,2,2"
+  ]
+}

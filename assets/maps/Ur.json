@@ -11,7 +11,7 @@
     "columns": 16,
     "tile_count": 128
   },
-  "collision_gids": [4, 9, 10, 11, 19, 21, 22, 23, 24, 25, 26, 28, 29, 31, 32, 34, 35, 38, 90, 91, 92, 115, 118],
+  "collision_gids": [4, 9, 10, 11, 19, 21, 22, 23, 24, 25, 26, 28, 29, 31, 32, 34, 35, 38, 90, 91, 92, 118],
   "location_requirement": {
     "group": "Ur",
     "locations": ["Ur"]
@@ -123,6 +123,17 @@
       "target_spawn": {
         "x": 3,
         "y": 9
+      }
+    },
+    {
+      "type": "exit",
+      "name": "Ur Well",
+      "x": 28,
+      "y": 29,
+      "target_map": "Ur_Well",
+      "target_spawn": {
+        "x": 7,
+        "y": 2
       }
     },
     {

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   findCompatibleMapDefinition,
+  getMapManifestUrl,
   isInEncounterArea,
   normalizeMapDefinition,
   shouldTriggerEncounter,
@@ -97,6 +98,10 @@ test("encounter areas restrict random encounters by tile position", () => {
   assert.equal(isInEncounterArea(result, { tile_x: 24, tile_y: 15 }), false);
   assert.equal(shouldTriggerEncounter(result, 0, 6, { tile_x: 24, tile_y: 14 }), true);
   assert.equal(shouldTriggerEncounter(result, 0, 6, { tile_x: 25, tile_y: 14 }), false);
+});
+
+test("getMapManifestUrl resolves Ur Well map without falling back", () => {
+  assert.match(String(getMapManifestUrl("Ur_Well")), /\/assets\/maps\/Ur-Well\.json$/);
 });
 
 test("findCompatibleMapDefinition returns the map that matches selected location", async () => {
