@@ -300,9 +300,7 @@ function renderLayout() {
       .battle-screen .enemy-sprite {
         inset: 0;
         width: 100%;
-        height: auto;
-        max-height: calc(100% - 42px);
-        margin: auto;
+        height: 100%;
         object-fit: contain;
         object-position: center 48%;
         image-rendering: pixelated;

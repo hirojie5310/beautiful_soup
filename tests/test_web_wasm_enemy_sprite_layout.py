@@ -25,9 +25,9 @@ def test_enemy_sprite_uses_full_card_width_while_fitting_height() -> None:
 
     assert "inset: 0;" in enemy_sprite_rule
     assert "width: 100%;" in enemy_sprite_rule
-    assert "height: auto;" in enemy_sprite_rule
-    assert "max-height: calc(100% - 42px);" in enemy_sprite_rule
-    assert "margin: auto;" in enemy_sprite_rule
+    assert "height: 100%;" in enemy_sprite_rule
+    assert "max-height:" not in enemy_sprite_rule
+    assert "margin: auto;" not in enemy_sprite_rule
     assert "object-fit: contain;" in enemy_sprite_rule
     assert "object-position: center 48%;" in enemy_sprite_rule
     assert "image-rendering: pixelated;" in enemy_sprite_rule
