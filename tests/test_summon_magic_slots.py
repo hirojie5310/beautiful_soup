@@ -8,6 +8,7 @@ from assets.data.data_loader import load_jobs, load_spells
 from combat.battle_sim import _build_character_action_inputs
 from combat.battle_sim import simulate_one_round_multi_party
 from combat.magic_menu import (
+    build_party_magic_info_from_party,
     build_party_magic_lists_from_party,
     expand_spells_for_summons,
 )
@@ -145,6 +146,34 @@ def test_ranger_equipped_parent_summon_is_hidden_from_magic_menu():
     )
 
     assert [row[0] for row in rows[0]] == []
+
+
+def test_empty_equipped_magic_slots_do_not_fall_back_to_job_spell_list():
+    spells, jobs = _load_master_data()
+    empty_slots = {f"LV{level}": [None, None, None] for level in range(1, 9)}
+    party_entries = [
+        {
+            "name": "Runeth",
+            "job": "Sage",
+            "Magic": empty_slots,
+        }
+    ]
+
+    rows = build_party_magic_lists_from_party(
+        party_entries=party_entries,
+        jobs_by_name=jobs,
+        spells_by_name=spells,
+        job_cast_code=JOB_CAST_CODE,
+    )
+    info = build_party_magic_info_from_party(
+        party_entries=party_entries,
+        jobs_by_name=jobs,
+        spells_by_name=spells,
+        job_cast_code=JOB_CAST_CODE,
+    )
+
+    assert rows == [[]]
+    assert info[0].magic_list == []
 
 
 def test_evoker_cast_uses_random_child_from_parent_summon():

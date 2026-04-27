@@ -162,6 +162,62 @@ def test_wasm_engine_persists_save_when_battle_finishes(monkeypatch) -> None:
     assert saved_calls[0][1] is engine.session.state.save
 
 
+def test_wasm_engine_persists_runtime_hp_and_mp_when_battle_finishes(
+    monkeypatch,
+) -> None:
+    engine = WasmBattleEngine.create_default(seed=23)
+    first_member = engine.session.party_members[0]
+    first_member.state.max_hp = 200
+    first_member.state.hp = 200
+    first_member.state.max_mp_pool[1] = 3
+    first_member.state.mp_pool[1] = 3
+    saved_calls: list[tuple[str | os.PathLike[str], dict[str, object]]] = []
+
+    def _fake_execute_round_dto(*, session, request, rng):
+        member = session.party_members[0]
+        member.state.hp = 111
+        member.state.mp_pool[1] = 1
+        return type(
+            "Output",
+            (),
+            {
+                "logs": ["Battle ended."],
+                "end_reason": "char_defeated",
+                "escaped": False,
+                "enemy_was_physically_hit": False,
+                "events": [],
+                "lifecycle": type(
+                    "Lifecycle",
+                    (),
+                    {
+                        "before": "resolving_round",
+                        "after": "battle_finished",
+                        "battle_finished": True,
+                    },
+                )(),
+            },
+        )()
+
+    def _fake_save_savedata(path: str | os.PathLike[str], save: dict[str, object]):
+        saved_calls.append((path, save))
+
+    monkeypatch.setattr("combat.wasm_api.execute_round_dto", _fake_execute_round_dto)
+    monkeypatch.setattr("combat.wasm_api.save_savedata", _fake_save_savedata)
+
+    engine.execute_round_json(
+        json.dumps(
+            {"planned_actions": [], "lifecycle_state": "ready_for_actions"},
+            ensure_ascii=False,
+        )
+    )
+
+    saved_member = cast(dict[str, Any], saved_calls[0][1]["party"][0])
+    assert saved_member["hp"] == 111
+    assert saved_member["max_hp"] == 200
+    assert saved_member["mp"]["L1MP"] == 1
+    assert saved_member["mp_levels"]["1"] == {"current": 1, "max": 3}
+
+
 def test_wasm_engine_applies_drop_item_stock_to_inventory_on_victory(
     monkeypatch,
 ) -> None:
@@ -210,6 +266,10 @@ def test_wasm_engine_applies_drop_item_stock_to_inventory_on_victory(
     monkeypatch.setattr(
         "combat.wasm_api.apply_item_stock_to_inventory",
         _fake_apply_item_stock_to_inventory,
+    )
+    monkeypatch.setattr(
+        "combat.wasm_api.save_savedata",
+        lambda path, save: None,
     )
 
     payload = json.loads(

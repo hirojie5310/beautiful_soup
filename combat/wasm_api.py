@@ -272,6 +272,58 @@ def _build_enemy_status_snapshot(session: BattleSession) -> list[dict[str, Any]]
     return snapshots
 
 
+def _sync_party_battle_state_to_save(
+    save: dict[str, Any], party_members: Sequence[Any]
+) -> None:
+    party = save.get("party")
+    if not isinstance(party, list):
+        return
+
+    by_name = {
+        str(getattr(member, "name", "")): member
+        for member in party_members
+        if str(getattr(member, "name", ""))
+    }
+
+    for index, entry in enumerate(party):
+        if not isinstance(entry, dict):
+            continue
+        member = None
+        name = entry.get("name")
+        if isinstance(name, str):
+            member = by_name.get(name)
+        if member is None and index < len(party_members):
+            member = party_members[index]
+        if member is None:
+            continue
+
+        state = getattr(member, "state", None)
+        if state is None:
+            continue
+
+        hp = _safe_int(getattr(state, "hp", 0), 0)
+        max_hp = _safe_int(getattr(state, "max_hp", hp), hp)
+        mp_pool = getattr(state, "mp_pool", {})
+        max_mp_pool = getattr(state, "max_mp_pool", {})
+        if not isinstance(mp_pool, dict):
+            mp_pool = {}
+        if not isinstance(max_mp_pool, dict):
+            max_mp_pool = {}
+
+        entry["hp"] = max(0, min(hp, max_hp))
+        entry["max_hp"] = max_hp
+        entry["mp"] = {}
+        entry["mp_levels"] = {}
+        for level in range(1, 9):
+            max_uses = _safe_int(max_mp_pool.get(level, mp_pool.get(level, 0)), 0)
+            current = max(0, min(_safe_int(mp_pool.get(level, 0), 0), max_uses))
+            entry["mp"][f"L{level}MP"] = current
+            entry["mp_levels"][str(level)] = {
+                "current": current,
+                "max": max_uses,
+            }
+
+
 def _build_battle_commands_by_member(
     session: BattleSession,
 ) -> list[list[dict[str, str]]]:
@@ -857,6 +909,10 @@ class WasmBattleEngine:
         response_payload["selected_location"] = self.selected_location
 
         if output_dto.lifecycle.battle_finished:
+            state = getattr(self.session, "state", None)
+            save = getattr(state, "save", None) if state is not None else None
+            if isinstance(save, dict):
+                _sync_party_battle_state_to_save(save, self.session.party_members)
             self.persist_runtime_save()
             self.battle_start_progress = _build_party_progress_snapshot(self.session)
             self.battle_start_resources = _build_resource_progress_snapshot(self.session)
