@@ -5,20 +5,20 @@ function renderLayout() {
     <style>
       .battle-screen {
         --battle-gutter: 10px;
-        --dock-height: 36vh;
         width: min(860px, 100vw);
         margin: 0 auto;
-        min-height: 100vh;
-        min-height: 100dvh;
+        height: 100vh;
+        height: 100dvh;
         padding: var(--battle-gutter);
         box-sizing: border-box;
         display: grid;
-        grid-template-rows: minmax(0, 1fr) minmax(260px, var(--dock-height));
+        grid-template-rows: minmax(220px, 1fr) minmax(112px, auto) minmax(150px, auto);
         gap: var(--battle-gutter);
         background:
           radial-gradient(circle at top, rgba(74, 100, 201, 0.22), transparent 42%),
           linear-gradient(180deg, #0d1430 0%, #070b18 100%);
         position: relative;
+        overflow: hidden;
       }
       .battle-screen .frame {
         border: 1px solid rgba(255,255,255,.22);
@@ -79,6 +79,7 @@ function renderLayout() {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 8px;
+        min-height: 0;
       }
       .battle-screen .party-grid.party-hud {
         grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -87,7 +88,7 @@ function renderLayout() {
         width: 100%;
         height: 100%;
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         grid-template-rows: repeat(2, minmax(0, 1fr));
         gap: 10px;
         align-content: stretch;
@@ -95,19 +96,19 @@ function renderLayout() {
         justify-items: stretch;
       }
       .battle-screen .enemy-grid[data-count="1"] {
-        grid-template-columns: minmax(0, 1fr);
-        grid-template-rows: minmax(0, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-rows: repeat(2, minmax(0, 1fr));
       }
       .battle-screen .enemy-grid[data-count="2"] {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        grid-template-rows: minmax(0, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-rows: repeat(2, minmax(0, 1fr));
       }
       .battle-screen .enemy-grid[data-count="3"] {
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        grid-template-rows: minmax(0, 1fr);
+        grid-template-rows: repeat(2, minmax(0, 1fr));
       }
       .battle-screen .enemy-grid[data-count="4"] {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         grid-template-rows: repeat(2, minmax(0, 1fr));
       }
       .battle-screen .enemy-grid[data-count="5"],
@@ -132,15 +133,13 @@ function renderLayout() {
       .battle-screen .enemy-grid[data-count="6"] .enemy-card .status-icon-row {
         display: none !important;
       }
-      .battle-screen .battle-dock {
+      .battle-screen .battle-party-panel {
         min-height: 0;
         display: grid;
-        grid-template-rows: auto auto minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr);
         gap: 10px;
         padding: 12px;
-        position: sticky;
-        bottom: 0;
-        overflow: visible;
+        overflow: hidden;
       }
       .battle-screen .dock-topbar {
         display: flex;
@@ -158,25 +157,13 @@ function renderLayout() {
         gap: 8px;
         align-items: center;
       }
-      .battle-screen .dock-panels {
-        min-height: 0;
-        display: grid;
-        grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.35fr);
-        gap: 10px;
-        align-items: start;
-      }
-      .battle-screen .dock-panel {
+      .battle-screen .command-panel {
         min-width: 0;
         min-height: 0;
-        border: 1px solid rgba(255,255,255,.12);
-        border-radius: 14px;
-        background: rgba(255,255,255,.04);
-        padding: 10px;
-        overflow: hidden;
-      }
-      .battle-screen .dock-panel.compact {
         display: grid;
         grid-template-rows: minmax(0, 1fr);
+        padding: 12px;
+        overflow: visible;
       }
       .battle-screen #commandFrame {
         align-items: start;
@@ -310,7 +297,16 @@ function renderLayout() {
         z-index: 0;
       }
       .battle-screen .party-face { object-fit: cover; object-position: center 22%; }
-      .battle-screen .enemy-sprite { object-fit: contain; object-position: center 58%; }
+      .battle-screen .enemy-sprite {
+        inset: 0;
+        width: 100%;
+        height: auto;
+        max-height: calc(100% - 42px);
+        margin: auto;
+        object-fit: contain;
+        object-position: center 48%;
+        image-rendering: pixelated;
+      }
       .battle-screen .party-face-fallback,
       .battle-screen .enemy-sprite-fallback {
         position: absolute;
@@ -494,11 +490,14 @@ function renderLayout() {
       .battle-screen .mono { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
       .battle-screen .log-frame {
         display: none;
-        margin-top: 8px;
+        grid-row: 3;
+        min-height: 0;
+        margin-top: 0;
         overflow: hidden;
       }
       .battle-screen .log-frame.open {
-        display: block;
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
       }
       .battle-screen .log-frame-header {
         display: flex;
@@ -509,6 +508,8 @@ function renderLayout() {
       }
       .battle-screen .log-frame-body {
         padding: 12px;
+        min-height: 0;
+        overflow: hidden;
       }
       .battle-screen .log-frame.is-clickable-next .log-frame-body::after {
         content: "タップで次へ";
@@ -527,23 +528,22 @@ function renderLayout() {
       @media (max-width: 720px) {
         .battle-screen {
           --battle-gutter: 8px;
-          --dock-height: 37vh;
-          grid-template-rows: minmax(0, 1fr) minmax(248px, var(--dock-height));
+          grid-template-rows: minmax(210px, 1fr) minmax(104px, auto) minmax(144px, auto);
         }
         .battle-screen .enemy-grid {
           gap: 8px;
         }
         .battle-screen .enemy-grid[data-count="1"] {
-          grid-template-columns: minmax(0, 1fr);
-          grid-template-rows: minmax(0, 1fr);
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          grid-template-rows: repeat(2, minmax(0, 1fr));
         }
         .battle-screen .enemy-grid[data-count="2"] {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          grid-template-rows: minmax(0, 1fr);
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          grid-template-rows: repeat(2, minmax(0, 1fr));
         }
         .battle-screen .enemy-grid[data-count="3"] {
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          grid-template-rows: minmax(0, 1fr);
+          grid-template-rows: repeat(2, minmax(0, 1fr));
         }
         .battle-screen .enemy-grid[data-count="5"],
         .battle-screen .enemy-grid[data-count="6"] {
@@ -572,10 +572,6 @@ function renderLayout() {
         .battle-screen .enemy-card .name {
           font-size: .78rem;
         }
-        .battle-screen .dock-panels {
-          grid-template-columns: minmax(0, 1fr);
-          grid-template-rows: auto minmax(0, 1fr);
-        }
         .battle-screen .party-grid {
           grid-template-columns: repeat(4, minmax(0, 1fr));
           gap: 6px;
@@ -600,7 +596,11 @@ function renderLayout() {
         }
       }
       @media (max-width: 420px) {
-        .battle-screen .battle-dock {
+        .battle-screen {
+          grid-template-rows: minmax(194px, 1fr) minmax(92px, auto) minmax(132px, auto);
+        }
+        .battle-screen .battle-party-panel,
+        .battle-screen .command-panel {
           padding: 10px;
         }
         .battle-screen .btn {
@@ -616,10 +616,10 @@ function renderLayout() {
         }
         .battle-screen .party-card,
         .battle-screen .enemy-card {
-          min-height: 96px;
+          min-height: 0;
         }
         .battle-screen .party-card {
-          min-height: 76px;
+          min-height: 68px;
           padding: 6px;
         }
         .battle-screen .party-card .name {
@@ -633,7 +633,11 @@ function renderLayout() {
         }
         .battle-screen .enemy-grid[data-count="5"] .enemy-card,
         .battle-screen .enemy-grid[data-count="6"] .enemy-card {
-          min-height: 78px;
+          min-height: 0;
+        }
+        .battle-screen .enemy-grid[data-count="3"] .enemy-card,
+        .battle-screen .enemy-grid[data-count="4"] .enemy-card {
+          min-height: 0;
         }
         .battle-screen .enemy-card .name {
           font-size: .72rem;
@@ -658,7 +662,7 @@ function renderLayout() {
           </div>
         </section>
       </section>
-      <section class="frame battle-dock">
+      <section class="frame battle-party-panel">
         <div class="dock-topbar">
           <div class="dock-progress">
             <div id="statusLine" class="status">エンジン起動中です...</div>
@@ -667,14 +671,10 @@ function renderLayout() {
             <button id="battleLogToggleBtn" class="btn" type="button">ログを開く</button>
           </div>
         </div>
-        <div class="dock-panels">
-          <section class="dock-panel compact">
-            <div id="partyGrid" class="party-grid party-hud"></div>
-          </section>
-          <section id="commandFrame" class="dock-panel compact">
-            <div id="commandGrid" class="command-grid"></div>
-          </section>
-        </div>
+        <div id="partyGrid" class="party-grid party-hud"></div>
+      </section>
+      <section id="commandFrame" class="frame command-panel">
+        <div id="commandGrid" class="command-grid"></div>
       </section>
       <section id="battleLogFrame" class="frame log-frame">
         <div class="log-frame-header">
