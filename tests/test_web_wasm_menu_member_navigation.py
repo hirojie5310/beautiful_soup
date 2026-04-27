@@ -39,3 +39,25 @@ def test_subpage_navigation_buttons_prevent_default_before_handling() -> None:
     assert "const onBackClick = (event) => {" in source
     assert source.count("event.preventDefault();") >= 3
     assert source.count("event.stopPropagation();") >= 3
+
+
+def test_menu_party_row_uses_portrait_offset_instead_of_text() -> None:
+    menu_source = _read("web_wasm/screens/menu_screen.js")
+    css_source = _read("web_wasm/index.html")
+
+    assert 'card.classList.add(`row-${normalizeRow(member?.row)}`);' in menu_source
+    assert '<div class="muted">row:' not in menu_source
+    assert "grid-template-columns: 84px 1fr;" in css_source
+    assert ".member-card.row-back .portrait" in css_source
+    assert "justify-self: end;" in css_source
+
+
+def test_menu_party_hp_row_renders_status_icons() -> None:
+    menu_source = _read("web_wasm/screens/menu_screen.js")
+    css_source = _read("web_wasm/index.html")
+
+    assert 'class="menu-status-icons"' in menu_source
+    assert "memberStatusIconKeys(member).forEach" in menu_source
+    assert "resolveStatusIconCandidates(iconKey)" in menu_source
+    assert ".menu-status-icon" in css_source
+    assert "width: 16px;" in css_source

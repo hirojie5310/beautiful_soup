@@ -1,7 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { deriveMenuMapOpenRequest, hydrateMenuStateFromEnvelope } from "./menu_screen.js";
+import {
+  deriveMenuMapOpenRequest,
+  hydrateMenuStateFromEnvelope,
+  memberJobLevelText,
+  memberStatusIconKeys,
+} from "./menu_screen.js";
 
 test("deriveMenuMapOpenRequest resumes directly to the current map when menu return is pending", () => {
   const result = deriveMenuMapOpenRequest({
@@ -130,4 +135,20 @@ test("hydrateMenuStateFromEnvelope uses envelope map state when current menu sta
     tile_y: 14,
     steps_since_reset: 2,
   });
+});
+
+test("memberJobLevelText reads menu job level fields for party cards", () => {
+  assert.equal(memberJobLevelText({ job_level: { level: 12, skill_point: 0 } }), "12");
+  assert.equal(memberJobLevelText({ status: { job_level: 7 } }), "7");
+  assert.equal(memberJobLevelText({}), "*");
+});
+
+test("memberStatusIconKeys reads top-level and status nested icon keys", () => {
+  assert.deepEqual(
+    memberStatusIconKeys({
+      status_icons: ["Poison", "blind"],
+      status: { status_icons: ["poison", "sleep"] },
+    }),
+    ["poison", "blind", "sleep"],
+  );
 });
