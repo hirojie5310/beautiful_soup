@@ -735,8 +735,8 @@ test("normalizeMergedFixedContent strips merged_fixed control notation for map d
   );
 });
 
-test("water highlight animation covers Ur, Elder House, and Well water tiles", () => {
-  [5, 6, 9, 10, 11, 43, 46].forEach((gid) => {
+test("water highlight animation covers town and Floating Continent water tiles", () => {
+  [5, 6, 9, 10, 11, 14, 15, 16, 30, 31, 32, 43, 46, 47, 48].forEach((gid) => {
     assert.equal(isWaterAnimationGid(gid), true);
   });
   assert.equal(isWaterAnimationGid(94), false);

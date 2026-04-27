@@ -354,7 +354,7 @@ def build_party_magic_lists_from_party(
             if isinstance(spell_name, str) and spell_name
         ]
         if not equipped_names:
-            out.append(allowed_magic_list)
+            out.append([])
             continue
 
         allowed_lookup = {
@@ -413,7 +413,7 @@ def build_party_magic_info_from_party(
             allowed_names=allowed_names,
             cast_code=cast_code,
         )
-        magic_list = allowed_magic_list
+        magic_list: List[MagicCandidate] = []
         equipped_slots = load_equipped_magic_slots_from_entry(entry)
         equipped_names = [
             spell_name

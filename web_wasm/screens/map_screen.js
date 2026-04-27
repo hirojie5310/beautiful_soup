@@ -32,7 +32,8 @@ const NPC_DIRECTION_MIN_MS = 3000;
 const NPC_DIRECTION_MAX_MS = 6000;
 const NPC_DIRECTIONS = ["up", "left", "right", "down"];
 const NPC_MOVEMENT_RANDOM = "random";
-const WATER_ANIMATION_GIDS = new Set([5, 6, 9, 10, 11, 43, 46]);
+const WATER_ANIMATION_GIDS = new Set([5, 6, 9, 10, 11, 14, 15, 16, 30, 31, 32, 43, 46, 47, 48]);
+const WATER_FLOW_TILE_GIDS = new Set([31]);
 const WATER_HIGHLIGHT_SHIFT_PX = 4;
 const MAP_MOVE_ANIMATION_MS = 140;
 const HOLD_MOVE_INITIAL_DELAY_MS = 220;
@@ -109,6 +110,7 @@ let spellLevelByNamePromise = null;
 let mergedFixedContentPromise = null;
 const mapRenderStateCache = new WeakMap();
 const waterHighlightMaskCache = new Map();
+const waterFlowTileCache = new Map();
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
@@ -605,6 +607,15 @@ function renderLayout() {
         animation: map-water-highlight 1800ms steps(${WATER_HIGHLIGHT_SHIFT_PX}) infinite;
         will-change: transform;
       }
+      [data-screen="map"] .map-water-flow-canvas {
+        position: absolute;
+        top: 0;
+        image-rendering: pixelated;
+        opacity: 1;
+        pointer-events: none;
+        animation: map-water-flow 1800ms steps(${WATER_HIGHLIGHT_SHIFT_PX}) infinite;
+        will-change: transform;
+      }
       [data-screen="map"] .map-object {
         position: absolute;
         width: var(--map-tile-size);
@@ -737,6 +748,10 @@ function renderLayout() {
         to { background-position: calc(var(--map-tile-size) * -${CRYSTAL_SPRITE_FRAMES}) 0; }
       }
       @keyframes map-water-highlight {
+        from { transform: translateX(0); }
+        to { transform: translateX(${WATER_HIGHLIGHT_SHIFT_PX}px); }
+      }
+      @keyframes map-water-flow {
         from { transform: translateX(0); }
         to { transform: translateX(${WATER_HIGHLIGHT_SHIFT_PX}px); }
       }
@@ -885,6 +900,10 @@ export function isWaterAnimationGid(gid) {
   return WATER_ANIMATION_GIDS.has(Number(gid || 0));
 }
 
+function isWaterFlowTileGid(gid) {
+  return WATER_FLOW_TILE_GIDS.has(Number(gid || 0));
+}
+
 function loadImageElement(url) {
   return new Promise((resolve, reject) => {
     const image = new Image();
@@ -894,7 +913,7 @@ function loadImageElement(url) {
   });
 }
 
-function createWaterHighlightMask(image, gid, tilesetColumns, tilesetRows) {
+function createWaterFlowTile(image, gid, tilesetColumns, tilesetRows) {
   const displaySize = DISPLAY_TILE_SIZE;
   const sourceTileWidth = Math.max(1, Math.floor(image.naturalWidth / tilesetColumns));
   const sourceTileHeight = Math.max(1, Math.floor(image.naturalHeight / tilesetRows));
@@ -918,6 +937,14 @@ function createWaterHighlightMask(image, gid, tilesetColumns, tilesetRows) {
     displaySize,
     displaySize,
   );
+  return canvas;
+}
+
+function createWaterHighlightMask(image, gid, tilesetColumns, tilesetRows) {
+  const canvas = createWaterFlowTile(image, gid, tilesetColumns, tilesetRows);
+  const displaySize = DISPLAY_TILE_SIZE;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) return "";
 
   const imageData = context.getImageData(0, 0, displaySize, displaySize);
   const pixels = imageData.data;
@@ -942,7 +969,7 @@ function createWaterHighlightMask(image, gid, tilesetColumns, tilesetRows) {
   return canvas.toDataURL("image/png");
 }
 
-function ensureWaterHighlightMasks(mapDefinition) {
+function ensureWaterFlowTiles(mapDefinition) {
   const imageUrl = String(mapDefinition?.tileset?.imageUrl || "");
   if (!imageUrl) return Promise.resolve(new Map());
   const tilesetColumns = Math.max(1, Number(mapDefinition?.tileset?.columns || 1));
@@ -952,13 +979,41 @@ function ensureWaterHighlightMasks(mapDefinition) {
     imageUrl,
     tilesetColumns,
     tilesetRows,
-    Array.from(WATER_ANIMATION_GIDS).join(","),
+    Array.from(WATER_FLOW_TILE_GIDS).join(","),
+  ].join("|");
+  if (!waterFlowTileCache.has(cacheKey)) {
+    const request = loadImageElement(imageUrl)
+      .then((image) => {
+        const tiles = new Map();
+        WATER_FLOW_TILE_GIDS.forEach((gid) => {
+          tiles.set(gid, createWaterFlowTile(image, gid, tilesetColumns, tilesetRows));
+        });
+        return tiles;
+      })
+      .catch(() => new Map());
+    waterFlowTileCache.set(cacheKey, request);
+  }
+  return waterFlowTileCache.get(cacheKey);
+}
+
+function ensureWaterHighlightMasks(mapDefinition) {
+  const imageUrl = String(mapDefinition?.tileset?.imageUrl || "");
+  if (!imageUrl) return Promise.resolve(new Map());
+  const tilesetColumns = Math.max(1, Number(mapDefinition?.tileset?.columns || 1));
+  const tileCount = Math.max(1, Number(mapDefinition?.tileset?.tileCount || 1));
+  const tilesetRows = Math.max(1, Math.ceil(tileCount / tilesetColumns));
+  const highlightGids = Array.from(WATER_ANIMATION_GIDS).filter((gid) => !WATER_FLOW_TILE_GIDS.has(gid));
+  const cacheKey = [
+    imageUrl,
+    tilesetColumns,
+    tilesetRows,
+    highlightGids.join(","),
   ].join("|");
   if (!waterHighlightMaskCache.has(cacheKey)) {
     const request = loadImageElement(imageUrl)
       .then((image) => {
         const masks = new Map();
-        WATER_ANIMATION_GIDS.forEach((gid) => {
+        highlightGids.forEach((gid) => {
           masks.set(gid, createWaterHighlightMask(image, gid, tilesetColumns, tilesetRows));
         });
         return masks;
@@ -969,6 +1024,36 @@ function ensureWaterHighlightMasks(mapDefinition) {
   return waterHighlightMaskCache.get(cacheKey);
 }
 
+function drawWaterFlowCanvas(waterCanvas, mapDefinition, masks) {
+  if (!waterCanvas) return;
+  const tileSize = DISPLAY_TILE_SIZE;
+  const renderRows = Array.isArray(mapDefinition?.renderRows) ? mapDefinition.renderRows : [];
+  const width = Math.max(1, Number(mapDefinition?.renderWidth || 0) * tileSize + WATER_HIGHLIGHT_SHIFT_PX);
+  const height = Math.max(1, Number(mapDefinition?.renderHeight || 0) * tileSize);
+  if (waterCanvas.width !== width) waterCanvas.width = width;
+  if (waterCanvas.height !== height) waterCanvas.height = height;
+  waterCanvas.style.width = `${width}px`;
+  waterCanvas.style.height = `${height}px`;
+  waterCanvas.style.left = `${-WATER_HIGHLIGHT_SHIFT_PX}px`;
+
+  const context = waterCanvas.getContext("2d");
+  if (!context) return;
+  context.imageSmoothingEnabled = false;
+  context.clearRect(0, 0, width, height);
+  renderRows.forEach((row, y) => {
+    row.forEach((gid, x) => {
+      if (!isWaterFlowTileGid(gid)) return;
+      const mask = masks.get(Number(gid || 0));
+      if (!mask) return;
+      context.drawImage(
+        mask,
+        x * tileSize + WATER_HIGHLIGHT_SHIFT_PX,
+        y * tileSize,
+      );
+    });
+  });
+}
+
 function applyWaterHighlightMasks(mapLayer, masks) {
   mapLayer.querySelectorAll(".map-water-highlight").forEach((node) => {
     const maskUrl = masks.get(Number(node.dataset.waterGid || 0)) || "";
@@ -977,6 +1062,11 @@ function applyWaterHighlightMasks(mapLayer, masks) {
 }
 
 function scheduleWaterHighlightMasks(mapLayer, mapDefinition, signature) {
+  ensureWaterFlowTiles(mapDefinition).then((masks) => {
+    const currentState = mapRenderStateCache.get(mapLayer);
+    if (!currentState || currentState.signature !== signature) return;
+    drawWaterFlowCanvas(currentState.waterCanvas, mapDefinition, masks);
+  });
   ensureWaterHighlightMasks(mapDefinition).then((masks) => {
     const currentState = mapRenderStateCache.get(mapLayer);
     if (!currentState || currentState.signature !== signature) return;
@@ -1011,6 +1101,16 @@ function ensureMapRenderState(mapLayer, mapDefinition) {
       tileNodes.push(tile);
     });
   });
+
+  const waterCanvas = document.createElement("canvas");
+  waterCanvas.className = "map-water-flow-canvas";
+  waterCanvas.setAttribute("aria-hidden", "true");
+  waterCanvas.width = Math.max(1, mapDefinition.renderWidth * tileSize + WATER_HIGHLIGHT_SHIFT_PX);
+  waterCanvas.height = Math.max(1, mapDefinition.renderHeight * tileSize);
+  waterCanvas.style.left = `${-WATER_HIGHLIGHT_SHIFT_PX}px`;
+  waterCanvas.style.width = `${waterCanvas.width}px`;
+  waterCanvas.style.height = `${waterCanvas.height}px`;
+  mapLayer.appendChild(waterCanvas);
 
   const renderPadding = mapDefinition.renderPadding || { left: 0, top: 0 };
   (mapDefinition.objects || []).forEach((row, index) => {
@@ -1050,6 +1150,7 @@ function ensureMapRenderState(mapLayer, mapDefinition) {
   const nextState = {
     signature,
     tileNodes,
+    waterCanvas,
     previousRenderRows: [],
     tilesetColumns,
   };
@@ -1065,8 +1166,9 @@ function updateRenderedTile(tile, gid, tilesetColumns) {
   const tileRow = Math.floor(localId / tilesetColumns);
   tile.style.backgroundPosition = `${-col * tileSize}px ${-tileRow * tileSize}px`;
   tile.dataset.gid = String(Number(gid || 0));
+  tile.classList.toggle("map-tile-water", isWaterFlowTileGid(gid));
   let waterHighlight = tile.querySelector(".map-water-highlight");
-  if (isWaterAnimationGid(gid)) {
+  if (isWaterAnimationGid(gid) && !isWaterFlowTileGid(gid)) {
     if (!waterHighlight) {
       waterHighlight = document.createElement("span");
       waterHighlight.className = "map-water-highlight";

@@ -352,6 +352,18 @@ def _normalize_loaded_save(save_data):
     for entry in party:
         if not isinstance(entry, dict):
             continue
+        mp_from_save = entry.get("mp")
+        if isinstance(mp_from_save, dict):
+            mp_levels = entry.get("mp_levels")
+            if isinstance(mp_levels, dict):
+                for level in range(1, 9):
+                    row = mp_levels.setdefault(str(level), {})
+                    if isinstance(row, dict):
+                        row["current"] = _safe_int(
+                            mp_from_save.get(f"L{level}MP", row.get("current", 0)),
+                            0,
+                        )
+            continue
         derived_mp = _mp_from_mp_levels(entry)
         if isinstance(derived_mp, dict):
             entry["mp"] = derived_mp
