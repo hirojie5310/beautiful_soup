@@ -81,6 +81,47 @@ export function hydrateMenuStateFromEnvelope(currentMenuState, envelope) {
   });
 }
 
+export function memberJobLevelText(member) {
+  const candidates = [
+    member?.job_level,
+    member?.jobLevel,
+    member?.status?.job_level,
+    member?.status?.jobLevel,
+  ];
+  for (const candidate of candidates) {
+    if (candidate && typeof candidate === "object") {
+      const value = Number(candidate.level ?? candidate.job_level ?? candidate.jobLevel);
+      if (Number.isFinite(value) && value > 0) return String(value);
+      continue;
+    }
+    const value = Number(candidate);
+    if (Number.isFinite(value) && value > 0) return String(value);
+  }
+  return "*";
+}
+
+export function memberStatusIconKeys(member) {
+  const keys = [];
+  [member?.status_icons, member?.status?.status_icons].forEach((rows) => {
+    if (!Array.isArray(rows)) return;
+    rows.forEach((row) => {
+      const key = String(row || "").trim().toLowerCase();
+      if (key && !keys.includes(key)) keys.push(key);
+    });
+  });
+  return keys;
+}
+
+function resolveStatusIconCandidates(iconKey) {
+  const safeKey = encodeURIComponent(String(iconKey || "").trim().toLowerCase());
+  if (!safeKey) return [];
+  return [
+    `../assets/images/status_icons/${safeKey}.png`,
+    new URL(`../../assets/images/status_icons/${safeKey}.png`, import.meta.url).href,
+    `/assets/images/status_icons/${safeKey}.png`,
+  ];
+}
+
 function applyCachedImageSource(target, candidates, { onLoad, onError } = {}) {
   if (!target) return;
   const cachedUrl = readCachedImageUrl(candidates);
@@ -445,6 +486,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     state.party.forEach((member, index) => {
       const card = document.createElement("article");
       card.className = "member-card";
+      card.classList.add(`row-${normalizeRow(member?.row)}`);
       if (isRowSwapMode) {
         card.classList.add("row-mode");
         card.tabIndex = 0;
@@ -486,12 +528,27 @@ export async function mountScreen({ mountNode, store, navigate }) {
       const main = document.createElement("div");
       main.className = "member-main";
       main.innerHTML = `
-        <div class="line-strong">${String(member?.name || "Unknown")}</div>
-        <div class="muted">Job: ${String(member?.job || "Unknown")} / Lv ${Number(member?.level ?? 0)}</div>
-        <div class="muted">row: ${String(member?.row || "front")}</div>
-        <div class="hp">HP ${Number(member?.hp ?? 0)} / ${Number(member?.max_hp ?? 0)}</div>
+        <div class="line-strong">${String(member?.name || "Unknown")} / Lv ${Number(member?.level ?? 0)}</div>
+        <div class="muted">Job: ${String(member?.job || "Unknown")} / Lv ${memberJobLevelText(member)}</div>
+        <div class="hp"><span>HP ${Number(member?.hp ?? 0)} / ${Number(member?.max_hp ?? 0)}</span><span class="menu-status-icons" aria-label="status icons"></span></div>
         <div class="mp">MP(1-8): ${levelMpText(member)}</div>
       `;
+      const statusIconRow = main.querySelector(".menu-status-icons");
+      memberStatusIconKeys(member).forEach((iconKey) => {
+        const candidates = resolveStatusIconCandidates(iconKey);
+        if (!candidates.length) return;
+        const icon = document.createElement("img");
+        icon.className = "menu-status-icon";
+        icon.alt = iconKey;
+        icon.loading = "lazy";
+        icon.decoding = "async";
+        applyCachedImageSource(icon, candidates, {
+          onError: () => {
+            icon.remove();
+          },
+        });
+        statusIconRow.appendChild(icon);
+      });
       card.appendChild(main);
       partyList.appendChild(card);
     });
