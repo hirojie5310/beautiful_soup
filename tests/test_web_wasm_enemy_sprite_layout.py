@@ -19,16 +19,16 @@ def test_enemy_grid_keeps_six_stable_slots_across_counts() -> None:
     assert 'enemy-grid[data-count="4"]' in source
 
 
-def test_enemy_sprite_uses_full_card_width_while_fitting_height() -> None:
+def test_enemy_sprite_fills_card_width_and_allows_vertical_crop() -> None:
     source = _battle_screen_source()
     enemy_sprite_rule = source.rsplit(".battle-screen .enemy-sprite {", 1)[1].split("}", 1)[0]
 
     assert "inset: 0;" in enemy_sprite_rule
     assert "width: 100%;" in enemy_sprite_rule
-    assert "height: auto;" in enemy_sprite_rule
-    assert "max-height: calc(100% - 42px);" in enemy_sprite_rule
-    assert "margin: auto;" in enemy_sprite_rule
-    assert "object-fit: contain;" in enemy_sprite_rule
+    assert "height: 100%;" in enemy_sprite_rule
+    assert "max-height:" not in enemy_sprite_rule
+    assert "margin: auto;" not in enemy_sprite_rule
+    assert "object-fit: cover;" in enemy_sprite_rule
     assert "object-position: center 48%;" in enemy_sprite_rule
     assert "image-rendering: pixelated;" in enemy_sprite_rule
 

@@ -1124,6 +1124,16 @@ def boot_engine_for_location_with_save_json(
             state.save["item_stock"] = (
                 _merge_save_data(None, item_stock) if isinstance(item_stock, dict) else {}
             )
+        if "event_flag" in parsed:
+            event_flag = parsed.get("event_flag")
+            state.save["event_flag"] = (
+                _merge_save_data(None, event_flag) if isinstance(event_flag, dict) else {}
+            )
+        if "treasures" in parsed:
+            treasures = parsed.get("treasures")
+            state.save["treasures"] = (
+                _merge_save_data(None, treasures) if isinstance(treasures, dict) else {}
+            )
     if enemy_names_json is None:
         return boot_engine_for_location(location_group, location, seed=seed)
     return boot_engine_for_location(
