@@ -53,8 +53,6 @@ function buildNewGamePartyMember(index) {
     job_levels: {
       "Onion Knight": { level: 1, skill_point: 0 },
     },
-    hp: 0,
-    max_hp: 0,
     mp_levels: blankMpLevels(),
     Magic: blankMagicSlots(),
     equipment: {
@@ -78,6 +76,8 @@ export function createNewGameSaveData() {
     CP: 0,
     inventory: {},
     item_stock: {},
+    event_flag: {},
+    treasures: {},
     party: FIXED_PARTY_SLOT_KEYS.map((_key, index) => buildNewGamePartyMember(index)),
   };
 }
