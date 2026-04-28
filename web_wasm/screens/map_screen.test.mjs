@@ -13,10 +13,12 @@ import {
   findAdjacentNpc,
   findBlockingObjectAt,
   findCrystalSpriteOrigin,
+  configureLoopingMapBgm,
   findShopActivation,
   isAdjacentToCrystalSprite,
   isAdjacentToTileCoordinate,
   isStandingOnTileCoordinate,
+  isFloatingContinentMap,
   isUrInnItemShopRecoveryTile,
   interpolateMapPosition,
   findStandingObject,
@@ -740,6 +742,24 @@ test("water highlight animation covers town and Floating Continent water tiles",
     assert.equal(isWaterAnimationGid(gid), true);
   });
   assert.equal(isWaterAnimationGid(94), false);
+});
+
+test("Floating Continent BGM only targets the world map", () => {
+  assert.equal(isFloatingContinentMap({ id: "FloatingContinent" }), true);
+  assert.equal(isFloatingContinentMap({ id: "Ur", name: "Floating Continent" }), false);
+});
+
+test("configureLoopingMapBgm prepares an audio element for repeated playback", () => {
+  const audioElement = {
+    src: "",
+    loop: false,
+    preload: "",
+  };
+
+  assert.equal(configureLoopingMapBgm(audioElement, "/assets/sounds/bgm/eternal-wind.ogg"), audioElement);
+  assert.equal(audioElement.src, "/assets/sounds/bgm/eternal-wind.ogg");
+  assert.equal(audioElement.loop, true);
+  assert.equal(audioElement.preload, "auto");
 });
 
 test("findAdjacentTileWithGid detects a matching neighboring tile", () => {

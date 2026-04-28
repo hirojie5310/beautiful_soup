@@ -42,6 +42,8 @@ const BATTLE_START_SELECTION_KEY = "ff3_wasm_battle_start_selection_v1";
 const BATTLE_RETURN_CONTEXT_KEY = "ff3_wasm_battle_return_context_v1";
 const MAP_ENTRY_CONTEXT_KEY = "ff3_wasm_map_entry_context_v1";
 const SHOP_START_CONTEXT_KEY = "ff3_wasm_shop_start_context_v1";
+const FLOATING_CONTINENT_MAP_ID = "FloatingContinent";
+const FLOATING_CONTINENT_BGM_URL = new URL("../../assets/sounds/bgm/eternal-wind.ogg", import.meta.url).href;
 const ALTER_CAVE_RECOVERY_MAP_ID = "Alter_Cave_B4";
 const ALTER_CAVE_RECOVERY_GID = 36;
 const ALTER_CAVE_RECOVERY_TEXT_INDEX = 582;
@@ -111,6 +113,18 @@ let mergedFixedContentPromise = null;
 const mapRenderStateCache = new WeakMap();
 const waterHighlightMaskCache = new Map();
 const waterFlowTileCache = new Map();
+
+export function isFloatingContinentMap(mapDefinition) {
+  return String(mapDefinition?.id || "") === FLOATING_CONTINENT_MAP_ID;
+}
+
+export function configureLoopingMapBgm(audioElement, sourceUrl = FLOATING_CONTINENT_BGM_URL) {
+  if (!audioElement) return null;
+  audioElement.src = String(sourceUrl || "");
+  audioElement.loop = true;
+  audioElement.preload = "auto";
+  return audioElement;
+}
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
@@ -1675,8 +1689,72 @@ export async function mountScreen({ mountNode, store, navigate }) {
   let npcAnimationIntervalId = null;
   let playerDirection = "down";
   let playerWalkFrame = 0;
+  let floatingContinentBgm = null;
+  let cancelPendingBgmUnlock = null;
   const npcAnimationStates = new Map();
   const holdRepeater = createDirectionalHoldRepeater((direction) => tryMove(direction));
+
+  function clearPendingBgmUnlock() {
+    if (typeof cancelPendingBgmUnlock === "function") {
+      cancelPendingBgmUnlock();
+      cancelPendingBgmUnlock = null;
+    }
+  }
+
+  function ensureFloatingContinentBgm() {
+    if (floatingContinentBgm) return floatingContinentBgm;
+    if (typeof Audio !== "function") return null;
+    try {
+      floatingContinentBgm = configureLoopingMapBgm(new Audio());
+      return floatingContinentBgm;
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function stopFloatingContinentBgm() {
+    clearPendingBgmUnlock();
+    if (!floatingContinentBgm) return;
+    floatingContinentBgm.pause();
+    floatingContinentBgm.currentTime = 0;
+  }
+
+  function scheduleBgmUnlockRetry() {
+    if (cancelPendingBgmUnlock || typeof window === "undefined") return;
+    const retryPlayback = () => {
+      clearPendingBgmUnlock();
+      if (!isFloatingContinentMap(mapDefinition)) return;
+      const audio = ensureFloatingContinentBgm();
+      if (!audio) return;
+      const playResult = audio.play();
+      if (playResult && typeof playResult.catch === "function") {
+        playResult.catch(() => {});
+      }
+    };
+    window.addEventListener("pointerdown", retryPlayback, { capture: true });
+    window.addEventListener("keydown", retryPlayback, { capture: true });
+    cancelPendingBgmUnlock = () => {
+      window.removeEventListener("pointerdown", retryPlayback, { capture: true });
+      window.removeEventListener("keydown", retryPlayback, { capture: true });
+    };
+  }
+
+  function syncFloatingContinentBgm() {
+    if (!isFloatingContinentMap(mapDefinition)) {
+      stopFloatingContinentBgm();
+      return;
+    }
+    const audio = ensureFloatingContinentBgm();
+    if (!audio || !audio.paused) return;
+    const playResult = audio.play();
+    if (playResult && typeof playResult.catch === "function") {
+      playResult.catch(() => {
+        if (isFloatingContinentMap(mapDefinition)) {
+          scheduleBgmUnlockRetry();
+        }
+      });
+    }
+  }
 
   function isEventOverlayOpen() {
     return mapEventOverlay.classList.contains("open");
@@ -2150,6 +2228,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       tickNpcSprites();
       setVisualMapPosition(mapState.tile_x, mapState.tile_y);
       persistCurrentMapState(mapState);
+      syncFloatingContinentBgm();
       mapStatus.textContent = `${mapDefinition.name} に移動しました。`;
       return true;
     } finally {
@@ -2357,6 +2436,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
         });
         holdRepeater.stop();
         stopNpcAnimation();
+        stopFloatingContinentBgm();
         window.removeEventListener("keydown", onKeyDown);
       };
     }
@@ -2395,6 +2475,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     startNpcAnimation();
     persistCurrentMapState(mapState);
     setVisualMapPosition(mapState.tile_x, mapState.tile_y);
+    syncFloatingContinentBgm();
     if (postBattleOverlayIndices.length) {
       openEventOverlaySequence(await loadMergedFixedContentByIndices(postBattleOverlayIndices));
       mapStatus.textContent = "戦いのあと、クリスタルが静かに輝いている。";
@@ -2431,6 +2512,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     holdRepeater.stop();
     stopNpcAnimation();
     stopMoveAnimation();
+    stopFloatingContinentBgm();
     window.removeEventListener("keydown", onKeyDown);
     if (resizeObserver) {
       resizeObserver.disconnect();
