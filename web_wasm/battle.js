@@ -1,12 +1,47 @@
 import { getPyodideRuntime } from "./pyodide_runtime.js";
 import {
+  alignEventBlocksToLogBlocks,
   applyEventToPlaybackStatus,
+  applyNamedCombatEffect,
   applyNamedPopupOverrides,
+  buildLogBlocks,
+  buildNamedCombatEffects,
+  buildPlaybackEventsByBlock,
+  buildRewardLogBlock,
+  injectResourceDiffsIntoRewardLogs,
+  normalizeVictoryRewards,
 } from "./battle_playback.js";
 import {
   DEFAULT_BATTLE_RETURN_CONTEXT,
   resolveMountedBattleReturnContext,
 } from "./battle_context.js";
+import {
+  buildActionFromCommand as buildActionFromCommandForState,
+  commandLabel,
+  isOutOfBattleEnemy,
+  isOutOfBattleMember,
+  selectedEnemySafeIndex as selectedEnemySafeIndexForState,
+  targetSideForCommand,
+} from "./battle_controller.js";
+import {
+  downloadSaveEnvelope,
+  readBattleReturnContextFromSession,
+  readBattleStartSelectionFromSession,
+  syncRuntimeSaveToBrowser,
+  persistFinishedBattleSave,
+  writeBattleReturnContextToSession as persistBattleReturnContextToSession,
+} from "./battle_persistence.js";
+import {
+  renderBattleActionSheet,
+  renderBattleStatusLine,
+  renderEnemyCards,
+  renderPartyCards,
+  renderPlannedActionsText,
+  renderRewardPanel,
+  setActionSheetOpenState,
+  setBattleLogExpandedState,
+  setCommandLogLayoutState,
+} from "./battle_view.js";
 import {
   normalizeMemberIndexedRows,
   normalizePartyIdentityOrder,
@@ -17,14 +52,11 @@ import {
   resolveCachedImageUrl,
 } from "./image_cache.js";
 import {
-  AUTO_SAVE_SLOT_ID,
   LOCAL_MENU_STORAGE_KEY,
   parseSaveEnvelope,
-  persistSaveEnvelopeToIndexedDB,
   restoreSaveEnvelopeFromStorage,
   restoreSaveEnvelopeFromStorageAsync,
   parseMenuStateFromStorage,
-  makeSaveEnvelope,
   persistSaveEnvelopeToStorage,
 } from "./shared_storage.js";
 import { resolveLocationMapImageUrl } from "./map_images.js";
@@ -80,8 +112,6 @@ const statusIconRowCache = new WeakMap();
 const PYTHON_BUNDLE_VERSION = "20260406c";
 const ATTACK_EFFECT_SHEET_NAME = "ef_slash_frames.png";
 
-const BATTLE_START_SELECTION_KEY = "ff3_wasm_battle_start_selection_v1";
-const BATTLE_RETURN_CONTEXT_KEY = "ff3_wasm_battle_return_context_v1";
 const BATTLE_BOOT_DEBUG_TAG = "[battle-boot-debug]";
 
 function summarizePartyForBattleBoot(party) {
@@ -162,46 +192,9 @@ function bindDom(root = document) {
   enemyFrame = root.querySelector("#enemyFrame");
 }
 
-function readBattleStartSelectionFromSession() {
-  try {
-    const raw = sessionStorage.getItem(BATTLE_START_SELECTION_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === "object") {
-      return {
-        selected_location_group: String(parsed.selected_location_group || ""),
-        selected_location: String(parsed.selected_location || ""),
-        enemy_names: Array.isArray(parsed.enemy_names)
-          ? parsed.enemy_names.map((name) => String(name || "")).filter((name) => Boolean(name))
-          : [],
-      };
-    }
-  } catch (_error) {
-    return null;
-  }
-  return null;
-}
-
-function readBattleReturnContextFromSession() {
-  try {
-    const raw = sessionStorage.getItem(BATTLE_RETURN_CONTEXT_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? parsed : null;
-  } catch (_error) {
-    return null;
-  }
-}
-
 function writeBattleReturnContextToSession(nextContext) {
-  try {
-    sessionStorage.setItem(BATTLE_RETURN_CONTEXT_KEY, JSON.stringify(nextContext || {}));
-    battleReturnContext = nextContext && typeof nextContext === "object"
-      ? nextContext
-      : { ...DEFAULT_BATTLE_RETURN_CONTEXT };
-  } catch (_error) {
-    // ignore session persistence failures
-  }
+  battleReturnContext = persistBattleReturnContextToSession(nextContext)
+    || { ...DEFAULT_BATTLE_RETURN_CONTEXT };
 }
 
 function readBattleSelectionFromStore() {
@@ -225,16 +218,6 @@ let currentBattleSelection = sessionBattleStartSelection || storeBattleStartSele
   enemy_names: [],
 };
 let battleReturnContext = resolveMountedBattleReturnContext(readBattleReturnContextFromSession());
-
-const COMMAND_LABELS = {
-  Fight: "たたかう",
-  Defend: "ぼうぎょ",
-  Run: "にげる",
-  Flee: "にげる",
-  Item: "アイテム",
-  Magic: "まほう",
-  Cheer: "おうえん",
-};
 
 function resolveBattleSelection(selectionPayload) {
   const fallbackGroup = String(selectionPayload?.selected_group || "");
@@ -263,62 +246,15 @@ function resolveBattleSelection(selectionPayload) {
 }
 
 function selectedEnemySafeIndex() {
-  const enemies = Array.isArray(sessionStatus.enemies) ? sessionStatus.enemies : [];
-  if (!enemies.length) return 0;
-  const aliveIndices = enemies
-    .map((enemy, idx) => ({ enemy, idx }))
-    .filter(({ enemy }) => !isOutOfBattleEnemy(enemy))
-    .map(({ idx }) => idx);
-  if (!aliveIndices.length) return 0;
-  if (aliveIndices.includes(selectedEnemyIndex)) return selectedEnemyIndex;
-  return aliveIndices[0];
+  return selectedEnemySafeIndexForState({ sessionStatus, selectedEnemyIndex });
 }
 
 function buildActionFromCommand(def) {
-  const enemyIndex = selectedEnemySafeIndex();
-  if (def.targetSide === "self") {
-    return {
-      kind: def.kind,
-      command: def.command,
-      target_side: "self",
-      target_index: currentMemberIndex,
-      target_all: false,
-    };
-  }
-  if (def.targetSide === "ally") {
-    return {
-      kind: def.kind,
-      command: def.command,
-      target_side: "ally",
-      target_index: currentMemberIndex,
-      target_all: false,
-    };
-  }
-  return {
-    kind: def.kind,
-    command: def.command,
-    target_side: "enemy",
-    target_index: enemyIndex,
-    target_all: false,
-  };
-}
-
-function targetSideForCommand(def) {
-  if (def?.kind === "defend" || def?.kind === "run") {
-    return "self";
-  }
-  if (def?.kind === "item" || def?.kind === "magic") {
-    return "enemy";
-  }
-  if (def?.command === "Cheer") {
-    return "ally";
-  }
-  return "enemy";
-}
-
-function commandLabel(command) {
-  const key = String(command || "").trim();
-  return COMMAND_LABELS[key] || key || "(unknown)";
+  return buildActionFromCommandForState(def, {
+    currentMemberIndex,
+    sessionStatus,
+    selectedEnemyIndex,
+  });
 }
 
 function normalizeSpriteKey(raw) {
@@ -388,299 +324,9 @@ function applyCachedImageSource(target, candidates, { onLoad, onError } = {}) {
   });
 }
 
-function candidateListCacheKey(candidates) {
-  return Array.isArray(candidates)
-    ? candidates.map((candidate) => String(candidate || "")).filter(Boolean).join("\n")
-    : "";
-}
-
-function clearCardOverlayLayers(card) {
-  if (!card) return;
-  card.querySelectorAll(".combat-popup-layer,.combat-effect-layer").forEach((node) => node.remove());
-}
-
-function renderStatusIcons(iconRow, iconKeys) {
-  if (!iconRow) return;
-  const normalizedKeys = Array.isArray(iconKeys)
-    ? iconKeys.map((iconKey) => String(iconKey || "").trim()).filter(Boolean)
-    : [];
-  const previousState = statusIconRowCache.get(iconRow) || {
-    order: [],
-    nodes: new Map(),
-  };
-  const nextNodes = new Map();
-  const nextOrder = [];
-  const occurrenceCounts = new Map();
-
-  normalizedKeys.forEach((iconKey) => {
-    const occurrence = occurrenceCounts.get(iconKey) || 0;
-    occurrenceCounts.set(iconKey, occurrence + 1);
-    const nodeKey = `${iconKey}#${occurrence}`;
-    nextOrder.push(nodeKey);
-    let icon = previousState.nodes.get(nodeKey);
-    if (!icon) {
-      const candidates = resolveStatusIconCandidates(iconKey);
-      if (!candidates.length) return;
-      icon = document.createElement("img");
-      icon.className = "status-icon";
-      icon.alt = iconKey;
-      icon.loading = "lazy";
-      icon.decoding = "async";
-      icon.addEventListener("error", () => {
-        icon.remove();
-      });
-      applyCachedImageSource(icon, candidates, {
-        onError: () => {
-          icon.remove();
-        },
-      });
-    }
-    nextNodes.set(nodeKey, icon);
-    iconRow.appendChild(icon);
-  });
-
-  previousState.nodes.forEach((icon, nodeKey) => {
-    if (nextNodes.has(nodeKey)) return;
-    icon.remove();
-  });
-
-  statusIconRowCache.set(iconRow, {
-    order: nextOrder,
-    nodes: nextNodes,
-  });
-  iconRow.style.display = iconRow.childElementCount > 0 ? "" : "none";
-}
-
-function syncManagedCardImage(state, candidates) {
-  if (!state?.image || !state?.fallback) return;
-  const nextCandidateKey = candidateListCacheKey(candidates);
-  if (!nextCandidateKey) {
-    state.image.removeAttribute("src");
-    state.image.style.display = "none";
-    state.fallback.style.display = "";
-    state.currentCandidateKey = "";
-    return;
-  }
-  if (state.currentCandidateKey === nextCandidateKey) return;
-  state.currentCandidateKey = nextCandidateKey;
-  state.image.style.display = "";
-  state.fallback.style.display = "";
-  applyCachedImageSource(state.image, candidates, {
-    onLoad: () => {
-      if (state.currentCandidateKey !== nextCandidateKey) return;
-      state.fallback.style.display = "none";
-      state.image.style.display = "";
-    },
-    onError: () => {
-      if (state.currentCandidateKey !== nextCandidateKey) return;
-      state.image.removeAttribute("src");
-      state.image.style.display = "none";
-      state.fallback.style.display = "";
-    },
-  });
-}
-
-function createPartyCardState(idx) {
-  const card = document.createElement("article");
-  card.className = "card party-card";
-
-  const faceImage = document.createElement("img");
-  faceImage.className = "party-face";
-  faceImage.alt = "";
-  faceImage.loading = "eager";
-  faceImage.decoding = "async";
-  card.appendChild(faceImage);
-
-  const faceFallback = document.createElement("div");
-  faceFallback.className = "party-face-fallback";
-  faceFallback.textContent = "NO PORTRAIT";
-  card.appendChild(faceFallback);
-
-  const content = document.createElement("div");
-  content.className = "party-card-content";
-
-  const nameRow = document.createElement("div");
-  nameRow.className = "name party-name-row";
-  content.appendChild(nameRow);
-
-  const hpRow = document.createElement("div");
-  hpRow.className = "hp party-hp-row";
-  content.appendChild(hpRow);
-
-  const hpBarRow = document.createElement("div");
-  hpBarRow.className = "party-hp-bar-row";
-  const hpBar = document.createElement("div");
-  hpBar.className = "hp-bar";
-  const hpBarFill = document.createElement("div");
-  hpBarFill.className = "hp-bar-fill";
-  hpBar.appendChild(hpBarFill);
-  hpBarRow.appendChild(hpBar);
-  content.appendChild(hpBarRow);
-
-  const levelRow = document.createElement("div");
-  levelRow.className = "status party-level-row";
-  content.appendChild(levelRow);
-
-  const iconRow = document.createElement("div");
-  iconRow.className = "status-icon-row party-status-icons-row";
-  content.appendChild(iconRow);
-
-  card.appendChild(content);
-
-  return {
-    card,
-    image: faceImage,
-    fallback: faceFallback,
-    content,
-    nameRow,
-    hpRow,
-    hpBarRow,
-    hpBar,
-    hpBarFill,
-    levelRow,
-    iconRow,
-    currentCandidateKey: "",
-    index: idx,
-  };
-}
-
-function clampPercent(value) {
-  if (!Number.isFinite(value)) return 0;
-  return Math.max(0, Math.min(100, value));
-}
-
-function applyHudHpBar(barFill, member) {
-  if (!barFill) return;
-  const hp = Number(member?.hp ?? 0);
-  const maxHp = Math.max(0, Number(member?.max_hp ?? 0));
-  const ratio = maxHp > 0 ? (hp / maxHp) * 100 : 0;
-  const normalizedRatio = clampPercent(ratio);
-  barFill.style.setProperty("--hp-ratio", `${normalizedRatio}%`);
-  barFill.classList.remove("is-caution", "is-danger");
-  if (normalizedRatio <= 25) {
-    barFill.classList.add("is-danger");
-  } else if (normalizedRatio <= 55) {
-    barFill.classList.add("is-caution");
-  }
-}
-
-function createEnemyCardState(idx) {
-  const card = document.createElement("article");
-  card.className = "card target enemy-card";
-  card.addEventListener("click", () => {
-    if (battleFinished) return;
-    const enemy = Array.isArray(sessionStatus.enemies) ? sessionStatus.enemies[idx] : null;
-    if (isOutOfBattleEnemy(enemy)) return;
-    selectedEnemyIndex = idx;
-    renderEnemies();
-    renderStatus();
-  });
-
-  const spriteImage = document.createElement("img");
-  spriteImage.className = "enemy-sprite";
-  spriteImage.alt = "";
-  spriteImage.loading = "eager";
-  spriteImage.decoding = "async";
-  card.appendChild(spriteImage);
-
-  const spriteFallback = document.createElement("div");
-  spriteFallback.className = "enemy-sprite-fallback";
-  spriteFallback.textContent = "NO SPRITE";
-  card.appendChild(spriteFallback);
-
-  const content = document.createElement("div");
-  content.className = "enemy-card-content";
-
-  const nameRow = document.createElement("div");
-  nameRow.className = "name enemy-name-row";
-  content.appendChild(nameRow);
-
-  const hpWrap = document.createElement("div");
-  hpWrap.className = "enemy-hp-wrap";
-
-  const hpRow = document.createElement("div");
-  hpRow.className = "hp";
-  hpWrap.appendChild(hpRow);
-
-  const hpBarRow = document.createElement("div");
-  hpBarRow.className = "enemy-hp-bar-row";
-  const hpBar = document.createElement("div");
-  hpBar.className = "hp-bar";
-  const hpBarFill = document.createElement("div");
-  hpBarFill.className = "hp-bar-fill";
-  hpBar.appendChild(hpBarFill);
-  hpBarRow.appendChild(hpBar);
-  hpWrap.appendChild(hpBarRow);
-  content.appendChild(hpWrap);
-
-  const iconRow = document.createElement("div");
-  iconRow.className = "status-icon-row enemy-status-icons-row";
-  content.appendChild(iconRow);
-
-  card.appendChild(content);
-
-  return {
-    card,
-    image: spriteImage,
-    fallback: spriteFallback,
-    content,
-    nameRow,
-    hpWrap,
-    hpRow,
-    hpBarRow,
-    hpBar,
-    hpBarFill,
-    iconRow,
-    currentCandidateKey: "",
-    index: idx,
-  };
-}
-
-function getPartyCardState(idx) {
-  if (!partyCardCache.has(idx)) {
-    partyCardCache.set(idx, createPartyCardState(idx));
-  }
-  return partyCardCache.get(idx);
-}
-
-function getEnemyCardState(idx) {
-  if (!enemyCardCache.has(idx)) {
-    enemyCardCache.set(idx, createEnemyCardState(idx));
-  }
-  return enemyCardCache.get(idx);
-}
-
 function enterCommandMode() {
   inputMode = "command";
   pendingActionDraft = null;
-}
-
-function isOutOfBattleMember(member) {
-  if (!member || typeof member !== "object") return true;
-  if (member.out_of_battle === true) return true;
-  const hp = Number(member.hp ?? 0);
-  if (hp <= 0) return true;
-  const icons = Array.isArray(member.status_icons) ? member.status_icons : [];
-  const normalized = icons.map((icon) => String(icon || "").toLowerCase());
-  return (
-    normalized.includes("ko")
-    || normalized.includes("petrify")
-    || normalized.includes("petrification")
-  );
-}
-
-function isOutOfBattleEnemy(enemy) {
-  if (!enemy || typeof enemy !== "object") return true;
-  if (enemy.out_of_battle === true) return true;
-  const hp = Number(enemy.hp ?? 0);
-  if (hp <= 0) return true;
-  const icons = Array.isArray(enemy.status_icons) ? enemy.status_icons : [];
-  const normalized = icons.map((icon) => String(icon || "").toLowerCase());
-  return (
-    normalized.includes("ko")
-    || normalized.includes("petrify")
-    || normalized.includes("petrification")
-  );
 }
 
 function actionableMemberIndices() {
@@ -788,17 +434,12 @@ function currentItemCandidates() {
 }
 
 function setActionSheetOpen(open) {
-  const isOpen = Boolean(open);
-  if (actionSheet) {
-    actionSheet.classList.toggle("open", isOpen);
-    actionSheet.setAttribute("aria-hidden", isOpen ? "false" : "true");
-  }
-  if (actionSheetBackdrop) {
-    actionSheetBackdrop.classList.toggle("open", isOpen);
-  }
-  if (!isOpen && actionSheetBody) {
-    actionSheetBody.innerHTML = "";
-  }
+  setActionSheetOpenState({
+    open,
+    actionSheet,
+    actionSheetBackdrop,
+    actionSheetBody,
+  });
 }
 
 function closeActionSheetToCommand() {
@@ -846,39 +487,6 @@ function shouldReturnToSideSelection() {
   return Boolean(pendingActionDraft?.requires_side_choice);
 }
 
-function createSheetButton(label, onClick, { disabled = false } = {}) {
-  const button = document.createElement("button");
-  button.className = "btn";
-  button.type = "button";
-  button.disabled = disabled;
-  button.textContent = String(label || "");
-  button.addEventListener("click", onClick);
-  return button;
-}
-
-function createActionSheetGrid() {
-  const grid = document.createElement("div");
-  grid.className = "action-sheet-grid";
-  return grid;
-}
-
-function createActionSheetSection(label, { magicLevel = false } = {}) {
-  const section = document.createElement("section");
-  section.className = "action-sheet-section";
-  if (label) {
-    const heading = document.createElement("div");
-    heading.className = "action-sheet-section-label";
-    heading.textContent = label;
-    section.appendChild(heading);
-  }
-  const grid = createActionSheetGrid();
-  if (magicLevel) {
-    grid.classList.add("magic-level-grid");
-  }
-  section.appendChild(grid);
-  return { section, grid };
-}
-
 function currentActorName() {
   const party = Array.isArray(sessionStatus.party) ? sessionStatus.party : [];
   const actor = party[currentMemberIndex];
@@ -886,176 +494,59 @@ function currentActorName() {
 }
 
 function renderMagicActionSheet() {
-  if (!actionSheetBody || !actionSheetTitle) return;
-  const actorName = currentActorName();
-  actionSheetTitle.textContent = actorName
-    ? `${actorName} の魔法`
-    : "魔法を選択";
-  actionSheetBody.innerHTML = "";
-
-  const backGrid = createActionSheetGrid();
-  backGrid.appendChild(createSheetButton("← コマンドにもどる", () => {
-    closeActionSheetToCommand();
-  }));
-  actionSheetBody.appendChild(backGrid);
-
-  const candidates = currentMemberMagicCandidates();
-  const groupedCandidates = [];
-  let currentGroup = null;
-  candidates.forEach((cand) => {
-    const groupLabel = String(cand?.group_label || "").trim();
-    if (!groupLabel) {
-      groupedCandidates.push({ header: "", spells: [cand] });
-      currentGroup = null;
-      return;
-    }
-    if (!currentGroup || currentGroup.header !== groupLabel) {
-      currentGroup = { header: groupLabel, spells: [] };
-      groupedCandidates.push(currentGroup);
-    }
-    currentGroup.spells.push(cand);
-  });
-
-  groupedCandidates.forEach((group) => {
-    const { section, grid } = createActionSheetSection(group.header, { magicLevel: true });
-    group.spells.forEach((cand) => {
-      grid.appendChild(createSheetButton(
-        String(cand?.label || cand?.name || "(magic)"),
-        () => chooseMagic(cand),
-        { disabled: !pyodide || battleFinished },
-      ));
-    });
-    actionSheetBody.appendChild(section);
-  });
+  renderCurrentActionSheet("pick_magic");
 }
 
 function renderItemActionSheet() {
-  if (!actionSheetBody || !actionSheetTitle) return;
-  const actorName = currentActorName();
-  actionSheetTitle.textContent = actorName
-    ? `${actorName} のアイテム`
-    : "アイテムを選択";
-  actionSheetBody.innerHTML = "";
-
-  const grid = createActionSheetGrid();
-  grid.appendChild(createSheetButton("← コマンドにもどる", () => {
-    closeActionSheetToCommand();
-  }));
-  currentItemCandidates().forEach((cand) => {
-    grid.appendChild(createSheetButton(
-      String(cand?.label || cand?.name || "(item)"),
-      () => chooseItem(cand),
-      { disabled: !pyodide || battleFinished },
-    ));
-  });
-  actionSheetBody.appendChild(grid);
+  renderCurrentActionSheet("pick_item");
 }
 
 function renderTargetSideActionSheet() {
-  if (!actionSheetBody || !actionSheetTitle) return;
-  const actorName = currentActorName();
-  actionSheetTitle.textContent = actorName
-    ? `${actorName} の対象サイド`
-    : "対象サイドを選択";
-  actionSheetBody.innerHTML = "";
-
-  const grid = createActionSheetGrid();
-  grid.appendChild(createSheetButton("← まほう・アイテム選択にもどる", () => {
-    returnToSourceSelection();
-  }));
-  grid.appendChild(createSheetButton("敵を対象にする", () => {
-    pendingActionDraft = { ...(pendingActionDraft || {}), target_side: "enemy" };
-    inputMode = "pick_target";
-    rerenderAll();
-  }));
-  grid.appendChild(createSheetButton("味方を対象にする", () => {
-    pendingActionDraft = { ...(pendingActionDraft || {}), target_side: "ally" };
-    inputMode = "pick_target";
-    rerenderAll();
-  }));
-  actionSheetBody.appendChild(grid);
+  renderCurrentActionSheet("pick_side");
 }
 
 function renderTargetActionSheet() {
-  if (!actionSheetBody || !actionSheetTitle) return;
-  const actorName = currentActorName();
-  const side = pendingActionDraft?.target_side || "enemy";
-  const sideLabel = side === "ally" ? "味方" : "敵";
-  actionSheetTitle.textContent = actorName
-    ? `${actorName} の対象選択`
-    : `${sideLabel}対象を選択`;
-  actionSheetBody.innerHTML = "";
+  renderCurrentActionSheet("pick_target");
+}
 
-  const grid = createActionSheetGrid();
-  const backLabel = shouldReturnToSideSelection()
-    ? "← 対象サイド選択にもどる"
-    : "← まほう・アイテム選択にもどる";
-  grid.appendChild(createSheetButton(backLabel, () => {
-    if (shouldReturnToSideSelection()) {
-      inputMode = "pick_side";
-    } else {
-      inputMode = sourceSelectionModeForDraft();
-      if (inputMode === "command") {
-        pendingActionDraft = null;
+function renderCurrentActionSheet(mode) {
+  renderBattleActionSheet({
+    mode,
+    actionSheetTitle,
+    actionSheetBody,
+    actorName: currentActorName(),
+    magicCandidates: currentMemberMagicCandidates(),
+    itemCandidates: currentItemCandidates(),
+    pendingActionDraft,
+    sessionStatus,
+    canAct: Boolean(pyodide && !battleFinished),
+    isOutOfBattleEnemy,
+    onBackToCommand: closeActionSheetToCommand,
+    onReturnToSource: returnToSourceSelection,
+    onChooseMagic: chooseMagic,
+    onChooseItem: chooseItem,
+    onChooseSide: (side) => {
+      pendingActionDraft = { ...(pendingActionDraft || {}), target_side: side };
+      inputMode = "pick_target";
+      rerenderAll();
+    },
+    onBackFromTarget: () => {
+      if (shouldReturnToSideSelection()) {
+        inputMode = "pick_side";
+      } else {
+        inputMode = sourceSelectionModeForDraft();
+        if (inputMode === "command") {
+          pendingActionDraft = null;
+        }
       }
-    }
-    rerenderAll();
-  }));
-
-  const targetNorm = String(pendingActionDraft?.target_norm || "");
-  const canSelectAll = Boolean(pendingActionDraft?.can_select_all);
-  const canSelectAllForSide =
-    canSelectAll && (
-      pendingActionDraft?.kind === "item" ||
-      targetNorm === "one/all" ||
-      (side === "enemy" && targetNorm === "one/all enemies") ||
-      (side === "ally" && targetNorm === "one/all allies") ||
-      (
-        pendingActionDraft?.kind === "magic" &&
-        pendingActionDraft?.target_mode === "any" &&
-        side === "ally" &&
-        targetNorm === "one/all enemies"
-      )
-    );
-  if (canSelectAllForSide) {
-    grid.appendChild(createSheetButton(
-      side === "ally" ? "味方全体" : "敵全体",
-      () => finalizeDraftAction(0, { targetAll: true }),
-    ));
-  }
-
-  if (side === "ally") {
-    const party = Array.isArray(sessionStatus.party) ? sessionStatus.party : [];
-    party.forEach((member, idx) => {
-      grid.appendChild(createSheetButton(
-        `味方: ${member?.name || `Member ${idx + 1}`}`,
-        () => finalizeDraftAction(idx),
-      ));
-    });
-  } else {
-    const enemies = Array.isArray(sessionStatus.enemies) ? sessionStatus.enemies : [];
-    enemies.forEach((enemy, idx) => {
-      if (isOutOfBattleEnemy(enemy)) return;
-      grid.appendChild(createSheetButton(
-        `敵: ${enemy?.name || `Enemy ${idx + 1}`}`,
-        () => finalizeDraftAction(idx),
-      ));
-    });
-  }
-
-  actionSheetBody.appendChild(grid);
+      rerenderAll();
+    },
+    onFinalizeTarget: finalizeDraftAction,
+  });
 }
 
 function cloneJsonValue(value) {
   return JSON.parse(JSON.stringify(value ?? null));
-}
-
-function asPlainObject(value) {
-  return value && typeof value === "object" ? value : {};
-}
-
-function asArrayValue(value) {
-  return Array.isArray(value) ? value : [];
 }
 
 function combatPopupKey(side, index) {
@@ -1082,391 +573,53 @@ function resolveAttackEffectImageCandidates(fileName = ATTACK_EFFECT_SHEET_NAME)
   ];
 }
 
-function appendCombatPopup(card, popup) {
-  if (!card || !popup) return;
-  const layer = document.createElement("div");
-  layer.className = "combat-popup-layer";
-  const bubble = document.createElement("div");
-  const value = Number(popup?.value ?? 0);
-  const kind = String(popup?.kind || "");
-  let text = String(popup?.text || value);
-  let extraClass = "";
-  if (kind === "status") {
-    text = String(popup?.text || "");
-    extraClass = popup?.statusCategory === "cure" ? " status cure" : " status";
-  } else if (kind === "heal") {
-    text = `+${Math.abs(value)}`;
-    extraClass = " heal";
-  } else if (kind === "miss") {
-    text = "MISS";
-    extraClass = " miss";
-  } else if (value > 0) {
-    text = `${value}`;
-  } else if (value < 0) {
-    text = `+${Math.abs(value)}`;
-    extraClass = " heal";
-  } else {
-    text = "0";
-    extraClass = " miss";
-  }
-  bubble.className = `combat-popup${extraClass}`;
-  bubble.textContent = text;
-  layer.appendChild(bubble);
-  card.appendChild(layer);
-}
-
-function appendCombatEffect(card, effect) {
-  if (!card || !effect || effect.kind !== "slash") return;
-
-  const layer = document.createElement("div");
-  layer.className = "combat-effect-layer";
-
-  const slash = document.createElement("div");
-  slash.className = "combat-slash";
-
-  const targetWidth = Math.max(1, card.clientWidth || card.offsetWidth || 120);
-  const targetHeight = Math.max(1, card.clientHeight || card.offsetHeight || 112);
-  const frameWidth = 41;
-  const frameHeight = 44;
-  const startX = Math.round(targetWidth * 0.16);
-  const endX = Math.round(targetWidth - frameWidth - targetWidth * 0.16);
-  const startY = Math.round(targetHeight * 0.48 - frameHeight / 2 - targetHeight * 0.06);
-  const endY = Math.round(targetHeight * 0.48 - frameHeight / 2 + targetHeight * 0.06);
-  const candidates = resolveAttackEffectImageCandidates(effect.sheetName);
-
-  slash.style.setProperty("--slash-start-x", `${startX}px`);
-  slash.style.setProperty("--slash-end-x", `${Math.max(startX, endX)}px`);
-  slash.style.setProperty("--slash-start-y", `${startY}px`);
-  slash.style.setProperty("--slash-end-y", `${endY}px`);
-  applyCachedImageSource(slash, candidates, {
-    onLoad: (resolvedUrl) => {
-      slash.style.setProperty("--slash-image", `url("${resolvedUrl}")`);
-    },
-  });
-
-  layer.appendChild(slash);
-  card.appendChild(layer);
-}
-
-function normalizeStatusIconKey(raw) {
-  return String(raw || "").trim().toLowerCase().replace(/^status\./, "");
-}
-
-function parseActionHeaderMeta(line, actorOccurrenceMap) {
-  const header = String(line || "").trim();
-  let match = header.match(/^▶\s(.+?)\sの行動/);
-  if (match) {
-    const actorName = String(match[1] || "");
-    const occurrenceKey = `char:${actorName}`;
-    const occurrence = actorOccurrenceMap.get(occurrenceKey) || 0;
-    actorOccurrenceMap.set(occurrenceKey, occurrence + 1);
-    const party = Array.isArray(sessionStatus?.party) ? sessionStatus.party : [];
-    const candidateIndexes = party
-      .map((member, index) => ({ name: String(member?.name || ""), index }))
-      .filter((row) => row.name === actorName)
-      .map((row) => row.index);
-    return {
-      actorSide: "char",
-      actorIndex: candidateIndexes[occurrence] ?? candidateIndexes[0] ?? null,
-    };
-  }
-
-  match = header.match(/^◆\s(.+?)\sの行動/);
-  if (match) {
-    const actorName = String(match[1] || "");
-    const occurrenceKey = `enemy:${actorName}`;
-    const occurrence = actorOccurrenceMap.get(occurrenceKey) || 0;
-    actorOccurrenceMap.set(occurrenceKey, occurrence + 1);
-    const enemies = Array.isArray(sessionStatus?.enemies) ? sessionStatus.enemies : [];
-    const candidateIndexes = enemies
-      .map((enemy, index) => ({ name: String(enemy?.name || ""), index }))
-      .filter((row) => row.name === actorName)
-      .map((row) => row.index);
-    return {
-      actorSide: "enemy",
-      actorIndex: candidateIndexes[occurrence] ?? candidateIndexes[0] ?? null,
-    };
-  }
-
-  return { actorSide: null, actorIndex: null };
-}
-
-function buildPlaybackEventsByBlock(blocks, events) {
-  const actorOccurrenceMap = new Map();
-  const pendingEvents = Array.isArray(events) ? [...events] : [];
-  let cursor = 0;
-  return blocks.map((block) => {
-    if (block.type !== "action") return [];
-    const firstLine = Array.isArray(block.lines) ? block.lines[0] : "";
-    const { actorSide, actorIndex } = parseActionHeaderMeta(firstLine, actorOccurrenceMap);
-    if (actorSide == null || actorIndex == null) {
-      return [];
-    }
-    const blockEvents = [];
-    let probe = cursor;
-    while (probe < pendingEvents.length) {
-      const nextEvent = pendingEvents[probe];
-      const nextActorSide = String(nextEvent?.actor_side || "");
-      const nextActorIndex = Number(nextEvent?.actor_index ?? -1);
-      if (!nextActorSide || Number.isNaN(nextActorIndex) || nextActorIndex < 0) {
-        probe += 1;
-        continue;
-      }
-      if (
-        nextActorSide !== actorSide
-        || nextActorIndex !== Number(actorIndex)
-      ) {
-        if (blockEvents.length === 0) {
-          break;
-        }
-        break;
-      }
-      blockEvents.push(nextEvent);
-      probe += 1;
-    }
-    if (blockEvents.length > 0) {
-      cursor = probe;
-    }
-    return blockEvents;
-  });
-}
-
-function extractPopupValueQueue(block) {
-  const queue = [];
-  (Array.isArray(block?.lines) ? block.lines : []).forEach((lineRaw) => {
-    const line = String(lineRaw || "").trim();
-    let match = line.match(/(?:に|は)(\d+)のダメージ(?:を受けた)?[。！]?/);
-    if (match) {
-      queue.push({ kind: "damage", value: Number(match[1]) });
-      return;
-    }
-
-    match = line.match(/HP(?:が|を)(\d+)回復(?:した)?[。！]?/);
-    if (match) {
-      queue.push({ kind: "heal", value: Number(match[1]) });
-      return;
-    }
-
-    if (line.includes("ダメージを与えられなかった") || line.includes("（ミス）") || line.endsWith("ミス")) {
-      queue.push({ kind: "miss", value: 0 });
-    }
-  });
-  return queue;
-}
-
-function resolveNamedTarget(name, playbackStatus, preferredSide, usageMap) {
-  const targetName = String(name || "").trim();
-  if (!targetName || !playbackStatus || typeof playbackStatus !== "object") {
-    return null;
-  }
-  const collections = preferredSide === "enemy"
-    ? [
-      ["enemy", Array.isArray(playbackStatus.enemies) ? playbackStatus.enemies : []],
-      ["char", Array.isArray(playbackStatus.party) ? playbackStatus.party : []],
-    ]
-    : [
-      ["char", Array.isArray(playbackStatus.party) ? playbackStatus.party : []],
-      ["enemy", Array.isArray(playbackStatus.enemies) ? playbackStatus.enemies : []],
-    ];
-
-  for (const [side, rows] of collections) {
-    const key = `${side}:${targetName}`;
-    const occurrence = usageMap.get(key) || 0;
-    const matchedIndexes = rows
-      .map((row, index) => ({ name: String(row?.name || "").trim(), index }))
-      .filter((row) => row.name === targetName)
-      .map((row) => row.index);
-    if (matchedIndexes.length > occurrence) {
-      usageMap.set(key, occurrence + 1);
-      return { side, index: matchedIndexes[occurrence] };
-    }
-  }
-  return null;
-}
-
-function buildNamedCombatEffects(block, playbackStatus) {
-  const firstLine = Array.isArray(block?.lines) ? String(block.lines[0] || "") : "";
-  const { actorSide } = parseActionHeaderMeta(firstLine, new Map());
-  const preferredSide = actorSide === "char" ? "enemy" : "char";
-  const usageMap = new Map();
-  const effects = [];
-
-  (Array.isArray(block?.lines) ? block.lines : []).forEach((lineRaw) => {
-    const line = String(lineRaw || "").trim();
-    let match = line.match(/(?:^|[！。]\s*)([^！。]+?)に(\d+)のダメージ/);
-    if (!match) match = line.match(/(?:^|[！。]\s*)([^！。]+?)は(\d+)のダメージを受けた/);
-    if (!match) match = line.match(/(?:^|[！。]\s*)([^！。]+?)は(\d+)のダメージ/);
-    if (match) {
-      const target = resolveNamedTarget(match[1], playbackStatus, preferredSide, usageMap);
-      if (target) {
-        effects.push({ ...target, kind: "damage", value: Number(match[2]) });
-      }
-      return;
-    }
-
-    match = line.match(/(?:^|[！。]\s*)([^！。]+?)のHPが(\d+)回復/);
-    if (!match) match = line.match(/(?:^|[！。]\s*)([^！。]+?)はHPを(\d+)回復した/);
-    if (!match) match = line.match(/(?:^|[！。]\s*)([^！。]+?)はHPが(\d+)回復/);
-    if (match) {
-      const target = resolveNamedTarget(match[1], playbackStatus, preferredSide, usageMap);
-      if (target) {
-        effects.push({ ...target, kind: "heal", value: Number(match[2]) });
-      }
-      return;
-    }
-
-    match = line.match(/(?:^|[！。]\s*)([^！。]+?)は《?([^》！。]+?)》?状態になった/);
-    if (!match) match = line.match(/(?:^|[！。]\s*)([^！。]+?)は([^！。]+?)状態になった/);
-    if (match) {
-      const target = resolveNamedTarget(match[1], playbackStatus, preferredSide, usageMap);
-      if (target) {
-        effects.push({
-          ...target,
-          kind: "status",
-          text: String(match[2] || "").trim(),
-          statusCategory: "inflict",
-        });
-      }
-      return;
-    }
-
-    match = line.match(/(?:^|[！。]\s*)([^！。]+?)の([^！。]+?)が解けた/);
-    if (match) {
-      const target = resolveNamedTarget(match[1], playbackStatus, preferredSide, usageMap);
-      if (target) {
-        effects.push({
-          ...target,
-          kind: "status",
-          text: `${String(match[2] || "").trim()}解除`,
-          statusCategory: "cure",
-        });
-      }
-      return;
-    }
-
-    match = line.match(/しかし([^！。]+?)には効かなかった/);
-    if (match) {
-      const target = resolveNamedTarget(match[1], playbackStatus, preferredSide, usageMap);
-      if (target) {
-        effects.push({ ...target, kind: "miss", value: 0 });
-      }
-    }
-  });
-
-  return effects;
-}
-
-function applyNamedCombatEffect(playbackStatus, effect) {
-  if (!effect || !playbackStatus || typeof playbackStatus !== "object") return null;
-  const side = String(effect.side || "");
-  const index = Number(effect.index ?? -1);
-  const value = Number(effect.value ?? 0);
-  const kind = String(effect.kind || "");
-  const collection = side === "enemy" ? playbackStatus.enemies : playbackStatus.party;
-  if (!Array.isArray(collection) || index < 0 || index >= collection.length) return null;
-  const target = collection[index];
-  if (!target || typeof target !== "object") return null;
-
-  if (kind === "damage") {
-    const currentHp = Number(target?.hp ?? 0);
-    const nextHp = Math.max(0, currentHp - value);
-    target.hp = nextHp;
-    target.out_of_battle = nextHp <= 0 ? true : Boolean(target.out_of_battle);
-    if (target?.status && typeof target.status === "object") {
-      target.status.hp = nextHp;
-    }
-  } else if (kind === "heal") {
-    const currentHp = Number(target?.hp ?? 0);
-    const maxHp = Number(target?.max_hp ?? currentHp);
-    const nextHp = Math.min(maxHp, currentHp + value);
-    target.hp = nextHp;
-    target.out_of_battle = false;
-    if (target?.status && typeof target.status === "object") {
-      target.status.hp = nextHp;
-    }
-  }
-
-  return {
-    side,
-    index,
-    effect: kind === "damage" && value > 0
-      ? {
-        kind: "slash",
-        sheetName: ATTACK_EFFECT_SHEET_NAME,
-      }
-      : null,
-    popup: kind === "status"
-      ? {
-        kind,
-        text: String(effect?.text || ""),
-        statusCategory: String(effect?.statusCategory || "inflict"),
-      }
-      : {
-        kind,
-        value,
-      },
-  };
-}
-
 function renderParty() {
   const party = Array.isArray(sessionStatus.party) ? sessionStatus.party : [];
-  const activeKeys = new Set();
-  party.forEach((member, idx) => {
-    const activeClass = idx === currentMemberIndex && !battleFinished ? " active" : "";
-    const cardState = getPartyCardState(idx);
-    activeKeys.add(idx);
-    cardState.card.className = `card party-card${activeClass}`;
-    cardState.nameRow.textContent = String(member?.name ?? `Member ${idx + 1}`);
-    cardState.hpRow.textContent = `${Number(member?.hp ?? 0)} / ${Number(member?.max_hp ?? 0)}`;
-    cardState.levelRow.textContent = `Lv ${Number(member?.level ?? 0)}`;
-    applyHudHpBar(cardState.hpBarFill, member);
-    syncManagedCardImage(cardState, resolveFaceImageCandidates(member, idx));
-    renderStatusIcons(cardState.iconRow, member?.status_icons);
-    clearCardOverlayLayers(cardState.card);
-    appendCombatEffect(cardState.card, effectForTarget("char", idx));
-    appendCombatPopup(cardState.card, popupForTarget("char", idx));
-    partyGrid.appendChild(cardState.card);
-  });
-  partyCardCache.forEach((cardState, key) => {
-    if (activeKeys.has(key)) return;
-    cardState.card.remove();
+  renderPartyCards({
+    partyGrid,
+    party,
+    partyCardCache,
+    currentMemberIndex,
+    battleFinished,
+    resolveFaceImageCandidates,
+    statusIconRowCache,
+    resolveStatusIconCandidates,
+    applyCachedImageSource,
+    effectForTarget,
+    popupForTarget,
+    resolveAttackEffectImageCandidates,
   });
 }
 
 function renderEnemies() {
   const enemies = Array.isArray(sessionStatus.enemies) ? sessionStatus.enemies : [];
-  if (enemyGrid) {
-    enemyGrid.dataset.count = String(enemies.length);
-  }
-  const mapImageUrl = resolveLocationMapImageUrl(currentSelectedLocationGroup, () => {
-    renderEnemies();
-  });
-  if (enemyFrame) {
-    if (mapImageUrl) {
-      enemyFrame.style.backgroundImage = `linear-gradient(rgba(8,14,34,0.68), rgba(8,14,34,0.68)), url("${mapImageUrl}")`;
-    } else {
-      enemyFrame.style.backgroundImage = "none";
-    }
-  }
-  const activeKeys = new Set();
-  enemies.forEach((enemy, idx) => {
-    const selectedClass = idx === selectedEnemySafeIndex() ? " selected" : "";
-    const cardState = getEnemyCardState(idx);
-    activeKeys.add(idx);
-    cardState.card.className = `card target enemy-card${selectedClass}`;
-    cardState.nameRow.textContent = String(enemy?.name ?? `Enemy ${idx + 1}`);
-    cardState.hpRow.textContent = `HP ${Number(enemy?.hp ?? 0)} / ${Number(enemy?.max_hp ?? 0)}`;
-    applyHudHpBar(cardState.hpBarFill, enemy);
-    syncManagedCardImage(cardState, resolveEnemyImageCandidates(enemy));
-    renderStatusIcons(cardState.iconRow, enemy?.status_icons);
-    clearCardOverlayLayers(cardState.card);
-    appendCombatEffect(cardState.card, effectForTarget("enemy", idx));
-    appendCombatPopup(cardState.card, popupForTarget("enemy", idx));
-    enemyGrid.appendChild(cardState.card);
-  });
-  enemyCardCache.forEach((cardState, key) => {
-    if (activeKeys.has(key)) return;
-    cardState.card.remove();
+  renderEnemyCards({
+    enemyGrid,
+    enemyFrame,
+    enemies,
+    enemyCardCache,
+    selectedEnemyIndex,
+    selectedEnemySafeIndex: selectedEnemySafeIndexForState,
+    currentSelectedLocationGroup,
+    resolveLocationMapImageUrl,
+    resolveEnemyImageCandidates,
+    statusIconRowCache,
+    resolveStatusIconCandidates,
+    applyCachedImageSource,
+    effectForTarget,
+    popupForTarget,
+    resolveAttackEffectImageCandidates,
+    onEnemyClick: (idx) => {
+      if (battleFinished) return;
+      const enemy = Array.isArray(sessionStatus.enemies) ? sessionStatus.enemies[idx] : null;
+      if (isOutOfBattleEnemy(enemy)) return;
+      selectedEnemyIndex = idx;
+      renderEnemies();
+      renderStatus();
+    },
+    onMapImageResolved: () => {
+      renderEnemies();
+    },
   });
 }
 
@@ -1548,131 +701,34 @@ function goBackToPreviousMemberAction() {
 }
 
 function renderPlannedActions() {
-  if (!plannedActionsView) return;
-  plannedActionsView.textContent = pendingActions.length
-    ? JSON.stringify(pendingActions, null, 2)
-    : "(none)";
+  renderPlannedActionsText(plannedActionsView, pendingActions);
 }
 
 function setBattleLogExpanded(expanded) {
-  battleLogExpanded = Boolean(expanded);
-  if (battleLogFrame) {
-    battleLogFrame.classList.toggle("open", battleLogExpanded);
-  }
-  if (battleLogToggleBtn) {
-    battleLogToggleBtn.textContent = battleLogExpanded ? "ログを閉じる" : "ログを開く";
-    battleLogToggleBtn.setAttribute("aria-expanded", battleLogExpanded ? "true" : "false");
-  }
+  battleLogExpanded = setBattleLogExpandedState({
+    expanded,
+    battleLogFrame,
+    battleLogToggleBtn,
+  });
 }
 
 function renderStatus() {
-  const party = Array.isArray(sessionStatus.party) ? sessionStatus.party : [];
-  const enemies = Array.isArray(sessionStatus.enemies) ? sessionStatus.enemies : [];
-  if (battleFinished) {
-    statusLine.textContent = "戦闘終了。Bootし直すと再開始できます。";
-    return;
-  }
-  const actor = party[currentMemberIndex];
-  const target = enemies[selectedEnemySafeIndex()];
-  if (!actor) {
-    statusLine.textContent = "操作可能なメンバーがいません。";
-    return;
-  }
-  if (inputMode === "pick_magic") {
-    statusLine.textContent = `行動入力: ${actor.name} / 魔法を選択してください`;
-    return;
-  }
-  if (inputMode === "pick_item") {
-    statusLine.textContent = `行動入力: ${actor.name} / アイテムを選択してください`;
-    return;
-  }
-  if (inputMode === "pick_side") {
-    statusLine.textContent = `行動入力: ${actor.name} / 対象サイドを選択してください`;
-    return;
-  }
-  if (inputMode === "pick_target") {
-    const sideLabel = pendingActionDraft?.target_side === "ally" ? "味方" : "敵";
-    statusLine.textContent = `行動入力: ${actor.name} / ${sideLabel}対象を選択してください`;
-    return;
-  }
-  const committed = committedActionCount();
-  const required = requiredActionCount();
-  statusLine.textContent = `行動入力: ${actor.name} / 対象: ${target?.name ?? "(なし)"} / 入力済み ${committed}/${required}`;
+  renderBattleStatusLine({
+    statusLine,
+    sessionStatus,
+    currentMemberIndex,
+    selectedEnemyIndex,
+    inputMode,
+    pendingActionDraft,
+    battleFinished,
+    selectedEnemySafeIndex: selectedEnemySafeIndexForState,
+    committedActionCount,
+    requiredActionCount,
+  });
 }
 
 function maybeShowRewards(payload) {
-  if (payload?.victory_rewards) {
-    const rewards = payload.victory_rewards;
-    rewardPanel.classList.add("open");
-    rewardPanel.innerHTML = `
-      <strong>Victory Rewards</strong><br>
-      EXP +${Number(rewards?.gained_exp ?? 0)} / Gil +${Number(rewards?.gained_gil ?? 0)} / CP +${Number(rewards?.gained_cp ?? 0)}<br>
-      Drop: ${Array.isArray(rewards?.dropped_item) && rewards.dropped_item.length ? rewards.dropped_item.join(", ") : "(none)"}
-    `;
-    return;
-  }
-  rewardPanel.classList.remove("open");
-  rewardPanel.textContent = "";
-}
-
-function normalizeVictoryRewards(payload, beforeResources, afterResources) {
-  if (!payload?.victory_rewards) return payload;
-  const rewards = payload.victory_rewards;
-  const gilBefore = Number(rewards?.gil_before ?? beforeResources?.gil ?? 0);
-  const cpBefore = Number(rewards?.cp_before ?? beforeResources?.cp ?? 0);
-  const gilAfter = Number(rewards?.gil_after ?? afterResources?.gil ?? (gilBefore + Number(rewards?.gained_gil ?? 0)));
-  const cpAfter = Number(rewards?.cp_after ?? afterResources?.cp ?? (cpBefore + Number(rewards?.gained_cp ?? 0)));
-  rewards.gil_before = gilBefore;
-  rewards.gil_after = gilAfter;
-  rewards.cp_before = cpBefore;
-  rewards.cp_after = cpAfter;
-  return payload;
-}
-
-function injectResourceDiffsIntoRewardLogs(logs, rewards) {
-  if (!Array.isArray(logs) || !rewards) return Array.isArray(logs) ? logs : [];
-  const gilLine = `Gil +${Number(rewards?.gained_gil ?? 0)} (${Number(rewards?.gil_before ?? 0)} -> ${Number(rewards?.gil_after ?? 0)})`;
-  const cpLine = `CP +${Number(rewards?.gained_cp ?? 0)} (${Number(rewards?.cp_before ?? 0)} -> ${Number(rewards?.cp_after ?? 0)})`;
-  let inRewardBlock = false;
-  let foundRewardHeader = false;
-  return logs.map((lineRaw) => {
-    const line = String(lineRaw ?? "");
-    const normalized = line.replace(/^[\s\u3000]+/, "");
-    if (normalized.startsWith("=== Battle Rewards ===")) {
-      inRewardBlock = true;
-      foundRewardHeader = true;
-      return line;
-    }
-    if (inRewardBlock && normalized.startsWith("Gil +")) {
-      return gilLine;
-    }
-    if (inRewardBlock && normalized.startsWith("CP +")) {
-      return cpLine;
-    }
-    if (inRewardBlock && /^[▶◆]\s/.test(normalized)) {
-      inRewardBlock = false;
-    }
-    return line;
-  }).concat(foundRewardHeader ? [] : [
-    "=== Battle Rewards ===",
-    `EXP +${Number(rewards?.gained_exp ?? 0)}`,
-    gilLine,
-    cpLine,
-    `Drop: ${Array.isArray(rewards?.dropped_item) && rewards.dropped_item.length ? rewards.dropped_item.join(", ") : "(none)"}`,
-  ]);
-}
-
-function compactSaveEnvelope(envelope) {
-  if (!envelope || typeof envelope !== "object") return null;
-  if (!envelope.save || typeof envelope.save !== "object") return null;
-  return {
-    version: 1,
-    saved_at: String(envelope.saved_at || ""),
-    selected_location_group: String(envelope.selected_location_group || ""),
-    selected_location: String(envelope.selected_location || ""),
-    save: envelope.save,
-    menu_state: null,
-  };
+  renderRewardPanel(rewardPanel, payload);
 }
 
 function buildMenuViewState() {
@@ -1855,43 +911,17 @@ function getCurrentMenuStateForPersistence() {
 }
 
 function syncNormalizedRuntimeSaveToStorage() {
-  if (!pyodide) return false;
-  const exportSaveJson = pyodide.globals.get("export_runtime_save_json");
-  const saveJson = exportSaveJson ? String(exportSaveJson() || "") : "";
-  if (!saveJson) return false;
-  try {
-    const saveObj = JSON.parse(saveJson);
-    const storedEnvelope = appStore?.getState()?.saveEnvelope || cachedStoredEnvelope || restoreSaveEnvelopeFromStorage();
-    const envelope = makeSaveEnvelope(saveObj, {
-      selectedLocationGroup: currentBattleSelection?.selected_location_group || storedEnvelope?.selected_location_group || "",
-      selectedLocation: currentBattleSelection?.selected_location || storedEnvelope?.selected_location || "",
-      menuState: getCurrentMenuStateForPersistence(),
-    });
-    if (appStore) {
-      return appStore.updateSaveEnvelope(envelope);
-    }
-    cachedStoredEnvelope = envelope;
-    return persistSaveEnvelopeToStorage(envelope);
-  } catch (_error) {
-    return false;
+  const result = syncRuntimeSaveToBrowser({
+    pyodide,
+    appStore,
+    cachedStoredEnvelope,
+    currentBattleSelection,
+    menuState: getCurrentMenuStateForPersistence(),
+  });
+  if (result.envelope && !appStore) {
+    cachedStoredEnvelope = result.envelope;
   }
-}
-
-function downloadSaveEnvelope(envelope) {
-  const exportEnvelope = compactSaveEnvelope(envelope);
-  if (!exportEnvelope) return false;
-  const payload = JSON.stringify(exportEnvelope, null, 2);
-  const blob = new Blob([payload], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-  anchor.href = url;
-  anchor.download = `ffiii_savedata_${stamp}.json`;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
-  return true;
+  return result.persisted;
 }
 
 function setSaveButtonsEnabled(enabled) {
@@ -1925,76 +955,12 @@ function bindReturnToLocationOnClick() {
 }
 
 function setCommandLogLayout({ showCommand }) {
-  if (commandFrame) {
-    commandFrame.style.display = showCommand ? "" : "none";
-  }
-  setBattleLogExpanded(!showCommand);
-}
-
-function buildLogBlocks(logs) {
-  const lines = Array.isArray(logs) ? logs : [];
-  const blocks = [];
-  let current = [];
-  let type = "system";
-  const flush = () => {
-    if (!current.length) return;
-    blocks.push({ type, lines: current });
-    current = [];
-  };
-  lines.forEach((lineRaw) => {
-    const line = String(lineRaw ?? "");
-    const normalized = line.replace(/^[\s\u3000]+/, "");
-    if (/^[▶◆]\s/.test(normalized)) {
-      flush();
-      type = "action";
-      current.push(line);
-      return;
-    }
-    if (normalized.startsWith("=== Battle Rewards ===")) {
-      flush();
-      type = "reward";
-      current.push(line);
-      return;
-    }
-    current.push(line);
+  battleLogExpanded = setCommandLogLayoutState({
+    showCommand,
+    commandFrame,
+    battleLogFrame,
+    battleLogToggleBtn,
   });
-  flush();
-  return blocks;
-}
-
-function alignEventBlocksToLogBlocks(blocks, eventBlocks) {
-  const source = Array.isArray(eventBlocks) ? eventBlocks : [];
-  let actionIndex = 0;
-  return blocks.map((block) => {
-    if (block?.type !== "action") return [];
-    const eventsForBlock = Array.isArray(source[actionIndex]) ? source[actionIndex] : [];
-    actionIndex += 1;
-    return eventsForBlock;
-  });
-}
-
-function buildRewardLogBlock(payload) {
-  if (!payload?.victory_rewards) {
-    return null;
-  }
-  const rewards = payload.victory_rewards;
-  const gilBefore = Number(rewards?.gil_before ?? 0);
-  const gilAfter = Number(rewards?.gil_after ?? gilBefore + Number(rewards?.gained_gil ?? 0));
-  const cpBefore = Number(rewards?.cp_before ?? 0);
-  const cpAfter = Number(rewards?.cp_after ?? cpBefore + Number(rewards?.gained_cp ?? 0));
-  const drops = Array.isArray(rewards?.dropped_item) && rewards.dropped_item.length
-    ? rewards.dropped_item.join(", ")
-    : "(none)";
-  return {
-    type: "reward",
-    lines: [
-      "=== Battle Rewards ===",
-      `EXP +${Number(rewards?.gained_exp ?? 0)}`,
-      `Gil +${Number(rewards?.gained_gil ?? 0)} (${gilBefore} -> ${gilAfter})`,
-      `CP +${Number(rewards?.gained_cp ?? 0)} (${cpBefore} -> ${cpAfter})`,
-      `Drop: ${drops}`,
-    ],
-  };
 }
 
 async function playBattleLogBlocks(logs, payload) {
@@ -2003,7 +969,7 @@ async function playBattleLogBlocks(logs, payload) {
   const blocks = buildLogBlocks(logs);
   const blockEvents = Array.isArray(payload?.event_blocks)
     ? alignEventBlocksToLogBlocks(blocks, payload.event_blocks)
-    : buildPlaybackEventsByBlock(blocks, payload?.events);
+    : buildPlaybackEventsByBlock(blocks, payload?.events, sessionStatus);
   const playbackStatus = cloneJsonValue(payload?.playback_initial_status || sessionStatus);
   const hasRewardBlock = blocks.some((block) => block.type === "reward");
   if (!hasRewardBlock) {
@@ -2462,35 +1428,26 @@ async function executeRound() {
         pending_overlay_indices: battleReturnContext.post_victory_overlay_indices,
       });
     }
-    const exportSaveJson = pyodide.globals.get("export_runtime_save_json");
-    const saveJson = exportSaveJson ? String(exportSaveJson() || "") : "";
-    if (saveJson) {
-      try {
-        const saveObj = JSON.parse(saveJson);
-        const envelope = makeSaveEnvelope(saveObj, {
-          selectedLocationGroup: result?.selected_location_group,
-          selectedLocation: result?.selected_location,
-          menuState: getCurrentMenuStateForPersistence(),
-        });
-        const persisted = appStore
-          ? appStore.updateSaveEnvelope(envelope)
-          : persistSaveEnvelopeToStorage(envelope);
-        const autosaved = await persistSaveEnvelopeToIndexedDB(envelope, {
-          slotId: AUTO_SAVE_SLOT_ID,
-          kind: "auto",
-          rememberSelection: false,
-        });
-        if (persisted) {
-          statusLine.textContent = autosaved
-            ? "戦闘終了データをブラウザに保存し、オートセーブを更新しました。"
-            : "戦闘終了データをブラウザに保存しました。";
-          setSaveButtonsEnabled(true);
-        } else {
-          statusLine.textContent = "ブラウザ保存に失敗しました。";
-        }
-      } catch (_error) {
-        statusLine.textContent = "保存データの生成に失敗しました。";
+    const saveResult = await persistFinishedBattleSave({
+      pyodide,
+      appStore,
+      result,
+      menuState: getCurrentMenuStateForPersistence(),
+    });
+    if (saveResult.envelope && !appStore) {
+      cachedStoredEnvelope = saveResult.envelope;
+    }
+    if (saveResult.envelope) {
+      if (saveResult.persisted) {
+        statusLine.textContent = saveResult.autosaved
+          ? "戦闘終了データをブラウザに保存し、オートセーブを更新しました。"
+          : "戦闘終了データをブラウザに保存しました。";
+        setSaveButtonsEnabled(true);
+      } else {
+        statusLine.textContent = "ブラウザ保存に失敗しました。";
       }
+    } else {
+      statusLine.textContent = "保存データの生成に失敗しました。";
     }
     statusLine.textContent = "戦闘終了。クリックでLocation選択画面に戻ります。";
     bindReturnToLocationOnClick();
