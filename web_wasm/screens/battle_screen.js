@@ -699,6 +699,6 @@ function renderLayout() {
 
 export async function mountScreen({ mountNode, store, navigate }) {
   mountNode.innerHTML = renderLayout();
-  await initializeBattleApp({ root: mountNode, store, navigate });
-  return () => {};
+  const cleanup = await initializeBattleApp({ root: mountNode, store, navigate });
+  return typeof cleanup === "function" ? cleanup : () => {};
 }

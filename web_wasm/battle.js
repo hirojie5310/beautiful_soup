@@ -59,6 +59,11 @@ import {
 import { saveRepository } from "./save_repository.js";
 import { resolveLocationMapImageUrl } from "./map_images.js";
 
+const NORMAL_BATTLE_BGM_URL = new URL("../assets/sounds/bgm/battle.ogg", import.meta.url).href;
+const BOSS_BATTLE_BGM_URL = new URL("../assets/sounds/bgm/boss-battle.ogg", import.meta.url).href;
+const VICTORY_BGM_URL = new URL("../assets/sounds/bgm/victory.ogg", import.meta.url).href;
+const PERISHED_BGM_URL = new URL("../assets/sounds/bgm/perished.ogg", import.meta.url).href;
+
 let battlePhase = null;
 let partyGrid = null;
 let enemyGrid = null;
@@ -90,6 +95,7 @@ let pendingActions = [];
 let currentMemberIndex = 0;
 let selectedEnemyIndex = 0;
 let lifecycleState = "ready_for_actions";
+let battleEndReason = "continue";
 let battleFinished = false;
 let locationGroups = [];
 let inputMode = "command";
@@ -104,6 +110,9 @@ let activeCombatPopups = {};
 let activeCombatEffects = {};
 let suppressMenuStateSync = false;
 let battleLogExpanded = false;
+let battleBgmAudio = null;
+let battleBgmSourceUrl = "";
+let cancelBattleBgmUnlock = null;
 const partyCardCache = new Map();
 const enemyCardCache = new Map();
 const statusIconRowCache = new WeakMap();
@@ -214,8 +223,86 @@ let currentBattleSelection = sessionBattleStartSelection || storeBattleStartSele
   selected_location_group: "",
   selected_location: "",
   enemy_names: [],
+  is_boss: false,
 };
 let battleReturnContext = resolveMountedBattleReturnContext(readBattleReturnContextFromSession());
+
+function clearPendingBattleBgmUnlock() {
+  if (typeof cancelBattleBgmUnlock === "function") {
+    cancelBattleBgmUnlock();
+    cancelBattleBgmUnlock = null;
+  }
+}
+
+function ensureBattleBgmAudio(sourceUrl) {
+  const nextSourceUrl = String(sourceUrl || "");
+  if (!nextSourceUrl || typeof Audio !== "function") return null;
+  try {
+    if (!battleBgmAudio) {
+      battleBgmAudio = new Audio();
+      battleBgmAudio.loop = true;
+      battleBgmAudio.preload = "auto";
+    }
+    if (battleBgmSourceUrl !== nextSourceUrl) {
+      battleBgmAudio.pause();
+      battleBgmAudio.currentTime = 0;
+      battleBgmAudio.src = nextSourceUrl;
+      battleBgmSourceUrl = nextSourceUrl;
+    }
+    return battleBgmAudio;
+  } catch (_error) {
+    return null;
+  }
+}
+
+function stopBattleBgm() {
+  clearPendingBattleBgmUnlock();
+  if (!battleBgmAudio) return;
+  battleBgmAudio.pause();
+  battleBgmAudio.currentTime = 0;
+}
+
+function scheduleBattleBgmUnlockRetry(sourceUrl) {
+  if (cancelBattleBgmUnlock || typeof window === "undefined" || !sourceUrl) return;
+  const retryPlayback = () => {
+    clearPendingBattleBgmUnlock();
+    const audio = ensureBattleBgmAudio(sourceUrl);
+    if (!audio) return;
+    const playResult = audio.play();
+    if (playResult && typeof playResult.catch === "function") {
+      playResult.catch(() => {});
+    }
+  };
+  window.addEventListener("pointerdown", retryPlayback, { capture: true });
+  window.addEventListener("keydown", retryPlayback, { capture: true });
+  cancelBattleBgmUnlock = () => {
+    window.removeEventListener("pointerdown", retryPlayback, { capture: true });
+    window.removeEventListener("keydown", retryPlayback, { capture: true });
+  };
+}
+
+function resolveBattleBgmUrl() {
+  if (battleFinished) {
+    return battleEndReason === "char_defeated" ? PERISHED_BGM_URL : VICTORY_BGM_URL;
+  }
+  return currentBattleSelection?.is_boss ? BOSS_BATTLE_BGM_URL : NORMAL_BATTLE_BGM_URL;
+}
+
+function syncBattleBgm() {
+  const sourceUrl = resolveBattleBgmUrl();
+  if (!sourceUrl) {
+    stopBattleBgm();
+    return;
+  }
+  const audio = ensureBattleBgmAudio(sourceUrl);
+  if (!audio || !audio.paused) return;
+  const playResult = audio.play();
+  if (playResult && typeof playResult.catch === "function") {
+    playResult.catch(() => {
+      scheduleBattleBgmUnlockRetry(sourceUrl);
+    });
+  }
+}
 
 function resolveBattleSelection(selectionPayload) {
   const fallbackGroup = String(selectionPayload?.selected_group || "");
@@ -230,6 +317,7 @@ function resolveBattleSelection(selectionPayload) {
       enemy_names: Array.isArray(currentBattleSelection.enemy_names)
         ? currentBattleSelection.enemy_names
         : [],
+      is_boss: currentBattleSelection?.is_boss === true,
     };
   }
   const locations = Array.isArray(group.locations) ? group.locations : [];
@@ -240,6 +328,7 @@ function resolveBattleSelection(selectionPayload) {
     enemy_names: Array.isArray(currentBattleSelection.enemy_names)
       ? currentBattleSelection.enemy_names
       : [],
+    is_boss: currentBattleSelection?.is_boss === true,
   };
 }
 
@@ -1009,6 +1098,7 @@ function bindReturnToLocationOnClick() {
   battleLogFrame.classList.add("is-clickable-next");
   const onClick = () => {
     const returnRoute = String(battleReturnContext?.return_route || "location");
+    stopBattleBgm();
     if (appNavigate) {
       appNavigate(returnRoute === "map" ? "map" : "location");
       return;
@@ -1031,6 +1121,7 @@ async function playBattleLogBlocks(logs, payload) {
   resetBattleLogInteractionState();
   const playbackId = activeLogPlaybackId;
   const blocks = buildLogBlocks(logs);
+  let postBattleBgmStarted = false;
   const blockEvents = Array.isArray(payload?.event_blocks)
     ? alignEventBlocksToLogBlocks(blocks, payload.event_blocks)
     : buildPlaybackEventsByBlock(blocks, payload?.events, sessionStatus);
@@ -1105,6 +1196,13 @@ async function playBattleLogBlocks(logs, payload) {
       } else {
         rewardPanel.classList.remove("open");
         rewardPanel.textContent = "";
+      }
+      const nextBlock = i + 1 < blocks.length ? blocks[i + 1] : null;
+      const isLastCombatLogBlock = block.type !== "reward"
+        && (!nextBlock || nextBlock.type === "reward");
+      if (battleFinished && isLastCombatLogBlock && !postBattleBgmStarted) {
+        syncBattleBgm();
+        postBattleBgmStarted = true;
       }
       if (i < blocks.length - 1) {
         await waitForBattleLogClick(playbackId);
@@ -1253,7 +1351,10 @@ async function bootEngine() {
   locationGroups = Array.isArray(selectionPayload?.groups) ? selectionPayload.groups : [];
   const selectionFromStore = readBattleSelectionFromStore();
   if (selectionFromStore?.selected_location_group || selectionFromStore?.selected_location) {
-    currentBattleSelection = selectionFromStore;
+    currentBattleSelection = {
+      ...currentBattleSelection,
+      ...selectionFromStore,
+    };
   }
   currentBattleSelection = resolveBattleSelection(selectionPayload);
 
@@ -1336,6 +1437,7 @@ function bootLocationAndSyncSession() {
     enemy_names: Array.isArray(currentBattleSelection.enemy_names)
       ? currentBattleSelection.enemy_names
       : [],
+    is_boss: currentBattleSelection?.is_boss === true,
   };
   if (appStore) {
     appStore.patch({
@@ -1345,8 +1447,10 @@ function bootLocationAndSyncSession() {
   }
   sessionStatus = payload?.session_status ?? { party: [], enemies: [] };
   latestMenuState = parseMenuStateCandidate(payload?.menu_state) || latestMenuState;
+  battleEndReason = "continue";
   lifecycleState = "ready_for_actions";
   battleFinished = false;
+  syncBattleBgm();
   resetBattleLogInteractionState();
   refreshMenuStateFromPyodide();
   syncNormalizedRuntimeSaveToStorage();
@@ -1393,6 +1497,7 @@ async function executeRound() {
   lifecycleState = result?.lifecycle?.after === "ready_for_next_round"
     ? "ready_for_actions"
     : (result?.lifecycle?.after ?? "ready_for_actions");
+  battleEndReason = String(result?.end_reason || "continue");
   battleFinished = Boolean(result?.lifecycle?.battle_finished);
 
   const logs = injectResourceDiffsIntoRewardLogs(
@@ -1401,6 +1506,9 @@ async function executeRound() {
   );
   result.playback_initial_status = sessionStatusBeforeRound;
   await playBattleLogBlocks(logs, result);
+  if (battleFinished) {
+    syncBattleBgm();
+  }
 
   sessionStatus = result?.session_status ?? sessionStatus;
   activeCombatPopups = {};
@@ -1486,6 +1594,7 @@ function attachBattleEventHandlers() {
     menuBtn.addEventListener("click", () => {
       refreshMenuStateFromPyodide();
       syncMenuViewStateToStorage();
+      stopBattleBgm();
       if (appStore) {
         const currentState = appStore.getState();
         if (battleReturnContext?.return_route === "map" && battleReturnContext?.resume_map) {
@@ -1507,6 +1616,7 @@ function attachBattleEventHandlers() {
     locationBtn.addEventListener("click", () => {
       refreshMenuStateFromPyodide();
       syncMenuViewStateToStorage();
+      stopBattleBgm();
       if (appNavigate) {
         appNavigate("location");
         return;
@@ -1594,15 +1704,28 @@ export async function initializeBattleApp({ root = document, store = null, navig
   bindDom(root);
   setBattleLogExpanded(false);
   resetBattleLogInteractionState();
+  stopBattleBgm();
   appStore = store;
   appNavigate = navigate;
   battleReturnContext = resolveMountedBattleReturnContext(
     readBattleReturnContextFromSession(),
     battleReturnContext,
   );
+  const sessionSelection = readBattleStartSelectionFromSession();
+  if (sessionSelection) {
+    currentBattleSelection = {
+      selected_location_group: String(sessionSelection.selected_location_group || ""),
+      selected_location: String(sessionSelection.selected_location || ""),
+      enemy_names: Array.isArray(sessionSelection.enemy_names) ? sessionSelection.enemy_names : [],
+      is_boss: sessionSelection.is_boss === true,
+    };
+  }
   const storeSelection = readBattleSelectionFromStore();
   if (storeSelection?.selected_location_group || storeSelection?.selected_location) {
-    currentBattleSelection = storeSelection;
+    currentBattleSelection = {
+      ...currentBattleSelection,
+      ...storeSelection,
+    };
   }
   attachBattleEventHandlers();
   rerenderAll();
@@ -1613,6 +1736,9 @@ export async function initializeBattleApp({ root = document, store = null, navig
     statusLine.textContent = "エンジン起動に失敗しました。ページを再読み込みしてください。";
     throw error;
   }
+  return () => {
+    stopBattleBgm();
+  };
 }
 
 if (typeof document !== "undefined" && document.getElementById("battlePhase")) {

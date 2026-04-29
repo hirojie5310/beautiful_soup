@@ -38,6 +38,7 @@ import {
   resolveCharacterSpriteFrame,
   resolveLeaderCharacterSprite,
   resolveLeaderCharacterSpriteUrl,
+  resolveMapBgmUrl,
   resolveNpcInitialDirection,
   resolveInitialMapSelection,
   shouldCloseEventOverlayOnConfirm,
@@ -747,6 +748,14 @@ test("water highlight animation covers town and Floating Continent water tiles",
 test("Floating Continent BGM only targets the world map", () => {
   assert.equal(isFloatingContinentMap({ id: "FloatingContinent" }), true);
   assert.equal(isFloatingContinentMap({ id: "Ur", name: "Floating Continent" }), false);
+});
+
+test("resolveMapBgmUrl selects map themes by map id or location group", () => {
+  assert.match(resolveMapBgmUrl({ id: "FloatingContinent", locationRequirement: {} }), /eternal-wind\.ogg$/);
+  assert.match(decodeURI(resolveMapBgmUrl({ id: "Ur_Pub", locationRequirement: { group: "Ur" } })), /Hometown of Ur\.ogg$/);
+  assert.match(resolveMapBgmUrl({ id: "Alter_Cave_B1", locationRequirement: { group: "Alter Cave" } }), /crystal-cave\.ogg$/);
+  assert.match(resolveMapBgmUrl({ id: "Alter_Cave_B2", locationRequirement: { group: "Altar Cave" } }), /crystal-cave\.ogg$/);
+  assert.equal(resolveMapBgmUrl({ id: "Unknown", locationRequirement: { group: "Castle Sasune" } }), "");
 });
 
 test("configureLoopingMapBgm prepares an audio element for repeated playback", () => {

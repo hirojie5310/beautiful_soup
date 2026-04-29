@@ -44,6 +44,8 @@ const MAP_ENTRY_CONTEXT_KEY = "ff3_wasm_map_entry_context_v1";
 const SHOP_START_CONTEXT_KEY = "ff3_wasm_shop_start_context_v1";
 const FLOATING_CONTINENT_MAP_ID = "FloatingContinent";
 const FLOATING_CONTINENT_BGM_URL = new URL("../../assets/sounds/bgm/eternal-wind.ogg", import.meta.url).href;
+const UR_BGM_URL = new URL("../../assets/sounds/bgm/Hometown of Ur.ogg", import.meta.url).href;
+const ALTER_CAVE_BGM_URL = new URL("../../assets/sounds/bgm/crystal-cave.ogg", import.meta.url).href;
 const ALTER_CAVE_RECOVERY_MAP_ID = "Alter_Cave_B4";
 const ALTER_CAVE_RECOVERY_GID = 36;
 const ALTER_CAVE_RECOVERY_TEXT_INDEX = 582;
@@ -116,6 +118,26 @@ const waterFlowTileCache = new Map();
 
 export function isFloatingContinentMap(mapDefinition) {
   return String(mapDefinition?.id || "") === FLOATING_CONTINENT_MAP_ID;
+}
+
+export function resolveMapBgmUrl(mapDefinition, fallbackSelection = {}) {
+  const mapId = String(mapDefinition?.id || "");
+  if (mapId === FLOATING_CONTINENT_MAP_ID) {
+    return FLOATING_CONTINENT_BGM_URL;
+  }
+  const locationGroup = String(
+    mapDefinition?.locationRequirement?.group
+    || fallbackSelection?.selected_location_group
+    || fallbackSelection?.selectedLocationGroup
+    || "",
+  );
+  if (locationGroup === "Ur") {
+    return UR_BGM_URL;
+  }
+  if (locationGroup === "Alter Cave" || locationGroup === "Altar Cave") {
+    return ALTER_CAVE_BGM_URL;
+  }
+  return "";
 }
 
 export function configureLoopingMapBgm(audioElement, sourceUrl = FLOATING_CONTINENT_BGM_URL) {
@@ -1689,7 +1711,8 @@ export async function mountScreen({ mountNode, store, navigate }) {
   let npcAnimationIntervalId = null;
   let playerDirection = "down";
   let playerWalkFrame = 0;
-  let floatingContinentBgm = null;
+  let mapBgmAudio = null;
+  let currentMapBgmUrl = "";
   let cancelPendingBgmUnlock = null;
   const npcAnimationStates = new Map();
   const holdRepeater = createDirectionalHoldRepeater((direction) => tryMove(direction));
@@ -1701,30 +1724,45 @@ export async function mountScreen({ mountNode, store, navigate }) {
     }
   }
 
-  function ensureFloatingContinentBgm() {
-    if (floatingContinentBgm) return floatingContinentBgm;
-    if (typeof Audio !== "function") return null;
+  function resolveActiveMapBgmUrl() {
+    return resolveMapBgmUrl(mapDefinition, store.getState());
+  }
+
+  function ensureMapBgmAudio(sourceUrl) {
+    const nextSourceUrl = String(sourceUrl || "");
+    if (!nextSourceUrl || typeof Audio !== "function") return null;
     try {
-      floatingContinentBgm = configureLoopingMapBgm(new Audio());
-      return floatingContinentBgm;
+      if (!mapBgmAudio) {
+        mapBgmAudio = configureLoopingMapBgm(new Audio(), nextSourceUrl);
+        currentMapBgmUrl = nextSourceUrl;
+        return mapBgmAudio;
+      }
+      if (currentMapBgmUrl !== nextSourceUrl) {
+        mapBgmAudio.pause();
+        mapBgmAudio.currentTime = 0;
+        configureLoopingMapBgm(mapBgmAudio, nextSourceUrl);
+        currentMapBgmUrl = nextSourceUrl;
+      }
+      return mapBgmAudio;
     } catch (_error) {
       return null;
     }
   }
 
-  function stopFloatingContinentBgm() {
+  function stopMapBgm() {
     clearPendingBgmUnlock();
-    if (!floatingContinentBgm) return;
-    floatingContinentBgm.pause();
-    floatingContinentBgm.currentTime = 0;
+    if (!mapBgmAudio) return;
+    mapBgmAudio.pause();
+    mapBgmAudio.currentTime = 0;
   }
 
   function scheduleBgmUnlockRetry() {
     if (cancelPendingBgmUnlock || typeof window === "undefined") return;
     const retryPlayback = () => {
       clearPendingBgmUnlock();
-      if (!isFloatingContinentMap(mapDefinition)) return;
-      const audio = ensureFloatingContinentBgm();
+      const sourceUrl = resolveActiveMapBgmUrl();
+      if (!sourceUrl) return;
+      const audio = ensureMapBgmAudio(sourceUrl);
       if (!audio) return;
       const playResult = audio.play();
       if (playResult && typeof playResult.catch === "function") {
@@ -1739,17 +1777,18 @@ export async function mountScreen({ mountNode, store, navigate }) {
     };
   }
 
-  function syncFloatingContinentBgm() {
-    if (!isFloatingContinentMap(mapDefinition)) {
-      stopFloatingContinentBgm();
+  function syncMapBgm() {
+    const sourceUrl = resolveActiveMapBgmUrl();
+    if (!sourceUrl) {
+      stopMapBgm();
       return;
     }
-    const audio = ensureFloatingContinentBgm();
+    const audio = ensureMapBgmAudio(sourceUrl);
     if (!audio || !audio.paused) return;
     const playResult = audio.play();
     if (playResult && typeof playResult.catch === "function") {
       playResult.catch(() => {
-        if (isFloatingContinentMap(mapDefinition)) {
+        if (resolveActiveMapBgmUrl()) {
           scheduleBgmUnlockRetry();
         }
       });
@@ -2228,7 +2267,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       tickNpcSprites();
       setVisualMapPosition(mapState.tile_x, mapState.tile_y);
       persistCurrentMapState(mapState);
-      syncFloatingContinentBgm();
+      syncMapBgm();
       mapStatus.textContent = `${mapDefinition.name} に移動しました。`;
       return true;
     } finally {
@@ -2247,12 +2286,15 @@ export async function mountScreen({ mountNode, store, navigate }) {
     const forcedEnemyNames = Array.isArray(options?.enemyNames)
       ? options.enemyNames.map((name) => String(name || "")).filter((name) => Boolean(name))
       : [];
+    const isBossEncounter = options?.isBoss === true
+      || forcedEnemyNames.includes(ALTER_CAVE_CRYSTAL_BOSS_NAME);
     const postVictoryOverlayIndices = Array.isArray(options?.postVictoryOverlayIndices)
       ? options.postVictoryOverlayIndices.map((index) => Number(index)).filter((index) => Number.isFinite(index))
       : [];
     sessionStorage.setItem(BATTLE_START_SELECTION_KEY, JSON.stringify({
       ...encounterSelection,
       ...(forcedEnemyNames.length ? { enemy_names: forcedEnemyNames } : {}),
+      ...(isBossEncounter ? { is_boss: true } : {}),
     }));
     sessionStorage.setItem(BATTLE_RETURN_CONTEXT_KEY, JSON.stringify({
       return_route: "map",
@@ -2436,7 +2478,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
         });
         holdRepeater.stop();
         stopNpcAnimation();
-        stopFloatingContinentBgm();
+        stopMapBgm();
         window.removeEventListener("keydown", onKeyDown);
       };
     }
@@ -2475,7 +2517,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     startNpcAnimation();
     persistCurrentMapState(mapState);
     setVisualMapPosition(mapState.tile_x, mapState.tile_y);
-    syncFloatingContinentBgm();
+    syncMapBgm();
     if (postBattleOverlayIndices.length) {
       openEventOverlaySequence(await loadMergedFixedContentByIndices(postBattleOverlayIndices));
       mapStatus.textContent = "戦いのあと、クリスタルが静かに輝いている。";
@@ -2512,7 +2554,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     holdRepeater.stop();
     stopNpcAnimation();
     stopMoveAnimation();
-    stopFloatingContinentBgm();
+    stopMapBgm();
     window.removeEventListener("keydown", onKeyDown);
     if (resizeObserver) {
       resizeObserver.disconnect();
