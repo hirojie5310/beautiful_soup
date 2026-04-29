@@ -35,6 +35,8 @@ const NPC_MOVEMENT_RANDOM = "random";
 const WATER_ANIMATION_GIDS = new Set([5, 6, 9, 10, 11, 14, 15, 16, 30, 31, 32, 43, 46, 47, 48]);
 const WATER_FLOW_TILE_GIDS = new Set([31]);
 const WATER_HIGHLIGHT_SHIFT_PX = 4;
+const WATER_FLOW_SHIFT_PX = DISPLAY_TILE_SIZE;
+const WATER_FLOW_ANIMATION_MS = Math.round(1800 * (WATER_FLOW_SHIFT_PX / WATER_HIGHLIGHT_SHIFT_PX));
 const MAP_MOVE_ANIMATION_MS = 140;
 const HOLD_MOVE_INITIAL_DELAY_MS = 220;
 const HOLD_MOVE_REPEAT_MS = 110;
@@ -43,6 +45,13 @@ const BATTLE_RETURN_CONTEXT_KEY = "ff3_wasm_battle_return_context_v1";
 const MAP_ENTRY_CONTEXT_KEY = "ff3_wasm_map_entry_context_v1";
 const SHOP_START_CONTEXT_KEY = "ff3_wasm_shop_start_context_v1";
 const FLOATING_CONTINENT_MAP_ID = "FloatingContinent";
+const WATER_ANIMATION_INCLUDED_GIDS_BY_MAP_ID = {
+  [FLOATING_CONTINENT_MAP_ID]: new Set([25, 26, 59, 67]),
+};
+const WATER_ANIMATION_EXCLUDED_GIDS_BY_MAP_ID = {
+  [FLOATING_CONTINENT_MAP_ID]: new Set([6, 43]),
+  Ur: new Set([5, 31, 32]),
+};
 const FLOATING_CONTINENT_BGM_URL = new URL("../../assets/sounds/bgm/eternal-wind.ogg", import.meta.url).href;
 const UR_BGM_URL = new URL("../../assets/sounds/bgm/Hometown of Ur.ogg", import.meta.url).href;
 const ALTER_CAVE_BGM_URL = new URL("../../assets/sounds/bgm/crystal-cave.ogg", import.meta.url).href;
@@ -656,7 +665,7 @@ function renderLayout() {
         image-rendering: pixelated;
         opacity: 1;
         pointer-events: none;
-        animation: map-water-flow 1800ms steps(${WATER_HIGHLIGHT_SHIFT_PX}) infinite;
+        animation: map-water-flow ${WATER_FLOW_ANIMATION_MS}ms steps(${WATER_FLOW_SHIFT_PX}) infinite;
         will-change: transform;
       }
       [data-screen="map"] .map-object {
@@ -796,7 +805,7 @@ function renderLayout() {
       }
       @keyframes map-water-flow {
         from { transform: translateX(0); }
-        to { transform: translateX(${WATER_HIGHLIGHT_SHIFT_PX}px); }
+        to { transform: translateX(${WATER_FLOW_SHIFT_PX}px); }
       }
       [data-screen="map"] .map-meta {
         display: flex;
@@ -939,12 +948,40 @@ function mapRenderSignature(mapDefinition) {
   ].join("|");
 }
 
-export function isWaterAnimationGid(gid) {
-  return WATER_ANIMATION_GIDS.has(Number(gid || 0));
+function getWaterAnimationExcludedGidsForMap(mapDefinition) {
+  const mapId = String(mapDefinition?.id || "");
+  return WATER_ANIMATION_EXCLUDED_GIDS_BY_MAP_ID[mapId] || null;
 }
 
-function isWaterFlowTileGid(gid) {
-  return WATER_FLOW_TILE_GIDS.has(Number(gid || 0));
+function getWaterAnimationGidsForMap(mapDefinition) {
+  const mapId = String(mapDefinition?.id || "");
+  const includedGids = WATER_ANIMATION_INCLUDED_GIDS_BY_MAP_ID[mapId];
+  const excludedGids = getWaterAnimationExcludedGidsForMap(mapDefinition);
+  if (!includedGids?.size && !excludedGids?.size) {
+    return WATER_ANIMATION_GIDS;
+  }
+  const animationGids = new Set(WATER_ANIMATION_GIDS);
+  includedGids?.forEach((gid) => animationGids.add(gid));
+  excludedGids?.forEach((gid) => animationGids.delete(gid));
+  return animationGids;
+}
+
+function getWaterFlowTileGidsForMap(mapDefinition) {
+  const excludedGids = getWaterAnimationExcludedGidsForMap(mapDefinition);
+  if (!excludedGids?.size) {
+    return WATER_FLOW_TILE_GIDS;
+  }
+  return new Set(
+    Array.from(WATER_FLOW_TILE_GIDS).filter((gid) => !excludedGids.has(gid)),
+  );
+}
+
+export function isWaterAnimationGid(gid, mapDefinition = null) {
+  return getWaterAnimationGidsForMap(mapDefinition).has(Number(gid || 0));
+}
+
+function isWaterFlowTileGid(gid, mapDefinition = null) {
+  return getWaterFlowTileGidsForMap(mapDefinition).has(Number(gid || 0));
 }
 
 function loadImageElement(url) {
@@ -1015,6 +1052,8 @@ function createWaterHighlightMask(image, gid, tilesetColumns, tilesetRows) {
 function ensureWaterFlowTiles(mapDefinition) {
   const imageUrl = String(mapDefinition?.tileset?.imageUrl || "");
   if (!imageUrl) return Promise.resolve(new Map());
+  const waterFlowGids = Array.from(getWaterFlowTileGidsForMap(mapDefinition));
+  if (!waterFlowGids.length) return Promise.resolve(new Map());
   const tilesetColumns = Math.max(1, Number(mapDefinition?.tileset?.columns || 1));
   const tileCount = Math.max(1, Number(mapDefinition?.tileset?.tileCount || 1));
   const tilesetRows = Math.max(1, Math.ceil(tileCount / tilesetColumns));
@@ -1022,13 +1061,13 @@ function ensureWaterFlowTiles(mapDefinition) {
     imageUrl,
     tilesetColumns,
     tilesetRows,
-    Array.from(WATER_FLOW_TILE_GIDS).join(","),
+    waterFlowGids.join(","),
   ].join("|");
   if (!waterFlowTileCache.has(cacheKey)) {
     const request = loadImageElement(imageUrl)
       .then((image) => {
         const tiles = new Map();
-        WATER_FLOW_TILE_GIDS.forEach((gid) => {
+        waterFlowGids.forEach((gid) => {
           tiles.set(gid, createWaterFlowTile(image, gid, tilesetColumns, tilesetRows));
         });
         return tiles;
@@ -1045,7 +1084,9 @@ function ensureWaterHighlightMasks(mapDefinition) {
   const tilesetColumns = Math.max(1, Number(mapDefinition?.tileset?.columns || 1));
   const tileCount = Math.max(1, Number(mapDefinition?.tileset?.tileCount || 1));
   const tilesetRows = Math.max(1, Math.ceil(tileCount / tilesetColumns));
-  const highlightGids = Array.from(WATER_ANIMATION_GIDS).filter((gid) => !WATER_FLOW_TILE_GIDS.has(gid));
+  const waterAnimationGids = getWaterAnimationGidsForMap(mapDefinition);
+  const waterFlowGids = getWaterFlowTileGidsForMap(mapDefinition);
+  const highlightGids = Array.from(waterAnimationGids).filter((gid) => !waterFlowGids.has(gid));
   const cacheKey = [
     imageUrl,
     tilesetColumns,
@@ -1071,13 +1112,13 @@ function drawWaterFlowCanvas(waterCanvas, mapDefinition, masks) {
   if (!waterCanvas) return;
   const tileSize = DISPLAY_TILE_SIZE;
   const renderRows = Array.isArray(mapDefinition?.renderRows) ? mapDefinition.renderRows : [];
-  const width = Math.max(1, Number(mapDefinition?.renderWidth || 0) * tileSize + WATER_HIGHLIGHT_SHIFT_PX);
+  const width = Math.max(1, Number(mapDefinition?.renderWidth || 0) * tileSize + WATER_FLOW_SHIFT_PX);
   const height = Math.max(1, Number(mapDefinition?.renderHeight || 0) * tileSize);
   if (waterCanvas.width !== width) waterCanvas.width = width;
   if (waterCanvas.height !== height) waterCanvas.height = height;
   waterCanvas.style.width = `${width}px`;
   waterCanvas.style.height = `${height}px`;
-  waterCanvas.style.left = `${-WATER_HIGHLIGHT_SHIFT_PX}px`;
+  waterCanvas.style.left = `${-WATER_FLOW_SHIFT_PX}px`;
 
   const context = waterCanvas.getContext("2d");
   if (!context) return;
@@ -1085,12 +1126,12 @@ function drawWaterFlowCanvas(waterCanvas, mapDefinition, masks) {
   context.clearRect(0, 0, width, height);
   renderRows.forEach((row, y) => {
     row.forEach((gid, x) => {
-      if (!isWaterFlowTileGid(gid)) return;
+      if (!isWaterFlowTileGid(gid, mapDefinition)) return;
       const mask = masks.get(Number(gid || 0));
       if (!mask) return;
       context.drawImage(
         mask,
-        x * tileSize + WATER_HIGHLIGHT_SHIFT_PX,
+        x * tileSize + WATER_FLOW_SHIFT_PX,
         y * tileSize,
       );
     });
@@ -1148,9 +1189,9 @@ function ensureMapRenderState(mapLayer, mapDefinition) {
   const waterCanvas = document.createElement("canvas");
   waterCanvas.className = "map-water-flow-canvas";
   waterCanvas.setAttribute("aria-hidden", "true");
-  waterCanvas.width = Math.max(1, mapDefinition.renderWidth * tileSize + WATER_HIGHLIGHT_SHIFT_PX);
+  waterCanvas.width = Math.max(1, mapDefinition.renderWidth * tileSize + WATER_FLOW_SHIFT_PX);
   waterCanvas.height = Math.max(1, mapDefinition.renderHeight * tileSize);
-  waterCanvas.style.left = `${-WATER_HIGHLIGHT_SHIFT_PX}px`;
+  waterCanvas.style.left = `${-WATER_FLOW_SHIFT_PX}px`;
   waterCanvas.style.width = `${waterCanvas.width}px`;
   waterCanvas.style.height = `${waterCanvas.height}px`;
   mapLayer.appendChild(waterCanvas);
@@ -1201,7 +1242,7 @@ function ensureMapRenderState(mapLayer, mapDefinition) {
   return nextState;
 }
 
-function updateRenderedTile(tile, gid, tilesetColumns) {
+function updateRenderedTile(tile, gid, tilesetColumns, mapDefinition) {
   if (!tile) return;
   const tileSize = DISPLAY_TILE_SIZE;
   const localId = Math.max(0, Number(gid || 0) - 1);
@@ -1209,9 +1250,9 @@ function updateRenderedTile(tile, gid, tilesetColumns) {
   const tileRow = Math.floor(localId / tilesetColumns);
   tile.style.backgroundPosition = `${-col * tileSize}px ${-tileRow * tileSize}px`;
   tile.dataset.gid = String(Number(gid || 0));
-  tile.classList.toggle("map-tile-water", isWaterFlowTileGid(gid));
+  tile.classList.toggle("map-tile-water", isWaterFlowTileGid(gid, mapDefinition));
   let waterHighlight = tile.querySelector(".map-water-highlight");
-  if (isWaterAnimationGid(gid) && !isWaterFlowTileGid(gid)) {
+  if (isWaterAnimationGid(gid, mapDefinition) && !isWaterFlowTileGid(gid, mapDefinition)) {
     if (!waterHighlight) {
       waterHighlight = document.createElement("span");
       waterHighlight.className = "map-water-highlight";
@@ -1398,7 +1439,7 @@ function renderMapTiles(mapLayer, mapDefinition) {
       const previousGid = Number(previousRows?.[y]?.[x] ?? NaN);
       const nextGid = Number(gid || 0);
       if (previousGid !== nextGid) {
-        updateRenderedTile(renderState.tileNodes[tileIndex], nextGid, renderState.tilesetColumns);
+        updateRenderedTile(renderState.tileNodes[tileIndex], nextGid, renderState.tilesetColumns, mapDefinition);
       }
       tileIndex += 1;
     });

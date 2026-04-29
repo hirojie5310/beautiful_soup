@@ -743,6 +743,21 @@ test("water highlight animation covers town and Floating Continent water tiles",
     assert.equal(isWaterAnimationGid(gid), true);
   });
   assert.equal(isWaterAnimationGid(94), false);
+  [5, 31, 32].forEach((gid) => {
+    assert.equal(isWaterAnimationGid(gid, { id: "Ur" }), false);
+  });
+  [6, 9, 10, 11, 14, 15, 16, 30, 43, 46, 47, 48].forEach((gid) => {
+    assert.equal(isWaterAnimationGid(gid, { id: "Ur" }), true);
+  });
+  [6, 43].forEach((gid) => {
+    assert.equal(isWaterAnimationGid(gid, { id: "FloatingContinent" }), false);
+  });
+  [25, 26, 59, 67].forEach((gid) => {
+    assert.equal(isWaterAnimationGid(gid, { id: "FloatingContinent" }), true);
+  });
+  [5, 9, 10, 11, 14, 15, 16, 30, 31, 32, 46, 47, 48].forEach((gid) => {
+    assert.equal(isWaterAnimationGid(gid, { id: "FloatingContinent" }), true);
+  });
 });
 
 test("Floating Continent BGM only targets the world map", () => {
