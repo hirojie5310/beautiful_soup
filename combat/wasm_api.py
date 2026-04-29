@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from random import Random
@@ -20,6 +21,10 @@ from combat.input_ui import normalize_battle_command
 from combat.inventory import is_item_visible_in_context
 from combat.item_effects import infer_battle_item_target_side
 from combat.battle_items import build_battle_item_definitions, build_battle_item_list
+from combat.battle_save_patch import (
+    build_battle_save_patch,
+    build_party_battle_state_patch,
+)
 from combat.life_check import is_out_of_battle
 from combat.magic_damage import healing_spell_kind
 from combat.spell_metadata import (
@@ -28,7 +33,7 @@ from combat.spell_metadata import (
     spell_target_scope,
     spell_target_mode,
 )
-from combat.progression import apply_item_stock_to_inventory, apply_victory_rewards
+from combat.progression import build_victory_reward_save_patch
 from combat.usecases import BattleSession, build_battle_session, execute_round_dto
 from combat.models import EquipmentSet
 from combat.runtime_state import RuntimeState, init_runtime_state, resolve_data_path
@@ -270,58 +275,6 @@ def _build_enemy_status_snapshot(session: BattleSession) -> list[dict[str, Any]]
             }
         )
     return snapshots
-
-
-def _sync_party_battle_state_to_save(
-    save: dict[str, Any], party_members: Sequence[Any]
-) -> None:
-    party = save.get("party")
-    if not isinstance(party, list):
-        return
-
-    by_name = {
-        str(getattr(member, "name", "")): member
-        for member in party_members
-        if str(getattr(member, "name", ""))
-    }
-
-    for index, entry in enumerate(party):
-        if not isinstance(entry, dict):
-            continue
-        member = None
-        name = entry.get("name")
-        if isinstance(name, str):
-            member = by_name.get(name)
-        if member is None and index < len(party_members):
-            member = party_members[index]
-        if member is None:
-            continue
-
-        state = getattr(member, "state", None)
-        if state is None:
-            continue
-
-        hp = _safe_int(getattr(state, "hp", 0), 0)
-        max_hp = _safe_int(getattr(state, "max_hp", hp), hp)
-        mp_pool = getattr(state, "mp_pool", {})
-        max_mp_pool = getattr(state, "max_mp_pool", {})
-        if not isinstance(mp_pool, dict):
-            mp_pool = {}
-        if not isinstance(max_mp_pool, dict):
-            max_mp_pool = {}
-
-        entry["hp"] = max(0, min(hp, max_hp))
-        entry["max_hp"] = max_hp
-        entry["mp"] = {}
-        entry["mp_levels"] = {}
-        for level in range(1, 9):
-            max_uses = _safe_int(max_mp_pool.get(level, mp_pool.get(level, 0)), 0)
-            current = max(0, min(_safe_int(mp_pool.get(level, 0), 0), max_uses))
-            entry["mp"][f"L{level}MP"] = current
-            entry["mp_levels"][str(level)] = {
-                "current": current,
-                "max": max_uses,
-            }
 
 
 def _build_battle_commands_by_member(
@@ -860,6 +813,11 @@ class WasmBattleEngine:
         save_savedata(save_path, save)
 
     def execute_round_payload(self, payload: dict[str, Any]) -> dict[str, Any]:
+        state = getattr(self.session, "state", None)
+        save_before_round = getattr(state, "save", None) if state is not None else None
+        save_before_round = (
+            deepcopy(save_before_round) if isinstance(save_before_round, dict) else {}
+        )
         request_dto = parse_execute_round_input_dict(payload)
         request_dto = _normalize_planned_actions_length(
             request_dto,
@@ -872,18 +830,20 @@ class WasmBattleEngine:
         )
         response_payload = to_json_ready_dict(output_dto)
 
+        rewards: dict[str, Any] | None = None
         if (
             output_dto.end_reason == "enemy_defeated"
             and hasattr(self.session, "level_table")
             and self.battle_start_progress is not None
             and self.battle_start_resources is not None
         ):
-            rewards = apply_victory_rewards(
+            rewards, reward_patch = build_victory_reward_save_patch(
                 party_members=self.session.party_members,
                 enemies=self.session.enemies,
                 state=self.session.state,
                 level_table=self.session.level_table,
             )
+            self.session.state.apply(reward_patch)
             after_progress = _build_party_progress_snapshot(self.session)
             after_resources = _build_resource_progress_snapshot(self.session)
             rewards["gil_before"] = _safe_int(
@@ -902,7 +862,6 @@ class WasmBattleEngine:
                 rewards=rewards,
             )
             response_payload["victory_rewards"] = rewards
-            apply_item_stock_to_inventory(self.session.state.save)
 
         response_payload["session_status"] = build_session_status_snapshot(self.session)
         response_payload["selected_location_group"] = self.selected_location_group
@@ -912,7 +871,14 @@ class WasmBattleEngine:
             state = getattr(self.session, "state", None)
             save = getattr(state, "save", None) if state is not None else None
             if isinstance(save, dict):
-                _sync_party_battle_state_to_save(save, self.session.party_members)
+                state.apply(
+                    build_party_battle_state_patch(save, self.session.party_members)
+                )
+                response_payload["battle_save_patch"] = build_battle_save_patch(
+                    save_before_round,
+                    save,
+                    rewards=rewards,
+                ).to_dict()
             self.persist_runtime_save()
             self.battle_start_progress = _build_party_progress_snapshot(self.session)
             self.battle_start_resources = _build_resource_progress_snapshot(self.session)

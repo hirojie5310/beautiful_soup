@@ -52,13 +52,9 @@ import {
   resolveCachedImageUrl,
 } from "./image_cache.js";
 import {
-  LOCAL_MENU_STORAGE_KEY,
   parseSaveEnvelope,
-  restoreSaveEnvelopeFromStorage,
-  restoreSaveEnvelopeFromStorageAsync,
-  parseMenuStateFromStorage,
-  persistSaveEnvelopeToStorage,
 } from "./shared_storage.js";
+import { saveRepository } from "./save_repository.js";
 import { resolveLocationMapImageUrl } from "./map_images.js";
 
 let battlePhase = null;
@@ -732,7 +728,7 @@ function maybeShowRewards(payload) {
 }
 
 function buildMenuViewState() {
-  const storedMenuState = parseMenuStateFromStorage();
+  const storedMenuState = saveRepository.loadMenuState();
   const menuState = latestMenuState && typeof latestMenuState === "object" ? latestMenuState : {};
   const equipmentByMember = Array.isArray(menuState?.equipment_by_member)
     ? menuState.equipment_by_member
@@ -827,14 +823,7 @@ function syncMenuViewStateToStorage() {
     appStore.updateMenuState(nextState);
     return;
   }
-  try {
-    localStorage.setItem(
-      LOCAL_MENU_STORAGE_KEY,
-      JSON.stringify(nextState),
-    );
-  } catch (_error) {
-    // ignore storage write failure in wasm runner.
-  }
+  saveRepository.saveMenuState(nextState);
 }
 
 function parseMenuStateCandidate(raw) {
@@ -1259,7 +1248,7 @@ async function bootEngine() {
   }
   currentBattleSelection = resolveBattleSelection(selectionPayload);
 
-  const storedEnvelope = appStore?.getState()?.saveEnvelope || await restoreSaveEnvelopeFromStorageAsync();
+  const storedEnvelope = appStore?.getState()?.saveEnvelope || await saveRepository.load();
   cachedStoredEnvelope = storedEnvelope;
   if (storedEnvelope?.save) {
     loadedSaveData = storedEnvelope.save;
@@ -1296,7 +1285,7 @@ function resolveSaveDataForBoot() {
   if (loadedSaveData && typeof loadedSaveData === "object") {
     return loadedSaveData;
   }
-  const storedEnvelope = cachedStoredEnvelope || restoreSaveEnvelopeFromStorage();
+  const storedEnvelope = cachedStoredEnvelope || saveRepository.loadLocalMirror();
   if (storedEnvelope?.save && typeof storedEnvelope.save === "object") {
     return storedEnvelope.save;
   }
@@ -1538,7 +1527,7 @@ function attachBattleEventHandlers() {
       }
       const persisted = appStore
         ? appStore.updateSaveEnvelope(envelope)
-        : persistSaveEnvelopeToStorage(envelope);
+        : saveRepository.saveLocalMirror(envelope);
       if (persisted) {
         setSaveButtonsEnabled(true);
       }
@@ -1570,7 +1559,7 @@ function attachBattleEventHandlers() {
 
   if (downloadSaveBtn) {
     downloadSaveBtn.addEventListener("click", () => {
-      const envelope = appStore?.getState()?.saveEnvelope || cachedStoredEnvelope || restoreSaveEnvelopeFromStorage();
+      const envelope = appStore?.getState()?.saveEnvelope || cachedStoredEnvelope || saveRepository.loadLocalMirror();
       if (!envelope) {
         statusLine.textContent = "保存できるセーブデータがありません。";
         return;

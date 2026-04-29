@@ -20,9 +20,11 @@
   - 画面や battle ロジックは、直接 Pyodide を初期化せず `getPyodideRuntime()` を使います。
 - `store/app_store.js`
   - 現在ルート、選択中 Location、選択中メンバー、`menu_state`、save envelope を持つアプリ内の状態管理です。
-  - 必要な変更をブラウザストレージへ永続化します。
+- `save_repository.js`
+  - save envelope / `menu_state` の読み書き入口です。
+  - UI 層は `localStorage` / `IndexedDB` を直接触らず、この repository 経由で保存・読込・slot 一覧・削除を行います。
 - `shared_storage.js`
-  - save envelope の解析、`IndexedDB` スロット保存、last-used slot の保持を担当します。
+  - save envelope の解析、`IndexedDB` スロット保存、last-used slot の保持を担当する低レベル実装です。
 - `location_shared.js`
   - location、shop、inn、回復処理などで共有する補助処理を持ちます。
 
@@ -54,6 +56,7 @@
    - `updateMenuState(...)`: `menu_state` 更新
    - `updateSaveEnvelope(...)`: save 更新
    - `persistMenuEnvelope(...)`: `menu_state` と save をまとめて更新
+   - slot 保存・読込・削除は `saveRepository` 経由
 4. battle や equip のようにゲームルール依存の再計算が必要な箇所は、JavaScript で再実装せず Pyodide 上の Python に委譲します。
 5. 戦闘終了時は `AUTO SAVE` スロットが更新され、手動保存は `Slot 1` - `Slot 3` をメニューから選びます。
 
@@ -67,10 +70,42 @@
   - `current_job`
   - `mp_levels`
 
+## RuntimeState contract
+
+- Python 側の実行時状態は `combat.runtime_state.RuntimeState` が境界です。
+- `RuntimeState` の save は `SaveDataState` 相当の JSON 化可能な dict として扱います。
+- `init_runtime_state()` は構築後に `validate_runtime_state(...)` を通します。
+- 重要な不変条件:
+  - `save.gil`, `save.CP`, inventory count は 0 以上
+  - party member の `name` は空文字不可
+  - `hp`, `max_hp`, `exp`, `mp`, `mp_levels` は 0 以上
+  - `hp <= max_hp`
+  - `row` は `front` / `back` のみ
+  - `job_level` / `job_levels` は `level >= 1`, `skill_point >= 0`
+- save の構造検証は `schemas/ff3-save-envelope.schema.json`、RuntimeState 固有の不変条件は `validate_runtime_state(...)` に集約します。
+
+## Battle save patch
+
+- 戦闘終了時の save 反映差分は `combat.battle_save_patch.BattleSavePatch` で表現します。
+- Wasm round response は `battle_save_patch` を返します。
+- `RuntimeState.apply(patch)` が `BattleSavePatch` の save 反映入口です。
+- Wasm 経路では勝利報酬と戦闘終了時の runtime party HP/MP 同期を patch apply 経由に移しています。
+- Flask / Pygame 互換のため、既存の `apply_victory_rewards(...)` は直接 save 反映 API として残しています。
+- `battle_save_patch` の主な対象:
+  - `resource_changes`: gil / CP
+  - `party_changes`: hp / max_hp / level / exp / job_level / mp_levels
+  - `inventory_changes`
+  - `item_stock_changes`
+  - `rewards`
+- 今後、保存副作用をさらに分離する場合は、Flask / Pygame 側の勝利報酬も `BattleSavePatch` 生成と `state.apply(patch)` に寄せます。
+
 ## 今後の実装ルール
 
 - 新しい画面は `screens/` 配下に追加し、`router.js` に登録します。
 - 画面遷移は `window.location.href` ではなく `navigate(...)` を使います。
 - Pyodide の取得は `loadPyodide()` を直接呼ばず、`getPyodideRuntime()` を使います。
 - `menu_state` と save は store を通して同期を保ちます。
+- save envelope / `menu_state` の永続化入口は `saveRepository` に集約します。
+- RuntimeState に新しい永続フィールドを追加したら、型契約、JSON Schema、不変条件テストを同時に更新します。
+- 戦闘終了で save に新しい副作用を追加したら、`BattleSavePatch` と差分テストも更新します。
 - 旧 `*.html` は実装本体ではなく、互換性維持のためのリダイレクトとして扱います。

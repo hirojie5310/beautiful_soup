@@ -11,16 +11,10 @@ import {
 } from "../map_data.js";
 import {
   AUTO_SAVE_SLOT_ID,
-  LOCAL_MENU_STORAGE_KEY,
-  deleteSaveSlotFromIndexedDB,
   getLastUsedSaveSlotId,
-  listSaveSlotsFromIndexedDB,
-  loadSaveEnvelopeFromIndexedDB,
-  makeSaveEnvelope,
   parseSaveEnvelope,
-  persistSaveEnvelopeToIndexedDB,
-  restoreSaveEnvelopeFromStorageAsync,
 } from "../shared_storage.js";
+import { saveRepository } from "../save_repository.js";
 import { mergeMenuStateIntoSave } from "../menu_save_sync.js";
 import { bindButtonHandlers, triggerAutoSaveFromEnvelope } from "./screen_shared.js";
 
@@ -262,7 +256,7 @@ function patchSaveWithMenuState(saveObj, menuState) {
 
 function buildEnvelopeForCurrentState(store, state) {
   const currentState = store.getState();
-  const currentEnvelope = currentState.saveEnvelope || makeSaveEnvelope({}, {});
+  const currentEnvelope = currentState.saveEnvelope || saveRepository.makeEnvelope({}, {});
   return {
     ...currentEnvelope,
     save: patchSaveWithMenuState(currentEnvelope.save || {}, state),
@@ -364,7 +358,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
 
   if (!Array.isArray(state.party) || !state.party.length) {
     const currentEnvelope = store.getState().saveEnvelope;
-    const stored = currentEnvelope?.save ? currentEnvelope : await restoreSaveEnvelopeFromStorageAsync();
+    const stored = currentEnvelope?.save ? currentEnvelope : await saveRepository.load();
     if (stored?.save) {
       state = hydrateMenuStateFromEnvelope(state, stored);
       store.updateMenuState(state);
@@ -394,7 +388,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   }
 
   async function refreshSlotList() {
-    const slots = await listSaveSlotsFromIndexedDB();
+    const slots = await saveRepository.listSlots();
     slotSummariesById = Object.fromEntries(
       slots.map((row) => [String(row.slot_id || ""), row]),
     );
@@ -420,8 +414,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       setSlotStatus("保存失敗: 現在セーブの更新に失敗しました。");
       return false;
     }
-    const saved = await persistSaveEnvelopeToIndexedDB(nextEnvelope, {
-      slotId,
+    const saved = await saveRepository.saveSlot(nextEnvelope, slotId, {
       kind: "manual",
       rememberSelection: true,
     });
@@ -641,7 +634,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       loadBtn.disabled = !summaryRow;
       loadBtn.addEventListener("click", async (event) => {
         event.stopPropagation();
-        const envelope = await loadSaveEnvelopeFromIndexedDB(slotId);
+        const envelope = await saveRepository.loadSlot(slotId);
         if (!envelope?.save) {
           setSlotStatus(`${label} の読込に失敗しました。`);
           return;
@@ -666,7 +659,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       deleteBtn.addEventListener("click", async (event) => {
         event.stopPropagation();
         if (kind === "auto") return;
-        const removed = await deleteSaveSlotFromIndexedDB(slotId);
+        const removed = await saveRepository.deleteSlot(slotId);
         if (!removed) {
           setSlotStatus(`${label} の削除に失敗しました。`);
           return;

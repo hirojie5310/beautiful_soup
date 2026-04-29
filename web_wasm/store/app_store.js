@@ -4,16 +4,7 @@ import {
   getStoredLocationSelectionAsync,
   syncStoredLocationSelection,
 } from "../location_shared.js";
-import {
-  clearMenuStateFromStorage,
-  clearSaveEnvelopeFromStorage,
-  LOCAL_MENU_STORAGE_KEY,
-  makeSaveEnvelope,
-  parseMenuStateFromStorage,
-  persistSaveEnvelopeToStorage,
-  restoreSaveEnvelopeFromStorage,
-  restoreSaveEnvelopeFromStorageAsync,
-} from "../shared_storage.js";
+import { saveRepository } from "../save_repository.js";
 import {
   normalizeMemberIndexedRows,
   normalizePartyIdentityOrder,
@@ -60,8 +51,8 @@ export function createAppStore() {
   let initialized = false;
 
   const storedSelection = getStoredLocationSelection();
-  const storedEnvelope = restoreSaveEnvelopeFromStorage();
-  const storedMenuState = parseMenuStateFromStorage();
+  const storedEnvelope = saveRepository.loadLocalMirror();
+  const storedMenuState = saveRepository.loadMenuState();
   const initialMenuStateSource = (
     storedEnvelope?.menu_state && typeof storedEnvelope.menu_state === "object"
       ? storedEnvelope.menu_state
@@ -91,7 +82,7 @@ export function createAppStore() {
     initialized = true;
 
     const storedSelectionAsync = await getStoredLocationSelectionAsync();
-    const storedEnvelopeAsync = await restoreSaveEnvelopeFromStorageAsync();
+    const storedEnvelopeAsync = await saveRepository.load();
     const hasAsyncSelection = (
       storedSelectionAsync
       && typeof storedSelectionAsync === "object"
@@ -135,14 +126,7 @@ export function createAppStore() {
     };
 
     if (normalizedEnvelope.menu_state && typeof normalizedEnvelope.menu_state === "object") {
-      try {
-        localStorage.setItem(
-          LOCAL_MENU_STORAGE_KEY,
-          JSON.stringify(nextMenuState),
-        );
-      } catch (_error) {
-        // noop
-      }
+      saveRepository.saveMenuState(nextMenuState);
     }
 
     return getState();
@@ -174,11 +158,7 @@ export function createAppStore() {
       ...state,
       menuState: normalizedMenuState,
     };
-    try {
-      localStorage.setItem(LOCAL_MENU_STORAGE_KEY, JSON.stringify(normalizedMenuState));
-    } catch (_error) {
-      // noop
-    }
+    saveRepository.saveMenuState(normalizedMenuState);
     notify();
   }
 
@@ -193,7 +173,7 @@ export function createAppStore() {
         envelope.selected_location || state.selectedLocation || "",
       ),
     };
-    const persisted = persistSaveEnvelopeToStorage(nextEnvelope);
+    const persisted = saveRepository.saveLocalMirror(nextEnvelope);
     if (!persisted) return false;
 
     state = {
@@ -206,21 +186,14 @@ export function createAppStore() {
         : state.menuState,
     };
     if (nextEnvelope.menu_state && typeof nextEnvelope.menu_state === "object") {
-      try {
-        localStorage.setItem(
-          LOCAL_MENU_STORAGE_KEY,
-          JSON.stringify(normalizeMenuState(nextEnvelope.menu_state)),
-        );
-      } catch (_error) {
-        // noop
-      }
+      saveRepository.saveMenuState(normalizeMenuState(nextEnvelope.menu_state));
     }
     notify();
     return true;
   }
 
   function createDefaultEnvelope() {
-    return makeSaveEnvelope({ gil: 0, inventory: {}, party: [] }, {
+    return saveRepository.makeEnvelope({ gil: 0, inventory: {}, party: [] }, {
       selectedLocationGroup: state.selectedLocationGroup,
       selectedLocation: state.selectedLocation,
       menuState: state.menuState,
@@ -229,8 +202,7 @@ export function createAppStore() {
 
   function resetForTitle() {
     clearStoredLocationSelection();
-    clearSaveEnvelopeFromStorage();
-    clearMenuStateFromStorage();
+    saveRepository.clearLocalMirrors();
     state = {
       ...state,
       selectedLocationGroup: "",

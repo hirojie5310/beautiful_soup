@@ -1,5 +1,5 @@
 import { mergeMenuStateIntoSave } from "../menu_save_sync.js";
-import { persistAutoSaveEnvelope } from "../shared_storage.js";
+import { saveRepository } from "../save_repository.js";
 
 export function syncMenuMemberSelection(store, requestedIndex) {
   const state = store.getState();
@@ -52,14 +52,14 @@ export function persistMenuEnvelope(store, nextMenuState, nextEnvelope) {
   nextEnvelope.menu_state = nextMenuState;
   const persisted = store.updateSaveEnvelope(nextEnvelope);
   if (persisted) {
-    void persistAutoSaveEnvelope(nextEnvelope);
+    void saveRepository.saveAuto(nextEnvelope);
   }
   return persisted;
 }
 
 export function triggerAutoSaveFromEnvelope(envelope) {
   if (!envelope || typeof envelope !== "object") return;
-  void persistAutoSaveEnvelope(envelope);
+  void saveRepository.saveAuto(envelope);
 }
 
 export function selectedLocationText(state) {

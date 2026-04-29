@@ -1,5 +1,5 @@
 import { FIXED_PARTY_SLOT_KEYS, FIXED_PARTY_SLOT_LABELS } from "./shared_party.js";
-import { makeSaveEnvelope, persistAutoSaveEnvelope } from "./shared_storage.js";
+import { saveRepository } from "./save_repository.js";
 
 export const MANUAL_SAVE_SLOT_IDS = ["slot-1", "slot-2", "slot-3"];
 
@@ -92,7 +92,9 @@ export async function getDefaultLocationSelection(pyodide) {
 }
 
 export async function hydrateEnvelopeWithRuntime(pyodide, envelope) {
-  const baseEnvelope = envelope && typeof envelope === "object" ? envelope : makeSaveEnvelope(createNewGameSaveData());
+  const baseEnvelope = envelope && typeof envelope === "object"
+    ? envelope
+    : saveRepository.makeEnvelope(createNewGameSaveData());
   const fallbackSelection = await getDefaultLocationSelection(pyodide);
   const selectedLocationGroup = String(
     baseEnvelope?.selected_location_group || fallbackSelection.selectedLocationGroup || "",
@@ -126,5 +128,5 @@ export async function hydrateEnvelopeWithRuntime(pyodide, envelope) {
 }
 
 export async function persistAutoSave(envelope) {
-  return persistAutoSaveEnvelope(envelope);
+  return saveRepository.saveAuto(envelope);
 }

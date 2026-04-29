@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 from typing import Any, cast
 
+from combat.battle_save_patch import build_battle_save_patch
 from combat.enums import Status
 from combat.runtime_state import init_runtime_state
 from combat.wasm_api import (
@@ -222,7 +223,6 @@ def test_wasm_engine_applies_drop_item_stock_to_inventory_on_victory(
     monkeypatch,
 ) -> None:
     engine = WasmBattleEngine.create_default(seed=29)
-    calls: list[dict[str, Any]] = []
 
     def _fake_execute_round_dto(*, session, request, rng):
         return type(
@@ -246,26 +246,30 @@ def test_wasm_engine_applies_drop_item_stock_to_inventory_on_victory(
             },
         )()
 
-    def _fake_apply_victory_rewards(*, party_members, enemies, state, level_table):
-        state.save["item_stock"] = {"Potion": 1}
-        return {
+    def _fake_build_victory_reward_save_patch(*, party_members, enemies, state, level_table):
+        del party_members, enemies, level_table
+        after_save = json.loads(json.dumps(state.save))
+        after_save.setdefault("inventory", {}).setdefault("Anywhere", {})["Potion"] = (
+            int(
+                after_save.setdefault("inventory", {})
+                .setdefault("Anywhere", {})
+                .get("Potion", 0)
+            )
+            + 1
+        )
+        rewards = {
             "gained_exp": 10,
             "gained_gil": 10,
             "gained_cp": 1,
             "dropped_item": ["Potion"],
             "levelups": [],
         }
-
-    def _fake_apply_item_stock_to_inventory(save_data: dict[str, Any]) -> None:
-        calls.append(save_data)
+        return rewards, build_battle_save_patch(state.save, after_save, rewards=rewards)
 
     monkeypatch.setattr("combat.wasm_api.execute_round_dto", _fake_execute_round_dto)
     monkeypatch.setattr(
-        "combat.wasm_api.apply_victory_rewards", _fake_apply_victory_rewards
-    )
-    monkeypatch.setattr(
-        "combat.wasm_api.apply_item_stock_to_inventory",
-        _fake_apply_item_stock_to_inventory,
+        "combat.wasm_api.build_victory_reward_save_patch",
+        _fake_build_victory_reward_save_patch,
     )
     monkeypatch.setattr(
         "combat.wasm_api.save_savedata",
@@ -294,7 +298,11 @@ def test_wasm_engine_applies_drop_item_stock_to_inventory_on_victory(
     )
     assert any("Gil +10 (" in row for row in payload["logs"])
     assert any("CP +1 (" in row for row in payload["logs"])
-    assert calls == [engine.session.state.save]
+    assert payload["battle_save_patch"]["rewards"]["dropped_item"] == ["Potion"]
+    assert any(
+        row["path"] == ["Anywhere", "Potion"] and row["delta"] == 1
+        for row in payload["battle_save_patch"]["inventory_changes"]
+    )
 
 
 def test_wasm_engine_battle_end_save_includes_progress_fields_after_victory(
@@ -325,20 +333,22 @@ def test_wasm_engine_battle_end_save_includes_progress_fields_after_victory(
             },
         )()
 
-    def _fake_apply_victory_rewards(*, party_members, enemies, state, level_table):
+    def _fake_build_victory_reward_save_patch(*, party_members, enemies, state, level_table):
         del party_members, enemies, level_table
-        state.save["party"][0]["exp"] = 43210
-        state.save["party"][0]["job_level"] = {"level": 12, "skill_point": 34}
-        state.save["gil"] = 9876
-        state.save["CP"] = 654
-        state.save["inventory"] = {"Anywhere": {"Potion": 7}}
-        return {
+        after_save = json.loads(json.dumps(state.save))
+        after_save["party"][0]["exp"] = 43210
+        after_save["party"][0]["job_level"] = {"level": 12, "skill_point": 34}
+        after_save["gil"] = 9876
+        after_save["CP"] = 654
+        after_save["inventory"] = {"Anywhere": {"Potion": 7}}
+        rewards = {
             "gained_exp": 999,
             "gained_gil": 10,
             "gained_cp": 1,
             "dropped_item": [],
             "levelups": [],
         }
+        return rewards, build_battle_save_patch(state.save, after_save, rewards=rewards)
 
     def _fake_save_savedata(path: str | os.PathLike[str], save: dict[str, object]):
         del path
@@ -346,24 +356,90 @@ def test_wasm_engine_battle_end_save_includes_progress_fields_after_victory(
 
     monkeypatch.setattr("combat.wasm_api.execute_round_dto", _fake_execute_round_dto)
     monkeypatch.setattr(
-        "combat.wasm_api.apply_victory_rewards", _fake_apply_victory_rewards
+        "combat.wasm_api.build_victory_reward_save_patch",
+        _fake_build_victory_reward_save_patch,
     )
     monkeypatch.setattr("combat.wasm_api.save_savedata", _fake_save_savedata)
 
-    engine.execute_round_json(
-        json.dumps(
-            {"planned_actions": [], "lifecycle_state": "ready_for_actions"},
-            ensure_ascii=False,
+    payload = json.loads(
+        engine.execute_round_json(
+            json.dumps(
+                {"planned_actions": [], "lifecycle_state": "ready_for_actions"},
+                ensure_ascii=False,
+            )
         )
     )
 
     assert saved_calls
+    assert payload["battle_save_patch"]["resource_changes"]["gil"]["after"] == 9876
+    assert payload["battle_save_patch"]["resource_changes"]["cp"]["after"] == 654
+    first_member_patch = next(
+        row
+        for row in payload["battle_save_patch"]["party_changes"]
+        if row["name"] == engine.session.party_members[0].name
+    )
+    assert first_member_patch["exp"]["after"] == 43210
+    assert first_member_patch["job_level"]["level"]["after"] == 12
+    assert payload["battle_save_patch"]["inventory_changes"]
+
     assert saved_calls[0]["party"][0]["exp"] == 43210
     assert saved_calls[0]["party"][0]["job_level"]["level"] == 12
     assert saved_calls[0]["party"][0]["job_level"]["skill_point"] == 34
     assert saved_calls[0]["gil"] == 9876
     assert saved_calls[0]["CP"] == 654
     assert saved_calls[0]["inventory"]["Anywhere"]["Potion"] >= 7
+
+
+def test_wasm_engine_battle_end_save_patch_reports_non_victory_state_sync(
+    monkeypatch,
+) -> None:
+    engine = WasmBattleEngine.create_default(seed=43)
+    before_hp = int(engine.session.state.save["party"][0]["hp"])
+    engine.session.party_members[0].state.hp = max(0, before_hp - 5)
+
+    def _fake_execute_round_dto(*, session, request, rng):
+        del session, request, rng
+        return type(
+            "Output",
+            (),
+            {
+                "logs": ["Escaped!"],
+                "end_reason": "escaped",
+                "escaped": True,
+                "enemy_was_physically_hit": False,
+                "events": [],
+                "lifecycle": type(
+                    "Lifecycle",
+                    (),
+                    {
+                        "before": "resolving_round",
+                        "after": "battle_finished",
+                        "battle_finished": True,
+                    },
+                )(),
+            },
+        )()
+
+    monkeypatch.setattr("combat.wasm_api.execute_round_dto", _fake_execute_round_dto)
+    monkeypatch.setattr("combat.wasm_api.save_savedata", lambda path, save: None)
+
+    payload = json.loads(
+        engine.execute_round_json(
+            json.dumps(
+                {"planned_actions": [], "lifecycle_state": "ready_for_actions"},
+                ensure_ascii=False,
+            )
+        )
+    )
+
+    assert payload["battle_save_patch"]["rewards"] == {}
+    first_member_patch = next(
+        row
+        for row in payload["battle_save_patch"]["party_changes"]
+        if row["name"] == engine.session.party_members[0].name
+    )
+    assert first_member_patch["hp"]["before"] == before_hp
+    assert first_member_patch["hp"]["after"] == max(0, before_hp - 5)
 
 
 def test_build_session_status_snapshot_serializes_status_icons() -> None:
