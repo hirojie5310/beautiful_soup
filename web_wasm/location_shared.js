@@ -1,10 +1,7 @@
 import {
-  LOCAL_MENU_STORAGE_KEY,
   makeSaveEnvelope,
-  persistSaveEnvelopeToStorage,
-  restoreSaveEnvelopeFromStorage,
-  restoreSaveEnvelopeFromStorageAsync,
 } from "./shared_storage.js";
+import { saveRepository } from "./save_repository.js";
 import { findPartyMemberIndex } from "./shared_party.js";
 
 export const LOCAL_SAVE_STORAGE_KEY = "ff3_wasm_savedata_v1";
@@ -32,7 +29,7 @@ export function clone(value) {
 }
 
 export function readStoredEnvelope() {
-  const envelope = restoreSaveEnvelopeFromStorage();
+  const envelope = saveRepository.loadLocalMirror();
   if (envelope?.save && typeof envelope.save === "object") return envelope;
   try {
     const raw = localStorage.getItem(LOCAL_SAVE_STORAGE_KEY);
@@ -47,7 +44,7 @@ export function readStoredEnvelope() {
 }
 
 export async function readStoredEnvelopeAsync() {
-  const envelope = await restoreSaveEnvelopeFromStorageAsync();
+  const envelope = await saveRepository.load();
   if (envelope?.save && typeof envelope.save === "object") return envelope;
   return readStoredEnvelope();
 }
@@ -127,7 +124,7 @@ export function syncStoredLocationSelection(selectedLocationGroup, selectedLocat
   nextEnvelope.selected_location_group = String(selectedLocationGroup || "");
   nextEnvelope.selected_location = String(selectedLocation || "");
   nextEnvelope.saved_at = new Date().toISOString();
-  return persistSaveEnvelopeToStorage(nextEnvelope) || mirrored;
+  return saveRepository.saveLocalMirror(nextEnvelope) || mirrored;
 }
 
 export async function syncStoredLocationSelectionAsync(selectedLocationGroup, selectedLocation) {
@@ -141,16 +138,12 @@ export async function syncStoredLocationSelectionAsync(selectedLocationGroup, se
   nextEnvelope.selected_location_group = String(selectedLocationGroup || "");
   nextEnvelope.selected_location = String(selectedLocation || "");
   nextEnvelope.saved_at = new Date().toISOString();
-  return persistSaveEnvelopeToStorage(nextEnvelope) || mirrored;
+  return saveRepository.saveLocalMirror(nextEnvelope) || mirrored;
 }
 
 export function persistMenuStateFromEnvelope(envelope) {
   if (!envelope?.menu_state || typeof envelope.menu_state !== "object") return;
-  try {
-    localStorage.setItem(LOCAL_MENU_STORAGE_KEY, JSON.stringify(envelope.menu_state));
-  } catch (_error) {
-    // noop
-  }
+  saveRepository.saveMenuState(envelope.menu_state);
 }
 
 export async function loadJson(url) {

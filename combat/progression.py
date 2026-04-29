@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import Iterable, Any, Tuple, List, Optional, Dict
 import random
 
+from combat.battle_save_patch import BattleSavePatch, build_battle_save_patch
 from combat.inventory import add_item_to_inventory
 from combat.models import PartyMemberRuntime, EquipmentSet, PlannedAction
 from combat.char_build import compute_character_final_stats
@@ -545,3 +547,58 @@ def apply_victory_rewards(
         "dropped_item": battle_loot,
         "levelups": levelups,  # [(name, old_lv, new_lv), ...]
     }
+
+
+def build_victory_reward_save_patch(
+    *,
+    party_members,
+    enemies,
+    state,
+    level_table,
+) -> tuple[dict, BattleSavePatch]:
+    """
+    勝利報酬を runtime に反映し、save へ適用する差分を生成する。
+
+    既存の apply_victory_rewards() は save を直接更新する互換 API として残し、
+    Wasm の保存経路ではこちらを使って state.apply(patch) へ寄せる。
+    """
+
+    before_save = deepcopy(state.save)
+    after_save = deepcopy(state.save)
+
+    levelups = apply_victory_exp_rewards(
+        party_members,
+        enemies,
+        level_table=level_table,
+        weapons=state.weapons,
+        armors=state.armors,
+    )
+
+    gained_gil = apply_victory_gil_reward(
+        save_dict=after_save,
+        enemies=enemies,
+    )
+    gained_cp = apply_victory_cp_reward(
+        save_dict=after_save,
+        enemies=enemies,
+    )
+
+    item_stock = after_save.setdefault("item_stock", {})
+    battle_loot = process_battle_drops(enemies, item_stock)
+    apply_item_stock_to_inventory(after_save)
+
+    persist_party_progress_to_save(after_save, party_members)
+    total_exp = compute_exp_reward(enemies)
+    rewards = {
+        "gained_exp": total_exp,
+        "gained_gil": gained_gil,
+        "gained_cp": gained_cp,
+        "dropped_item": battle_loot,
+        "levelups": levelups,
+    }
+
+    return rewards, build_battle_save_patch(
+        before_save,
+        after_save,
+        rewards=rewards,
+    )

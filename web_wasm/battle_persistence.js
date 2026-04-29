@@ -1,10 +1,4 @@
-import {
-  AUTO_SAVE_SLOT_ID,
-  makeSaveEnvelope,
-  persistSaveEnvelopeToIndexedDB,
-  persistSaveEnvelopeToStorage,
-  restoreSaveEnvelopeFromStorage,
-} from "./shared_storage.js";
+import { saveRepository } from "./save_repository.js";
 
 export const BATTLE_START_SELECTION_KEY = "ff3_wasm_battle_start_selection_v1";
 export const BATTLE_RETURN_CONTEXT_KEY = "ff3_wasm_battle_return_context_v1";
@@ -87,7 +81,7 @@ export function buildRuntimeSaveEnvelope({
   selectedLocationGroup = "",
   selectedLocation = "",
 }) {
-  return makeSaveEnvelope(saveObj, {
+  return saveRepository.makeEnvelope(saveObj, {
     selectedLocationGroup: selectedLocationGroup
       || currentBattleSelection?.selected_location_group
       || storedEnvelope?.selected_location_group
@@ -113,7 +107,7 @@ export function syncRuntimeSaveToBrowser({
   if (!saveJson) return { persisted: false, envelope: null };
   try {
     const saveObj = JSON.parse(saveJson);
-    const storedEnvelope = appStore?.getState()?.saveEnvelope || cachedStoredEnvelope || restoreSaveEnvelopeFromStorage();
+    const storedEnvelope = appStore?.getState()?.saveEnvelope || cachedStoredEnvelope || saveRepository.loadLocalMirror();
     const envelope = buildRuntimeSaveEnvelope({
       saveObj,
       currentBattleSelection,
@@ -122,7 +116,7 @@ export function syncRuntimeSaveToBrowser({
     });
     const persisted = appStore
       ? appStore.updateSaveEnvelope(envelope)
-      : persistSaveEnvelopeToStorage(envelope);
+      : saveRepository.saveLocalMirror(envelope);
     return { persisted, envelope };
   } catch (_error) {
     return { persisted: false, envelope: null };
@@ -141,19 +135,15 @@ export async function persistFinishedBattleSave({
   if (!saveJson) return { persisted: false, autosaved: false, envelope: null };
   try {
     const saveObj = JSON.parse(saveJson);
-    const envelope = makeSaveEnvelope(saveObj, {
+    const envelope = saveRepository.makeEnvelope(saveObj, {
       selectedLocationGroup: result?.selected_location_group,
       selectedLocation: result?.selected_location,
       menuState,
     });
     const persisted = appStore
       ? appStore.updateSaveEnvelope(envelope)
-      : persistSaveEnvelopeToStorage(envelope);
-    const autosaved = await persistSaveEnvelopeToIndexedDB(envelope, {
-      slotId: AUTO_SAVE_SLOT_ID,
-      kind: "auto",
-      rememberSelection: false,
-    });
+      : saveRepository.saveLocalMirror(envelope);
+    const autosaved = await saveRepository.saveAuto(envelope);
     return { persisted, autosaved, envelope };
   } catch (_error) {
     return { persisted: false, autosaved: false, envelope: null };

@@ -1,9 +1,6 @@
 import { getPyodideRuntime } from "../pyodide_runtime.js";
-import {
-  AUTO_SAVE_SLOT_ID,
-  listSaveSlotsFromIndexedDB,
-  loadSaveEnvelopeFromIndexedDB,
-} from "../shared_storage.js";
+import { AUTO_SAVE_SLOT_ID } from "../shared_storage.js";
+import { saveRepository } from "../save_repository.js";
 import {
   MANUAL_SAVE_SLOT_IDS,
   createNewGameSaveData,
@@ -339,13 +336,13 @@ export async function mountScreen({ mountNode, store, navigate }) {
     }
   };
 
-  const slots = await listSaveSlotsFromIndexedDB();
+  const slots = await saveRepository.listSlots();
   const autoSlot = slots.find((row) => row.slot_id === AUTO_SAVE_SLOT_ID) || null;
 
   const openLoadPanel = () => {
     loadPanel.style.display = "";
     renderLoadSlots(loadSlotList, slots, async (slotId) => {
-      const envelope = await loadSaveEnvelopeFromIndexedDB(slotId);
+      const envelope = await saveRepository.loadSlot(slotId);
       if (!envelope?.save) {
         titleStatus.textContent = "ロードに失敗しました。";
         return;
@@ -389,7 +386,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
           titleStatus.textContent = "AUTO SAVE が見つかりません。";
           return;
         }
-        const envelope = await loadSaveEnvelopeFromIndexedDB(AUTO_SAVE_SLOT_ID);
+        const envelope = await saveRepository.loadSlot(AUTO_SAVE_SLOT_ID);
         if (!envelope?.save) {
           titleStatus.textContent = "AUTO SAVE の読み込みに失敗しました。";
           return;
