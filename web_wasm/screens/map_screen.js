@@ -145,6 +145,13 @@ export function configureLoopingMapBgm(audioElement, sourceUrl = FLOATING_CONTIN
   audioElement.src = String(sourceUrl || "");
   audioElement.loop = true;
   audioElement.preload = "auto";
+  try {
+    audioElement.playsInline = true;
+    audioElement.setAttribute?.("playsinline", "true");
+    audioElement.setAttribute?.("webkit-playsinline", "true");
+  } catch (_error) {
+    // Ignore browsers that do not expose inline playback flags on Audio.
+  }
   return audioElement;
 }
 
@@ -1756,23 +1763,24 @@ export async function mountScreen({ mountNode, store, navigate }) {
     mapBgmAudio.currentTime = 0;
   }
 
+  function resumeMapBgmFromGesture() {
+    clearPendingBgmUnlock();
+    syncMapBgm();
+  }
+
   function scheduleBgmUnlockRetry() {
     if (cancelPendingBgmUnlock || typeof window === "undefined") return;
     const retryPlayback = () => {
-      clearPendingBgmUnlock();
-      const sourceUrl = resolveActiveMapBgmUrl();
-      if (!sourceUrl) return;
-      const audio = ensureMapBgmAudio(sourceUrl);
-      if (!audio) return;
-      const playResult = audio.play();
-      if (playResult && typeof playResult.catch === "function") {
-        playResult.catch(() => {});
-      }
+      resumeMapBgmFromGesture();
     };
     window.addEventListener("pointerdown", retryPlayback, { capture: true });
+    window.addEventListener("touchstart", retryPlayback, { capture: true });
+    window.addEventListener("click", retryPlayback, { capture: true });
     window.addEventListener("keydown", retryPlayback, { capture: true });
     cancelPendingBgmUnlock = () => {
       window.removeEventListener("pointerdown", retryPlayback, { capture: true });
+      window.removeEventListener("touchstart", retryPlayback, { capture: true });
+      window.removeEventListener("click", retryPlayback, { capture: true });
       window.removeEventListener("keydown", retryPlayback, { capture: true });
     };
   }
@@ -2359,6 +2367,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   }
 
   const onKeyDown = (event) => {
+    resumeMapBgmFromGesture();
     if (isEventOverlayOpen()) {
       if (event.key === "Enter" || event.key === " " || event.key === "Escape") {
         event.preventDefault();
@@ -2385,22 +2394,31 @@ export async function mountScreen({ mountNode, store, navigate }) {
   };
 
   const onConfirm = () => {
+    resumeMapBgmFromGesture();
     if (shouldCloseEventOverlayOnConfirm(isEventOverlayOpen())) {
       closeEventOverlay();
       return;
     }
     void tryConfirm();
   };
-  const onCloseEvent = () => closeEventOverlay();
+  const onCloseEvent = () => {
+    resumeMapBgmFromGesture();
+    closeEventOverlay();
+  };
   const onGoLocation = () => {
+    resumeMapBgmFromGesture();
     patchMapMenuState({ map_return_pending: false });
     navigate("location");
   };
   const onGoMenu = () => {
+    resumeMapBgmFromGesture();
     patchMapMenuState({ map_return_pending: true });
     navigate("menu");
   };
-  const onGoBattle = () => navigate("battle");
+  const onGoBattle = () => {
+    resumeMapBgmFromGesture();
+    navigate("battle");
+  };
   const padHandlers = new Map();
 
   confirmBtn.addEventListener("click", onConfirm);
@@ -2412,6 +2430,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     const direction = String(button.dataset.dir || "");
     const onPointerDown = (event) => {
       event.preventDefault();
+      resumeMapBgmFromGesture();
       holdRepeater.start(direction);
     };
     const onPointerUp = (event) => {
