@@ -15,6 +15,7 @@ export function readBattleStartSelectionFromSession() {
         enemy_names: Array.isArray(parsed.enemy_names)
           ? parsed.enemy_names.map((name) => String(name || "")).filter((name) => Boolean(name))
           : [],
+        is_boss: parsed.is_boss === true,
       };
     }
   } catch (_error) {

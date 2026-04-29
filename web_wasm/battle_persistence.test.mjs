@@ -5,6 +5,7 @@ import { makeSaveEnvelope } from "./shared_storage.js";
 import {
   applyBattleSavePatchToSave,
   persistFinishedBattleSave,
+  readBattleStartSelectionFromSession,
 } from "./battle_persistence.js";
 
 function createFakeLocalStorage() {
@@ -156,4 +157,21 @@ test("persistFinishedBattleSave falls back to battle_save_patch when runtime exp
   const mirrored = JSON.parse(localStorage.getItem("ff3_wasm_savedata_v1") || "{}");
   assert.equal(mirrored?.save?.gil, 125);
   assert.equal(mirrored?.save?.party?.[0]?.hp, 6);
+});
+
+test("readBattleStartSelectionFromSession preserves boss encounters", () => {
+  globalThis.sessionStorage = createFakeLocalStorage();
+  sessionStorage.setItem("ff3_wasm_battle_start_selection_v1", JSON.stringify({
+    selected_location_group: "Alter Cave",
+    selected_location: "Crystal Room",
+    enemy_names: ["Land Turtle"],
+    is_boss: true,
+  }));
+
+  assert.deepEqual(readBattleStartSelectionFromSession(), {
+    selected_location_group: "Alter Cave",
+    selected_location: "Crystal Room",
+    enemy_names: ["Land Turtle"],
+    is_boss: true,
+  });
 });
