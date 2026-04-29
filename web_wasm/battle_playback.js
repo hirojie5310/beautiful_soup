@@ -1,6 +1,29 @@
 const DEFAULT_ATTACK_EFFECT_SHEET_NAME = "ef_slash_frames.png";
 
-export function applyEventToPlaybackStatus(
+function buildPlaybackPresentation({ side, index, kind, value = 0, displayValue = value, text = "", statusCategory = "", attackEffectSheetName = DEFAULT_ATTACK_EFFECT_SHEET_NAME }) {
+  return {
+    side,
+    index,
+    effect: kind === "damage" && value > 0
+      ? {
+        kind: "slash",
+        sheetName: attackEffectSheetName,
+      }
+      : null,
+    popup: kind === "status"
+      ? {
+        kind,
+        text,
+        statusCategory,
+      }
+      : {
+        kind,
+        value: kind === "damage" ? displayValue : value,
+      },
+  };
+}
+
+export function buildPlaybackStatusUpdateFromEvent(
   playbackStatus,
   event,
   { attackEffectSheetName = DEFAULT_ATTACK_EFFECT_SHEET_NAME } = {},
@@ -24,24 +47,24 @@ export function applyEventToPlaybackStatus(
     const currentHp = Number(target?.hp ?? 0);
     const oldHp = Number(event?.old_hp ?? currentHp);
     const nextHp = Math.max(0, Number(event?.new_hp ?? (oldHp - amount)));
-    target.hp = nextHp;
-    target.out_of_battle = nextHp <= 0 ? true : Boolean(target.out_of_battle);
-    if (target?.status && typeof target.status === "object") {
-      target.status.hp = nextHp;
-    }
     return {
-      side: targetSide,
-      index: targetIndex,
-      effect: amount > 0
-        ? {
-          kind: "slash",
-          sheetName: attackEffectSheetName,
-        }
-        : null,
-      popup: {
-        kind: amount > 0 ? "damage" : "miss",
-        value: displayValue,
+      target: {
+        side: targetSide,
+        index: targetIndex,
       },
+      patch: {
+        hp: nextHp,
+        out_of_battle: nextHp <= 0 ? true : Boolean(target.out_of_battle),
+        status_hp: target?.status && typeof target.status === "object" ? nextHp : null,
+      },
+      presentation: buildPlaybackPresentation({
+        side: targetSide,
+        index: targetIndex,
+        kind: amount > 0 ? "damage" : "miss",
+        value: amount,
+        displayValue,
+        attackEffectSheetName,
+      }),
     };
   }
 
@@ -52,9 +75,51 @@ export function applyEventToPlaybackStatus(
         .map((name) => String(name || "").trim().toLowerCase().replace(/^status\./, ""))
         .filter(Boolean)
       : [];
-    target.status_icons = Array.from(new Set([...existing, ...additions]));
+    return {
+      target: {
+        side: targetSide,
+        index: targetIndex,
+      },
+      patch: {
+        status_icons: Array.from(new Set([...existing, ...additions])),
+      },
+      presentation: null,
+    };
   }
   return null;
+}
+
+export function applyEventToPlaybackStatus(
+  playbackStatus,
+  event,
+  { attackEffectSheetName = DEFAULT_ATTACK_EFFECT_SHEET_NAME } = {},
+) {
+  const update = buildPlaybackStatusUpdateFromEvent(
+    playbackStatus,
+    event,
+    { attackEffectSheetName },
+  );
+  if (!update) return null;
+  const side = String(update?.target?.side || "");
+  const index = Number(update?.target?.index ?? -1);
+  const collection = side === "enemy" ? playbackStatus.enemies : playbackStatus.party;
+  const target = Array.isArray(collection) && index >= 0 && index < collection.length
+    ? collection[index]
+    : null;
+  if (!target || typeof target !== "object") return null;
+  if (Object.prototype.hasOwnProperty.call(update.patch || {}, "hp")) {
+    target.hp = Number(update.patch.hp ?? target.hp ?? 0);
+  }
+  if (Object.prototype.hasOwnProperty.call(update.patch || {}, "out_of_battle")) {
+    target.out_of_battle = Boolean(update.patch.out_of_battle);
+  }
+  if (Array.isArray(update.patch?.status_icons)) {
+    target.status_icons = update.patch.status_icons;
+  }
+  if (target?.status && typeof target.status === "object" && update.patch?.status_hp != null) {
+    target.status.hp = Number(update.patch.status_hp);
+  }
+  return update.presentation;
 }
 
 export function applyNamedPopupOverrides(activePopups, effects) {
@@ -377,7 +442,7 @@ export function buildNamedCombatEffects(block, playbackStatus) {
   return effects;
 }
 
-export function applyNamedCombatEffect(playbackStatus, effect, { attackEffectSheetName = DEFAULT_ATTACK_EFFECT_SHEET_NAME } = {}) {
+export function buildPlaybackStatusUpdateFromNamedEffect(playbackStatus, effect, { attackEffectSheetName = DEFAULT_ATTACK_EFFECT_SHEET_NAME } = {}) {
   if (!effect || !playbackStatus || typeof playbackStatus !== "object") return null;
   const side = String(effect.side || "");
   const index = Number(effect.index ?? -1);
@@ -388,43 +453,63 @@ export function applyNamedCombatEffect(playbackStatus, effect, { attackEffectShe
   const target = collection[index];
   if (!target || typeof target !== "object") return null;
 
+  let patch = {};
   if (kind === "damage") {
     const currentHp = Number(target?.hp ?? 0);
     const nextHp = Math.max(0, currentHp - value);
-    target.hp = nextHp;
-    target.out_of_battle = nextHp <= 0 ? true : Boolean(target.out_of_battle);
-    if (target?.status && typeof target.status === "object") {
-      target.status.hp = nextHp;
-    }
+    patch = {
+      hp: nextHp,
+      out_of_battle: nextHp <= 0 ? true : Boolean(target.out_of_battle),
+      status_hp: target?.status && typeof target.status === "object" ? nextHp : null,
+    };
   } else if (kind === "heal") {
     const currentHp = Number(target?.hp ?? 0);
     const maxHp = Number(target?.max_hp ?? currentHp);
     const nextHp = Math.min(maxHp, currentHp + value);
-    target.hp = nextHp;
-    target.out_of_battle = false;
-    if (target?.status && typeof target.status === "object") {
-      target.status.hp = nextHp;
-    }
+    patch = {
+      hp: nextHp,
+      out_of_battle: false,
+      status_hp: target?.status && typeof target.status === "object" ? nextHp : null,
+    };
   }
 
   return {
-    side,
-    index,
-    effect: kind === "damage" && value > 0
-      ? {
-        kind: "slash",
-        sheetName: attackEffectSheetName,
-      }
-      : null,
-    popup: kind === "status"
-      ? {
-        kind,
-        text: String(effect?.text || ""),
-        statusCategory: String(effect?.statusCategory || "inflict"),
-      }
-      : {
-        kind,
-        value,
-      },
+    target: { side, index },
+    patch,
+    presentation: buildPlaybackPresentation({
+      side,
+      index,
+      kind,
+      value,
+      text: String(effect?.text || ""),
+      statusCategory: String(effect?.statusCategory || "inflict"),
+      attackEffectSheetName,
+    }),
   };
+}
+
+export function applyNamedCombatEffect(playbackStatus, effect, { attackEffectSheetName = DEFAULT_ATTACK_EFFECT_SHEET_NAME } = {}) {
+  const update = buildPlaybackStatusUpdateFromNamedEffect(
+    playbackStatus,
+    effect,
+    { attackEffectSheetName },
+  );
+  if (!update) return null;
+  const side = String(update?.target?.side || "");
+  const index = Number(update?.target?.index ?? -1);
+  const collection = side === "enemy" ? playbackStatus.enemies : playbackStatus.party;
+  const target = Array.isArray(collection) && index >= 0 && index < collection.length
+    ? collection[index]
+    : null;
+  if (!target || typeof target !== "object") return null;
+  if (Object.prototype.hasOwnProperty.call(update.patch || {}, "hp")) {
+    target.hp = Number(update.patch.hp ?? target.hp ?? 0);
+  }
+  if (Object.prototype.hasOwnProperty.call(update.patch || {}, "out_of_battle")) {
+    target.out_of_battle = Boolean(update.patch.out_of_battle);
+  }
+  if (target?.status && typeof target.status === "object" && update.patch?.status_hp != null) {
+    target.status.hp = Number(update.patch.status_hp);
+  }
+  return update.presentation;
 }

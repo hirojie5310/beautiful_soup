@@ -150,3 +150,52 @@ test("SaveRepository keeps menu_state writes behind the repository boundary", ()
   assert.equal(repository.saveMenuState({ party: [{ name: "Refia" }] }), true);
   assert.deepEqual(repository.loadMenuState(), { party: [{ name: "Refia" }] });
 });
+
+test("SaveRepository commitSync persists local mirror for runtime_checkpoint reason", () => {
+  globalThis.localStorage = createFakeLocalStorage();
+  delete globalThis.indexedDB;
+
+  const repository = new SaveRepository();
+  const envelope = repository.makeEnvelope({
+    schema_version: 2,
+    gil: 123,
+    inventory: {},
+    party: [{ name: "Luneth", level: 5 }],
+  });
+
+  const result = repository.commitSync({
+    reason: "runtime_checkpoint",
+    envelope,
+  });
+
+  assert.equal(result.reason, "runtime_checkpoint");
+  assert.equal(result.persisted, true);
+  assert.equal(result.mirrored, true);
+  assert.equal(repository.loadLocalMirror()?.save?.gil, 123);
+});
+
+test("SaveRepository commit uses manual_save reason to update selected slot", async () => {
+  globalThis.localStorage = createFakeLocalStorage();
+  globalThis.indexedDB = createFakeIndexedDb();
+
+  const repository = new SaveRepository();
+  const envelope = repository.makeEnvelope({
+    schema_version: 2,
+    gil: 999,
+    inventory: {},
+    party: [{ name: "Ingus", level: 12 }],
+  });
+
+  const result = await repository.commit({
+    reason: "manual_save",
+    envelope,
+    slotId: "slot-2",
+  });
+
+  assert.equal(result.reason, "manual_save");
+  assert.equal(result.persisted, true);
+  assert.equal(result.mirrored, true);
+  assert.equal(result.slotted, true);
+  assert.equal((await repository.loadSlot("slot-2"))?.save?.party?.[0]?.name, "Ingus");
+  assert.equal(getLastUsedSaveSlotId(), "slot-2");
+});

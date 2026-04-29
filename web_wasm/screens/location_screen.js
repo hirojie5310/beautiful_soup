@@ -126,7 +126,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
         selected_location_group: currentState.selectedLocationGroup,
         selected_location: currentState.selectedLocation,
         saved_at: new Date().toISOString(),
-      });
+      }, { reason: "menu_confirmed" });
     }
   };
 

@@ -358,14 +358,13 @@ export async function mountScreen({ mountNode, store, navigate }) {
 
   if (!Array.isArray(state.party) || !state.party.length) {
     const currentEnvelope = store.getState().saveEnvelope;
-    const stored = currentEnvelope?.save ? currentEnvelope : await saveRepository.load();
-    if (stored?.save) {
-      state = hydrateMenuStateFromEnvelope(state, stored);
+    if (currentEnvelope?.save) {
+      state = hydrateMenuStateFromEnvelope(state, currentEnvelope);
       store.updateMenuState(state);
       store.updateSaveEnvelope({
-        ...stored,
+        ...currentEnvelope,
         menu_state: state,
-      });
+      }, { reason: "session_restored" });
     }
   }
 
@@ -380,7 +379,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       menu_state: state,
       saved_at: new Date().toISOString(),
     };
-    const persisted = store.updateSaveEnvelope(nextEnvelope);
+    const persisted = store.updateSaveEnvelope(nextEnvelope, { reason: "menu_confirmed" });
     if (persisted) {
       triggerAutoSaveFromEnvelope(nextEnvelope);
     }
@@ -410,14 +409,17 @@ export async function mountScreen({ mountNode, store, navigate }) {
   async function saveToSlot(slotId, { exportLocalFile = false } = {}) {
     persistMenuState(state);
     const nextEnvelope = buildEnvelopeForCurrentState(store, state);
-    if (!store.updateSaveEnvelope(nextEnvelope)) {
+    if (!store.updateSaveEnvelope(nextEnvelope, { reason: "manual_save" })) {
       setSlotStatus("保存失敗: 現在セーブの更新に失敗しました。");
       return false;
     }
-    const saved = await saveRepository.saveSlot(nextEnvelope, slotId, {
-      kind: "manual",
-      rememberSelection: true,
+    const saveResult = await saveRepository.commit({
+      reason: "manual_save",
+      envelope: nextEnvelope,
+      slotId,
+      alreadyMirrored: true,
     });
+    const saved = saveResult.persisted;
     if (!saved) {
       setSlotStatus(`${slotId} への保存に失敗しました。`);
       return false;
@@ -644,7 +646,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
         const loadedMenuState = extractMenuStateFromEnvelope(envelope);
         state = loadedMenuState;
         store.updateMenuState(loadedMenuState);
-        store.updateSaveEnvelope({ ...envelope, menu_state: loadedMenuState });
+        store.updateSaveEnvelope({ ...envelope, menu_state: loadedMenuState }, { reason: "session_restored" });
         renderParty();
         renderResources();
         await refreshSlotList();
@@ -719,7 +721,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
             }
             const loadedMenuState = extractMenuStateFromEnvelope(envelope);
             persistMenuState(loadedMenuState);
-            store.updateSaveEnvelope({ ...envelope, menu_state: loadedMenuState });
+            store.updateSaveEnvelope({ ...envelope, menu_state: loadedMenuState }, { reason: "save_imported" });
             renderParty();
             renderResources();
             window.alert("ロード完了: セーブデータを復元しました。");
