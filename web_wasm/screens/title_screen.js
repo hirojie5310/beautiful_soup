@@ -11,6 +11,12 @@ import { loadTitleStoryLines } from "../title_story.js";
 
 const TITLE_THEME_URL = new URL("../../assets/images/ffiii_theme.jpg", import.meta.url).href;
 const TITLE_HERO_CYCLE_MS = 60000;
+const MAP_ENTRY_CONTEXT_KEY = "ff3_wasm_map_entry_context_v1";
+const NEW_GAME_START_SELECTION = Object.freeze({
+  group: "Altar Cave",
+  location: "Altar Cave B3",
+  mapId: "Alter_Cave_B3",
+});
 
 function renderLayout() {
   return `
@@ -267,7 +273,15 @@ function renderLoadSlots(loadSlotList, slots, onLoad) {
   });
 }
 
-async function activateEnvelope({ store, navigate, statusLine, envelope, autosave = false }) {
+async function activateEnvelope({
+  store,
+  navigate,
+  statusLine,
+  envelope,
+  autosave = false,
+  targetRoute = "location",
+  mapEntryContext = null,
+}) {
   statusLine.textContent = "ゲームデータを準備しています...";
   const pyodide = await getPyodideRuntime();
   const hydratedEnvelope = await hydrateEnvelopeWithRuntime(pyodide, envelope);
@@ -276,8 +290,11 @@ async function activateEnvelope({ store, navigate, statusLine, envelope, autosav
   if (autosave) {
     await persistAutoSave(hydratedEnvelope);
   }
+  if (mapEntryContext && typeof mapEntryContext === "object") {
+    sessionStorage.setItem(MAP_ENTRY_CONTEXT_KEY, JSON.stringify(mapEntryContext));
+  }
   statusLine.textContent = "準備が完了しました。";
-  navigate("location");
+  navigate(targetRoute);
 }
 
 export async function mountScreen({ mountNode, store, navigate }) {
@@ -368,8 +385,8 @@ export async function mountScreen({ mountNode, store, navigate }) {
         const envelope = {
           version: 1,
           saved_at: new Date().toISOString(),
-          selected_location_group: "",
-          selected_location: "",
+          selected_location_group: NEW_GAME_START_SELECTION.group,
+          selected_location: NEW_GAME_START_SELECTION.location,
           save: createNewGameSaveData(),
           menu_state: null,
         };
@@ -379,6 +396,12 @@ export async function mountScreen({ mountNode, store, navigate }) {
           statusLine: titleStatus,
           envelope,
           autosave: true,
+          targetRoute: "map",
+          mapEntryContext: {
+            entry_route: "location",
+            fresh_start: true,
+            map_id: NEW_GAME_START_SELECTION.mapId,
+          },
         });
       },
       continue: async () => {

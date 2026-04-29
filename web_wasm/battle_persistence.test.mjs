@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { makeSaveEnvelope } from "./shared_storage.js";
 import {
   applyBattleSavePatchToSave,
+  compactSaveEnvelope,
   persistFinishedBattleSave,
   readBattleStartSelectionFromSession,
 } from "./battle_persistence.js";
@@ -157,6 +158,32 @@ test("persistFinishedBattleSave falls back to battle_save_patch when runtime exp
   const mirrored = JSON.parse(localStorage.getItem("ff3_wasm_savedata_v1") || "{}");
   assert.equal(mirrored?.save?.gil, 125);
   assert.equal(mirrored?.save?.party?.[0]?.hp, 6);
+});
+
+test("compactSaveEnvelope keeps treasure progress in exported save payload", () => {
+  const compacted = compactSaveEnvelope(makeSaveEnvelope(
+    {
+      schema_version: 2,
+      gil: 100,
+      treasures: {
+        Alter_Cave_B1: {
+          altar_cave_b1_treasure_right_room_left: true,
+        },
+      },
+      party: [{ name: "Refia", hp: 8, max_hp: 10 }],
+    },
+    {
+      selectedLocationGroup: "Alter Cave",
+      selectedLocation: "Alter Cave B1",
+      menuState: { party: [{ name: "Refia" }], resources: { gil: 100, cp: 2 } },
+    },
+  ));
+
+  assert.equal(compacted?.menu_state, null);
+  assert.equal(
+    compacted?.save?.treasures?.Alter_Cave_B1?.altar_cave_b1_treasure_right_room_left,
+    true,
+  );
 });
 
 test("readBattleStartSelectionFromSession preserves boss encounters", () => {
