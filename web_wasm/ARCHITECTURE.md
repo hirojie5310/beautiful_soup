@@ -51,6 +51,9 @@
 
 1. `router.js` が常に 1 画面だけをマウントします。
 2. 各画面は `store.getState()` から必要な状態を読みます。
+   - 通常の画面表示で storage を直接再読込しません。
+   - 初期データの非同期読込は `app.js` → `store.initialize()` に集約します。
+   - 例外は、ユーザーが明示的に選ぶ manual load / auto load の `loadSlot()` 系操作だけです。
 3. 永続化が必要な変更は store 経由で戻します。
    - `patch(...)`: 軽い UI 状態更新
    - `updateMenuState(...)`: `menu_state` 更新
@@ -104,6 +107,8 @@
 - 新しい画面は `screens/` 配下に追加し、`router.js` に登録します。
 - 画面遷移は `window.location.href` ではなく `navigate(...)` を使います。
 - Pyodide の取得は `loadPyodide()` を直接呼ばず、`getPyodideRuntime()` を使います。
+- screen は原則として store の state を読むだけにし、起動時の storage 再読込を持ち込みません。
+- 非同期 load は `store.initialize()` に集約し、screen で許容する読込操作は `loadSlot()` などユーザー明示操作だけにします。
 - `menu_state` と save は store を通して同期を保ちます。
 - save envelope / `menu_state` の永続化入口は `saveRepository` に集約します。
 - RuntimeState に新しい永続フィールドを追加したら、型契約、JSON Schema、不変条件テストを同時に更新します。

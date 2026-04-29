@@ -1,7 +1,6 @@
 import {
   clearStoredLocationSelection,
   getStoredLocationSelection,
-  getStoredLocationSelectionAsync,
   syncStoredLocationSelection,
 } from "../location_shared.js";
 import { saveRepository } from "../save_repository.js";
@@ -81,8 +80,18 @@ export function createAppStore() {
     if (initialized) return getState();
     initialized = true;
 
-    const storedSelectionAsync = await getStoredLocationSelectionAsync();
     const storedEnvelopeAsync = await saveRepository.load();
+    const storedSelectionAsync = (
+      state.selectedLocationGroup || state.selectedLocation
+    )
+      ? {
+        selected_location_group: state.selectedLocationGroup,
+        selected_location: state.selectedLocation,
+      }
+      : {
+        selected_location_group: String(storedEnvelopeAsync?.selected_location_group || ""),
+        selected_location: String(storedEnvelopeAsync?.selected_location || ""),
+      };
     const hasAsyncSelection = (
       storedSelectionAsync
       && typeof storedSelectionAsync === "object"
@@ -162,7 +171,7 @@ export function createAppStore() {
     notify();
   }
 
-  function updateSaveEnvelope(envelope) {
+  function updateSaveEnvelope(envelope, { reason = "runtime_checkpoint" } = {}) {
     if (!envelope || typeof envelope !== "object") return false;
     const nextEnvelope = {
       ...envelope,
@@ -173,8 +182,16 @@ export function createAppStore() {
         envelope.selected_location || state.selectedLocation || "",
       ),
     };
-    const persisted = saveRepository.saveLocalMirror(nextEnvelope);
-    if (!persisted) return false;
+    let commitResult;
+    try {
+      commitResult = saveRepository.commitSync({
+        reason,
+        envelope: nextEnvelope,
+      });
+    } catch (_error) {
+      return false;
+    }
+    if (!commitResult.persisted) return false;
 
     state = {
       ...state,

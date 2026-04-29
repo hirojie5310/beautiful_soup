@@ -272,7 +272,7 @@ async function activateEnvelope({ store, navigate, statusLine, envelope, autosav
   const pyodide = await getPyodideRuntime();
   const hydratedEnvelope = await hydrateEnvelopeWithRuntime(pyodide, envelope);
   store.updateMenuState(hydratedEnvelope.menu_state || {});
-  store.updateSaveEnvelope(hydratedEnvelope);
+  store.updateSaveEnvelope(hydratedEnvelope, { reason: "session_restored" });
   if (autosave) {
     await persistAutoSave(hydratedEnvelope);
   }

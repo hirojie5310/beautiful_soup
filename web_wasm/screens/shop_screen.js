@@ -210,7 +210,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     nextEnvelope.selected_location_group = currentState.selectedLocationGroup;
     nextEnvelope.selected_location = currentState.selectedLocation;
 
-    if (!store.updateSaveEnvelope(nextEnvelope)) {
+    if (!store.updateSaveEnvelope(nextEnvelope, { reason: "menu_confirmed" })) {
       shopStatusLine.textContent = "購入内容の保存に失敗しました。";
       return;
     }

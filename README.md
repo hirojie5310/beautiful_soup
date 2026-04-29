@@ -110,6 +110,12 @@ Flask 版の `flask_app.py` に相当する Wasm 版の起点は、次の 4 フ�
   - `Slot 1` - `Slot 3`: 手動保存用
 - 最後に使った手動スロットはブラウザ側で記憶し、メニュー画面で強調表示します。
 
+### SPA state / load rule
+
+- SPA 画面は原則として `store.getState()` を読むだけにし、通常表示のために storage をその場で再読込しません。
+- 初期データの非同期読込は `app.js` → `store.initialize()` に集約します。
+- 例外として、ユーザーが明示的に行う save slot 読込 (`loadSlot()`) や外部 save import は許容します。
+
 ### JSON Schema / Validation
 
 - スキーマ定義は [schemas/ff3-save-envelope.schema.json](/Users/hirotaka/beautiful_soup/schemas/ff3-save-envelope.schema.json) にあります。

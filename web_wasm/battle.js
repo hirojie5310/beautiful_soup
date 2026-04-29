@@ -1,9 +1,9 @@
 import { getPyodideRuntime } from "./pyodide_runtime.js";
 import {
   alignEventBlocksToLogBlocks,
-  applyEventToPlaybackStatus,
-  applyNamedCombatEffect,
   applyNamedPopupOverrides,
+  buildPlaybackStatusUpdateFromEvent,
+  buildPlaybackStatusUpdateFromNamedEffect,
   buildLogBlocks,
   buildNamedCombatEffects,
   buildPlaybackEventsByBlock,
@@ -17,6 +17,8 @@ import {
 } from "./battle_context.js";
 import {
   buildActionFromCommand as buildActionFromCommandForState,
+  buildItemIntent,
+  buildMagicIntent,
   commandLabel,
   isOutOfBattleEnemy,
   isOutOfBattleMember,
@@ -517,27 +519,6 @@ function renderCurrentActionSheet(mode) {
     sessionStatus,
     canAct: Boolean(pyodide && !battleFinished),
     isOutOfBattleEnemy,
-    onBackToCommand: closeActionSheetToCommand,
-    onReturnToSource: returnToSourceSelection,
-    onChooseMagic: chooseMagic,
-    onChooseItem: chooseItem,
-    onChooseSide: (side) => {
-      pendingActionDraft = { ...(pendingActionDraft || {}), target_side: side };
-      inputMode = "pick_target";
-      rerenderAll();
-    },
-    onBackFromTarget: () => {
-      if (shouldReturnToSideSelection()) {
-        inputMode = "pick_side";
-      } else {
-        inputMode = sourceSelectionModeForDraft();
-        if (inputMode === "command") {
-          pendingActionDraft = null;
-        }
-      }
-      rerenderAll();
-    },
-    onFinalizeTarget: finalizeDraftAction,
   });
 }
 
@@ -555,6 +536,32 @@ function popupForTarget(side, index) {
 
 function effectForTarget(side, index) {
   return activeCombatEffects[combatPopupKey(side, index)] || null;
+}
+
+function applyPlaybackStatusUpdate(playbackStatus, update) {
+  if (!playbackStatus || typeof playbackStatus !== "object" || !update || typeof update !== "object") {
+    return null;
+  }
+  const side = String(update?.target?.side || "");
+  const index = Number(update?.target?.index ?? -1);
+  const collection = side === "enemy" ? playbackStatus.enemies : playbackStatus.party;
+  if (!Array.isArray(collection) || index < 0 || index >= collection.length) return null;
+  const target = collection[index];
+  if (!target || typeof target !== "object") return null;
+
+  if (Object.prototype.hasOwnProperty.call(update.patch || {}, "hp")) {
+    target.hp = Number(update.patch.hp ?? target.hp ?? 0);
+  }
+  if (Object.prototype.hasOwnProperty.call(update.patch || {}, "out_of_battle")) {
+    target.out_of_battle = Boolean(update.patch.out_of_battle);
+  }
+  if (Array.isArray(update.patch?.status_icons)) {
+    target.status_icons = update.patch.status_icons;
+  }
+  if (target?.status && typeof target.status === "object" && update.patch?.status_hp != null) {
+    target.status.hp = Number(update.patch.status_hp);
+  }
+  return update.presentation || null;
 }
 
 function resolveAttackEffectImageCandidates(fileName = ATTACK_EFFECT_SHEET_NAME) {
@@ -605,18 +612,86 @@ function renderEnemies() {
     effectForTarget,
     popupForTarget,
     resolveAttackEffectImageCandidates,
-    onEnemyClick: (idx) => {
-      if (battleFinished) return;
-      const enemy = Array.isArray(sessionStatus.enemies) ? sessionStatus.enemies[idx] : null;
-      if (isOutOfBattleEnemy(enemy)) return;
-      selectedEnemyIndex = idx;
-      renderEnemies();
-      renderStatus();
-    },
     onMapImageResolved: () => {
       renderEnemies();
     },
   });
+}
+
+function handleChooseSide(side) {
+  pendingActionDraft = { ...(pendingActionDraft || {}), target_side: side };
+  inputMode = "pick_target";
+  rerenderAll();
+}
+
+function handleBackFromTarget() {
+  if (shouldReturnToSideSelection()) {
+    inputMode = "pick_side";
+  } else {
+    inputMode = sourceSelectionModeForDraft();
+    if (inputMode === "command") {
+      pendingActionDraft = null;
+    }
+  }
+  rerenderAll();
+}
+
+function handleActionSheetClick(event) {
+  const button = event.target instanceof Element
+    ? event.target.closest("button[data-action-sheet-action]")
+    : null;
+  if (!button) return;
+  const action = String(button.dataset.actionSheetAction || "");
+  if (!action) return;
+
+  if (action === "back_to_command") {
+    closeActionSheetToCommand();
+    return;
+  }
+  if (action === "return_to_source") {
+    returnToSourceSelection();
+    return;
+  }
+  if (action === "choose_magic") {
+    const spellName = String(button.dataset.spellName || "");
+    const candidate = currentMemberMagicCandidates().find((cand) => String(cand?.name || "") === spellName);
+    if (candidate) chooseMagic(candidate);
+    return;
+  }
+  if (action === "choose_item") {
+    const itemName = String(button.dataset.itemName || "");
+    const candidate = currentItemCandidates().find((cand) => String(cand?.name || "") === itemName);
+    if (candidate) chooseItem(candidate);
+    return;
+  }
+  if (action === "choose_side") {
+    handleChooseSide(String(button.dataset.side || "enemy"));
+    return;
+  }
+  if (action === "back_from_target") {
+    handleBackFromTarget();
+    return;
+  }
+  if (action === "finalize_target") {
+    const targetIndex = Number(button.dataset.targetIndex ?? 0);
+    const targetAll = String(button.dataset.targetAll || "") === "true";
+    finalizeDraftAction(targetIndex, { targetAll });
+  }
+}
+
+function handleEnemyGridClick(event) {
+  const card = event.target instanceof Element
+    ? event.target.closest(".enemy-card[data-enemy-index]")
+    : null;
+  if (!card) return;
+  if (battleFinished) return;
+  const idx = Number(card.dataset.enemyIndex ?? -1);
+  if (idx < 0) return;
+  const enemy = Array.isArray(sessionStatus.enemies) ? sessionStatus.enemies[idx] : null;
+  if (isOutOfBattleEnemy(enemy)) return;
+  selectedEnemyIndex = idx;
+  renderEnemies();
+  renderStatus();
 }
 
 function renderCommandButtons() {
@@ -992,7 +1067,10 @@ async function playBattleLogBlocks(logs, payload) {
       activeCombatEffects = {};
       const eventsForBlock = Array.isArray(blockEvents[i]) ? blockEvents[i] : [];
       eventsForBlock.forEach((event) => {
-        const applied = applyEventToPlaybackStatus(playbackStatus, event);
+        const applied = applyPlaybackStatusUpdate(
+          playbackStatus,
+          buildPlaybackStatusUpdateFromEvent(playbackStatus, event),
+        );
         if (!applied) return;
         const key = combatPopupKey(applied.side, applied.index);
         activeCombatPopups[key] = applied.popup;
@@ -1003,7 +1081,10 @@ async function playBattleLogBlocks(logs, payload) {
       if (eventsForBlock.length === 0) {
         const namedEffects = buildNamedCombatEffects(block, playbackStatus);
         namedEffects.forEach((effect) => {
-          const applied = applyNamedCombatEffect(playbackStatus, effect);
+          const applied = applyPlaybackStatusUpdate(
+            playbackStatus,
+            buildPlaybackStatusUpdateFromNamedEffect(playbackStatus, effect),
+          );
           if (!applied) return;
           const key = combatPopupKey(applied.side, applied.index);
           activeCombatPopups[key] = applied.popup;
@@ -1056,13 +1137,15 @@ function waitForBattleLogClick(playbackId) {
   });
 }
 
-function rerenderAll() {
+function rerenderAll({ persistMenuState = false } = {}) {
   renderParty();
   renderEnemies();
   renderCommandButtons();
   renderPlannedActions();
   renderStatus();
-  syncMenuViewStateToStorage();
+  if (persistMenuState) {
+    syncMenuViewStateToStorage();
+  }
 }
 
 function chooseCommand(def) {
@@ -1113,106 +1196,32 @@ function appendPendingAction(action) {
 }
 
 function chooseMagic(cand) {
-  const spellName = String(cand?.name || "");
-  if (!spellName) return;
-  const spellMeta = sessionStatus?.magic_spell_meta?.[spellName] || {};
-  const mode = String(spellMeta?.target_mode || "enemy_only");
-  const targetNorm = String(spellMeta?.target_norm || "");
-  const canSelectAll = Boolean(spellMeta?.can_select_all);
-  if (targetNorm === "all enemies") {
-    appendPendingAction({
-      kind: "magic",
-      command: "Magic",
-      spell_name: spellName,
-      target_side: "enemy",
-      target_index: 0,
-      target_all: true,
-    });
+  const intent = buildMagicIntent(cand, {
+    sessionStatus,
+    currentMemberIndex,
+  });
+  if (!intent) return;
+  if (intent.type === "action") {
+    appendPendingAction(intent.action);
     return;
   }
-  if (targetNorm === "all allies") {
-    appendPendingAction({
-      kind: "magic",
-      command: "Magic",
-      spell_name: spellName,
-      target_side: "ally",
-      target_index: currentMemberIndex,
-      target_all: true,
-    });
-    return;
-  }
-  if (mode === "ally_only") {
-    pendingActionDraft = {
-      kind: "magic",
-      command: "Magic",
-      spell_name: spellName,
-      target_side: "ally",
-      can_select_all: canSelectAll,
-      target_norm: targetNorm,
-      requires_side_choice: false,
-    };
-    inputMode = "pick_target";
-    rerenderAll();
-    return;
-  }
-  if (mode === "any") {
-    pendingActionDraft = {
-      kind: "magic",
-      command: "Magic",
-      spell_name: spellName,
-      can_select_all: canSelectAll,
-      target_norm: targetNorm,
-      target_mode: mode,
-      requires_side_choice: true,
-    };
-    inputMode = "pick_side";
-    rerenderAll();
-    return;
-  }
-  pendingActionDraft = {
-    kind: "magic",
-    command: "Magic",
-    spell_name: spellName,
-    target_side: "enemy",
-    can_select_all: canSelectAll,
-    target_norm: targetNorm,
-    requires_side_choice: false,
-  };
-  inputMode = "pick_target";
+  pendingActionDraft = intent.draft;
+  inputMode = intent.inputMode;
   rerenderAll();
 }
 
 function chooseItem(cand) {
-  const itemName = String(cand?.name || "");
-  if (!itemName) return;
-  const itemMeta = sessionStatus?.item_meta?.[itemName] || {};
-  const targetSide = itemMeta?.target_side;
-  const canSelectAll = Boolean(itemMeta?.can_select_all);
-  const autoAllTarget = Boolean(itemMeta?.auto_all_target);
-  if (autoAllTarget && (targetSide === "ally" || targetSide === "enemy")) {
-    appendPendingAction({
-      kind: "item",
-      command: "Item",
-      item_name: itemName,
-      target_side: targetSide,
-      target_index: targetSide === "ally" ? currentMemberIndex : 0,
-      target_all: true,
-    });
+  const intent = buildItemIntent(cand, {
+    sessionStatus,
+    currentMemberIndex,
+  });
+  if (!intent) return;
+  if (intent.type === "action") {
+    appendPendingAction(intent.action);
     return;
   }
-  pendingActionDraft = {
-    kind: "item",
-    command: "Item",
-    item_name: itemName,
-    can_select_all: canSelectAll,
-    requires_side_choice: !(targetSide === "ally" || targetSide === "enemy"),
-  };
-  if (targetSide === "ally" || targetSide === "enemy") {
-    pendingActionDraft.target_side = targetSide;
-    inputMode = "pick_target";
-  } else {
-    inputMode = "pick_side";
-  }
+  pendingActionDraft = intent.draft;
+  inputMode = intent.inputMode;
   rerenderAll();
 }
 
@@ -1248,7 +1257,7 @@ async function bootEngine() {
   }
   currentBattleSelection = resolveBattleSelection(selectionPayload);
 
-  const storedEnvelope = appStore?.getState()?.saveEnvelope || await saveRepository.load();
+  const storedEnvelope = appStore?.getState()?.saveEnvelope || saveRepository.loadLocalMirror();
   cachedStoredEnvelope = storedEnvelope;
   if (storedEnvelope?.save) {
     loadedSaveData = storedEnvelope.save;
@@ -1272,7 +1281,7 @@ async function bootEngine() {
   rewardPanel.classList.remove("open");
   rewardPanel.textContent = "";
   setSaveButtonsEnabled(Boolean(storedEnvelope?.save));
-  rerenderAll();
+  rerenderAll({ persistMenuState: true });
 }
 
 function resolveSaveDataForBoot() {
@@ -1443,7 +1452,7 @@ async function executeRound() {
   }
 
   refreshMenuStateFromPyodide();
-  rerenderAll();
+  rerenderAll({ persistMenuState: true });
 }
 
 function attachBattleEventHandlers() {
@@ -1457,6 +1466,14 @@ function attachBattleEventHandlers() {
     actionSheetCloseBtn.addEventListener("click", () => {
       handleActionSheetDismiss();
     });
+  }
+
+  if (actionSheetBody) {
+    actionSheetBody.addEventListener("click", handleActionSheetClick);
+  }
+
+  if (enemyGrid) {
+    enemyGrid.addEventListener("click", handleEnemyGridClick);
   }
 
   if (battleLogToggleBtn) {
@@ -1526,8 +1543,8 @@ function attachBattleEventHandlers() {
         currentBattleSelection.selected_location = String(envelope.selected_location);
       }
       const persisted = appStore
-        ? appStore.updateSaveEnvelope(envelope)
-        : saveRepository.saveLocalMirror(envelope);
+        ? appStore.updateSaveEnvelope(envelope, { reason: "save_imported" })
+        : saveRepository.commitSync({ reason: "save_imported", envelope }).persisted;
       if (persisted) {
         setSaveButtonsEnabled(true);
       }
@@ -1550,7 +1567,7 @@ function attachBattleEventHandlers() {
       setCommandLogLayout({ showCommand: true });
       rewardPanel.classList.remove("open");
       rewardPanel.textContent = "";
-      rerenderAll();
+      rerenderAll({ persistMenuState: true });
     } catch (_error) {
       statusLine.textContent = "ロード失敗: JSON を読み込めませんでした。";
     }

@@ -115,8 +115,8 @@ export function syncRuntimeSaveToBrowser({
       menuState,
     });
     const persisted = appStore
-      ? appStore.updateSaveEnvelope(envelope)
-      : saveRepository.saveLocalMirror(envelope);
+      ? appStore.updateSaveEnvelope(envelope, { reason: "runtime_checkpoint" })
+      : saveRepository.commitSync({ reason: "runtime_checkpoint", envelope }).persisted;
     return { persisted, envelope };
   } catch (_error) {
     return { persisted: false, envelope: null };
@@ -141,9 +141,14 @@ export async function persistFinishedBattleSave({
       menuState,
     });
     const persisted = appStore
-      ? appStore.updateSaveEnvelope(envelope)
-      : saveRepository.saveLocalMirror(envelope);
-    const autosaved = await saveRepository.saveAuto(envelope);
+      ? appStore.updateSaveEnvelope(envelope, { reason: "battle_finished" })
+      : saveRepository.commitSync({ reason: "battle_finished", envelope }).persisted;
+    const commitResult = await saveRepository.commit({
+      reason: "battle_finished",
+      envelope,
+      alreadyMirrored: persisted,
+    });
+    const autosaved = commitResult.autosaved;
     return { persisted, autosaved, envelope };
   } catch (_error) {
     return { persisted: false, autosaved: false, envelope: null };

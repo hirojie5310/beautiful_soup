@@ -128,5 +128,9 @@ export async function hydrateEnvelopeWithRuntime(pyodide, envelope) {
 }
 
 export async function persistAutoSave(envelope) {
-  return saveRepository.saveAuto(envelope);
+  const result = await saveRepository.commit({
+    reason: "new_game_initialized",
+    envelope,
+  });
+  return result.persisted;
 }

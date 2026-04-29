@@ -43,12 +43,6 @@ export function readStoredEnvelope() {
   return null;
 }
 
-export async function readStoredEnvelopeAsync() {
-  const envelope = await saveRepository.load();
-  if (envelope?.save && typeof envelope.save === "object") return envelope;
-  return readStoredEnvelope();
-}
-
 export function currentGil(envelope = null) {
   const source = envelope?.save ? envelope : readStoredEnvelope();
   const menuGil = asNumber(source?.menu_state?.resources?.gil, NaN);
@@ -103,16 +97,6 @@ export function getStoredLocationSelection() {
   };
 }
 
-export async function getStoredLocationSelectionAsync() {
-  const localSelection = readStoredLocationSelectionFromLocal();
-  if (localSelection) return localSelection;
-  const envelope = await readStoredEnvelopeAsync();
-  return {
-    selected_location_group: String(envelope?.selected_location_group || ""),
-    selected_location: String(envelope?.selected_location || ""),
-  };
-}
-
 export function syncStoredLocationSelection(selectedLocationGroup, selectedLocation) {
   const originalEnvelope = readStoredEnvelope();
   const mirrored = persistStoredLocationSelectionToLocal(
@@ -124,21 +108,14 @@ export function syncStoredLocationSelection(selectedLocationGroup, selectedLocat
   nextEnvelope.selected_location_group = String(selectedLocationGroup || "");
   nextEnvelope.selected_location = String(selectedLocation || "");
   nextEnvelope.saved_at = new Date().toISOString();
-  return saveRepository.saveLocalMirror(nextEnvelope) || mirrored;
-}
-
-export async function syncStoredLocationSelectionAsync(selectedLocationGroup, selectedLocation) {
-  const originalEnvelope = await readStoredEnvelopeAsync();
-  const mirrored = persistStoredLocationSelectionToLocal(
-    selectedLocationGroup,
-    selectedLocation,
-  );
-  if (!originalEnvelope) return mirrored;
-  const nextEnvelope = clone(originalEnvelope);
-  nextEnvelope.selected_location_group = String(selectedLocationGroup || "");
-  nextEnvelope.selected_location = String(selectedLocation || "");
-  nextEnvelope.saved_at = new Date().toISOString();
-  return saveRepository.saveLocalMirror(nextEnvelope) || mirrored;
+  try {
+    return saveRepository.commitSync({
+      reason: "location_selected",
+      envelope: nextEnvelope,
+    }).persisted || mirrored;
+  } catch (_error) {
+    return mirrored;
+  }
 }
 
 export function persistMenuStateFromEnvelope(envelope) {

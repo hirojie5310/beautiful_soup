@@ -99,13 +99,16 @@ export function renderBattleStatusLine({
   statusLine.textContent = `行動入力: ${actor.name} / 対象: ${target?.name ?? "(なし)"} / 入力済み ${committed}/${required}`;
 }
 
-function createSheetButton(label, onClick, { disabled = false } = {}) {
+function createSheetButton(label, { disabled = false, dataset = {} } = {}) {
   const button = document.createElement("button");
   button.className = "btn";
   button.type = "button";
   button.disabled = disabled;
   button.textContent = String(label || "");
-  button.addEventListener("click", onClick);
+  Object.entries(dataset).forEach(([key, value]) => {
+    if (value == null) return;
+    button.dataset[key] = String(value);
+  });
   return button;
 }
 
@@ -157,13 +160,6 @@ export function renderBattleActionSheet({
   sessionStatus,
   canAct,
   isOutOfBattleEnemy,
-  onBackToCommand,
-  onReturnToSource,
-  onChooseMagic,
-  onChooseItem,
-  onChooseSide,
-  onBackFromTarget,
-  onFinalizeTarget,
 }) {
   if (!actionSheetBody || !actionSheetTitle) return;
   const safeActorName = String(actorName || "");
@@ -172,7 +168,9 @@ export function renderBattleActionSheet({
   if (mode === "pick_magic") {
     actionSheetTitle.textContent = safeActorName ? `${safeActorName} の魔法` : "魔法を選択";
     const backGrid = createActionSheetGrid();
-    backGrid.appendChild(createSheetButton("← コマンドにもどる", onBackToCommand));
+    backGrid.appendChild(createSheetButton("← コマンドにもどる", {
+      dataset: { actionSheetAction: "back_to_command" },
+    }));
     actionSheetBody.appendChild(backGrid);
 
     const groupedCandidates = [];
@@ -196,8 +194,13 @@ export function renderBattleActionSheet({
       group.spells.forEach((cand) => {
         grid.appendChild(createSheetButton(
           String(cand?.label || cand?.name || "(magic)"),
-          () => onChooseMagic?.(cand),
-          { disabled: !canAct },
+          {
+            disabled: !canAct,
+            dataset: {
+              actionSheetAction: "choose_magic",
+              spellName: String(cand?.name || ""),
+            },
+          },
         ));
       });
       actionSheetBody.appendChild(section);
@@ -208,12 +211,19 @@ export function renderBattleActionSheet({
   if (mode === "pick_item") {
     actionSheetTitle.textContent = safeActorName ? `${safeActorName} のアイテム` : "アイテムを選択";
     const grid = createActionSheetGrid();
-    grid.appendChild(createSheetButton("← コマンドにもどる", onBackToCommand));
+    grid.appendChild(createSheetButton("← コマンドにもどる", {
+      dataset: { actionSheetAction: "back_to_command" },
+    }));
     (Array.isArray(itemCandidates) ? itemCandidates : []).forEach((cand) => {
       grid.appendChild(createSheetButton(
         String(cand?.label || cand?.name || "(item)"),
-        () => onChooseItem?.(cand),
-        { disabled: !canAct },
+        {
+          disabled: !canAct,
+          dataset: {
+            actionSheetAction: "choose_item",
+            itemName: String(cand?.name || ""),
+          },
+        },
       ));
     });
     actionSheetBody.appendChild(grid);
@@ -223,9 +233,15 @@ export function renderBattleActionSheet({
   if (mode === "pick_side") {
     actionSheetTitle.textContent = safeActorName ? `${safeActorName} の対象サイド` : "対象サイドを選択";
     const grid = createActionSheetGrid();
-    grid.appendChild(createSheetButton("← まほう・アイテム選択にもどる", onReturnToSource));
-    grid.appendChild(createSheetButton("敵を対象にする", () => onChooseSide?.("enemy")));
-    grid.appendChild(createSheetButton("味方を対象にする", () => onChooseSide?.("ally")));
+    grid.appendChild(createSheetButton("← まほう・アイテム選択にもどる", {
+      dataset: { actionSheetAction: "return_to_source" },
+    }));
+    grid.appendChild(createSheetButton("敵を対象にする", {
+      dataset: { actionSheetAction: "choose_side", side: "enemy" },
+    }));
+    grid.appendChild(createSheetButton("味方を対象にする", {
+      dataset: { actionSheetAction: "choose_side", side: "ally" },
+    }));
     actionSheetBody.appendChild(grid);
     return;
   }
@@ -239,7 +255,9 @@ export function renderBattleActionSheet({
   const shouldReturnToSide = Boolean(pendingActionDraft?.requires_side_choice);
   grid.appendChild(createSheetButton(
     shouldReturnToSide ? "← 対象サイド選択にもどる" : "← まほう・アイテム選択にもどる",
-    onBackFromTarget,
+    {
+      dataset: { actionSheetAction: "back_from_target" },
+    },
   ));
 
   const targetNorm = String(pendingActionDraft?.target_norm || "");
@@ -260,7 +278,13 @@ export function renderBattleActionSheet({
   if (canSelectAllForSide) {
     grid.appendChild(createSheetButton(
       side === "ally" ? "味方全体" : "敵全体",
-      () => onFinalizeTarget?.(0, { targetAll: true }),
+      {
+        dataset: {
+          actionSheetAction: "finalize_target",
+          targetIndex: 0,
+          targetAll: "true",
+        },
+      },
     ));
   }
 
@@ -269,7 +293,12 @@ export function renderBattleActionSheet({
     party.forEach((member, idx) => {
       grid.appendChild(createSheetButton(
         `味方: ${member?.name || `Member ${idx + 1}`}`,
-        () => onFinalizeTarget?.(idx),
+        {
+          dataset: {
+            actionSheetAction: "finalize_target",
+            targetIndex: idx,
+          },
+        },
       ));
     });
   } else {
@@ -278,7 +307,12 @@ export function renderBattleActionSheet({
       if (typeof isOutOfBattleEnemy === "function" && isOutOfBattleEnemy(enemy)) return;
       grid.appendChild(createSheetButton(
         `敵: ${enemy?.name || `Enemy ${idx + 1}`}`,
-        () => onFinalizeTarget?.(idx),
+        {
+          dataset: {
+            actionSheetAction: "finalize_target",
+            targetIndex: idx,
+          },
+        },
       ));
     });
   }
@@ -462,10 +496,10 @@ function applyHudHpBar(barFill, member) {
   }
 }
 
-function createEnemyCardState(idx, onEnemyClick) {
+function createEnemyCardState(idx) {
   const card = document.createElement("article");
   card.className = "card target enemy-card";
-  card.addEventListener("click", () => onEnemyClick?.(idx));
+  card.dataset.enemyIndex = String(idx);
 
   const spriteImage = document.createElement("img");
   spriteImage.className = "enemy-sprite";
@@ -534,9 +568,9 @@ function getPartyCardState(cache, idx) {
   return cache.get(idx);
 }
 
-function getEnemyCardState(cache, idx, onEnemyClick) {
+function getEnemyCardState(cache, idx) {
   if (!cache.has(idx)) {
-    cache.set(idx, createEnemyCardState(idx, onEnemyClick));
+    cache.set(idx, createEnemyCardState(idx));
   }
   return cache.get(idx);
 }
@@ -669,7 +703,6 @@ export function renderEnemyCards({
   effectForTarget,
   popupForTarget,
   resolveAttackEffectImageCandidates,
-  onEnemyClick,
   onMapImageResolved,
 }) {
   const enemyRows = Array.isArray(enemies) ? enemies : [];
@@ -691,9 +724,10 @@ export function renderEnemyCards({
     : selectedEnemyIndex;
   enemyRows.forEach((enemy, idx) => {
     const selectedClass = idx === safeEnemyIndex ? " selected" : "";
-    const cardState = getEnemyCardState(enemyCardCache, idx, onEnemyClick);
+    const cardState = getEnemyCardState(enemyCardCache, idx);
     activeKeys.add(idx);
     cardState.card.className = `card target enemy-card${selectedClass}`;
+    cardState.card.dataset.enemyIndex = String(idx);
     cardState.nameRow.textContent = String(enemy?.name ?? `Enemy ${idx + 1}`);
     cardState.hpRow.textContent = `HP ${Number(enemy?.hp ?? 0)} / ${Number(enemy?.max_hp ?? 0)}`;
     applyHudHpBar(cardState.hpBarFill, enemy);

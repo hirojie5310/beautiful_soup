@@ -1831,14 +1831,14 @@ export async function mountScreen({ mountNode, store, navigate }) {
       saved_at: new Date().toISOString(),
     };
     store.updateMenuState(nextMenuState);
-    store.updateSaveEnvelope(nextEnvelope);
+    store.updateSaveEnvelope(nextEnvelope, { reason: "menu_confirmed" });
   }
 
   function persistCurrentMapState(nextMapState) {
     if (!mapDefinition) return false;
     const nextEnvelope = buildEnvelopeWithMapState(store, nextMapState, mapDefinition);
     store.updateMenuState(nextEnvelope.menu_state);
-    const persisted = store.updateSaveEnvelope(nextEnvelope);
+    const persisted = store.updateSaveEnvelope(nextEnvelope, { reason: "menu_confirmed" });
     if (persisted) {
       triggerAutoSaveFromEnvelope(nextEnvelope);
     }
@@ -1997,7 +1997,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     nextEnvelope.selected_location_group = currentState.selectedLocationGroup;
     nextEnvelope.selected_location = currentState.selectedLocation;
 
-    if (!store.updateSaveEnvelope(nextEnvelope)) {
+    if (!store.updateSaveEnvelope(nextEnvelope, { reason: "menu_confirmed" })) {
       mapStatus.textContent = "イベント結果の保存に失敗しました。";
       return false;
     }
@@ -2170,7 +2170,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
         saved_at: new Date().toISOString(),
       };
       store.updateMenuState(nextEnvelope.menu_state);
-      const persisted = store.updateSaveEnvelope(nextEnvelope);
+      const persisted = store.updateSaveEnvelope(nextEnvelope, { reason: "menu_confirmed" });
       if (persisted) {
         triggerAutoSaveFromEnvelope(nextEnvelope);
       }

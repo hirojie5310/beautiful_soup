@@ -50,16 +50,24 @@ export function persistMenuEnvelope(store, nextMenuState, nextEnvelope) {
     nextEnvelope.save = mergeMenuStateIntoSave(nextEnvelope.save, nextMenuState);
   }
   nextEnvelope.menu_state = nextMenuState;
-  const persisted = store.updateSaveEnvelope(nextEnvelope);
+  const persisted = store.updateSaveEnvelope(nextEnvelope, { reason: "menu_confirmed" });
   if (persisted) {
-    void saveRepository.saveAuto(nextEnvelope);
+    void saveRepository.commit({
+      reason: "menu_confirmed",
+      envelope: nextEnvelope,
+      alreadyMirrored: true,
+    });
   }
   return persisted;
 }
 
 export function triggerAutoSaveFromEnvelope(envelope) {
   if (!envelope || typeof envelope !== "object") return;
-  void saveRepository.saveAuto(envelope);
+  void saveRepository.commit({
+    reason: "menu_confirmed",
+    envelope,
+    alreadyMirrored: true,
+  });
 }
 
 export function selectedLocationText(state) {
