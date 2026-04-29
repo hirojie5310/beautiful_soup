@@ -246,6 +246,108 @@ def test_compute_character_final_stats_applies_legacy_string_bonus_to_stats() ->
     assert stats.evasion_percent == 21
 
 
+def test_compute_character_final_stats_grants_general_unarmed_power_to_both_hands() -> None:
+    base = BaseCharacter(
+        level=10,
+        total_exp=0,
+        job_level=12,
+        job_skill_point=0,
+        max_hp=100,
+        strength=18,
+        agility=14,
+        vitality=10,
+        intelligence=10,
+        mind=10,
+    )
+
+    stats = compute_character_final_stats(
+        base,
+        EquipmentSet(),
+        {},
+        {},
+        job_name="Warrior",
+    )
+
+    expected_power = (base.strength // 4) + (base.job_level // 4)
+    expected_accuracy = 85 + (base.agility // 4) + (base.job_level // 4)
+
+    assert stats.main_power == expected_power
+    assert stats.off_power == expected_power
+    assert stats.main_accuracy == expected_accuracy
+    assert stats.off_accuracy == expected_accuracy
+    assert stats.main_atk_multiplier > 0
+    assert stats.off_atk_multiplier > 0
+
+
+def test_compute_character_final_stats_grants_monk_unarmed_level_bonus() -> None:
+    base = BaseCharacter(
+        level=11,
+        total_exp=0,
+        job_level=9,
+        job_skill_point=0,
+        max_hp=100,
+        strength=18,
+        agility=14,
+        vitality=10,
+        intelligence=10,
+        mind=10,
+    )
+
+    stats = compute_character_final_stats(
+        base,
+        EquipmentSet(),
+        {},
+        {},
+        job_name="Monk",
+    )
+
+    expected_power = int(base.level * 1.5) + (base.strength // 4) + (base.job_level // 4)
+    expected_accuracy = 85 + (base.agility // 4) + (base.job_level // 4)
+
+    assert stats.main_power == expected_power
+    assert stats.off_power == expected_power
+    assert stats.main_accuracy == expected_accuracy
+    assert stats.off_accuracy == expected_accuracy
+
+
+def test_compute_character_final_stats_does_not_treat_shield_as_unarmed_offhand() -> None:
+    base = BaseCharacter(
+        level=10,
+        total_exp=0,
+        job_level=12,
+        job_skill_point=0,
+        max_hp=100,
+        strength=18,
+        agility=14,
+        vitality=10,
+        intelligence=10,
+        mind=10,
+    )
+    armors = {
+        "Buckler": {
+            "Defense": 1,
+            "Evasion": 0.05,
+            "BaseMagicDefense": 0,
+            "ArmorType": "Shield",
+            "Weight": 1,
+        }
+    }
+
+    stats = compute_character_final_stats(
+        base,
+        EquipmentSet(off_hand="Buckler"),
+        {},
+        armors,
+        job_name="Warrior",
+    )
+
+    assert stats.main_power == (base.strength // 4) + (base.job_level // 4)
+    assert stats.main_accuracy == 85 + (base.agility // 4) + (base.job_level // 4)
+    assert stats.off_power == 0
+    assert stats.off_accuracy == 0
+    assert stats.off_atk_multiplier == 0
+
+
 def test_spell_weight_for_character_magic_action_reads_spell_json() -> None:
     action = PlannedAction(kind="magic", command="Magic", spell_name="Fire")
     spells = {"Fire": {"Weight": 4}}

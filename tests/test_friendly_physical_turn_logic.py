@@ -3,6 +3,7 @@ from random import Random
 from types import SimpleNamespace
 
 from combat.models import BattleActorState, FinalCharacterStats, FinalEnemyStats, SpellInfo
+from combat.phys_damage import physical_damage_char_to_enemy
 from combat.turn_logic import run_character_turn
 
 
@@ -13,7 +14,15 @@ def test_turn_logic_module_imports_cleanly() -> None:
 
 
 def _char_stats(
-    *, row: str = "front", main_power: int = 20, defense: int = 50
+    *,
+    row: str = "front",
+    main_power: int = 20,
+    main_accuracy: int = 100,
+    main_atk_multiplier: int = 2,
+    off_power: int = 0,
+    off_accuracy: int = 0,
+    off_atk_multiplier: int = 1,
+    defense: int = 50,
 ) -> FinalCharacterStats:
     return FinalCharacterStats(
         level=20,
@@ -27,13 +36,13 @@ def _char_stats(
         mind=10,
         row=row,
         main_power=main_power,
-        main_accuracy=100,
-        main_atk_multiplier=2,
+        main_accuracy=main_accuracy,
+        main_atk_multiplier=main_atk_multiplier,
         main_two=False,
         main_long=False,
-        off_power=0,
-        off_accuracy=0,
-        off_atk_multiplier=1,
+        off_power=off_power,
+        off_accuracy=off_accuracy,
+        off_atk_multiplier=off_atk_multiplier,
         off_two=False,
         off_long=False,
         defense=defense,
@@ -106,6 +115,67 @@ def test_physical_attack_to_ally_does_not_use_target_defense() -> None:
     assert ally_state.hp == 72
     assert enemy_state.hp == 500
     assert any("Ingus" in line for line in logs)
+
+
+def test_physical_attack_to_enemy_sums_main_and_off_hand_damage() -> None:
+    attacker_stats = _char_stats(
+        main_power=20,
+        main_accuracy=100,
+        main_atk_multiplier=2,
+        off_power=12,
+        off_accuracy=100,
+        off_atk_multiplier=3,
+        defense=0,
+    )
+    enemy_stats = _enemy_stats()
+    attacker_state = BattleActorState(hp=999, max_hp=999)
+    enemy_state = BattleActorState(hp=500, max_hp=500)
+    logs: list[str] = []
+
+    expected_rng = Random(7)
+    main_res = physical_damage_char_to_enemy(
+        attacker_stats,
+        enemy_stats,
+        hand="main",
+        rng=expected_rng,
+        use_expectation=False,
+        attacker_state=attacker_state,
+    )
+    off_res = physical_damage_char_to_enemy(
+        attacker_stats,
+        enemy_stats,
+        hand="off",
+        rng=expected_rng,
+        use_expectation=False,
+        attacker_state=attacker_state,
+    )
+    expected_damage = main_res.damage + off_res.damage
+    expected_hits = main_res.hit_count + off_res.hit_count
+
+    damage, result = run_character_turn(
+        char_name="Refia",
+        enemy_name="Goblin",
+        char_stats=attacker_stats,
+        enemy_stats=enemy_stats,
+        enemy_json={},
+        char_state=attacker_state,
+        enemy_state=enemy_state,
+        char_attack_kind="physical",
+        char_battle_command="Fight",
+        char_weapon_hand="main",
+        char_spell=None,
+        char_spell_json=None,
+        char_spell_healing_type=None,
+        char_spell_name=None,
+        char_item=None,
+        logs=logs,
+        rng=Random(7),
+    )
+
+    assert result is None
+    assert damage == expected_damage
+    assert enemy_state.hp == 500 - expected_damage
+    assert any(f"（{expected_hits}ヒット）" in line for line in logs)
 
 
 def test_offensive_magic_to_ally_hits_selected_ally_not_enemy() -> None:

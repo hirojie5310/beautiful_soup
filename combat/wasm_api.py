@@ -138,44 +138,35 @@ def _build_party_status_snapshot(session: BattleSession) -> list[dict[str, Any]]
 
         powers: list[int] = []
         accs: list[int] = []
-        if _is_weapon(getattr(eq, "main_hand", None)):
-            powers.append(
-                _safe_int(getattr(stats, "main_power", getattr(stats, "attack", 0)), 0)
-            )
-            accs.append(
-                _safe_int(
-                    getattr(stats, "main_accuracy", getattr(stats, "hit_rate", 0)), 0
-                )
-            )
-        if _is_weapon(getattr(eq, "off_hand", None)):
-            powers.append(
-                _safe_int(getattr(stats, "off_power", getattr(stats, "attack", 0)), 0)
-            )
-            accs.append(
-                _safe_int(
-                    getattr(stats, "off_accuracy", getattr(stats, "hit_rate", 0)), 0
-                )
-            )
-        if not powers:
-            powers = [
-                _safe_int(getattr(stats, "main_power", getattr(stats, "attack", 0)), 0)
-            ]
-            accs = [
-                _safe_int(
-                    getattr(stats, "main_accuracy", getattr(stats, "hit_rate", 0)), 0
-                )
-            ]
-
-        atk_value = int(round(sum(powers) / len(powers)))
-        acc_value = int(round(sum(accs) / len(accs)))
-
         atk_times = 0
-        if _is_weapon(getattr(eq, "main_hand", None)):
-            atk_times += _safe_int(getattr(stats, "main_atk_multiplier", 0), 0)
-        if _is_weapon(getattr(eq, "off_hand", None)):
-            atk_times += _safe_int(getattr(stats, "off_atk_multiplier", 0), 0)
-        if atk_times == 0:
-            atk_times = _safe_int(getattr(stats, "main_atk_multiplier", 0), 0)
+
+        main_power = _safe_int(getattr(stats, "main_power", getattr(stats, "attack", 0)), 0)
+        main_acc = _safe_int(
+            getattr(stats, "main_accuracy", getattr(stats, "hit_rate", 0)), 0
+        )
+        main_mul = _safe_int(getattr(stats, "main_atk_multiplier", 0), 0)
+        if main_power > 0 and main_mul > 0:
+            powers.append(main_power)
+            accs.append(main_acc)
+            atk_times += main_mul
+
+        off_power = _safe_int(getattr(stats, "off_power", getattr(stats, "attack", 0)), 0)
+        off_acc = _safe_int(
+            getattr(stats, "off_accuracy", getattr(stats, "hit_rate", 0)), 0
+        )
+        off_mul = _safe_int(getattr(stats, "off_atk_multiplier", 0), 0)
+        if off_power > 0 and off_mul > 0:
+            powers.append(off_power)
+            accs.append(off_acc)
+            atk_times += off_mul
+
+        if not powers:
+            powers = [main_power]
+            accs = [main_acc]
+            atk_times = main_mul
+
+        atk_value = sum(powers)
+        acc_value = int(round(sum(accs) / len(accs)))
 
         exp_to_next = 0
         level_table = getattr(session, "level_table", None)

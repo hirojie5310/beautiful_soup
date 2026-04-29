@@ -206,8 +206,12 @@ def _apply_enemy_summon_if_possible(
 def _attack_has_dark_element(
     *,
     char_stats: FinalCharacterStats,
-    weapon_hand: Literal["main", "off"],
+    weapon_hand: Literal["main", "off", "both"],
 ) -> bool:
+    if weapon_hand == "both":
+        return _attack_has_dark_element(
+            char_stats=char_stats, weapon_hand="main"
+        ) or _attack_has_dark_element(char_stats=char_stats, weapon_hand="off")
     if weapon_hand == "off":
         attack_elems = char_stats.off_weapon_elements
     else:
@@ -563,6 +567,136 @@ def _all_runtime_enemies_defeated(enemies: list | None) -> bool:
     return all(getattr(e.state, "hp", 0) <= 0 for e in enemies)
 
 
+def _hand_attack_enabled(
+    char_stats: FinalCharacterStats,
+    hand: Literal["main", "off"],
+) -> bool:
+    if hand == "off":
+        return (
+            int(getattr(char_stats, "off_power", 0)) > 0
+            and int(getattr(char_stats, "off_atk_multiplier", 0)) > 0
+        )
+    return (
+        int(getattr(char_stats, "main_power", 0)) > 0
+        and int(getattr(char_stats, "main_atk_multiplier", 0)) > 0
+    )
+
+
+def _resolve_physical_hands(
+    char_stats: FinalCharacterStats,
+    preferred_hand: Literal["main", "off"],
+) -> list[Literal["main", "off"]]:
+    if preferred_hand == "off":
+        return ["off"] if _hand_attack_enabled(char_stats, "off") else []
+
+    hands: list[Literal["main", "off"]] = []
+    if _hand_attack_enabled(char_stats, "main"):
+        hands.append("main")
+    if _hand_attack_enabled(char_stats, "off"):
+        hands.append("off")
+    return hands
+
+
+def _weapon_elements_for_hand(
+    char_stats: FinalCharacterStats,
+    hand: Literal["main", "off"],
+) -> list[str]:
+    if hand == "off":
+        return list(getattr(char_stats, "off_weapon_elements", []))
+    return list(getattr(char_stats, "main_weapon_elements", []))
+
+
+def _combined_relation_comment(
+    relation_rows: list[tuple[str, list[str]]],
+) -> str:
+    seen: set[str] = set()
+    messages: list[str] = []
+    for relation, hit_elems in relation_rows:
+        msg = relation_comment(relation, hit_elems, perspective="attacker")
+        if not msg or msg in seen:
+            continue
+        seen.add(msg)
+        messages.append(msg)
+    return " ".join(messages)
+
+
+def _resolve_physical_attack_to_enemy(
+    *,
+    char_stats: FinalCharacterStats,
+    enemy_stats: FinalEnemyStats,
+    enemy_json: Dict[str, Any],
+    preferred_hand: Literal["main", "off"],
+    rng: Random,
+    char_is_blind: bool,
+    char_is_mini_or_toad: bool,
+    char_state: BattleActorState,
+) -> tuple[AttackResult, list[Literal["main", "off"]], list[tuple[str, list[str]]]]:
+    total = AttackResult(damage=0, hit_count=0, is_critical=False)
+    hands_used = _resolve_physical_hands(char_stats, preferred_hand)
+    relation_rows: list[tuple[str, list[str]]] = []
+
+    for hand in hands_used:
+        attack_elems = _weapon_elements_for_hand(char_stats, hand)
+        relation, hit_elems = element_relation_and_hits_for_monster(
+            enemy_json, attack_elems
+        )
+        res = _as_attack_result(
+            physical_damage_char_to_enemy(
+                char=char_stats,
+                enemy=enemy_stats,
+                hand=hand,
+                element_relation=relation,
+                rng=rng,
+                use_expectation=False,
+                blind=char_is_blind,
+                attacker_is_mini_or_toad=char_is_mini_or_toad,
+                return_crit=True,
+                return_hits=True,
+                attacker_state=char_state,
+            )
+        )
+        total.damage += int(res.damage)
+        total.hit_count += int(res.hit_count)
+        total.is_critical = total.is_critical or bool(res.is_critical)
+        if relation != "normal":
+            relation_rows.append((relation, hit_elems))
+
+    return total, hands_used, relation_rows
+
+
+def _resolve_physical_attack_to_ally(
+    *,
+    char_stats: FinalCharacterStats,
+    target_stats: FinalCharacterStats,
+    preferred_hand: Literal["main", "off"],
+    rng: Random,
+    char_is_blind: bool,
+    char_is_mini_or_toad: bool,
+    char_state: BattleActorState,
+) -> tuple[AttackResult, list[Literal["main", "off"]]]:
+    total = AttackResult(damage=0, hit_count=0, is_critical=False)
+    hands_used = _resolve_physical_hands(char_stats, preferred_hand)
+
+    for hand in hands_used:
+        res = _as_attack_result(
+            physical_damage_char_to_ally(
+                char=char_stats,
+                target=target_stats,
+                hand=hand,
+                rng=rng,
+                use_expectation=False,
+                blind=char_is_blind,
+                attacker_is_mini_or_toad=char_is_mini_or_toad,
+                attacker_state=char_state,
+            )
+        )
+        total.damage += int(res.damage)
+        total.hit_count += int(res.hit_count)
+        total.is_critical = total.is_critical or bool(res.is_critical)
+
+    return total, hands_used
+
+
 # 4) キャラの1行動フェーズ（★ここだけが「キャラ側ロジック」）==========================================
 
 
@@ -729,28 +863,15 @@ def run_character_turn(
         # 50%: 敵を攻撃 / 50%: 自分を攻撃
         if rng.random() < 0.5:
             # 敵を攻撃
-            if char_weapon_hand == "main":
-                attack_elems = char_stats.main_weapon_elements
-            else:
-                attack_elems = char_stats.off_weapon_elements
-
-            relation, hit_elems = element_relation_and_hits_for_monster(
-                enemy_json, attack_elems
-            )
-
-            res = _as_attack_result(
-                physical_damage_char_to_enemy(
-                    char=char_stats,
-                    enemy=enemy_stats,
-                    hand=char_weapon_hand,
-                    element_relation=relation,
-                    rng=rng,
-                    use_expectation=False,
-                    blind=char_is_blind,
-                    attacker_is_mini_or_toad=char_is_mini_or_toad,
-                    return_crit=True,
-                    attacker_state=char_state,
-                )
+            res, hands_used, relation_rows = _resolve_physical_attack_to_enemy(
+                char_stats=char_stats,
+                enemy_stats=enemy_stats,
+                enemy_json=enemy_json,
+                preferred_hand=char_weapon_hand,
+                rng=rng,
+                char_is_blind=char_is_blind,
+                char_is_mini_or_toad=char_is_mini_or_toad,
+                char_state=char_state,
             )
             dmg_to_enemy = res.damage
             crit = res.is_critical
@@ -760,7 +881,7 @@ def run_character_turn(
             enemy_state.hp = max(enemy_state.hp - dmg_to_enemy, 0)
 
             # ★ 共通ヘルパから相性コメント取得
-            relation_msg = relation_comment(relation, hit_elems, perspective="attacker")
+            relation_msg = _combined_relation_comment(relation_rows)
 
             # クリティカルかどうかで prefix だけ変える
             if crit:
@@ -791,7 +912,7 @@ def run_character_turn(
                 target_index=target_index,
                 char_attack_kind="physical",
                 char_stats=char_stats,
-                char_weapon_hand=char_weapon_hand,
+                char_weapon_hand="both" if len(hands_used) > 1 else char_weapon_hand,
                 enemy_state=enemy_state,
                 enemy_json=enemy_json,
                 actual_enemy_change=max(0, old_enemy_hp - enemy_state.hp),
@@ -802,19 +923,15 @@ def run_character_turn(
 
         else:
             # 自分を攻撃（自傷）
-            res = _as_attack_result(
-                physical_damage_char_to_enemy(
-                    char=char_stats,
-                    # 自分を「防御側」として扱うためのダミー敵
-                    enemy=ff3_confused_self_dummy_enemy(char_stats),
-                    hand=char_weapon_hand,
-                    element_relation="normal",
-                    rng=rng,
-                    use_expectation=False,
-                    blind=char_is_blind,
-                    attacker_is_mini_or_toad=char_is_mini_or_toad,
-                    return_crit=True,
-                )
+            res, _hands_used, _relation_rows = _resolve_physical_attack_to_enemy(
+                char_stats=char_stats,
+                enemy_stats=ff3_confused_self_dummy_enemy(char_stats),
+                enemy_json={},
+                preferred_hand=char_weapon_hand,
+                rng=rng,
+                char_is_blind=char_is_blind,
+                char_is_mini_or_toad=char_is_mini_or_toad,
+                char_state=char_state,
             )
             dmg_to_char_from_self = res.damage
             crit = res.is_critical
@@ -3138,17 +3255,14 @@ def run_character_turn(
                     name=char_name, stats=char_stats, state=char_state
                 )
 
-            res = _as_attack_result(
-                physical_damage_char_to_ally(
-                    char=char_stats,
-                    target=target_pm.stats,
-                    hand=char_weapon_hand,
-                    rng=rng,
-                    use_expectation=False,
-                    blind=char_is_blind,
-                    attacker_is_mini_or_toad=char_is_mini_or_toad,
-                    attacker_state=char_state,
-                )
+            res, _hands_used = _resolve_physical_attack_to_ally(
+                char_stats=char_stats,
+                target_stats=target_pm.stats,
+                preferred_hand=char_weapon_hand,
+                rng=rng,
+                char_is_blind=char_is_blind,
+                char_is_mini_or_toad=char_is_mini_or_toad,
+                char_state=char_state,
             )
             crit = res.is_critical
             net_hits = res.hit_count
@@ -3182,29 +3296,15 @@ def run_character_turn(
             )
             return dmg_to_enemy, None
 
-        if char_weapon_hand == "main":
-            attack_elems = char_stats.main_weapon_elements
-        else:
-            attack_elems = char_stats.off_weapon_elements
-
-        relation, hit_elems = element_relation_and_hits_for_monster(
-            enemy_json, attack_elems
-        )
-
-        res = _as_attack_result(
-            physical_damage_char_to_enemy(
-                char=char_stats,
-                enemy=enemy_stats,
-                hand=char_weapon_hand,
-                element_relation=relation,
-                rng=rng,
-                use_expectation=False,
-                blind=char_is_blind,
-                attacker_is_mini_or_toad=char_is_mini_or_toad,
-                return_crit=True,
-                return_hits=True,  # ★追加
-                attacker_state=char_state,
-            )
+        res, hands_used, relation_rows = _resolve_physical_attack_to_enemy(
+            char_stats=char_stats,
+            enemy_stats=enemy_stats,
+            enemy_json=enemy_json,
+            preferred_hand=char_weapon_hand,
+            rng=rng,
+            char_is_blind=char_is_blind,
+            char_is_mini_or_toad=char_is_mini_or_toad,
+            char_state=char_state,
         )
         dmg_to_enemy = res.damage
         crit = res.is_critical
@@ -3248,13 +3348,11 @@ def run_character_turn(
             enemy_state, int(dmg_to_enemy)
         )
 
-        relation_msg = relation_comment(relation, hit_elems, perspective="attacker")
+        relation_msg = _combined_relation_comment(relation_rows)
 
         attack_label = "の物理攻撃"
         if char_battle_command == "Sing":
             attack_label = "は歌った"
-
-        relation_msg = relation_comment(relation, hit_elems, perspective="attacker")
 
         if crit:
             prefix = (
@@ -3281,7 +3379,7 @@ def run_character_turn(
             None,
             suffix,
             False,
-            relation == "absorb",
+            any(rel == "absorb" for rel, _elems in relation_rows),
             display_amount=max(0, dmg_to_enemy),
         )
 
@@ -3290,7 +3388,7 @@ def run_character_turn(
             target_index=target_index,
             char_attack_kind="physical",
             char_stats=char_stats,
-            char_weapon_hand=char_weapon_hand,
+            char_weapon_hand="both" if len(hands_used) > 1 else char_weapon_hand,
             enemy_state=enemy_state,
             enemy_json=enemy_json,
             actual_enemy_change=max(0, actual_enemy_change),
