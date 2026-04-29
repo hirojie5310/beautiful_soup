@@ -52,6 +52,22 @@ def _cap_physical_accuracy_for_build(hit_percent: int) -> int:
     return _cap_nes_percent_for_build(hit_percent)
 
 
+_MARTIAL_UNARMED_JOBS = frozenset({"Monk", "Black Belt"})
+
+
+def _is_unarmed_martial_job(job_name: Optional[str]) -> bool:
+    return job_name in _MARTIAL_UNARMED_JOBS
+
+
+def _unarmed_attack_base_power(*, level: int, strength: int, job_level: int, martial: bool) -> int:
+    """素手時の基本ダメージを、後段の hand power 形式へ変換して返す。"""
+    del strength  # strength は hand power 加算後に共通処理で反映する
+    base = job_level // 4
+    if martial:
+        base += int(level * 1.5)
+    return base
+
+
 def build_party_members_from_save(
     *,
     save: dict,
@@ -702,30 +718,44 @@ def compute_character_final_stats(
     # print(f"[Debug]off_pow:{off_pow} off_acc:{off_acc} off_long:{off_long} off_weapon_elements:{off_weapon_elements}")
 
     # ----------------------------------------
-    # Black Belt / Monk 素手補正
-    # BasePower = 1
-    # BaseAccuracy = 0.8（80%）
-    # レベルボーナス = ceil(Level * 1.5)
+    # 素手補正
+    # 一般職: (Str//4) + (JobLv//4)
+    # Monk / Black Belt: floor(Level*1.5) + (Str//4) + (JobLv//4)
+    # 命中率は両者とも 85 + (Agi//4) + (JobLv//4)
     # ----------------------------------------
-    if job_name in ("Black Belt", "Monk"):
-        unarmed_level_bonus = math.ceil(base.level * 1.5)
+    main_unarmed = not eq.main_hand
+    off_unarmed = not eq.off_hand
+    martial_unarmed = _is_unarmed_martial_job(job_name)
 
-        # メインハンドが素手の場合
-        if main_pow == 0:
-            main_pow = 1 + unarmed_level_bonus  # BasePower 1 + Lvボーナス
-            main_acc = int(0.8 * 100)  # 80%
+    if main_unarmed:
+        main_pow = _unarmed_attack_base_power(
+            level=base.level,
+            strength=strength,
+            job_level=base.job_level,
+            martial=martial_unarmed,
+        )
+        main_acc = 85
 
-        # オフハンドが素手の場合
-        if off_pow == 0:
-            off_pow = 1 + unarmed_level_bonus
-            off_acc = int(0.8 * 100)
+    if off_unarmed:
+        off_pow = _unarmed_attack_base_power(
+            level=base.level,
+            strength=strength,
+            job_level=base.job_level,
+            martial=martial_unarmed,
+        )
+        off_acc = 85
 
     def atk_mul(level: int, agility: int) -> int:
         # AtkMul = 1 + Lv//16 + Agi//16
         return 1 + level // 16 + agility // 16
 
-    main_mul = atk_mul(base.level, agility) if main_pow else 0
-    off_mul = atk_mul(base.level, agility) if off_pow else 0
+    main_weapon_equipped = bool(eq.main_hand) and normalize_name(eq.main_hand) in weapons_norm
+    off_weapon_equipped = bool(eq.off_hand) and normalize_name(eq.off_hand) in weapons_norm
+    main_attack_enabled = main_weapon_equipped or main_unarmed
+    off_attack_enabled = off_weapon_equipped or off_unarmed
+
+    main_mul = atk_mul(base.level, agility) if main_attack_enabled else 0
+    off_mul = atk_mul(base.level, agility) if off_attack_enabled else 0
 
     # --- 防御側（防具 + 盾） ---
     total_def = 0
@@ -779,19 +809,19 @@ def compute_character_final_stats(
     magic_resistance = _cap_nes_percent_for_build(intelligence // 2 + mind // 2)
 
     # Attack Power = 武器威力 + Str//4
-    main_power = main_pow + strength // 4 if main_pow else 0
-    off_power = off_pow + strength // 4 if off_pow else 0
+    main_power = main_pow + strength // 4 if main_attack_enabled else 0
+    off_power = off_pow + strength // 4 if off_attack_enabled else 0
 
     # 命中率 = 武器命中% + Agi//4 + JobLv//4
     # FF3 FAQ に合わせて 99% 上限はここで適用し、その後に暗闇/後列ペナルティを掛ける。
     main_accuracy = (
         _cap_physical_accuracy_for_build(main_acc + agility // 4 + base.job_level // 4)
-        if main_pow
+        if main_attack_enabled
         else 0
     )
     off_accuracy = (
         _cap_physical_accuracy_for_build(off_acc + agility // 4 + base.job_level // 4)
-        if off_pow
+        if off_attack_enabled
         else 0
     )
 

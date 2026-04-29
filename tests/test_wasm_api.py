@@ -3,11 +3,14 @@ from __future__ import annotations
 
 import json
 import os
+from random import Random
 from pathlib import Path
 from typing import Any, cast
 
 from combat.battle_save_patch import build_battle_save_patch
 from combat.enums import Status
+from combat.enemy_build import build_enemies
+from combat.models import BattleActorState, EnemyRuntime, FinalEnemyStats
 from combat.runtime_state import init_runtime_state
 from combat.wasm_api import (
     WasmBattleEngine,
@@ -495,6 +498,25 @@ def test_build_session_status_snapshot_includes_menu_fields() -> None:
     assert snapshot["resources"]["gil"] >= 0
 
 
+def test_build_session_status_snapshot_sums_dual_wield_attack_values() -> None:
+    engine = WasmBattleEngine.create_default(seed=17)
+    member = engine.session.party_members[0]
+    available_weapons = list(engine.session.state.weapons.keys())
+    assert len(available_weapons) >= 2
+
+    member.equipment.main_hand = available_weapons[0]
+    member.equipment.off_hand = available_weapons[1]
+    member.stats.main_power = 11
+    member.stats.off_power = 7
+    member.stats.main_atk_multiplier = 3
+    member.stats.off_atk_multiplier = 2
+
+    snapshot = build_session_status_snapshot(engine.session)
+
+    assert snapshot["party"][0]["status"]["atk_value"] == 18
+    assert snapshot["party"][0]["status"]["atk_times"] == 5
+
+
 def test_build_session_status_snapshot_prefers_runtime_member_identity() -> None:
     engine = WasmBattleEngine.create_default(seed=23)
     runtime_name = engine.session.party_members[0].name
@@ -521,6 +543,127 @@ def test_wasm_engine_initial_payload_exposes_flat_party_members() -> None:
     assert isinstance(payload["session_status"]["magic_spell_meta"], dict)
     assert payload["party_members"][0]["equipment"]["main_hand"] is not None
     assert "strength" in payload["party_members"][0]
+
+
+def test_wasm_engine_preserves_chaotic_multi_actor_round_logs() -> None:
+    state = init_runtime_state(Path("."))
+    state.spells = {
+        **state.spells,
+        "Chaos Flare": {
+            "Name": "Chaos Flare",
+            "Type": "Black Magic",
+            "Level": 1,
+            "Target": "All Enemies",
+            "Effect": "Deal Fire damage",
+            "Element": "Fire",
+            "BaseAccuracy": 1.0,
+            "BasePower": 999,
+        },
+    }
+    engine = WasmBattleEngine.create_from_state(
+        state=state,
+        enemy_names=["Goblin"],
+        seed=1,
+        selected_location_group="Test Group",
+        selected_location="Test Location",
+    )
+
+    party = engine.session.party_members
+    assert len(party) >= 3
+    party[0].stats.agility = 40
+    party[0].stats.main_power = 40
+    party[0].stats.off_power = 0
+    party[0].stats.off_atk_multiplier = 0
+    party[1].stats.agility = 10
+    party[1].stats.intelligence = 99
+    party[1].stats.main_power = 10
+    party[1].stats.off_power = 0
+    party[1].stats.off_atk_multiplier = 0
+    party[1].state.mp_pool[1] = 10
+    party[1].state.max_mp_pool[1] = 10
+    party[2].stats.agility = 1
+    party[2].stats.main_power = 10
+    party[2].stats.off_power = 0
+    party[2].stats.off_atk_multiplier = 0
+
+    greater_demon = build_enemies(
+        enemy_defs_by_name=state.monsters,
+        spells_by_name=state.spells,
+        enemy_names=["Greater Demon"],
+    )[0]
+    greater_demon.stats.agility = 20
+    eater = EnemyRuntime(
+        name="Eater",
+        stats=FinalEnemyStats(
+            name="Eater",
+            hp=120,
+            level=30,
+            job_level=1,
+            attack_power=1,
+            attack_multiplier=1,
+            accuracy_percent=1,
+            defense=2,
+            defense_multiplier=0,
+            evasion_percent=0,
+            magic_defense=1,
+            magic_def_multiplier=1,
+            magic_resistance_percent=0,
+            agility=5,
+        ),
+        state=BattleActorState(hp=120, max_hp=120),
+        json={
+            "name": "Eater",
+            "Level": 30,
+            "Special Attacks": [{"Attack": "Divide", "Rate": 1.0}],
+            "SpecialAttackRate": 0.4,
+        },
+    )
+    engine.session.enemies = [eater, greater_demon]
+
+    payload = engine.execute_round_payload(
+        {
+            "planned_actions": [
+                {
+                    "kind": "physical",
+                    "command": "Fight",
+                    "target_side": "enemy",
+                    "target_index": 0,
+                },
+                {
+                    "kind": "magic",
+                    "command": "Magic",
+                    "spell_name": "Chaos Flare",
+                    "target_side": "enemy",
+                    "target_index": 0,
+                    "target_all": True,
+                },
+                {
+                    "kind": "physical",
+                    "command": "Fight",
+                    "target_side": "enemy",
+                    "target_index": 0,
+                },
+            ],
+            "lifecycle_state": "ready_for_actions",
+        }
+    )
+
+    logs = cast(list[str], payload["logs"])
+    headers = [
+        line for line in logs if line.startswith("▶ ") or line.startswith("◆ ")
+    ]
+
+    assert payload["end_reason"] == "enemy_defeated"
+    assert any("Eaterの《Divide》！ 同じ敵が現れた。" == line for line in logs)
+    assert any("◆ Greater Demon の行動" == line for line in headers)
+    assert any("Greater Demonの《Summon》！ Iron Clawsが現れた。" == line for line in logs)
+    assert any(f"▶ {party[1].name} の行動（Magic）" == line for line in headers)
+    assert any(f"▶ {party[2].name} の行動（Fight）" == line for line in headers)
+    assert any(
+        f"{party[2].name}は敵が全滅していたため行動できなかった。" == line
+        for line in logs
+    )
+    assert len(cast(list[list[dict[str, Any]]], payload["event_blocks"])) == len(headers)
 
 
 def test_location_selection_context_includes_groups_and_locations() -> None:
