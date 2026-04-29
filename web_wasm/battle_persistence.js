@@ -94,6 +94,126 @@ export function buildRuntimeSaveEnvelope({
   });
 }
 
+function cloneJsonValue(value) {
+  if (typeof structuredClone === "function") {
+    return structuredClone(value);
+  }
+  return JSON.parse(JSON.stringify(value));
+}
+
+function asPlainObject(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+}
+
+function ensurePlainObject(parent, key) {
+  const current = asPlainObject(parent?.[key]);
+  parent[key] = current;
+  return current;
+}
+
+function findPartyEntryByName(saveObj, name) {
+  const party = Array.isArray(saveObj?.party) ? saveObj.party : [];
+  return party.find((entry) => entry && typeof entry === "object" && entry.name === name) || null;
+}
+
+function setNumericLeaf(root, path, value) {
+  if (!root || typeof root !== "object" || !Array.isArray(path) || !path.length) return;
+  let current = root;
+  for (const segment of path.slice(0, -1)) {
+    const key = String(segment || "");
+    if (!key) return;
+    current = ensurePlainObject(current, key);
+  }
+  current[String(path[path.length - 1] || "")] = Number(value || 0);
+}
+
+export function applyBattleSavePatchToSave(saveObj, battleSavePatch) {
+  const nextSave = cloneJsonValue(saveObj || {});
+  const patch = asPlainObject(battleSavePatch);
+  const resourceChanges = asPlainObject(patch.resource_changes);
+  const partyChanges = Array.isArray(patch.party_changes) ? patch.party_changes : [];
+  const inventoryChanges = Array.isArray(patch.inventory_changes) ? patch.inventory_changes : [];
+  const itemStockChanges = Array.isArray(patch.item_stock_changes) ? patch.item_stock_changes : [];
+
+  if (resourceChanges.gil && typeof resourceChanges.gil === "object") {
+    nextSave.gil = Number(resourceChanges.gil.after ?? nextSave.gil ?? 0);
+  }
+  if (resourceChanges.cp && typeof resourceChanges.cp === "object") {
+    nextSave.CP = Number(resourceChanges.cp.after ?? nextSave.CP ?? 0);
+  }
+
+  if (!Array.isArray(nextSave.party)) {
+    nextSave.party = [];
+  }
+  partyChanges.forEach((memberPatch) => {
+    if (!memberPatch || typeof memberPatch !== "object") return;
+    const name = String(memberPatch.name || "");
+    if (!name) return;
+    const entry = findPartyEntryByName(nextSave, name);
+    if (!entry) return;
+    ["hp", "max_hp", "level", "exp"].forEach((key) => {
+      if (memberPatch[key] && typeof memberPatch[key] === "object" && "after" in memberPatch[key]) {
+        entry[key] = Number(memberPatch[key].after ?? entry[key] ?? 0);
+      }
+    });
+
+    if (memberPatch.job_level && typeof memberPatch.job_level === "object") {
+      const nextJobLevel = ensurePlainObject(entry, "job_level");
+      ["level", "skill_point"].forEach((key) => {
+        if (memberPatch.job_level[key] && typeof memberPatch.job_level[key] === "object") {
+          nextJobLevel[key] = Number(memberPatch.job_level[key].after ?? nextJobLevel[key] ?? 0);
+        }
+      });
+    }
+
+    if (memberPatch.mp_levels && typeof memberPatch.mp_levels === "object") {
+      const nextMpLevels = ensurePlainObject(entry, "mp_levels");
+      const nextMp = ensurePlainObject(entry, "mp");
+      Object.entries(memberPatch.mp_levels).forEach(([level, levelPatch]) => {
+        if (!levelPatch || typeof levelPatch !== "object") return;
+        const row = ensurePlainObject(nextMpLevels, String(level));
+        if ("current_after" in levelPatch) {
+          row.current = Number(levelPatch.current_after ?? row.current ?? 0);
+          nextMp[`L${level}MP`] = row.current;
+        }
+        if ("max_after" in levelPatch) {
+          row.max = Number(levelPatch.max_after ?? row.max ?? 0);
+        }
+      });
+    }
+  });
+
+  const inventory = ensurePlainObject(nextSave, "inventory");
+  inventoryChanges.forEach((change) => {
+    if (!change || typeof change !== "object" || !Array.isArray(change.path)) return;
+    setNumericLeaf(inventory, change.path, change.after);
+  });
+
+  const itemStock = ensurePlainObject(nextSave, "item_stock");
+  itemStockChanges.forEach((change) => {
+    if (!change || typeof change !== "object" || !Array.isArray(change.path)) return;
+    setNumericLeaf(itemStock, change.path, change.after);
+  });
+
+  return nextSave;
+}
+
+export function buildPatchedBattleEnvelope({
+  currentEnvelope,
+  result,
+  menuState,
+}) {
+  if (!currentEnvelope || typeof currentEnvelope !== "object") return null;
+  if (!currentEnvelope.save || typeof currentEnvelope.save !== "object") return null;
+  if (!result?.battle_save_patch || typeof result.battle_save_patch !== "object") return null;
+  const nextSave = applyBattleSavePatchToSave(currentEnvelope.save, result.battle_save_patch);
+  return saveRepository.makeEnvelope(nextSave, {
+    selectedLocationGroup: result?.selected_location_group || currentEnvelope.selected_location_group || "",
+    selectedLocation: result?.selected_location || currentEnvelope.selected_location || "",
+    menuState,
+  });
+}
+
 export function syncRuntimeSaveToBrowser({
   pyodide,
   appStore = null,
@@ -129,10 +249,38 @@ export async function persistFinishedBattleSave({
   result,
   menuState,
 }) {
-  if (!pyodide) return { persisted: false, autosaved: false, envelope: null };
+  const currentEnvelope = appStore?.getState()?.saveEnvelope || saveRepository.loadLocalMirror();
+  const patchedEnvelope = buildPatchedBattleEnvelope({
+    currentEnvelope,
+    result,
+    menuState,
+  });
+  const patchMirrored = patchedEnvelope
+    ? (
+      appStore
+        ? appStore.updateSaveEnvelope(patchedEnvelope, { reason: "battle_finished" })
+        : saveRepository.commitSync({ reason: "battle_finished", envelope: patchedEnvelope }).persisted
+    )
+    : false;
+
+  async function commitFallbackEnvelope() {
+    if (!patchedEnvelope) return { persisted: false, autosaved: false, envelope: null };
+    const commitResult = await saveRepository.commit({
+      reason: "battle_finished",
+      envelope: patchedEnvelope,
+      alreadyMirrored: patchMirrored,
+    });
+    return {
+      persisted: patchMirrored || commitResult.persisted,
+      autosaved: commitResult.autosaved,
+      envelope: patchedEnvelope,
+    };
+  }
+
+  if (!pyodide) return commitFallbackEnvelope();
   const exportSaveJson = pyodide.globals.get("export_runtime_save_json");
   const saveJson = exportSaveJson ? String(exportSaveJson() || "") : "";
-  if (!saveJson) return { persisted: false, autosaved: false, envelope: null };
+  if (!saveJson) return commitFallbackEnvelope();
   try {
     const saveObj = JSON.parse(saveJson);
     const envelope = saveRepository.makeEnvelope(saveObj, {
@@ -151,6 +299,6 @@ export async function persistFinishedBattleSave({
     const autosaved = commitResult.autosaved;
     return { persisted, autosaved, envelope };
   } catch (_error) {
-    return { persisted: false, autosaved: false, envelope: null };
+    return commitFallbackEnvelope();
   }
 }

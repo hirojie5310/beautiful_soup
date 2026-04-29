@@ -756,8 +756,13 @@ def _apply_equipment_inventory_delta(
     *,
     before: EquipmentSet | None,
     after: EquipmentSet | None,
+    save_dict: dict[str, Any] | None = None,
 ) -> None:
-    save = getattr(getattr(session, "state", None), "save", {})
+    save = (
+        save_dict
+        if isinstance(save_dict, dict)
+        else getattr(getattr(session, "state", None), "save", {})
+    )
     before_counts = _equipment_inventory_counter(session, before)
     after_counts = _equipment_inventory_counter(session, after)
 
@@ -829,6 +834,10 @@ def _refresh_session_party(session: BattleSession) -> None:
     session.party_magic_info = build_party_magic_info(session.state)
     session.party_magic_lists = build_party_magic_lists(session.state)
     setattr(session, "menu_magic_setup", None)
+
+
+def _validate_menu_runtime_state(session: BattleSession) -> None:
+    session.state.validate()
 
 
 def _persist_menu_magic_setup_to_save(
@@ -1555,6 +1564,7 @@ def create_app(
             save_dict=battle_session.state.save,
         )
         ok = use_item(user_index, item_name, target_index, item_type)
+        _validate_menu_runtime_state(battle_session)
         return (
             jsonify(
                 {
@@ -1589,6 +1599,7 @@ def create_app(
             save_dict=battle_session.state.save,
         )
         ok = cast_magic(caster_index, spell_name, target_index)
+        _validate_menu_runtime_state(battle_session)
         return (
             jsonify(
                 {
@@ -1640,6 +1651,7 @@ def create_app(
         _persist_menu_magic_setup_to_save(battle_session, setup)
         _refresh_session_party(battle_session)
         setattr(battle_session, "menu_magic_setup", setup)
+        _validate_menu_runtime_state(battle_session)
 
         return (
             jsonify(
@@ -1697,6 +1709,7 @@ def create_app(
         _persist_menu_magic_setup_to_save(battle_session, setup)
         _refresh_session_party(battle_session)
         setattr(battle_session, "menu_magic_setup", setup)
+        _validate_menu_runtime_state(battle_session)
 
         return (
             jsonify(
@@ -1742,6 +1755,7 @@ def create_app(
         _persist_menu_magic_setup_to_save(battle_session, setup)
         _refresh_session_party(battle_session)
         setattr(battle_session, "menu_magic_setup", setup)
+        _validate_menu_runtime_state(battle_session)
 
         return (
             jsonify(
@@ -1812,6 +1826,7 @@ def create_app(
         )
 
         ok = cast_magic(caster_index, spell_name, target_index)
+        _validate_menu_runtime_state(battle_session)
         return (
             jsonify(
                 {
@@ -1865,6 +1880,7 @@ def create_app(
             job_name=member.job.name,
         )
         sync_equipment_to_save(member, battle_session.state.save)
+        _validate_menu_runtime_state(battle_session)
         return (
             jsonify(
                 {
@@ -1909,6 +1925,7 @@ def create_app(
             job_name=member.job.name,
         )
         sync_equipment_to_save(member, battle_session.state.save)
+        _validate_menu_runtime_state(battle_session)
         return (
             jsonify(
                 {
@@ -1969,42 +1986,48 @@ def create_app(
                 200,
             )
 
-        save["CP"] = max(0, current_cp - required_cp)
-        party_entry = save["party"][member_index]
         before_equipment = deepcopy(
             member.equipment if member.equipment is not None else EquipmentSet()
         )
-        job_levels = party_entry.get("job_levels")
-        if not isinstance(job_levels, dict):
-            job_levels = {}
-            party_entry["job_levels"] = job_levels
-        if from_job:
-            job_levels[from_job] = {
-                "level": _safe_int(getattr(member.base, "job_level", 1), 1),
-                "skill_point": _safe_int(getattr(member.base, "job_skill_point", 0), 0),
+        def _update_save_for_job_change(next_save: dict[str, Any]) -> None:
+            next_save["CP"] = max(0, current_cp - required_cp)
+            party_entry = next_save["party"][member_index]
+            job_levels = party_entry.get("job_levels")
+            if not isinstance(job_levels, dict):
+                job_levels = {}
+                party_entry["job_levels"] = job_levels
+            if from_job:
+                job_levels[from_job] = {
+                    "level": _safe_int(getattr(member.base, "job_level", 1), 1),
+                    "skill_point": _safe_int(
+                        getattr(member.base, "job_skill_point", 0), 0
+                    ),
+                }
+            next_progress = job_levels.get(job_name)
+            if not isinstance(next_progress, dict):
+                next_progress = {"level": int(to_job_level), "skill_point": 0}
+                job_levels[job_name] = next_progress
+            party_entry["job"] = job_name
+            party_entry["current_job"] = job_name
+            party_entry["job_level"] = {
+                "level": _safe_int(next_progress.get("level", to_job_level), 1),
+                "skill_point": _safe_int(next_progress.get("skill_point", 0), 0),
             }
-        next_progress = job_levels.get(job_name)
-        if not isinstance(next_progress, dict):
-            next_progress = {"level": int(to_job_level), "skill_point": 0}
-            job_levels[job_name] = next_progress
-        party_entry["job"] = job_name
-        party_entry["current_job"] = job_name
-        party_entry["job_level"] = {
-            "level": _safe_int(next_progress.get("level", to_job_level), 1),
-            "skill_point": _safe_int(next_progress.get("skill_point", 0), 0),
-        }
-        party_entry["equipment"] = {
-            "main_hand": None,
-            "off_hand": None,
-            "head": None,
-            "body": None,
-            "arms": None,
-        }
-        _apply_equipment_inventory_delta(
-            battle_session,
-            before=before_equipment,
-            after=EquipmentSet(),
-        )
+            party_entry["equipment"] = {
+                "main_hand": None,
+                "off_hand": None,
+                "head": None,
+                "body": None,
+                "arms": None,
+            }
+            _apply_equipment_inventory_delta(
+                battle_session,
+                before=before_equipment,
+                after=EquipmentSet(),
+                save_dict=next_save,
+            )
+
+        battle_session.state.update_save(_update_save_for_job_change)
         _refresh_session_party(battle_session)
         return (
             jsonify(
@@ -2032,10 +2055,13 @@ def create_app(
         if sorted(order) != expected:
             raise InputValidationError("order must be permutation of current indices")
 
+        battle_session.state.update_save(
+            lambda next_save: next_save.__setitem__(
+                "party",
+                [next_save["party"][i] for i in order],
+            )
+        )
         battle_session.party_members = [battle_session.party_members[i] for i in order]
-        battle_session.state.save["party"] = [
-            battle_session.state.save["party"][i] for i in order
-        ]
         battle_session.party_magic_lists = [
             battle_session.party_magic_lists[i] for i in order
         ]
@@ -2067,14 +2093,12 @@ def create_app(
         member = battle_session.party_members[member_index]
         current_row = str(getattr(member.base, "row", "front")).lower()
         next_row = "back" if current_row == "front" else "front"
+        battle_session.state.update_save(
+            lambda next_save: next_save["party"][member_index].__setitem__("row", next_row)
+        )
         member.base.row = next_row
         if member.stats is not None:
             member.stats.row = next_row
-        save_party = battle_session.state.save.get("party", [])
-        if member_index < len(save_party) and isinstance(
-            save_party[member_index], dict
-        ):
-            save_party[member_index]["row"] = next_row
 
         return (
             jsonify(

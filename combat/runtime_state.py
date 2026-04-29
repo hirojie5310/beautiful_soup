@@ -1,7 +1,8 @@
 from __future__ import annotations
+from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Optional, TypedDict
+from typing import Any, Callable, Dict, Optional, TypedDict
 
 from typing_extensions import NotRequired
 
@@ -70,13 +71,29 @@ class RuntimeState:
     save: Dict[str, Any]
     base_dir: Path
 
+    def validate(self) -> None:
+        validate_runtime_state(self)
+
+    def replace_save(self, save: Dict[str, Any]) -> None:
+        previous_save = self.save
+        self.save = save
+        try:
+            self.validate()
+        except Exception:
+            self.save = previous_save
+            raise
+
+    def update_save(self, updater: Callable[[Dict[str, Any]], None]) -> None:
+        next_save = deepcopy(self.save)
+        updater(next_save)
+        self.replace_save(next_save)
+
     def apply(self, patch: Any) -> None:
         """RuntimeState への保存差分適用入口。"""
         from combat.battle_save_patch import BattleSavePatch, apply_battle_save_patch
 
         if isinstance(patch, BattleSavePatch):
-            apply_battle_save_patch(self.save, patch)
-            validate_runtime_state(self)
+            self.update_save(lambda save: apply_battle_save_patch(save, patch))
             return
         raise TypeError(f"unsupported RuntimeState patch: {type(patch).__name__}")
 

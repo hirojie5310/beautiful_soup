@@ -874,6 +874,7 @@ class WasmBattleEngine:
                 state.apply(
                     build_party_battle_state_patch(save, self.session.party_members)
                 )
+                save = getattr(state, "save", None)
                 response_payload["battle_save_patch"] = build_battle_save_patch(
                     save_before_round,
                     save,

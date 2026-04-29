@@ -102,6 +102,29 @@
   - `rewards`
 - 今後、保存副作用をさらに分離する場合は、Flask / Pygame 側の勝利報酬も `BattleSavePatch` 生成と `state.apply(patch)` に寄せます。
 
+### Current Status
+
+- 2026-04-29 時点では、BattleResult 差分化は **Wasm の battle-finished 保存経路で実運用中** です。
+- JS 側は `battle_save_patch` を browser save mirror 更新に使える状態になっています。
+- 一方で Flask / Pygame では `apply_victory_rewards(...)` による直接 save mutation が残っており、**プロジェクト全体では mixed mode** です。
+
+### Completion Line
+
+BattleResult 差分化は、次の条件をすべて満たした時点で「完了」とみなします。
+
+1. 戦闘終了で発生する永続 save 更新が、全ランタイム経路で `BattleSavePatch` 生成と `RuntimeState.apply(patch)` を通る。
+2. Flask / Pygame / Wasm のどの battle-finished 経路でも、`apply_victory_rewards(...)` のような直接 save mutation API に依存しない。
+3. JS 側の battle-finished 保存は、`battle_save_patch` を一次入力として mirror / store 更新できる。
+4. 戦闘終了で追加された新しい save 副作用は、`BattleSavePatch` の表現対象に必ず追加され、差分テストが先に用意される。
+5. `battle_save_patch` を使う主要経路で、生成・適用・JS 消費の回帰テストが揃っている。
+
+### Migration Rules
+
+- 移行中に battle-finished save 更新を新規追加する場合、まず `BattleSavePatch` の生成と適用を追加し、直接 mutation は互換レイヤに閉じ込めます。
+- mixed mode のあいだも、Wasm 側の battle-finished 保存で直接 `state.save` を更新する新規コードは追加しません。
+- Flask / Pygame で互換 API を残す場合は、「どの経路が未移行か」をこの文書か関連ドキュメントに明記します。
+- `apply_victory_rewards(...)` を削除できる状態になったら、この節の Current Status を更新し、Completion Line の達成を明記します。
+
 ## 今後の実装ルール
 
 - 新しい画面は `screens/` 配下に追加し、`router.js` に登録します。
@@ -111,6 +134,8 @@
 - 非同期 load は `store.initialize()` に集約し、screen で許容する読込操作は `loadSlot()` などユーザー明示操作だけにします。
 - `menu_state` と save は store を通して同期を保ちます。
 - save envelope / `menu_state` の永続化入口は `saveRepository` に集約します。
+- `assets/maps/**.json` に新しいマップデータを追加したら、対応する URL / エントリを `web_wasm/map_data.js` に必ず登録します。
+- マップデータを追加・更新したら、`web_wasm/map_data.test.mjs` など関連テストも更新し、Wasm 側からそのマップが解決できることを確認します。
 - RuntimeState に新しい永続フィールドを追加したら、型契約、JSON Schema、不変条件テストを同時に更新します。
 - 戦闘終了で save に新しい副作用を追加したら、`BattleSavePatch` と差分テストも更新します。
 - 旧 `*.html` は実装本体ではなく、互換性維持のためのリダイレクトとして扱います。

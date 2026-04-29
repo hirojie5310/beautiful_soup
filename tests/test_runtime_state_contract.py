@@ -64,6 +64,16 @@ def test_init_runtime_state_satisfies_runtime_contract() -> None:
     validate_runtime_state(state)
 
 
+def test_runtime_state_update_save_reverts_on_invalid_mutation() -> None:
+    state = _minimal_state()
+    original_save = deepcopy(state.save)
+
+    with pytest.raises(RuntimeStateInvariantError, match="save.gil"):
+        state.update_save(lambda save: save.update({"gil": -1}))
+
+    assert state.save == original_save
+
+
 @pytest.mark.parametrize(
     ("patch", "message"),
     [
