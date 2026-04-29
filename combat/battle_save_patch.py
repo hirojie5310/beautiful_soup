@@ -31,6 +31,10 @@ class BattleSavePatch:
         }
 
 
+class BattleSavePatchValidationError(ValueError):
+    """BattleSavePatch の契約違反を表す例外。"""
+
+
 def _ensure_dict(parent: dict[str, Any], key: str) -> dict[str, Any]:
     value = parent.get(key)
     if not isinstance(value, dict):
@@ -58,11 +62,200 @@ def _save_party_entry_by_name(save: dict[str, Any], name: str) -> dict[str, Any]
     return None
 
 
+def _raise_patch_error(message: str) -> None:
+    raise BattleSavePatchValidationError(message)
+
+
+def _require_change_triplet(
+    change: Any,
+    path: str,
+    *,
+    allowed_extra_keys: set[str] | None = None,
+) -> dict[str, int]:
+    if not isinstance(change, dict):
+        _raise_patch_error(f"{path} must be an object")
+    required_keys = {"before", "after", "delta"}
+    keys = set(change.keys())
+    extras = allowed_extra_keys or set()
+    if not required_keys.issubset(keys) or keys - required_keys - extras:
+        _raise_patch_error(f"{path} must contain only before/after/delta")
+    normalized: dict[str, int] = {}
+    for key in ("before", "after", "delta"):
+        value = change.get(key)
+        if not isinstance(value, int) or isinstance(value, bool):
+            _raise_patch_error(f"{path}.{key} must be an integer")
+        normalized[key] = int(value)
+    if normalized["after"] - normalized["before"] != normalized["delta"]:
+        _raise_patch_error(f"{path}.delta must equal after - before")
+    return normalized
+
+
+def _get_numeric_leaf(root: Any, path: list[str], *, missing_default: int = 0) -> int:
+    current = root
+    for key in path:
+        if not isinstance(current, dict):
+            return missing_default
+        if key not in current:
+            return missing_default
+        current = current.get(key)
+    if isinstance(current, int) and not isinstance(current, bool):
+        return int(current)
+    return missing_default
+
+
+def _validate_resource_changes(save: dict[str, Any], changes: Any) -> None:
+    if not isinstance(changes, dict):
+        _raise_patch_error("patch.resource_changes must be an object")
+    allowed = {"gil": "gil", "cp": "CP"}
+    for key, change in changes.items():
+        if key not in allowed:
+            _raise_patch_error(f"patch.resource_changes.{key} is unsupported")
+        triplet = _require_change_triplet(change, f"patch.resource_changes.{key}")
+        current_value = save.get(allowed[key], 0)
+        if current_value != triplet["before"]:
+            _raise_patch_error(
+                f"patch.resource_changes.{key}.before does not match current save"
+            )
+
+
+def _validate_party_changes(save: dict[str, Any], changes: Any) -> None:
+    if not isinstance(changes, list):
+        _raise_patch_error("patch.party_changes must be a list")
+    for index, member_patch in enumerate(changes):
+        path = f"patch.party_changes[{index}]"
+        if not isinstance(member_patch, dict):
+            _raise_patch_error(f"{path} must be an object")
+        name = member_patch.get("name")
+        if not isinstance(name, str) or not name:
+            _raise_patch_error(f"{path}.name must be a non-empty string")
+        entry = _save_party_entry_by_name(save, name)
+        if entry is None:
+            _raise_patch_error(f"{path}.name does not exist in current save.party")
+
+        for key in ("hp", "max_hp", "level", "exp"):
+            if key not in member_patch:
+                continue
+            triplet = _require_change_triplet(member_patch.get(key), f"{path}.{key}")
+            if entry.get(key, 0) != triplet["before"]:
+                _raise_patch_error(f"{path}.{key}.before does not match current save")
+
+        if "job_level" in member_patch:
+            job_level_patch = member_patch.get("job_level")
+            if not isinstance(job_level_patch, dict):
+                _raise_patch_error(f"{path}.job_level must be an object")
+            current_job_level = entry.get("job_level")
+            if current_job_level is None:
+                current_job_level = {}
+            if not isinstance(current_job_level, dict):
+                _raise_patch_error(f"{path}.job_level target must be an object")
+            for key, change in job_level_patch.items():
+                if key not in {"level", "skill_point"}:
+                    _raise_patch_error(f"{path}.job_level.{key} is unsupported")
+                triplet = _require_change_triplet(change, f"{path}.job_level.{key}")
+                if current_job_level.get(key, 0) != triplet["before"]:
+                    _raise_patch_error(
+                        f"{path}.job_level.{key}.before does not match current save"
+                    )
+
+        if "mp_levels" in member_patch:
+            mp_levels_patch = member_patch.get("mp_levels")
+            if not isinstance(mp_levels_patch, dict):
+                _raise_patch_error(f"{path}.mp_levels must be an object")
+            current_mp_levels = entry.get("mp_levels")
+            if current_mp_levels is None:
+                current_mp_levels = {}
+            if not isinstance(current_mp_levels, dict):
+                _raise_patch_error(f"{path}.mp_levels target must be an object")
+            for level, row_change in mp_levels_patch.items():
+                row_path = f"{path}.mp_levels.{level}"
+                if not isinstance(row_change, dict):
+                    _raise_patch_error(f"{row_path} must be an object")
+                row = current_mp_levels.get(level)
+                if row is None:
+                    row = {}
+                if not isinstance(row, dict):
+                    _raise_patch_error(f"{row_path} target must be an object")
+                for prefix, current_key in (("current", "current"), ("max", "max")):
+                    keys = {f"{prefix}_before", f"{prefix}_after", f"{prefix}_delta"}
+                    present = [key for key in keys if key in row_change]
+                    if present and len(present) != 3:
+                        _raise_patch_error(f"{row_path} must include full {prefix}_* triplet")
+                    if present:
+                        triplet = _require_change_triplet(
+                            {
+                                "before": row_change[f"{prefix}_before"],
+                                "after": row_change[f"{prefix}_after"],
+                                "delta": row_change[f"{prefix}_delta"],
+                            },
+                            f"{row_path}.{prefix}",
+                        )
+                        if row.get(current_key, 0) != triplet["before"]:
+                            _raise_patch_error(
+                                f"{row_path}.{prefix}_before does not match current save"
+                            )
+                unsupported = set(row_change.keys()) - {
+                    "current_before",
+                    "current_after",
+                    "current_delta",
+                    "max_before",
+                    "max_after",
+                    "max_delta",
+                }
+                if unsupported:
+                    unsupported_key = sorted(unsupported)[0]
+                    _raise_patch_error(f"{row_path}.{unsupported_key} is unsupported")
+
+
+def _validate_leaf_changes(root: Any, changes: Any, *, path_label: str) -> None:
+    if not isinstance(changes, list):
+        _raise_patch_error(f"{path_label} must be a list")
+    for index, change in enumerate(changes):
+        row_path = f"{path_label}[{index}]"
+        if not isinstance(change, dict):
+            _raise_patch_error(f"{row_path} must be an object")
+        raw_path = change.get("path")
+        if not isinstance(raw_path, list) or not raw_path:
+            _raise_patch_error(f"{row_path}.path must be a non-empty list")
+        normalized_path: list[str] = []
+        for part_index, part in enumerate(raw_path):
+            if not isinstance(part, str) or not part:
+                _raise_patch_error(f"{row_path}.path[{part_index}] must be a non-empty string")
+            normalized_path.append(part)
+        triplet = _require_change_triplet(
+            change,
+            row_path,
+            allowed_extra_keys={"path"},
+        )
+        current_value = _get_numeric_leaf(root, normalized_path, missing_default=0)
+        if current_value != triplet["before"]:
+            _raise_patch_error(f"{row_path}.before does not match current save")
+
+
+def validate_battle_save_patch(save: dict[str, Any], patch: BattleSavePatch) -> None:
+    if not isinstance(save, dict):
+        _raise_patch_error("save must be a dictionary")
+    if not isinstance(patch, BattleSavePatch):
+        _raise_patch_error("patch must be BattleSavePatch")
+    if not isinstance(patch.rewards, dict):
+        _raise_patch_error("patch.rewards must be an object")
+    _validate_resource_changes(save, patch.resource_changes)
+    _validate_party_changes(save, patch.party_changes)
+    _validate_leaf_changes(
+        save.get("inventory", {}),
+        patch.inventory_changes,
+        path_label="patch.inventory_changes",
+    )
+    _validate_leaf_changes(
+        save.get("item_stock", {}),
+        patch.item_stock_changes,
+        path_label="patch.item_stock_changes",
+    )
+
+
 def apply_battle_save_patch(save: dict[str, Any], patch: BattleSavePatch) -> None:
     """BattleSavePatch の after 値を save へ適用する。"""
 
-    if not isinstance(save, dict):
-        return
+    validate_battle_save_patch(save, patch)
 
     resources = patch.resource_changes
     if "gil" in resources:

@@ -4,6 +4,10 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
+import pytest
+
+from combat.runtime_state import RuntimeStateInvariantError
+
 
 def test_bootstrap_python_file_is_syntax_valid() -> None:
     source = Path("web_wasm/bootstrap_runtime.py").read_text(encoding="utf-8")
@@ -119,6 +123,40 @@ def test_boot_engine_explicit_empty_magic_slots_override_base_party_magic() -> N
             "LV7": [None, None, None],
             "LV8": [None, None, None],
         }
+    finally:
+        module.state.save = original_save
+        module.boot_engine_for_location = original_boot
+
+
+def test_boot_engine_with_save_json_rejects_invalid_runtime_state() -> None:
+    path = Path("web_wasm/bootstrap_runtime.py")
+    spec = importlib.util.spec_from_file_location("bootstrap_runtime_for_test", path)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    original_save = module._merge_save_data(None, module.state.save)
+    original_boot = module.boot_engine_for_location
+
+    def _fake_boot_engine_for_location(location_group, location, seed=7):
+        return {
+            "location_group": location_group,
+            "location": location,
+            "seed": seed,
+        }
+
+    module.boot_engine_for_location = _fake_boot_engine_for_location
+
+    try:
+        with pytest.raises(RuntimeStateInvariantError, match="save.gil"):
+            module.boot_engine_for_location_with_save_json(
+                module.default_group,
+                module.default_location,
+                '{"schema_version":2,"gil":-1,"inventory":{},"party":[]}',
+                7,
+            )
+        assert module.state.save == original_save
     finally:
         module.state.save = original_save
         module.boot_engine_for_location = original_boot

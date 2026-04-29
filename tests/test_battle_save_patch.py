@@ -4,7 +4,11 @@ from copy import deepcopy
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
 from combat.models import BattleActorState
+from combat.battle_save_patch import BattleSavePatch
+from combat.battle_save_patch import BattleSavePatchValidationError
 from combat.battle_save_patch import build_battle_save_patch
 from combat.battle_save_patch import build_party_battle_state_patch
 from combat.progression import build_victory_reward_save_patch
@@ -143,6 +147,148 @@ def test_runtime_state_apply_battle_save_patch_updates_save_contract() -> None:
     assert state.save["party"][0]["max_hp"] == 12
     assert state.save["party"][0]["mp"]["L1MP"] == 0
     assert state.save["party"][0]["mp_levels"]["1"] == {"current": 0, "max": 3}
+
+
+def test_runtime_state_apply_rejects_patch_with_unknown_party_member() -> None:
+    state = RuntimeState(
+        monsters={},
+        weapons={},
+        armors={},
+        spells={},
+        items_by_name={},
+        jobs_by_name={},
+        base_dir=Path("."),
+        save={
+            "schema_version": 1,
+            "gil": 100,
+            "CP": 2,
+            "inventory": {},
+            "party": [
+                {
+                    "name": "Refia",
+                    "level": 1,
+                    "exp": 0,
+                    "job": "Onion Knight",
+                    "job_level": {"level": 1, "skill_point": 0},
+                    "hp": 8,
+                    "max_hp": 10,
+                    "mp_levels": {"1": {"current": 1, "max": 2}},
+                    "row": "front",
+                }
+            ],
+        },
+    )
+    before_save = deepcopy(state.save)
+    patch = BattleSavePatch(
+        party_changes=[
+            {
+                "name": "Arc",
+                "hp": {"before": 8, "after": 6, "delta": -2},
+            }
+        ]
+    )
+
+    with pytest.raises(
+        BattleSavePatchValidationError, match="does not exist in current save.party"
+    ):
+        state.apply(patch)
+
+    assert state.save == before_save
+
+
+def test_runtime_state_apply_rejects_reapplying_same_patch() -> None:
+    state = RuntimeState(
+        monsters={},
+        weapons={},
+        armors={},
+        spells={},
+        items_by_name={},
+        jobs_by_name={},
+        base_dir=Path("."),
+        save={
+            "schema_version": 1,
+            "gil": 100,
+            "CP": 2,
+            "inventory": {"Anywhere": {"Potion": 1}},
+            "party": [
+                {
+                    "name": "Refia",
+                    "level": 1,
+                    "exp": 0,
+                    "job": "Onion Knight",
+                    "job_level": {"level": 1, "skill_point": 0},
+                    "hp": 8,
+                    "max_hp": 10,
+                    "mp_levels": {"1": {"current": 1, "max": 2}},
+                    "row": "front",
+                }
+            ],
+        },
+    )
+    patch = build_battle_save_patch(
+        state.save,
+        {
+            **state.save,
+            "gil": 125,
+            "party": [
+                {
+                    **state.save["party"][0],
+                    "hp": 6,
+                }
+            ],
+        },
+    )
+
+    state.apply(patch)
+
+    with pytest.raises(
+        BattleSavePatchValidationError, match="before does not match current save"
+    ):
+        state.apply(patch)
+
+
+def test_runtime_state_apply_rejects_patch_with_malformed_inventory_path() -> None:
+    state = RuntimeState(
+        monsters={},
+        weapons={},
+        armors={},
+        spells={},
+        items_by_name={},
+        jobs_by_name={},
+        base_dir=Path("."),
+        save={
+            "schema_version": 1,
+            "gil": 0,
+            "CP": 0,
+            "inventory": {"Anywhere": {"Potion": 1}},
+            "party": [
+                {
+                    "name": "Refia",
+                    "level": 1,
+                    "exp": 0,
+                    "job": "Onion Knight",
+                    "job_level": {"level": 1, "skill_point": 0},
+                    "hp": 10,
+                    "max_hp": 10,
+                    "mp_levels": {"1": {"current": 1, "max": 2}},
+                    "row": "front",
+                }
+            ],
+        },
+    )
+    before_save = deepcopy(state.save)
+    patch = BattleSavePatch(
+        inventory_changes=[
+            {"path": [], "before": 1, "after": 0, "delta": -1},
+        ]
+    )
+
+    with pytest.raises(
+        BattleSavePatchValidationError, match="path must be a non-empty list"
+    ):
+        state.apply(patch)
+
+    assert state.save == before_save
 
 
 def test_build_victory_reward_save_patch_does_not_mutate_save_before_apply(

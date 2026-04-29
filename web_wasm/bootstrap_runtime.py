@@ -448,7 +448,7 @@ def boot_engine_for_location(location_group, location, seed=7, enemy_names_json=
     global state
     current_save = getattr(state, "save", None)
     if isinstance(current_save, dict):
-        state.save = migrate_save(current_save)
+        state.replace_save(migrate_save(current_save))
     selected_group = str(location_group or "")
     selected_location = str(location or "")
     forced_enemy_names = []
@@ -1101,10 +1101,10 @@ def boot_engine_for_location_with_save_json(
         base_party = base_save.get("party", []) if isinstance(base_save, dict) else []
         if isinstance(parsed_party, list):
             parsed["party"] = _align_party_to_base(base_party, parsed_party)
-    state.save = _as_save_dict(_merge_save_data(base_save, parsed))
+    merged_save = _as_save_dict(_merge_save_data(base_save, parsed))
     if isinstance(parsed, dict):
         parsed_party = parsed.get("party")
-        merged_party = state.save.get("party")
+        merged_party = merged_save.get("party")
         if isinstance(parsed_party, list) and isinstance(merged_party, list):
             for idx, overlay_entry in enumerate(parsed_party):
                 if idx >= len(merged_party):
@@ -1116,24 +1116,25 @@ def boot_engine_for_location_with_save_json(
                     merged_party[idx]["Magic"] = _merge_save_data(None, overlay_magic)
         if "inventory" in parsed:
             inventory = parsed.get("inventory")
-            state.save["inventory"] = (
+            merged_save["inventory"] = (
                 _merge_save_data(None, inventory) if isinstance(inventory, dict) else {}
             )
         if "item_stock" in parsed:
             item_stock = parsed.get("item_stock")
-            state.save["item_stock"] = (
+            merged_save["item_stock"] = (
                 _merge_save_data(None, item_stock) if isinstance(item_stock, dict) else {}
             )
         if "event_flag" in parsed:
             event_flag = parsed.get("event_flag")
-            state.save["event_flag"] = (
+            merged_save["event_flag"] = (
                 _merge_save_data(None, event_flag) if isinstance(event_flag, dict) else {}
             )
         if "treasures" in parsed:
             treasures = parsed.get("treasures")
-            state.save["treasures"] = (
+            merged_save["treasures"] = (
                 _merge_save_data(None, treasures) if isinstance(treasures, dict) else {}
             )
+    state.replace_save(merged_save)
     if enemy_names_json is None:
         return boot_engine_for_location(location_group, location, seed=seed)
     return boot_engine_for_location(
