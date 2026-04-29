@@ -13,6 +13,7 @@ import {
   findAdjacentNpc,
   findBlockingObjectAt,
   findCrystalSpriteOrigin,
+  findStandingEventTrigger,
   configureLoopingMapBgm,
   findShopActivation,
   isAdjacentToCrystalSprite,
@@ -94,6 +95,68 @@ test("deriveInitialMapState always starts from map spawn", () => {
     steps_since_reset: 0,
     switch_states: {},
     opened_treasures: {},
+  });
+});
+
+test("deriveInitialMapState restores opened treasures from save data on fresh entry", () => {
+  const result = deriveInitialMapState({
+    saveEnvelope: {
+      save: {
+        treasures: {
+          Alter_Cave_B1: {
+            treasure1: true,
+          },
+        },
+      },
+    },
+  }, stubMap);
+
+  assert.deepEqual(result, {
+    current_map_id: "Alter_Cave_B1",
+    tile_x: 1,
+    tile_y: 1,
+    steps_since_reset: 0,
+    switch_states: {},
+    opened_treasures: {
+      treasure1: true,
+    },
+  });
+});
+
+test("deriveInitialMapState merges save treasures with resumed menu state", () => {
+  const result = deriveInitialMapState({
+    menuState: {
+      map_state: {
+        current_map_id: "Alter_Cave_B1",
+        tile_x: 2,
+        tile_y: 2,
+        opened_treasures: {
+          treasure2: true,
+        },
+      },
+    },
+    saveEnvelope: {
+      save: {
+        map: { map: "Alter_Cave_B1", x: 2, y: 2 },
+        treasures: {
+          Alter_Cave_B1: {
+            treasure1: true,
+          },
+        },
+      },
+    },
+  }, stubMap, { resumeFromSavedPosition: true });
+
+  assert.deepEqual(result, {
+    current_map_id: "Alter_Cave_B1",
+    tile_x: 2,
+    tile_y: 2,
+    steps_since_reset: 0,
+    switch_states: {},
+    opened_treasures: {
+      treasure1: true,
+      treasure2: true,
+    },
   });
 });
 
@@ -605,6 +668,51 @@ test("findStandingObject returns exit on matching tile", () => {
   }), mapWithExit.objects[0]);
 });
 
+test("findStandingEventTrigger resolves hidden standing events until completion flag is set", () => {
+  const mapWithEvent = {
+    ...stubMap,
+    objects: [
+      {
+        type: "event",
+        name: "Alter Cave Intro",
+        x: 1,
+        y: 2,
+        dialogue_indices: [8],
+        required_event_flag_absent: "altar_cave_b3_intro_complete",
+        hidden: true,
+      },
+    ],
+  };
+
+  assert.deepEqual(
+    findStandingEventTrigger(mapWithEvent, {
+      current_map_id: "Alter_Cave_B3",
+      tile_x: 1,
+      tile_y: 2,
+    }, {
+      save: {
+        event_flag: {},
+      },
+    }),
+    mapWithEvent.objects[0],
+  );
+
+  assert.equal(
+    findStandingEventTrigger(mapWithEvent, {
+      current_map_id: "Alter_Cave_B3",
+      tile_x: 1,
+      tile_y: 2,
+    }, {
+      save: {
+        event_flag: {
+          altar_cave_b3_intro_complete: true,
+        },
+      },
+    }),
+    null,
+  );
+});
+
 test("findAdjacentObject returns switch next to player", () => {
   const mapWithSwitch = {
     ...stubMap,
@@ -991,6 +1099,7 @@ test("openAdjacentTreasure adds Potion to inventory and opens chest", () => {
   assert.equal(result.mapDefinition.rows[1][2], 126);
   assert.equal(result.mapState.opened_treasures.treasure1, true);
   assert.equal(result.saveEnvelope.save.inventory.Anywhere.Potion, 1);
+  assert.equal(result.saveEnvelope.save.treasures.Alter_Cave_B1.treasure1, true);
 });
 
 test("openAdjacentTreasure stores Magic treasure under inventory level buckets", () => {

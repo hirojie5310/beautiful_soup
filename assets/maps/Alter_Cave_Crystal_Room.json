@@ -50,6 +50,19 @@
         "x": 87,
         "y": 10
       }
+    },
+    {
+      "type": "event",
+      "name": "Alter Cave Crystal Awakening",
+      "x": 6,
+      "y": 13,
+      "dialogue_indices": [10],
+      "enemy_names": ["Land Turtle"],
+      "post_victory_dialogue_indices": [30, 31],
+      "post_victory_show_opening_story": true,
+      "set_event_flag": "altar_cave_crystal_awakening_complete",
+      "required_event_flag_absent": "altar_cave_crystal_awakening_complete",
+      "hidden": true
     }
   ],
   "rows": [

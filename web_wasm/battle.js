@@ -1528,10 +1528,29 @@ async function executeRound() {
       && Array.isArray(battleReturnContext?.post_victory_overlay_indices)
       && battleReturnContext.post_victory_overlay_indices.length,
     );
-    if (shouldQueuePostVictoryOverlay) {
+    const shouldQueuePostVictoryEventFlags = Boolean(
+      result?.victory_rewards
+      && battleReturnContext?.return_route === "map"
+      && Array.isArray(battleReturnContext?.post_victory_event_flags)
+      && battleReturnContext.post_victory_event_flags.length,
+    );
+    const shouldQueuePostVictoryOpeningStory = Boolean(
+      result?.victory_rewards
+      && battleReturnContext?.return_route === "map"
+      && battleReturnContext?.post_victory_show_opening_story === true,
+    );
+    if (shouldQueuePostVictoryOverlay || shouldQueuePostVictoryEventFlags || shouldQueuePostVictoryOpeningStory) {
       writeBattleReturnContextToSession({
         ...battleReturnContext,
-        pending_overlay_indices: battleReturnContext.post_victory_overlay_indices,
+        ...(shouldQueuePostVictoryOverlay
+          ? { pending_overlay_indices: battleReturnContext.post_victory_overlay_indices }
+          : {}),
+        ...(shouldQueuePostVictoryEventFlags
+          ? { pending_event_flags: battleReturnContext.post_victory_event_flags }
+          : {}),
+        ...(shouldQueuePostVictoryOpeningStory
+          ? { pending_opening_story: true }
+          : {}),
       });
     }
     const saveResult = await persistFinishedBattleSave({

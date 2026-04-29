@@ -35,10 +35,52 @@
       "x": 13,
       "y": 0,
       "target_map": "Alter_Cave_B4",
+      "set_event_flag": "altar_cave_b3_intro_complete",
       "target_spawn": {
         "x": 24,
         "y": 27
       }
+    },
+    {
+      "type": "event",
+      "name": "Alter Cave Spawn Intro",
+      "x": 9,
+      "y": 23,
+      "dialogue_indices": [7],
+      "set_event_flag": "altar_cave_b3_spawn_intro_seen",
+      "required_event_flag_absent": "altar_cave_b3_spawn_intro_seen",
+      "hidden": true
+    },
+    {
+      "type": "event",
+      "name": "Alter Cave Exit Search",
+      "x": 6,
+      "y": 24,
+      "dialogue_indices": [8],
+      "set_event_flag": "altar_cave_b3_exit_search_seen",
+      "required_event_flag_absent": "altar_cave_b3_exit_search_seen",
+      "hidden": true
+    },
+    {
+      "type": "event",
+      "name": "Alter Cave Goblin Ambush",
+      "x": 4,
+      "y": 16,
+      "enemy_names": ["Goblin", "Goblin", "Goblin", "Goblin"],
+      "post_victory_dialogue_indices": [9],
+      "set_event_flag": "altar_cave_b3_goblin_ambush_cleared",
+      "required_event_flag_absent": "altar_cave_b3_goblin_ambush_cleared",
+      "hidden": true
+    },
+    {
+      "type": "event",
+      "name": "Alter Cave Strange Rock",
+      "x": 3,
+      "y": 6,
+      "dialogue_indices": [173],
+      "set_event_flag": "altar_cave_b3_strange_rock_seen",
+      "required_event_flag_absent": "altar_cave_b3_strange_rock_seen",
+      "hidden": true
     },
     {
       "type": "barrier",

@@ -52,6 +52,16 @@
       }
     },
     {
+      "type": "event",
+      "name": "Alter Cave B4 Mysterious Spring",
+      "x": 25,
+      "y": 8,
+      "dialogue_indices": [208],
+      "set_event_flag": "altar_cave_b4_mysterious_spring_seen",
+      "required_event_flag_absent": "altar_cave_b4_mysterious_spring_seen",
+      "hidden": true
+    },
+    {
       "type": "treasure",
       "name": "treasure_upper",
       "x": 12,

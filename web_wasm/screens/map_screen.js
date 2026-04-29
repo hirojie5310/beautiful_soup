@@ -44,6 +44,8 @@ const BATTLE_START_SELECTION_KEY = "ff3_wasm_battle_start_selection_v1";
 const BATTLE_RETURN_CONTEXT_KEY = "ff3_wasm_battle_return_context_v1";
 const MAP_ENTRY_CONTEXT_KEY = "ff3_wasm_map_entry_context_v1";
 const SHOP_START_CONTEXT_KEY = "ff3_wasm_shop_start_context_v1";
+const ALTER_CAVE_B3_INTRO_EVENT_FLAG = "altar_cave_b3_intro_complete";
+const ALTER_CAVE_B3_INTRO_MAP_ID = "Alter_Cave_B3";
 const FLOATING_CONTINENT_MAP_ID = "FloatingContinent";
 const WATER_ANIMATION_INCLUDED_GIDS_BY_MAP_ID = {
   [FLOATING_CONTINENT_MAP_ID]: new Set([25, 26, 59, 67]),
@@ -70,9 +72,12 @@ const UR_INN_ITEMSHOP_RECOVERY_TILES = [
 ];
 const UR_INN_ITEMSHOP_RECOVERY_TEXT_INDEX = 223;
 const ALTER_CAVE_CRYSTAL_ROOM_MAP_ID = "Alter_Cave_Crystal_Room";
-const ALTER_CAVE_CRYSTAL_EVENT_TEXT_INDEX = 10;
-const ALTER_CAVE_CRYSTAL_POST_BATTLE_TEXT_INDICES = [30, 31];
 const ALTER_CAVE_CRYSTAL_BOSS_NAME = "Land Turtle";
+const ALTER_CAVE_CRYSTAL_OPENING_STORY_LINES = [
+  "４にんは　ひかりのなかで\nそのいしを　そのこころを　かんじとり\nたびだつ　けついをした",
+  "さあ　やみをふりはらい\nふたたび\nこのせかいに　ひかりをとりもどすのだ",
+  "クリスタルのひかりを　きぼうにかえて…",
+];
 const UR_SHOP_ACTIVATIONS = [
   { mapId: "Ur_ArmorShop", x: 3, y: 5, shopMap: "Ur", shopType: "Armor" },
   { mapId: "Ur_MagicShop", x: 4, y: 4, shopMap: "Ur", shopType: "Magic" },
@@ -343,6 +348,21 @@ export function npcDialogueIndices(row) {
     .filter((index) => Number.isFinite(index));
 }
 
+function eventPostVictoryDialogueIndices(row) {
+  const rawIndices = Array.isArray(row?.post_victory_dialogue_indices)
+    ? row.post_victory_dialogue_indices
+    : [row?.post_victory_dialogue_index];
+  return rawIndices
+    .map((index) => Number(index))
+    .filter((index) => Number.isFinite(index));
+}
+
+function eventEnemyNames(row) {
+  return Array.isArray(row?.enemy_names)
+    ? row.enemy_names.map((name) => String(name || "")).filter((name) => Boolean(name))
+    : [];
+}
+
 function normalizeSwitchStates(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
   return Object.fromEntries(
@@ -363,6 +383,72 @@ function normalizeTreasureStates(value) {
 
 function treasureKey(row) {
   return String(row?.treasure_id || row?.name || `${row?.x},${row?.y}`);
+}
+
+function normalizeEventFlagStates(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value)
+      .map(([key, enabled]) => [String(key || ""), Boolean(enabled)])
+      .filter(([key]) => Boolean(key)),
+  );
+}
+
+function readSavedEventFlags(saveEnvelope) {
+  return normalizeEventFlagStates(saveEnvelope?.save?.event_flag);
+}
+
+function isSavedEventFlagEnabled(saveEnvelope, flagKey) {
+  if (!flagKey) return false;
+  return Boolean(readSavedEventFlags(saveEnvelope)[String(flagKey)]);
+}
+
+function writeSavedEventFlag(saveEnvelope, flagKey, enabled = true) {
+  if (!flagKey) return saveEnvelope;
+  const targetEnvelope = saveEnvelope && typeof saveEnvelope === "object" ? saveEnvelope : {};
+  if (!targetEnvelope.save || typeof targetEnvelope.save !== "object") {
+    targetEnvelope.save = {};
+  }
+  const currentFlags = readSavedEventFlags(targetEnvelope);
+  targetEnvelope.save.event_flag = {
+    ...currentFlags,
+    [String(flagKey)]: Boolean(enabled),
+  };
+  return targetEnvelope;
+}
+
+function readSavedTreasureStates(saveEnvelope, mapId) {
+  const treasures = saveEnvelope?.save?.treasures;
+  if (!treasures || typeof treasures !== "object" || Array.isArray(treasures)) return {};
+  return normalizeTreasureStates(treasures[String(mapId || "")]);
+}
+
+function mergeTreasureStates(...values) {
+  return values.reduce((merged, value) => {
+    const normalized = normalizeTreasureStates(value);
+    Object.entries(normalized).forEach(([key, opened]) => {
+      if (opened) merged[key] = true;
+    });
+    return merged;
+  }, {});
+}
+
+function writeSavedTreasureStates(saveEnvelope, mapId, openedTreasures) {
+  const targetEnvelope = saveEnvelope && typeof saveEnvelope === "object" ? saveEnvelope : {};
+  if (!targetEnvelope.save || typeof targetEnvelope.save !== "object") {
+    targetEnvelope.save = {};
+  }
+  const currentTreasures = targetEnvelope.save.treasures;
+  const nextTreasures = (
+    currentTreasures && typeof currentTreasures === "object" && !Array.isArray(currentTreasures)
+      ? { ...currentTreasures }
+      : {}
+  );
+  const mapKey = String(mapId || "");
+  const mergedForMap = mergeTreasureStates(nextTreasures[mapKey], openedTreasures);
+  nextTreasures[mapKey] = mergedForMap;
+  targetEnvelope.save.treasures = nextTreasures;
+  return targetEnvelope;
 }
 
 function addItemToInventory(save, bucketName, itemName, quantity = 1, spellLevelByName = {}) {
@@ -456,6 +542,9 @@ export function deriveInitialMapState(appState, mapDefinition, options = {}) {
   const menuState = appState?.menuState && typeof appState.menuState === "object"
     ? appState.menuState
     : {};
+  const saveEnvelope = appState?.saveEnvelope && typeof appState.saveEnvelope === "object"
+    ? appState.saveEnvelope
+    : {};
   const envelopeMap = appState?.saveEnvelope?.save?.map && typeof appState.saveEnvelope.save.map === "object"
     ? appState.saveEnvelope.save.map
     : {};
@@ -468,6 +557,7 @@ export function deriveInitialMapState(appState, mapDefinition, options = {}) {
     || mapDefinition?.id
     || DEFAULT_MAP_ID,
   );
+  const savedOpenedTreasures = readSavedTreasureStates(saveEnvelope, wantedMapId);
   const shouldResumeFromSavedPosition = Boolean(options?.resumeFromSavedPosition);
   if (shouldResumeFromSavedPosition) {
     return {
@@ -476,7 +566,7 @@ export function deriveInitialMapState(appState, mapDefinition, options = {}) {
       tile_y: asNumber(menuMapState.tile_y, asNumber(envelopeMap.y, asNumber(mapDefinition?.spawn?.y, 0))),
       steps_since_reset: asNumber(menuMapState.steps_since_reset, 0),
       switch_states: normalizeSwitchStates(menuMapState.switch_states),
-      opened_treasures: normalizeTreasureStates(menuMapState.opened_treasures),
+      opened_treasures: mergeTreasureStates(savedOpenedTreasures, menuMapState.opened_treasures),
     };
   }
   return {
@@ -485,7 +575,7 @@ export function deriveInitialMapState(appState, mapDefinition, options = {}) {
     tile_y: asNumber(mapDefinition?.spawn?.y, 0),
     steps_since_reset: 0,
     switch_states: {},
-    opened_treasures: {},
+    opened_treasures: savedOpenedTreasures,
   };
 }
 
@@ -587,6 +677,11 @@ function buildEnvelopeWithMapState(store, nextMapState, mapDefinition) {
     ...(currentEnvelope.save && typeof currentEnvelope.save === "object" ? currentEnvelope.save : {}),
     map: normalizeMapSaveShape(nextMapState, mapDefinition),
   };
+  writeSavedTreasureStates(
+    { save: nextSave },
+    nextMapState?.current_map_id || mapDefinition?.id,
+    nextMapState?.opened_treasures,
+  );
   return {
     ...currentEnvelope,
     save: nextSave,
@@ -1198,6 +1293,7 @@ function ensureMapRenderState(mapLayer, mapDefinition) {
 
   const renderPadding = mapDefinition.renderPadding || { left: 0, top: 0 };
   (mapDefinition.objects || []).forEach((row, index) => {
+    if (row?.hidden === true) return;
     const marker = document.createElement("div");
     marker.className = `map-object${row?.type === "npc" ? " map-object-npc" : ""}`;
     if (row?.type === "npc") {
@@ -1269,6 +1365,16 @@ export function findStandingObject(mapDefinition, mapState) {
   return (mapDefinition?.objects || []).find((row) => (
     Number(row?.x) === Number(mapState?.tile_x) && Number(row?.y) === Number(mapState?.tile_y)
   ));
+}
+
+export function findStandingEventTrigger(mapDefinition, mapState, saveEnvelope) {
+  const hit = findStandingObject(mapDefinition, mapState);
+  if (hit?.type !== "event") return null;
+  const requiredFlag = String(hit?.required_event_flag || "");
+  const requiredAbsentFlag = String(hit?.required_event_flag_absent || "");
+  if (requiredFlag && !isSavedEventFlagEnabled(saveEnvelope, requiredFlag)) return null;
+  if (requiredAbsentFlag && isSavedEventFlagEnabled(saveEnvelope, requiredAbsentFlag)) return null;
+  return hit;
 }
 
 export function findAdjacentObject(mapDefinition, mapState, predicate = () => true) {
@@ -1416,6 +1522,7 @@ export function isAdjacentToCrystalSprite(mapDefinition, mapState) {
 function describeStandingObject(mapDefinition, mapState) {
   const hit = findStandingObject(mapDefinition, mapState);
   if (!hit) return "";
+  if (hit.type === "event") return "";
   if (hit.type === "exit") {
     return `出口: ${hit.name || hit.target_map || "-"}`;
   }
@@ -1577,7 +1684,7 @@ export function openAdjacentTreasure(mapDefinition, mapState, saveEnvelope, spel
       ...mapState,
       opened_treasures: nextOpenedTreasures,
     },
-    saveEnvelope: nextEnvelope,
+    saveEnvelope: writeSavedTreasureStates(nextEnvelope, mapState?.current_map_id || mapDefinition?.id, nextOpenedTreasures),
   };
 }
 
@@ -1889,6 +1996,50 @@ export async function mountScreen({ mountNode, store, navigate }) {
     openNext();
   }
 
+  async function openTitleStoryInterlude(options = {}) {
+    const lines = ALTER_CAVE_CRYSTAL_OPENING_STORY_LINES.slice();
+    if (!lines.length) {
+      if (typeof options.onComplete === "function") {
+        options.onComplete();
+      }
+      return;
+    }
+    openEventOverlaySequence(lines, options);
+  }
+
+  async function openPostBattleDialogueSequence(indices, options = {}) {
+    const rawIndices = Array.isArray(indices)
+      ? indices.map((index) => Number(index)).filter((index) => Number.isFinite(index))
+      : [];
+    if (!rawIndices.length) {
+      if (options.showOpeningStory) {
+        await openTitleStoryInterlude(options);
+        return;
+      }
+      if (typeof options.onComplete === "function") {
+        options.onComplete();
+      }
+      return;
+    }
+    if (options.showOpeningStory && rawIndices.length >= 2) {
+      const firstMessages = await loadMergedFixedContentByIndices([rawIndices[0]]);
+      const trailingMessages = await loadMergedFixedContentByIndices(rawIndices.slice(1));
+      openEventOverlaySequence(firstMessages, {
+        onComplete: async () => {
+          await openTitleStoryInterlude({
+            onComplete: () => {
+              openEventOverlaySequence(trailingMessages, {
+                onComplete: options.onComplete,
+              });
+            },
+          });
+        },
+      });
+      return;
+    }
+    openEventOverlaySequence(await loadMergedFixedContentByIndices(rawIndices), options);
+  }
+
   function triggerFlash() {
     mapFlash.classList.remove("active");
     void mapFlash.offsetWidth;
@@ -2095,6 +2246,66 @@ export async function mountScreen({ mountNode, store, navigate }) {
     return true;
   }
 
+  function persistNamedEventFlag(flagKey) {
+    if (!flagKey) return true;
+    return persistNamedEventFlags([flagKey]);
+  }
+
+  function persistNamedEventFlags(flagKeys) {
+    const names = Array.isArray(flagKeys)
+      ? flagKeys.map((flag) => String(flag || "")).filter((flag) => Boolean(flag))
+      : [];
+    if (!names.length) return true;
+    const currentState = store.getState();
+    const originalEnvelope = currentState.saveEnvelope;
+    const nextEnvelope = originalEnvelope
+      ? clone(originalEnvelope)
+      : store.createDefaultEnvelope();
+    ensureMutableSaveEnvelope(nextEnvelope);
+    names.forEach((flagKey) => {
+      writeSavedEventFlag(nextEnvelope, flagKey, true);
+    });
+    return persistMapEventEnvelope(nextEnvelope);
+  }
+
+  async function triggerStandingEvent(eventRow) {
+    if (!eventRow || typeof eventRow !== "object") return false;
+    const enemyNames = eventEnemyNames(eventRow);
+    if (enemyNames.length) {
+      const startEncounter = () => {
+        mapStatus.textContent = `${enemyNames.join(" / ")} が現れた！`;
+        navigateToEncounter({
+          enemyNames,
+          postVictoryOverlayIndices: eventPostVictoryDialogueIndices(eventRow),
+          postVictoryEventFlags: eventRow.set_event_flag ? [String(eventRow.set_event_flag)] : [],
+          postVictoryShowOpeningStory: eventRow.post_victory_show_opening_story === true,
+        });
+      };
+      const messages = await loadMergedFixedContentByIndices(npcDialogueIndices(eventRow));
+      const visibleMessages = messages.filter((message) => Boolean(message));
+      if (visibleMessages.length === 1) {
+        openEventOverlay(visibleMessages[0], { onClose: startEncounter });
+      } else if (visibleMessages.length > 1) {
+        openEventOverlaySequence(visibleMessages, { onComplete: startEncounter });
+      } else {
+        startEncounter();
+      }
+      return true;
+    }
+    if (!persistNamedEventFlag(eventRow.set_event_flag)) {
+      return true;
+    }
+    const messages = await loadMergedFixedContentByIndices(npcDialogueIndices(eventRow));
+    const visibleMessages = messages.filter((message) => Boolean(message));
+    if (visibleMessages.length === 1) {
+      openEventOverlay(visibleMessages[0]);
+    } else if (visibleMessages.length > 1) {
+      openEventOverlaySequence(visibleMessages);
+    }
+    mapStatus.textContent = `${eventRow.name || "イベント"} が発生しました。`;
+    return true;
+  }
+
   async function runFullRecoveryEvent(textIndex, statusText) {
     if (!pyodide) {
       const pyodideRuntime = await import("../pyodide_runtime.js");
@@ -2165,20 +2376,6 @@ export async function mountScreen({ mountNode, store, navigate }) {
       patchMapMenuState({ map_return_pending: true });
       mapStatus.textContent = `${shopActivation.shopType} shop を開きます。`;
       navigate("shop");
-      return;
-    }
-    if (isAdjacentToCrystalSprite(mapDefinition, mapState)) {
-      const message = await loadMergedFixedContentByIndex(ALTER_CAVE_CRYSTAL_EVENT_TEXT_INDEX);
-      openEventOverlay(message, {
-        onClose: () => {
-          mapStatus.textContent = `${ALTER_CAVE_CRYSTAL_BOSS_NAME} が現れた！`;
-          navigateToEncounter({
-            enemyNames: [ALTER_CAVE_CRYSTAL_BOSS_NAME],
-            postVictoryOverlayIndices: ALTER_CAVE_CRYSTAL_POST_BATTLE_TEXT_INDICES,
-          });
-        },
-      });
-      mapStatus.textContent = "クリスタルが強く輝いている……。";
       return;
     }
     if (
@@ -2280,6 +2477,8 @@ export async function mountScreen({ mountNode, store, navigate }) {
     mapTransitionLocked = true;
     try {
       const nextMapDefinition = await loadMapDefinition(String(targetMapId));
+      const currentEnvelope = store.getState().saveEnvelope;
+      const savedOpenedTreasures = readSavedTreasureStates(currentEnvelope, nextMapDefinition.id);
       const storeState = store.getState();
       const nextSelection = buildEncounterSelection(nextMapDefinition, {
         selected_location_group: storeState.selectedLocationGroup,
@@ -2296,7 +2495,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
         tile_y: asNumber(targetSpawn?.y, asNumber(nextMapDefinition.spawn?.y, 0)),
         steps_since_reset: 0,
         switch_states: {},
-        opened_treasures: {},
+        opened_treasures: savedOpenedTreasures,
       };
       if (!canOccupyTile(mapDefinition, mapState.tile_x, mapState.tile_y)) {
         mapState = {
@@ -2305,7 +2504,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
           tile_y: asNumber(nextMapDefinition.spawn?.y, 0),
           steps_since_reset: 0,
           switch_states: {},
-          opened_treasures: {},
+          opened_treasures: savedOpenedTreasures,
         };
       }
       mapDefinition = applySwitchStateToMap(
@@ -2340,6 +2539,10 @@ export async function mountScreen({ mountNode, store, navigate }) {
     const postVictoryOverlayIndices = Array.isArray(options?.postVictoryOverlayIndices)
       ? options.postVictoryOverlayIndices.map((index) => Number(index)).filter((index) => Number.isFinite(index))
       : [];
+    const postVictoryEventFlags = Array.isArray(options?.postVictoryEventFlags)
+      ? options.postVictoryEventFlags.map((flag) => String(flag || "")).filter((flag) => Boolean(flag))
+      : [];
+    const postVictoryShowOpeningStory = options?.postVictoryShowOpeningStory === true;
     sessionStorage.setItem(BATTLE_START_SELECTION_KEY, JSON.stringify({
       ...encounterSelection,
       ...(forcedEnemyNames.length ? { enemy_names: forcedEnemyNames } : {}),
@@ -2350,6 +2553,8 @@ export async function mountScreen({ mountNode, store, navigate }) {
       resume_map: true,
       map_id: mapDefinition.id,
       ...(postVictoryOverlayIndices.length ? { post_victory_overlay_indices: postVictoryOverlayIndices } : {}),
+      ...(postVictoryEventFlags.length ? { post_victory_event_flags: postVictoryEventFlags } : {}),
+      ...(postVictoryShowOpeningStory ? { post_victory_show_opening_story: true } : {}),
     }));
     store.patch({
       selectedLocationGroup: encounterSelection.selected_location_group,
@@ -2377,6 +2582,9 @@ export async function mountScreen({ mountNode, store, navigate }) {
     animateVisualMapPosition(previousMapState, mapState);
     const standingObject = findStandingObject(mapDefinition, mapState);
     if (standingObject?.type === "exit" && standingObject?.target_map) {
+      if (!persistNamedEventFlag(standingObject.set_event_flag)) {
+        return;
+      }
       const moved = await applyMapTransition(
         String(standingObject.target_map),
         standingObject.target_spawn,
@@ -2391,6 +2599,15 @@ export async function mountScreen({ mountNode, store, navigate }) {
         UR_INN_ITEMSHOP_RECOVERY_TEXT_INDEX,
         "HP・MP と状態異常が回復した。",
       );
+      return;
+    }
+    const standingEvent = findStandingEventTrigger(
+      mapDefinition,
+      mapState,
+      store.getState().saveEnvelope,
+    );
+    if (standingEvent) {
+      await triggerStandingEvent(standingEvent);
       return;
     }
     const standing = describeStandingObject(mapDefinition, mapState);
@@ -2507,6 +2724,12 @@ export async function mountScreen({ mountNode, store, navigate }) {
       && Array.isArray(battleReturnContext?.pending_overlay_indices)
       ? battleReturnContext.pending_overlay_indices
       : [];
+    const postBattleEventFlags = returningFromBattle
+      && Array.isArray(battleReturnContext?.pending_event_flags)
+      ? battleReturnContext.pending_event_flags
+      : [];
+    const postBattleShowOpeningStory = returningFromBattle
+      && battleReturnContext?.pending_opening_story === true;
     spellLevelByName = await loadSpellLevelByName();
     mapDefinition = await loadMapDefinition(requestedMapId);
     const currentSelection = resolveInitialMapSelection(appState, mapDefinition, {
@@ -2553,6 +2776,13 @@ export async function mountScreen({ mountNode, store, navigate }) {
       sessionStorage.removeItem(MAP_ENTRY_CONTEXT_KEY);
       patchMapMenuState({ map_return_pending: false });
     }
+    if (
+      freshLocationEntry
+      && mapDefinition.id === ALTER_CAVE_B3_INTRO_MAP_ID
+      && !isSavedEventFlagEnabled(store.getState().saveEnvelope, ALTER_CAVE_B3_INTRO_EVENT_FLAG)
+    ) {
+      mapStatus.textContent = "洞窟の奥から不気味な気配がする……。";
+    }
     if (resumeFromSavedPosition) {
       sessionStorage.removeItem(BATTLE_RETURN_CONTEXT_KEY);
       patchMapMenuState({ map_return_pending: false });
@@ -2562,6 +2792,9 @@ export async function mountScreen({ mountNode, store, navigate }) {
           steps_since_reset: 0,
         };
       }
+    }
+    if (postBattleEventFlags.length) {
+      persistNamedEventFlags(postBattleEventFlags);
     }
     if (!canOccupyTile(mapDefinition, mapState.tile_x, mapState.tile_y)) {
       mapState = {
@@ -2578,8 +2811,37 @@ export async function mountScreen({ mountNode, store, navigate }) {
     persistCurrentMapState(mapState);
     setVisualMapPosition(mapState.tile_x, mapState.tile_y);
     syncMapBgm();
-    if (postBattleOverlayIndices.length) {
-      openEventOverlaySequence(await loadMergedFixedContentByIndices(postBattleOverlayIndices));
+    const standingEventOnMount = findStandingEventTrigger(
+      mapDefinition,
+      mapState,
+      store.getState().saveEnvelope,
+    );
+    if (standingEventOnMount) {
+      await triggerStandingEvent(standingEventOnMount);
+      return () => {
+        confirmBtn.removeEventListener("click", onConfirm);
+        locationBtn.removeEventListener("click", onGoLocation);
+        menuBtn.removeEventListener("click", onGoMenu);
+        battleBtn.removeEventListener("click", onGoBattle);
+        mapEventCloseBtn.removeEventListener("click", onCloseEvent);
+        padButtons.forEach((button) => {
+          const handlers = padHandlers.get(button);
+          if (!handlers) return;
+          button.removeEventListener("pointerdown", handlers.onPointerDown);
+          button.removeEventListener("pointerup", handlers.onPointerUp);
+          button.removeEventListener("pointercancel", handlers.onPointerUp);
+          button.removeEventListener("pointerleave", handlers.onPointerLeave);
+        });
+        holdRepeater.stop();
+        stopNpcAnimation();
+        stopMapBgm();
+        window.removeEventListener("keydown", onKeyDown);
+      };
+    }
+    if (postBattleOverlayIndices.length || postBattleShowOpeningStory) {
+      await openPostBattleDialogueSequence(postBattleOverlayIndices, {
+        showOpeningStory: postBattleShowOpeningStory,
+      });
       mapStatus.textContent = "戦いのあと、クリスタルが静かに輝いている。";
     } else {
       mapStatus.textContent = resumeFromSavedPosition
