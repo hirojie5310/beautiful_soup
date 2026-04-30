@@ -1091,19 +1091,28 @@ function resetBattleLogInteractionState() {
   }
 }
 
+function resolvePostBattleRoute() {
+  if (battleEndReason === "char_defeated") return "title";
+  return String(battleReturnContext?.return_route || "location") === "map" ? "map" : "location";
+}
+
 function bindReturnToLocationOnClick() {
   if (returnToLocationBound || !battleLogFrame) return;
   returnToLocationBound = true;
   setBattleLogExpanded(true);
   battleLogFrame.classList.add("is-clickable-next");
   const onClick = () => {
-    const returnRoute = String(battleReturnContext?.return_route || "location");
+    const returnRoute = resolvePostBattleRoute();
     stopBattleBgm();
     if (appNavigate) {
-      appNavigate(returnRoute === "map" ? "map" : "location");
+      appNavigate(returnRoute);
       return;
     }
-    window.location.href = returnRoute === "map" ? "./index.html#/map" : "./index.html";
+    window.location.href = returnRoute === "map"
+      ? "./index.html#/map"
+      : returnRoute === "title"
+        ? "./index.html#/title"
+        : "./index.html";
   };
   battleLogFrame.addEventListener("click", onClick, { once: true });
 }

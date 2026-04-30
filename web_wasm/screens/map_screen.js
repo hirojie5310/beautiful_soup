@@ -231,6 +231,11 @@ export function normalizeNpcDirection(direction, fallback = "down") {
   return NPC_DIRECTIONS.includes(normalizedDirection) ? normalizedDirection : fallback;
 }
 
+export function normalizeMapFacingDirection(direction, fallback = "down") {
+  const normalizedDirection = String(direction || "").trim().toLowerCase();
+  return NPC_DIRECTIONS.includes(normalizedDirection) ? normalizedDirection : fallback;
+}
+
 export function normalizeNpcMovement(movement) {
   const normalizedMovement = String(movement || "").trim().toLowerCase();
   return normalizedMovement === NPC_MOVEMENT_RANDOM ? NPC_MOVEMENT_RANDOM : "fixed";
@@ -564,6 +569,7 @@ export function deriveInitialMapState(appState, mapDefinition, options = {}) {
       current_map_id: wantedMapId,
       tile_x: asNumber(menuMapState.tile_x, asNumber(envelopeMap.x, asNumber(mapDefinition?.spawn?.x, 0))),
       tile_y: asNumber(menuMapState.tile_y, asNumber(envelopeMap.y, asNumber(mapDefinition?.spawn?.y, 0))),
+      facing_direction: normalizeMapFacingDirection(menuMapState.facing_direction, "down"),
       steps_since_reset: asNumber(menuMapState.steps_since_reset, 0),
       switch_states: normalizeSwitchStates(menuMapState.switch_states),
       opened_treasures: mergeTreasureStates(savedOpenedTreasures, menuMapState.opened_treasures),
@@ -634,14 +640,29 @@ export function canNpcOccupyTile(mapDefinition, npcRow, mapState, x, y) {
 }
 
 export function moveMapPosition(mapDefinition, mapState, direction) {
-  const delta = directionDelta(direction);
+  const facingDirection = normalizeMapFacingDirection(direction, mapState?.facing_direction || "down");
+  const delta = directionDelta(facingDirection);
   if (!delta) {
-    return { moved: false, nextState: mapState, reason: "invalid" };
+    return {
+      moved: false,
+      nextState: {
+        ...mapState,
+        facing_direction: facingDirection,
+      },
+      reason: "invalid",
+    };
   }
   const nextX = asNumber(mapState?.tile_x, 0) + delta.x;
   const nextY = asNumber(mapState?.tile_y, 0) + delta.y;
   if (!canOccupyTile(mapDefinition, nextX, nextY)) {
-    return { moved: false, nextState: mapState, reason: "blocked" };
+    return {
+      moved: false,
+      nextState: {
+        ...mapState,
+        facing_direction: facingDirection,
+      },
+      reason: "blocked",
+    };
   }
   return {
     moved: true,
@@ -649,6 +670,7 @@ export function moveMapPosition(mapDefinition, mapState, direction) {
       ...mapState,
       tile_x: nextX,
       tile_y: nextY,
+      facing_direction: facingDirection,
       steps_since_reset: asNumber(mapState?.steps_since_reset, 0) + 1,
     },
     reason: "moved",
@@ -1380,10 +1402,15 @@ export function findStandingEventTrigger(mapDefinition, mapState, saveEnvelope) 
 export function findAdjacentObject(mapDefinition, mapState, predicate = () => true) {
   const tileX = Number(mapState?.tile_x);
   const tileY = Number(mapState?.tile_y);
+  const facingDirection = normalizeMapFacingDirection(mapState?.facing_direction, "down");
+  const delta = directionDelta(facingDirection);
+  if (!delta) return null;
+  const targetX = tileX + delta.x;
+  const targetY = tileY + delta.y;
   return (mapDefinition?.objects || []).find((row) => {
     const objectX = Number(row?.x);
     const objectY = Number(row?.y);
-    return Math.abs(tileX - objectX) + Math.abs(tileY - objectY) === 1 && predicate(row);
+    return objectX === targetX && objectY === targetY && predicate(row);
   }) || null;
 }
 
@@ -2493,6 +2520,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
         current_map_id: nextMapDefinition.id,
         tile_x: asNumber(targetSpawn?.x, asNumber(nextMapDefinition.spawn?.x, 0)),
         tile_y: asNumber(targetSpawn?.y, asNumber(nextMapDefinition.spawn?.y, 0)),
+        facing_direction: playerDirection,
         steps_since_reset: 0,
         switch_states: {},
         opened_treasures: savedOpenedTreasures,
@@ -2502,6 +2530,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
           current_map_id: nextMapDefinition.id,
           tile_x: asNumber(nextMapDefinition.spawn?.x, 0),
           tile_y: asNumber(nextMapDefinition.spawn?.y, 0),
+          facing_direction: playerDirection,
           steps_since_reset: 0,
           switch_states: {},
           opened_treasures: savedOpenedTreasures,
@@ -2565,19 +2594,20 @@ export async function mountScreen({ mountNode, store, navigate }) {
 
   async function tryMove(direction) {
     if (!mapDefinition || !mapState || mapTransitionLocked) return;
-    playerDirection = String(direction || playerDirection);
+    const previousMapState = mapState;
+    playerDirection = normalizeMapFacingDirection(direction, playerDirection);
     const result = moveMapPosition(mapDefinition, mapState, direction);
+    mapState = result.nextState;
     if (!result.moved) {
       playerWalkFrame = 0;
       updateMapPlayerSprite(mapPlayer, playerDirection, playerWalkFrame);
+      persistCurrentMapState(mapState);
       mapStatus.textContent = result.reason === "blocked"
         ? "その方向には進めません。"
         : "移動できません。";
       return;
     }
-    const previousMapState = mapState;
     playerWalkFrame = playerWalkFrame === 0 ? 1 : 0;
-    mapState = result.nextState;
     persistCurrentMapState(mapState);
     animateVisualMapPosition(previousMapState, mapState);
     const standingObject = findStandingObject(mapDefinition, mapState);
@@ -2768,6 +2798,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     mapState = deriveInitialMapState(appState, mapDefinition, {
       resumeFromSavedPosition,
     });
+    playerDirection = normalizeMapFacingDirection(mapState?.facing_direction, "down");
     mapDefinition = applySwitchStateToMap(
       { ...mapDefinition, openedTreasures: mapState.opened_treasures },
       mapState.switch_states,
@@ -2801,6 +2832,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
         current_map_id: mapDefinition.id,
         tile_x: mapDefinition.spawn.x,
         tile_y: mapDefinition.spawn.y,
+        facing_direction: playerDirection,
         steps_since_reset: 0,
         switch_states: normalizeSwitchStates(mapState?.switch_states),
         opened_treasures: normalizeTreasureStates(mapState?.opened_treasures),
