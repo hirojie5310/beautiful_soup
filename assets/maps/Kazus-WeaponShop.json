@@ -1,0 +1,66 @@
+{
+  "id": "Kazus_WeaponShop",
+  "name": "Kazus Weapon Shop",
+  "tile_width": 24,
+  "tile_height": 24,
+  "width": 7,
+  "height": 10,
+  "tileset": {
+    "name": "TILESET - Shop_1",
+    "image": "../assets/images/maps/TILESET - Shop_1.png",
+    "columns": 16,
+    "tile_count": 128
+  },
+  "collision_gids": [9, 10, 30, 84, 92, 94, 125],
+  "location_requirement": {
+    "group": "Kazus",
+    "locations": ["Kazus"]
+  },
+  "encounter_rate": 0,
+  "padding": {
+    "top": 10,
+    "right": 10,
+    "bottom": 10,
+    "left": 10,
+    "fill_gid": 92
+  },
+  "spawn": {
+    "x": 3,
+    "y": 6
+  },
+  "objects": [
+    {
+      "type": "exit",
+      "name": "Kazus",
+      "x": 3,
+      "y": 9,
+      "target_map": "Kazus",
+      "target_spawn": {
+        "x": 16,
+        "y": 25
+      }
+    },
+    {
+      "type": "npc",
+      "name": "Kazus Weapon Shop NPC 285",
+      "x": 3,
+      "y": 3,
+      "sprite_image": "../assets/images/NPCs/fs_merchant1.png",
+      "dialogue_index": 285,
+      "movement": "fixed",
+      "direction": "down"
+    }
+  ],
+  "rows": [
+    "92,92,92,92,92,92,92",
+    "92,94,84,84,84,94,92",
+    "92,9,94,94,94,94,92",
+    "92,10,125,59,59,125,92",
+    "92,30,30,30,30,30,92",
+    "92,65,65,65,65,65,92",
+    "92,59,59,59,59,59,92",
+    "92,92,92,92,92,92,92",
+    "94,94,94,94,94,94,94",
+    "94,94,94,105,94,94,94"
+  ]
+}

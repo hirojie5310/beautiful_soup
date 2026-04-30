@@ -1,0 +1,98 @@
+{
+  "id": "Mythril_Mine_B2",
+  "name": "Mythril Mine B2",
+  "tile_width": 24,
+  "tile_height": 24,
+  "width": 7,
+  "height": 28,
+  "tileset": {
+    "name": "TILESET - Mythril_Mine",
+    "image": "../assets/images/maps/TILESET - Mythril_Mine.png",
+    "columns": 16,
+    "tile_count": 128
+  },
+  "collision_gids": [70, 85, 93, 98, 112, 124, 125],
+  "location_requirement": {
+    "group": "Mythril Mines",
+    "locations": ["Mythril Mines B2"]
+  },
+  "encounter_rate": 0.1,
+  "padding": {
+    "top": 10,
+    "right": 10,
+    "bottom": 10,
+    "left": 10,
+    "fill_gid": 112
+  },
+  "spawn": {
+    "x": 6,
+    "y": 21
+  },
+  "objects": [
+    {
+      "type": "exit",
+      "name": "Mythril Mine B1",
+      "x": 6,
+      "y": 21,
+      "target_map": "Mythril_Mine_B1",
+      "target_spawn": {
+        "x": 2,
+        "y": 15
+      }
+    },
+    {
+      "type": "treasure",
+      "name": "Mythril Mine B2 Mythril Sword 1",
+      "x": 2,
+      "y": 3,
+      "treasure_id": "mythril_mine_b2_treasure_mythril_sword_1",
+      "item_name": "Mythril Sword",
+      "inventory_bucket": "Weapon",
+      "quantity": 1,
+      "closed_gid": 125,
+      "open_gid": 126
+    },
+    {
+      "type": "treasure",
+      "name": "Mythril Mine B2 Mythril Sword 2",
+      "x": 0,
+      "y": 4,
+      "treasure_id": "mythril_mine_b2_treasure_mythril_sword_2",
+      "item_name": "Mythril Sword",
+      "inventory_bucket": "Weapon",
+      "quantity": 1,
+      "closed_gid": 125,
+      "open_gid": 126
+    }
+  ],
+  "rows": [
+    "93,112,112,112,112,112,112",
+    "93,2,70,112,112,112,112",
+    "2,2,70,112,112,112,112",
+    "2,124,125,112,112,112,112",
+    "125,122,122,112,112,112,112",
+    "121,122,122,112,112,112,112",
+    "121,122,122,112,112,112,112",
+    "121,122,122,112,112,112,112",
+    "121,122,122,112,112,112,112",
+    "121,122,122,112,112,112,112",
+    "93,121,122,112,112,112,112",
+    "93,112,121,112,112,112,112",
+    "93,112,121,112,112,112,112",
+    "93,112,121,112,112,112,112",
+    "93,112,121,112,112,112,112",
+    "93,112,121,112,112,112,112",
+    "2,2,98,112,112,112,112",
+    "2,2,98,112,112,112,112",
+    "121,122,49,112,112,112,112",
+    "121,112,112,112,112,112,112",
+    "121,112,112,112,112,112,85",
+    "121,70,112,112,112,112,101",
+    "121,70,112,112,112,112,74",
+    "121,122,112,112,112,112,121",
+    "93,121,70,112,112,112,121",
+    "93,121,2,2,2,2,98",
+    "93,121,122,2,2,2,98",
+    "93,112,121,122,122,122,49"
+  ]
+}

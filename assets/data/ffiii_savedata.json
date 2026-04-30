@@ -4,7 +4,7 @@
     {
       "name": "Runeth",
       "level": 45,
-      "exp": 534721,
+      "exp": 542321,
       "job": "Sage",
       "job_level": {
         "level": 99,
@@ -28,7 +28,7 @@
           "skill_point": 0
         }
       },
-      "hp": 2658,
+      "hp": 1994,
       "max_hp": 2658,
       "mp": {
         "L1MP": 48,
@@ -111,16 +111,50 @@
         "Partial Petrification (Full)": false
       },
       "image_name": "",
-      "portrait_key": "runeth"
+      "portrait_key": "runeth",
+      "mp_levels": {
+        "1": {
+          "current": 48,
+          "max": 50
+        },
+        "2": {
+          "current": 41,
+          "max": 43
+        },
+        "3": {
+          "current": 33,
+          "max": 35
+        },
+        "4": {
+          "current": 24,
+          "max": 27
+        },
+        "5": {
+          "current": 20,
+          "max": 23
+        },
+        "6": {
+          "current": 16,
+          "max": 18
+        },
+        "7": {
+          "current": 11,
+          "max": 14
+        },
+        "8": {
+          "current": 7,
+          "max": 10
+        }
+      }
     },
     {
       "name": "Arc",
       "level": 48,
-      "exp": 666444,
+      "exp": 674044,
       "job": "Evoker",
       "job_level": {
-        "level": 31,
-        "skill_point": 52
+        "level": 32,
+        "skill_point": 0
       },
       "job_levels": {
         "Dragoon": {
@@ -140,14 +174,14 @@
           "skill_point": 12
         },
         "Evoker": {
-          "level": 31,
-          "skill_point": 52
+          "level": 32,
+          "skill_point": 0
         }
       },
       "hp": 1776,
       "max_hp": 1776,
       "mp": {
-        "L1MP": 16,
+        "L1MP": 9,
         "L2MP": 13,
         "L3MP": 12,
         "L4MP": 10,
@@ -227,12 +261,46 @@
           null,
           null
         ]
+      },
+      "mp_levels": {
+        "1": {
+          "current": 9,
+          "max": 10
+        },
+        "2": {
+          "current": 13,
+          "max": 14
+        },
+        "3": {
+          "current": 12,
+          "max": 13
+        },
+        "4": {
+          "current": 10,
+          "max": 11
+        },
+        "5": {
+          "current": 9,
+          "max": 10
+        },
+        "6": {
+          "current": 7,
+          "max": 8
+        },
+        "7": {
+          "current": 5,
+          "max": 6
+        },
+        "8": {
+          "current": 3,
+          "max": 4
+        }
       }
     },
     {
       "name": "Refia",
       "level": 46,
-      "exp": 560863,
+      "exp": 568463,
       "job": "Dragoon",
       "job_level": {
         "level": 99,
@@ -340,7 +408,7 @@
     {
       "name": "Ingus",
       "level": 45,
-      "exp": 531129,
+      "exp": 538729,
       "job": "Thief",
       "job_level": {
         "level": 46,
@@ -458,7 +526,7 @@
       }
     }
   ],
-  "gil": 996437,
+  "gil": 1015237,
   "CP": 255,
   "map": {
     "map": "grassland",
@@ -473,7 +541,7 @@
       "Noah's Lute": 0
     },
     "Anywhere": {
-      "Potion": 37,
+      "Potion": 38,
       "Hi Potion": 8,
       "Elixir": 44,
       "Phoenix Down": 4,
@@ -742,6 +810,6 @@
     }
   },
   "item_stock": {
-    "Potion": 1
+    "Potion": 0
   }
 }

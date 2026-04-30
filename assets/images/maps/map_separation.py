@@ -8,18 +8,18 @@ TILE_SIZE = 24
 INNER_MARGIN = 1
 SUSPICIOUS_SCORE_THRESHOLD = 500
 INNER_SCORE_TIE_THRESHOLD = 32
-MAP_OFFSET_X = 10
-MAP_OFFSET_Y = 5
+MAP_OFFSET_X = 0    # Floating Continents: 10
+MAP_OFFSET_Y = 0    # Floating Continents: 5
 MAP_TILE_COLUMNS = 116
 MAP_TILE_ROWS = None
 BASE_DIR = Path(__file__).resolve().parent
-TILESET_PATH = BASE_DIR / "TILESET - FloatingContinent.png"
-MAP_PATH = BASE_DIR / "FloatingContinent.png"
-RECONSTRUCTED_PATH = BASE_DIR / "FloatingContinent_reconstructed.png"
-COMPARISON_PATH = BASE_DIR / "FloatingContinent_comparison.png"
-CSV_PATH = BASE_DIR / "FloatingContinent_tiles.csv"
-DEBUG_CSV_PATH = BASE_DIR / "FloatingContinent_tiles_debug.csv"
-SUSPICIOUS_PATH = BASE_DIR / "FloatingContinent_suspicious_tiles.png"
+TILESET_PATH = BASE_DIR / "TILESET - Ur_EldersHouse.png"
+MAP_PATH = BASE_DIR / "Kazus-Shrine.png"
+RECONSTRUCTED_PATH = BASE_DIR / "Kazus-Shrine_reconstructed.png"
+COMPARISON_PATH = BASE_DIR / "Kazus-Shrine_comparison.png"
+CSV_PATH = BASE_DIR / "Kazus-Shrine_tiles.csv"
+DEBUG_CSV_PATH = BASE_DIR / "Kazus-Shrine_tiles_debug.csv"
+SUSPICIOUS_PATH = BASE_DIR / "Kazus-Shrine_suspicious_tiles.png"
 
 
 def open_image(path: Path) -> Image.Image:
