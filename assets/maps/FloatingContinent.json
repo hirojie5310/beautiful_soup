@@ -60,6 +60,17 @@
         "x": 3,
         "y": 1
       }
+    },
+    {
+      "type": "exit",
+      "name": "Kazus",
+      "x": 85,
+      "y": 34,
+      "target_map": "Kazus",
+      "target_spawn": {
+        "x": 4,
+        "y": 29
+      }
     }
   ],
   "rows": [

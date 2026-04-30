@@ -1,0 +1,5074 @@
+{
+  "version": 1,
+  "saved_at": "2026-04-29T20:30:54.539Z",
+  "selected_location_group": "Ur",
+  "selected_location": "Ur",
+  "save": {
+    "schema_version": 2,
+    "party": [
+      {
+        "name": "Runeth",
+        "level": 11,
+        "exp": 3154,
+        "job": "Black Mage",
+        "job_level": {
+          "level": 10,
+          "skill_point": 64
+        },
+        "job_levels": {
+          "Sage": {
+            "level": 99,
+            "skill_point": 99
+          },
+          "Bard": {
+            "level": 12,
+            "skill_point": 3
+          },
+          "Ninja": {
+            "level": 2,
+            "skill_point": 12
+          },
+          "Knight": {
+            "level": 7,
+            "skill_point": 0
+          },
+          "Thief": {
+            "level": 8,
+            "skill_point": 0
+          },
+          "Mystic Knight": {
+            "level": 15,
+            "skill_point": 8
+          },
+          "Onion Knight": {
+            "level": 1,
+            "skill_point": 0
+          },
+          "Black Mage": {
+            "level": 10,
+            "skill_point": 64
+          }
+        },
+        "hp": 169,
+        "max_hp": 169,
+        "mp": {
+          "L1MP": 13,
+          "L2MP": 4,
+          "L3MP": 3,
+          "L4MP": 0,
+          "L5MP": 0,
+          "L6MP": 0,
+          "L7MP": 0,
+          "L8MP": 0
+        },
+        "strength": 10,
+        "agility": 12,
+        "vitality": 8,
+        "intelligence": 17,
+        "mind": 7,
+        "row": "back",
+        "equipment": {
+          "main_hand": "Ice Rod",
+          "off_hand": null,
+          "head": null,
+          "body": "Vest",
+          "arms": "Bronze Bracers"
+        },
+        "Magic": {
+          "LV1": [
+            "Fire",
+            "Blizzard",
+            "Cure"
+          ],
+          "LV2": [
+            "Blind",
+            "Thunder",
+            "Shiva"
+          ],
+          "LV3": [
+            "Fira",
+            "Thundara",
+            "Cura"
+          ],
+          "LV4": [
+            "Break",
+            "Shade",
+            "Libra"
+          ],
+          "LV5": [
+            "Thundaga",
+            "Protect",
+            "Raise"
+          ],
+          "LV6": [
+            "Firaga",
+            "Warp",
+            "Bio"
+          ],
+          "LV7": [
+            "Drain",
+            "Esuna",
+            "Curaja"
+          ],
+          "LV8": [
+            "Flare",
+            "Meteor",
+            "Bahamut"
+          ]
+        },
+        "status_effects": {
+          "Poison": false,
+          "Blind": false,
+          "Mini": false,
+          "Silence": false,
+          "Toad": false,
+          "Petrification": false,
+          "KO": false,
+          "Confusion": false,
+          "Sleep": false,
+          "Paralysis": false,
+          "Partial Petrification (1/3)": false,
+          "Partial Petrification (1/2)": false,
+          "Partial Petrification (Full)": false
+        },
+        "image_name": null,
+        "portrait_key": "runeth",
+        "index": 0,
+        "current_job": "Black Mage",
+        "mp_levels": {
+          "1": {
+            "current": 13,
+            "max": 13
+          },
+          "2": {
+            "current": 4,
+            "max": 4
+          },
+          "3": {
+            "current": 3,
+            "max": 3
+          },
+          "4": {
+            "current": 0,
+            "max": 0
+          },
+          "5": {
+            "current": 0,
+            "max": 0
+          },
+          "6": {
+            "current": 0,
+            "max": 0
+          },
+          "7": {
+            "current": 0,
+            "max": 0
+          },
+          "8": {
+            "current": 0,
+            "max": 0
+          }
+        },
+        "status": {
+          "level": 11,
+          "job_level": 10,
+          "exp": 3154,
+          "exp_to_next": 760,
+          "hp": 169,
+          "max_hp": 169,
+          "mp_text": "13/ 4/ 3/ 0/ 0/ 0/ 0/ 0",
+          "strength": 10,
+          "agility": 12,
+          "vitality": 8,
+          "intelligence": 17,
+          "mind": 7,
+          "atk_value": 18,
+          "atk_times": 2,
+          "acc_value": 82,
+          "defense": 6,
+          "def_times": 0,
+          "evasion_percent": 5,
+          "magic_defense": 3,
+          "magic_resistance": 11,
+          "row_label": "BACK",
+          "status_line": "-",
+          "status_icons": []
+        },
+        "status_icons": [],
+        "out_of_battle": false,
+        "is_jumping": false,
+        "jump_target_index": null
+      },
+      {
+        "name": "Arc",
+        "level": 11,
+        "exp": 3154,
+        "job": "Ranger",
+        "job_level": {
+          "level": 29,
+          "skill_point": 24
+        },
+        "job_levels": {
+          "Dragoon": {
+            "level": 97,
+            "skill_point": 54
+          },
+          "Ninja": {
+            "level": 13,
+            "skill_point": 71
+          },
+          "Black Belt": {
+            "level": 8,
+            "skill_point": 68
+          },
+          "Geomancer": {
+            "level": 16,
+            "skill_point": 12
+          },
+          "Evoker": {
+            "level": 31,
+            "skill_point": 52
+          },
+          "Onion Knight": {
+            "level": 2,
+            "skill_point": 0
+          },
+          "Ranger": {
+            "level": 29,
+            "skill_point": 24
+          }
+        },
+        "hp": 213,
+        "max_hp": 213,
+        "mp": {
+          "L1MP": 8,
+          "L2MP": 3,
+          "L3MP": 0,
+          "L4MP": 0,
+          "L5MP": 0,
+          "L6MP": 0,
+          "L7MP": 0,
+          "L8MP": 0
+        },
+        "strength": 13,
+        "agility": 28,
+        "vitality": 13,
+        "intelligence": 7,
+        "mind": 7,
+        "row": "back",
+        "equipment": {
+          "main_hand": "Bow",
+          "off_hand": "Wooden Arrow",
+          "head": "Leather Cap",
+          "body": "Leather Armor",
+          "arms": null
+        },
+        "status_effects": {
+          "Poison": false,
+          "Blind": false,
+          "Mini": false,
+          "Silence": false,
+          "Toad": false,
+          "Petrification": false,
+          "KO": false,
+          "Confusion": false,
+          "Sleep": false,
+          "Paralysis": false,
+          "Partial Petrification (1/3)": false,
+          "Partial Petrification (1/2)": false,
+          "Partial Petrification (Full)": false
+        },
+        "image_name": null,
+        "portrait_key": "arc",
+        "Magic": {
+          "LV1": [
+            "Chocobo",
+            null,
+            null
+          ],
+          "LV2": [
+            "Shiva",
+            null,
+            null
+          ],
+          "LV3": [
+            "Ramuh",
+            null,
+            null
+          ],
+          "LV4": [
+            "Ifrit",
+            null,
+            null
+          ],
+          "LV5": [
+            "Titan",
+            null,
+            null
+          ],
+          "LV6": [
+            "Odin",
+            null,
+            null
+          ],
+          "LV7": [
+            "Leviathan",
+            null,
+            null
+          ],
+          "LV8": [
+            "Bahamut",
+            null,
+            null
+          ]
+        },
+        "index": 1,
+        "current_job": "Ranger",
+        "mp_levels": {
+          "1": {
+            "current": 8,
+            "max": 8
+          },
+          "2": {
+            "current": 3,
+            "max": 3
+          },
+          "3": {
+            "current": 0,
+            "max": 0
+          },
+          "4": {
+            "current": 0,
+            "max": 0
+          },
+          "5": {
+            "current": 0,
+            "max": 0
+          },
+          "6": {
+            "current": 0,
+            "max": 0
+          },
+          "7": {
+            "current": 0,
+            "max": 0
+          },
+          "8": {
+            "current": 0,
+            "max": 0
+          }
+        },
+        "status": {
+          "level": 11,
+          "job_level": 29,
+          "exp": 3154,
+          "exp_to_next": 760,
+          "hp": 213,
+          "max_hp": 213,
+          "mp_text": " 8/ 3/ 0/ 0/ 0/ 0/ 0/ 0",
+          "strength": 13,
+          "agility": 28,
+          "vitality": 13,
+          "intelligence": 7,
+          "mind": 7,
+          "atk_value": 17,
+          "atk_times": 4,
+          "acc_value": 99,
+          "defense": 9,
+          "def_times": 0,
+          "evasion_percent": 9,
+          "magic_defense": 2,
+          "magic_resistance": 6,
+          "row_label": "BACK",
+          "status_line": "-",
+          "status_icons": []
+        },
+        "status_icons": [],
+        "out_of_battle": false,
+        "is_jumping": false,
+        "jump_target_index": null
+      },
+      {
+        "name": "Refia",
+        "level": 11,
+        "exp": 3154,
+        "job": "Monk",
+        "job_level": {
+          "level": 19,
+          "skill_point": 88
+        },
+        "job_levels": {
+          "Dragoon": {
+            "level": 99,
+            "skill_point": 99
+          },
+          "Ninja": {
+            "level": 24,
+            "skill_point": 83
+          },
+          "Black Belt": {
+            "level": 8,
+            "skill_point": 68
+          },
+          "Onion Knight": {
+            "level": 2,
+            "skill_point": 0
+          },
+          "Monk": {
+            "level": 19,
+            "skill_point": 88
+          }
+        },
+        "hp": 235,
+        "max_hp": 235,
+        "mp": {
+          "L1MP": 0,
+          "L2MP": 0,
+          "L3MP": 0,
+          "L4MP": 0,
+          "L5MP": 0,
+          "L6MP": 0,
+          "L7MP": 0,
+          "L8MP": 0
+        },
+        "strength": 19,
+        "agility": 17,
+        "vitality": 14,
+        "intelligence": 1,
+        "mind": 2,
+        "row": "front",
+        "equipment": {
+          "main_hand": null,
+          "off_hand": null,
+          "head": "Leather Cap",
+          "body": "Leather Armor",
+          "arms": null
+        },
+        "status_effects": {
+          "Poison": false,
+          "Blind": false,
+          "Mini": false,
+          "Silence": false,
+          "Toad": false,
+          "Petrification": false,
+          "KO": false,
+          "Confusion": false,
+          "Sleep": false,
+          "Paralysis": false,
+          "Partial Petrification (1/3)": false,
+          "Partial Petrification (1/2)": false,
+          "Partial Petrification (Full)": false
+        },
+        "image_name": null,
+        "portrait_key": "refia",
+        "Magic": {
+          "LV1": [
+            null,
+            null,
+            null
+          ],
+          "LV2": [
+            null,
+            null,
+            null
+          ],
+          "LV3": [
+            null,
+            null,
+            null
+          ],
+          "LV4": [
+            null,
+            null,
+            null
+          ],
+          "LV5": [
+            null,
+            null,
+            null
+          ],
+          "LV6": [
+            null,
+            null,
+            null
+          ],
+          "LV7": [
+            null,
+            null,
+            null
+          ],
+          "LV8": [
+            null,
+            null,
+            null
+          ]
+        },
+        "index": 2,
+        "current_job": "Monk",
+        "mp_levels": {
+          "1": {
+            "current": 0,
+            "max": 0
+          },
+          "2": {
+            "current": 0,
+            "max": 0
+          },
+          "3": {
+            "current": 0,
+            "max": 0
+          },
+          "4": {
+            "current": 0,
+            "max": 0
+          },
+          "5": {
+            "current": 0,
+            "max": 0
+          },
+          "6": {
+            "current": 0,
+            "max": 0
+          },
+          "7": {
+            "current": 0,
+            "max": 0
+          },
+          "8": {
+            "current": 0,
+            "max": 0
+          }
+        },
+        "status": {
+          "level": 11,
+          "job_level": 19,
+          "exp": 3154,
+          "exp_to_next": 760,
+          "hp": 235,
+          "max_hp": 235,
+          "mp_text": " 0/ 0/ 0/ 0/ 0/ 0/ 0/ 0",
+          "strength": 19,
+          "agility": 17,
+          "vitality": 14,
+          "intelligence": 1,
+          "mind": 2,
+          "atk_value": 48,
+          "atk_times": 4,
+          "acc_value": 93,
+          "defense": 10,
+          "def_times": 0,
+          "evasion_percent": 6,
+          "magic_defense": 2,
+          "magic_resistance": 1,
+          "row_label": "FRONT",
+          "status_line": "-",
+          "status_icons": []
+        },
+        "status_icons": [],
+        "out_of_battle": false,
+        "is_jumping": false,
+        "jump_target_index": null
+      },
+      {
+        "name": "Ingus",
+        "level": 11,
+        "exp": 3154,
+        "job": "Warrior",
+        "job_level": {
+          "level": 14,
+          "skill_point": 56
+        },
+        "job_levels": {
+          "Dragoon": {
+            "level": 10,
+            "skill_point": 0
+          },
+          "Ninja": {
+            "level": 13,
+            "skill_point": 71
+          },
+          "Black Belt": {
+            "level": 8,
+            "skill_point": 68
+          },
+          "Bard": {
+            "level": 22,
+            "skill_point": 12
+          },
+          "Thief": {
+            "level": 16,
+            "skill_point": 36
+          },
+          "Scholar": {
+            "level": 26,
+            "skill_point": 80
+          },
+          "Onion Knight": {
+            "level": 3,
+            "skill_point": 0
+          },
+          "Warrior": {
+            "level": 14,
+            "skill_point": 56
+          }
+        },
+        "hp": 193,
+        "max_hp": 193,
+        "mp": {
+          "L1MP": 0,
+          "L2MP": 0,
+          "L3MP": 0,
+          "L4MP": 0,
+          "L5MP": 0,
+          "L6MP": 0,
+          "L7MP": 0,
+          "L8MP": 0
+        },
+        "strength": 17,
+        "agility": 17,
+        "vitality": 10,
+        "intelligence": 5,
+        "mind": 5,
+        "row": "front",
+        "equipment": {
+          "main_hand": "Longsword",
+          "off_hand": "Leather Shield",
+          "head": "Leather Cap",
+          "body": "Leather Armor",
+          "arms": null
+        },
+        "status_effects": {
+          "Poison": false,
+          "Blind": false,
+          "Mini": false,
+          "Silence": false,
+          "Toad": false,
+          "Petrification": false,
+          "KO": false,
+          "Confusion": false,
+          "Sleep": false,
+          "Paralysis": false,
+          "Partial Petrification (1/3)": false,
+          "Partial Petrification (1/2)": false,
+          "Partial Petrification (Full)": false
+        },
+        "image_name": null,
+        "portrait_key": "ingus",
+        "Magic": {
+          "LV1": [
+            "Cure",
+            "Poisona",
+            "Sight"
+          ],
+          "LV2": [
+            "Mini",
+            "Toad",
+            "Aero"
+          ],
+          "LV3": [
+            "Cura",
+            "Teleport",
+            "Blindna"
+          ],
+          "LV4": [
+            "Confuse",
+            null,
+            null
+          ],
+          "LV5": [
+            null,
+            null,
+            null
+          ],
+          "LV6": [
+            null,
+            null,
+            null
+          ],
+          "LV7": [
+            null,
+            null,
+            null
+          ],
+          "LV8": [
+            null,
+            null,
+            null
+          ]
+        },
+        "index": 3,
+        "current_job": "Warrior",
+        "mp_levels": {
+          "1": {
+            "current": 0,
+            "max": 0
+          },
+          "2": {
+            "current": 0,
+            "max": 0
+          },
+          "3": {
+            "current": 0,
+            "max": 0
+          },
+          "4": {
+            "current": 0,
+            "max": 0
+          },
+          "5": {
+            "current": 0,
+            "max": 0
+          },
+          "6": {
+            "current": 0,
+            "max": 0
+          },
+          "7": {
+            "current": 0,
+            "max": 0
+          },
+          "8": {
+            "current": 0,
+            "max": 0
+          }
+        },
+        "status": {
+          "level": 11,
+          "job_level": 14,
+          "exp": 3154,
+          "exp_to_next": 760,
+          "hp": 193,
+          "max_hp": 193,
+          "mp_text": " 0/ 0/ 0/ 0/ 0/ 0/ 0/ 0",
+          "strength": 17,
+          "agility": 17,
+          "vitality": 10,
+          "intelligence": 5,
+          "mind": 5,
+          "atk_value": 14,
+          "atk_times": 2,
+          "acc_value": 87,
+          "defense": 11,
+          "def_times": 2,
+          "evasion_percent": 9,
+          "magic_defense": 4,
+          "magic_resistance": 4,
+          "row_label": "FRONT",
+          "status_line": "-",
+          "status_icons": []
+        },
+        "status_icons": [],
+        "out_of_battle": false,
+        "is_jumping": false,
+        "jump_target_index": null
+      }
+    ],
+    "gil": 5024,
+    "CP": 255,
+    "map": {
+      "map": "Ur_Well",
+      "surface": "Ur_Well",
+      "x": 6,
+      "y": 4
+    },
+    "inventory": {
+      "Key Item": {
+        "Eureka Key": 1,
+        "Fang Of Wind": 1,
+        "Noah's Lute": 0
+      },
+      "Anywhere": {
+        "Potion": 137,
+        "Hi Potion": 10,
+        "Elixir": 44,
+        "Phoenix Down": 5,
+        "Antidote": 10
+      },
+      "Field": {
+        "Magic Key": 1,
+        "Gysahl Greens": 4
+      },
+      "Combat": {
+        "Antarctic Wind": 2,
+        "Zeus's Wrath": 1,
+        "Raven's Yawn": 4,
+        "Black Hole": 2,
+        "Black Musk": 2,
+        "Devil's Sigh": 2,
+        "Lamia Scale": 3,
+        "Sheep Pillow": 5,
+        "Tranquilizer": 5,
+        "Bacchus's Cider": 2,
+        "Lilith's Kiss": 3,
+        "Shining Curtain": 2,
+        "Turtle Shell": 6,
+        "Bomb Arm": 1
+      },
+      "Weapon": {
+        "Kaiser Knuckles": 2,
+        "Cat Claws": 2,
+        "Wyvern Claws": 2,
+        "Faerie Claws": 2,
+        "Hellish Claws": 2,
+        "Nunchaku": 2,
+        "Tonfa": 2,
+        "Three Section Staff": 2,
+        "Mythril Rod": 2,
+        "Fire Rod": 1,
+        "Ice Rod": 1,
+        "Light Rod": 1,
+        "Omnirod": 2,
+        "Staff": 2,
+        "Fire Staff": 2,
+        "Ice Staff": 2,
+        "Light Staff": 2,
+        "Golem Staff": 2,
+        "Rune Staff": 2,
+        "Elder Staff": 2,
+        "Thor'S Hammer": 2,
+        "Battleaxe": 2,
+        "Great Axe": 2,
+        "Morning Star": 2,
+        "Dual Tomahawk": 2,
+        "Triton Hammer": 2,
+        "Thunder Spear": 2,
+        "Wind Spear": 2,
+        "Blood Lance": 2,
+        "Holy Lance": 1,
+        "Knife": 5,
+        "Dagger": 2,
+        "Mythril Knife": 2,
+        "Main Gauche": 2,
+        "Orichalcum": 2,
+        "Air Knife": 1,
+        "Longsword": 2,
+        "Wightslayer": 2,
+        "Golden Sword": 2,
+        "Mythril Sword": 2,
+        "Serpent Sword": 2,
+        "Freezing Blade": 2,
+        "Tyrfing": 2,
+        "Salamand Sword": 2,
+        "Royal Sword": 2,
+        "Ancient Sword": 2,
+        "Blood Sword": 2,
+        "Defender": 2,
+        "Break Blade": 2,
+        "Excalibur": 2,
+        "Ragnarok": 2,
+        "Onion Sword": 5,
+        "Ashura": 2,
+        "Kotetsu": 2,
+        "Kiku Ichimonji": 2,
+        "Masamune": 2,
+        "Book Of Fire": 2,
+        "Book Of Ice": 2,
+        "Tome Of Fire": 2,
+        "Book Of Light": 2,
+        "Tome Of Light": 2,
+        "Tome Of Ice": 2,
+        "Boomerang": 2,
+        "Moonring Blade": 2,
+        "Shuriken": 2,
+        "Diamond Bell": 2,
+        "Earthen Bell": 2,
+        "Rune Bell": 2,
+        "Madhura Harp": 2,
+        "Lamia Harp": 2,
+        "Loki Harp": 2,
+        "Bow": 1,
+        "Great Bow": 2,
+        "Killer Bow": 2,
+        "Rune Bow": 2,
+        "Yoichi Bow": 2,
+        "Wooden Arrow": 1,
+        "Holy Arrow": 2,
+        "Iron Arrow": 2,
+        "Light Arrow": 2,
+        "Fire Arrow": 2,
+        "Ice Arrow": 2,
+        "Medusa Arrow": 2,
+        "Yoichi Arrow": 2
+      },
+      "Armor": {
+        "Leather Shield": 2,
+        "Onion Shield": 2,
+        "Mythril Shield": 2,
+        "Ice Shield": 1,
+        "Heroic Shield": 2,
+        "Demon Shield": 2,
+        "Diamond Shield": 2,
+        "Aegis Shield": 2,
+        "Genji Shield": 2,
+        "Crystal Shield": 2,
+        "Leather Cap": 1,
+        "Onion Helm": 1,
+        "Mythril Helm": 2,
+        "Shell Helm": 2,
+        "Ice Helm": 2,
+        "Headband": 2,
+        "Scholar Hat": 2,
+        "Black Cowl": 2,
+        "Chakra Band": 2,
+        "Viking Helm": 2,
+        "Dragon Helm": 2,
+        "Feathered Hat": 2,
+        "Diamond Helm": 2,
+        "Genji Helm": 2,
+        "Crystal Helm": 2,
+        "Ribbon": 4,
+        "Vest": 5,
+        "Onion Armor": 2,
+        "Mythril Armor": 2,
+        "Shell Armor": 2,
+        "Ice Armor": 2,
+        "Flame Mail": 2,
+        "Kenpo Gi": 2,
+        "Black Garb": 2,
+        "Mage Robe": 2,
+        "Viking Mail": 2,
+        "Black Belt Gi": 2,
+        "Knight Armor": 2,
+        "Dragon Mail": 2,
+        "Bard Vest": 2,
+        "Scholar Robe": 2,
+        "Gaia Vest": 2,
+        "Demon Mail": 2,
+        "Diamond Mail": 2,
+        "Reflect Mail": 2,
+        "White Robe": 2,
+        "Black Robe": 2,
+        "Genji Armor": 2,
+        "Crystal Mail": 2,
+        "Rusty Mail": 2,
+        "Bronze Bracers": 2,
+        "Onion Gauntlets": 1,
+        "Mythril Gloves": 2,
+        "Mythril Bracers": 2,
+        "Thief Gloves": 2,
+        "Gauntlets": 2,
+        "Power Bracers": 2,
+        "Rune Bracers": 2,
+        "Diamond Bracers": 2,
+        "Diamond Gloves": 2,
+        "Protect Ring": 4,
+        "Genji Gloves": 2,
+        "Crystal Gloves": 2
+      },
+      "Magic": {
+        "LV1": {
+          "Blizzard": 2,
+          "Fire": 2,
+          "Sleep": 2,
+          "Cure": 2,
+          "Poisona": 2,
+          "Sight": 2,
+          "Chocobo": 2
+        },
+        "LV2": {
+          "Blind": 2,
+          "Poison": 2,
+          "Thunder": 2,
+          "Aero": 2,
+          "Mini": 2,
+          "Toad": 2,
+          "Shiva": 2
+        },
+        "LV3": {
+          "Blizzara": 2,
+          "Fira": 2,
+          "Thundara": 2,
+          "Blindna": 2,
+          "Cura": 2,
+          "Teleport": 2,
+          "Ramuh": 2
+        },
+        "LV4": {
+          "Blizzaga": 2,
+          "Break": 2,
+          "Shade": 2,
+          "Confuse": 2,
+          "Libra": 2,
+          "Silence": 2,
+          "Ifrit": 2
+        },
+        "LV5": {
+          "Erase": 2,
+          "Raze": 2,
+          "Thundaga": 2,
+          "Curaga": 2,
+          "Protect": 2,
+          "Raise": 2,
+          "Titan": 2
+        },
+        "LV6": {
+          "Bio": 2,
+          "Firaga": 2,
+          "Warp": 2,
+          "Aeroga": 2,
+          "Haste": 2,
+          "Stona": 2,
+          "Odin": 2
+        },
+        "LV7": {
+          "Breakga": 2,
+          "Drain": 2,
+          "Quake": 2,
+          "Curaja": 2,
+          "Esuna": 2,
+          "Reflect": 2,
+          "Leviathan": 2
+        },
+        "LV8": {
+          "Death": 2,
+          "Flare": 2,
+          "Meteor": 2,
+          "Arise": 2,
+          "Holy": 2,
+          "Tornado": 2,
+          "Bahamut": 2
+        }
+      }
+    },
+    "event_flag": {
+      "met_tutorial_npc": true,
+      "opened_forest_gate": false,
+      "defeated_goblin_lord": true
+    },
+    "treasures": {
+      "grassland": {
+        "chest_01": true,
+        "chest_02": false,
+        "hidden_01": true
+      },
+      "village": {
+        "well_item": true
+      },
+      "FloatingContinent": {},
+      "Ur": {},
+      "Ur_Well": {
+        "ur_well_treasure_potion_3": true,
+        "ur_well_treasure_potion_2": true,
+        "ur_well_treasure_potion_1": true
+      }
+    },
+    "item_stock": {}
+  },
+  "menu_state": {
+    "party": [
+      {
+        "index": 0,
+        "name": "Runeth",
+        "hp": 169,
+        "max_hp": 169,
+        "level": 11,
+        "job": "Black Mage",
+        "row": "back",
+        "mp_levels": {
+          "1": {
+            "current": 13,
+            "max": 13
+          },
+          "2": {
+            "current": 4,
+            "max": 4
+          },
+          "3": {
+            "current": 3,
+            "max": 3
+          },
+          "4": {
+            "current": 0,
+            "max": 0
+          },
+          "5": {
+            "current": 0,
+            "max": 0
+          },
+          "6": {
+            "current": 0,
+            "max": 0
+          },
+          "7": {
+            "current": 0,
+            "max": 0
+          },
+          "8": {
+            "current": 0,
+            "max": 0
+          }
+        },
+        "portrait_key": "runeth",
+        "image_name": null,
+        "equipment": {
+          "main_hand": "Ice Rod",
+          "off_hand": null,
+          "head": null,
+          "body": "Vest",
+          "arms": "Bronze Bracers"
+        },
+        "status_icons": [],
+        "status": {
+          "level": 11,
+          "job_level": 10,
+          "exp": 3154,
+          "exp_to_next": 760,
+          "hp": 169,
+          "max_hp": 169,
+          "mp_text": "13/ 4/ 3/ 0/ 0/ 0/ 0/ 0",
+          "strength": 10,
+          "agility": 12,
+          "vitality": 8,
+          "intelligence": 17,
+          "mind": 7,
+          "atk_value": 18,
+          "atk_times": 2,
+          "acc_value": 82,
+          "defense": 6,
+          "def_times": 0,
+          "evasion_percent": 5,
+          "magic_defense": 3,
+          "magic_resistance": 11,
+          "row_label": "BACK",
+          "status_line": "-",
+          "status_icons": []
+        },
+        "out_of_battle": false,
+        "is_jumping": false,
+        "jump_target_index": null
+      },
+      {
+        "index": 1,
+        "name": "Arc",
+        "hp": 213,
+        "max_hp": 213,
+        "level": 11,
+        "job": "Ranger",
+        "row": "back",
+        "mp_levels": {
+          "1": {
+            "current": 8,
+            "max": 8
+          },
+          "2": {
+            "current": 3,
+            "max": 3
+          },
+          "3": {
+            "current": 0,
+            "max": 0
+          },
+          "4": {
+            "current": 0,
+            "max": 0
+          },
+          "5": {
+            "current": 0,
+            "max": 0
+          },
+          "6": {
+            "current": 0,
+            "max": 0
+          },
+          "7": {
+            "current": 0,
+            "max": 0
+          },
+          "8": {
+            "current": 0,
+            "max": 0
+          }
+        },
+        "portrait_key": "arc",
+        "image_name": null,
+        "equipment": {
+          "main_hand": "Bow",
+          "off_hand": "Wooden Arrow",
+          "head": "Leather Cap",
+          "body": "Leather Armor",
+          "arms": null
+        },
+        "status_icons": [],
+        "status": {
+          "level": 11,
+          "job_level": 29,
+          "exp": 3154,
+          "exp_to_next": 760,
+          "hp": 213,
+          "max_hp": 213,
+          "mp_text": " 8/ 3/ 0/ 0/ 0/ 0/ 0/ 0",
+          "strength": 13,
+          "agility": 28,
+          "vitality": 13,
+          "intelligence": 7,
+          "mind": 7,
+          "atk_value": 17,
+          "atk_times": 4,
+          "acc_value": 99,
+          "defense": 9,
+          "def_times": 0,
+          "evasion_percent": 9,
+          "magic_defense": 2,
+          "magic_resistance": 6,
+          "row_label": "BACK",
+          "status_line": "-",
+          "status_icons": []
+        },
+        "out_of_battle": false,
+        "is_jumping": false,
+        "jump_target_index": null
+      },
+      {
+        "index": 2,
+        "name": "Refia",
+        "hp": 235,
+        "max_hp": 235,
+        "level": 11,
+        "job": "Monk",
+        "row": "front",
+        "mp_levels": {
+          "1": {
+            "current": 0,
+            "max": 0
+          },
+          "2": {
+            "current": 0,
+            "max": 0
+          },
+          "3": {
+            "current": 0,
+            "max": 0
+          },
+          "4": {
+            "current": 0,
+            "max": 0
+          },
+          "5": {
+            "current": 0,
+            "max": 0
+          },
+          "6": {
+            "current": 0,
+            "max": 0
+          },
+          "7": {
+            "current": 0,
+            "max": 0
+          },
+          "8": {
+            "current": 0,
+            "max": 0
+          }
+        },
+        "portrait_key": "refia",
+        "image_name": null,
+        "equipment": {
+          "main_hand": null,
+          "off_hand": null,
+          "head": "Leather Cap",
+          "body": "Leather Armor",
+          "arms": null
+        },
+        "status_icons": [],
+        "status": {
+          "level": 11,
+          "job_level": 19,
+          "exp": 3154,
+          "exp_to_next": 760,
+          "hp": 235,
+          "max_hp": 235,
+          "mp_text": " 0/ 0/ 0/ 0/ 0/ 0/ 0/ 0",
+          "strength": 19,
+          "agility": 17,
+          "vitality": 14,
+          "intelligence": 1,
+          "mind": 2,
+          "atk_value": 48,
+          "atk_times": 4,
+          "acc_value": 93,
+          "defense": 10,
+          "def_times": 0,
+          "evasion_percent": 6,
+          "magic_defense": 2,
+          "magic_resistance": 1,
+          "row_label": "FRONT",
+          "status_line": "-",
+          "status_icons": []
+        },
+        "out_of_battle": false,
+        "is_jumping": false,
+        "jump_target_index": null
+      },
+      {
+        "index": 3,
+        "name": "Ingus",
+        "hp": 193,
+        "max_hp": 193,
+        "level": 11,
+        "job": "Warrior",
+        "row": "front",
+        "mp_levels": {
+          "1": {
+            "current": 0,
+            "max": 0
+          },
+          "2": {
+            "current": 0,
+            "max": 0
+          },
+          "3": {
+            "current": 0,
+            "max": 0
+          },
+          "4": {
+            "current": 0,
+            "max": 0
+          },
+          "5": {
+            "current": 0,
+            "max": 0
+          },
+          "6": {
+            "current": 0,
+            "max": 0
+          },
+          "7": {
+            "current": 0,
+            "max": 0
+          },
+          "8": {
+            "current": 0,
+            "max": 0
+          }
+        },
+        "portrait_key": "ingus",
+        "image_name": null,
+        "equipment": {
+          "main_hand": "Longsword",
+          "off_hand": "Leather Shield",
+          "head": "Leather Cap",
+          "body": "Leather Armor",
+          "arms": null
+        },
+        "status_icons": [],
+        "status": {
+          "level": 11,
+          "job_level": 14,
+          "exp": 3154,
+          "exp_to_next": 760,
+          "hp": 193,
+          "max_hp": 193,
+          "mp_text": " 0/ 0/ 0/ 0/ 0/ 0/ 0/ 0",
+          "strength": 17,
+          "agility": 17,
+          "vitality": 10,
+          "intelligence": 5,
+          "mind": 5,
+          "atk_value": 14,
+          "atk_times": 2,
+          "acc_value": 87,
+          "defense": 11,
+          "def_times": 2,
+          "evasion_percent": 9,
+          "magic_defense": 4,
+          "magic_resistance": 4,
+          "row_label": "FRONT",
+          "status_line": "-",
+          "status_icons": []
+        },
+        "out_of_battle": false,
+        "is_jumping": false,
+        "jump_target_index": null
+      }
+    ],
+    "jobs": [
+      "Bard",
+      "Black Belt",
+      "Black Mage",
+      "Devout",
+      "Dragoon",
+      "Evoker",
+      "Geomancer",
+      "Knight",
+      "Magus",
+      "Monk",
+      "Mystic Knight",
+      "Ninja",
+      "Onion Knight",
+      "Ranger",
+      "Red Mage",
+      "Sage",
+      "Scholar",
+      "Summoner",
+      "Thief",
+      "Viking",
+      "Warrior",
+      "White Mage"
+    ],
+    "job_candidates_by_member": [
+      [
+        {
+          "job_name": "Bard",
+          "cp_cost": 13,
+          "saved_job_level": 12,
+          "is_current": false
+        },
+        {
+          "job_name": "Black Belt",
+          "cp_cost": 32,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Black Mage",
+          "cp_cost": 0,
+          "saved_job_level": 10,
+          "is_current": true
+        },
+        {
+          "job_name": "Devout",
+          "cp_cost": 32,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Dragoon",
+          "cp_cost": 32,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Evoker",
+          "cp_cost": 20,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Geomancer",
+          "cp_cost": 16,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Knight",
+          "cp_cost": 18,
+          "saved_job_level": 7,
+          "is_current": false
+        },
+        {
+          "job_name": "Magus",
+          "cp_cost": 24,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Monk",
+          "cp_cost": 8,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Mystic Knight",
+          "cp_cost": 10,
+          "saved_job_level": 15,
+          "is_current": false
+        },
+        {
+          "job_name": "Ninja",
+          "cp_cost": 63,
+          "saved_job_level": 2,
+          "is_current": false
+        },
+        {
+          "job_name": "Onion Knight",
+          "cp_cost": 8,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Ranger",
+          "cp_cost": 24,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Red Mage",
+          "cp_cost": 16,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Sage",
+          "cp_cost": 0,
+          "saved_job_level": 99,
+          "is_current": false
+        },
+        {
+          "job_name": "Scholar",
+          "cp_cost": 16,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Summoner",
+          "cp_cost": 52,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Thief",
+          "cp_cost": 9,
+          "saved_job_level": 8,
+          "is_current": false
+        },
+        {
+          "job_name": "Viking",
+          "cp_cost": 24,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Warrior",
+          "cp_cost": 16,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "White Mage",
+          "cp_cost": 8,
+          "saved_job_level": 1,
+          "is_current": false
+        }
+      ],
+      [
+        {
+          "job_name": "Bard",
+          "cp_cost": 16,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Black Belt",
+          "cp_cost": 25,
+          "saved_job_level": 8,
+          "is_current": false
+        },
+        {
+          "job_name": "Black Mage",
+          "cp_cost": 24,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Devout",
+          "cp_cost": 24,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Dragoon",
+          "cp_cost": 0,
+          "saved_job_level": 97,
+          "is_current": false
+        },
+        {
+          "job_name": "Evoker",
+          "cp_cost": 6,
+          "saved_job_level": 31,
+          "is_current": false
+        },
+        {
+          "job_name": "Geomancer",
+          "cp_cost": 25,
+          "saved_job_level": 16,
+          "is_current": false
+        },
+        {
+          "job_name": "Knight",
+          "cp_cost": 8,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Magus",
+          "cp_cost": 48,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Monk",
+          "cp_cost": 16,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Mystic Knight",
+          "cp_cost": 40,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Ninja",
+          "cp_cost": 60,
+          "saved_job_level": 13,
+          "is_current": false
+        },
+        {
+          "job_name": "Onion Knight",
+          "cp_cost": 15,
+          "saved_job_level": 2,
+          "is_current": false
+        },
+        {
+          "job_name": "Ranger",
+          "cp_cost": 0,
+          "saved_job_level": 29,
+          "is_current": true
+        },
+        {
+          "job_name": "Red Mage",
+          "cp_cost": 8,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Sage",
+          "cp_cost": 48,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Scholar",
+          "cp_cost": 16,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Summoner",
+          "cp_cost": 76,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Thief",
+          "cp_cost": 24,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Viking",
+          "cp_cost": 32,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Warrior",
+          "cp_cost": 8,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "White Mage",
+          "cp_cost": 16,
+          "saved_job_level": 1,
+          "is_current": false
+        }
+      ],
+      [
+        {
+          "job_name": "Bard",
+          "cp_cost": 32,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Black Belt",
+          "cp_cost": 17,
+          "saved_job_level": 8,
+          "is_current": false
+        },
+        {
+          "job_name": "Black Mage",
+          "cp_cost": 8,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Devout",
+          "cp_cost": 40,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Dragoon",
+          "cp_cost": 0,
+          "saved_job_level": 99,
+          "is_current": false
+        },
+        {
+          "job_name": "Evoker",
+          "cp_cost": 28,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Geomancer",
+          "cp_cost": 24,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Knight",
+          "cp_cost": 24,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Magus",
+          "cp_cost": 32,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Monk",
+          "cp_cost": 0,
+          "saved_job_level": 19,
+          "is_current": true
+        },
+        {
+          "job_name": "Mystic Knight",
+          "cp_cost": 24,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Ninja",
+          "cp_cost": 33,
+          "saved_job_level": 24,
+          "is_current": false
+        },
+        {
+          "job_name": "Onion Knight",
+          "cp_cost": 7,
+          "saved_job_level": 2,
+          "is_current": false
+        },
+        {
+          "job_name": "Ranger",
+          "cp_cost": 16,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Red Mage",
+          "cp_cost": 16,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Sage",
+          "cp_cost": 64,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Scholar",
+          "cp_cost": 24,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Summoner",
+          "cp_cost": 60,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Thief",
+          "cp_cost": 8,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Viking",
+          "cp_cost": 16,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Warrior",
+          "cp_cost": 8,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "White Mage",
+          "cp_cost": 16,
+          "saved_job_level": 1,
+          "is_current": false
+        }
+      ],
+      [
+        {
+          "job_name": "Bard",
+          "cp_cost": 3,
+          "saved_job_level": 22,
+          "is_current": false
+        },
+        {
+          "job_name": "Black Belt",
+          "cp_cost": 17,
+          "saved_job_level": 8,
+          "is_current": false
+        },
+        {
+          "job_name": "Black Mage",
+          "cp_cost": 16,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Devout",
+          "cp_cost": 32,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Dragoon",
+          "cp_cost": 7,
+          "saved_job_level": 10,
+          "is_current": false
+        },
+        {
+          "job_name": "Evoker",
+          "cp_cost": 28,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Geomancer",
+          "cp_cost": 32,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Knight",
+          "cp_cost": 16,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Magus",
+          "cp_cost": 40,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Monk",
+          "cp_cost": 8,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Mystic Knight",
+          "cp_cost": 32,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Ninja",
+          "cp_cost": 52,
+          "saved_job_level": 13,
+          "is_current": false
+        },
+        {
+          "job_name": "Onion Knight",
+          "cp_cost": 6,
+          "saved_job_level": 3,
+          "is_current": false
+        },
+        {
+          "job_name": "Ranger",
+          "cp_cost": 8,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Red Mage",
+          "cp_cost": 8,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Sage",
+          "cp_cost": 56,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Scholar",
+          "cp_cost": 0,
+          "saved_job_level": 26,
+          "is_current": false
+        },
+        {
+          "job_name": "Summoner",
+          "cp_cost": 68,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Thief",
+          "cp_cost": 1,
+          "saved_job_level": 16,
+          "is_current": false
+        },
+        {
+          "job_name": "Viking",
+          "cp_cost": 24,
+          "saved_job_level": 1,
+          "is_current": false
+        },
+        {
+          "job_name": "Warrior",
+          "cp_cost": 0,
+          "saved_job_level": 14,
+          "is_current": true
+        },
+        {
+          "job_name": "White Mage",
+          "cp_cost": 8,
+          "saved_job_level": 1,
+          "is_current": false
+        }
+      ]
+    ],
+    "equip_candidates_by_member": [
+      {
+        "main_hand": [
+          {
+            "kind": "none",
+            "name": null
+          },
+          {
+            "kind": "weapon",
+            "name": "Mythril Rod",
+            "count": 2,
+            "atk": 5,
+            "acc": 60,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Fire Rod",
+            "count": 1,
+            "atk": 12,
+            "acc": 70,
+            "bonus_label": "BON:FIR↑"
+          },
+          {
+            "kind": "weapon",
+            "name": "Ice Rod",
+            "count": 1,
+            "atk": 12,
+            "acc": 70,
+            "bonus_label": "BON:ICE↑"
+          },
+          {
+            "kind": "weapon",
+            "name": "Light Rod",
+            "count": 1,
+            "atk": 12,
+            "acc": 60,
+            "bonus_label": "BON:LIT↑"
+          },
+          {
+            "kind": "weapon",
+            "name": "Knife",
+            "count": 5,
+            "atk": 6,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Dagger",
+            "count": 2,
+            "atk": 8,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Mythril Knife",
+            "count": 2,
+            "atk": 10,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Bow",
+            "count": 1,
+            "atk": 5,
+            "acc": 90,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Great Bow",
+            "count": 2,
+            "atk": 8,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Wooden Arrow",
+            "count": 1,
+            "atk": 6,
+            "acc": 90,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Holy Arrow",
+            "count": 2,
+            "atk": 13,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Iron Arrow",
+            "count": 2,
+            "atk": 17,
+            "acc": 85,
+            "bonus_label": ""
+          }
+        ],
+        "off_hand": [
+          {
+            "kind": "none",
+            "name": null
+          },
+          {
+            "kind": "weapon",
+            "name": "Mythril Rod",
+            "count": 2,
+            "atk": 5,
+            "acc": 60,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Fire Rod",
+            "count": 1,
+            "atk": 12,
+            "acc": 70,
+            "bonus_label": "BON:FIR↑"
+          },
+          {
+            "kind": "weapon",
+            "name": "Ice Rod",
+            "count": 1,
+            "atk": 12,
+            "acc": 70,
+            "bonus_label": "BON:ICE↑"
+          },
+          {
+            "kind": "weapon",
+            "name": "Light Rod",
+            "count": 1,
+            "atk": 12,
+            "acc": 60,
+            "bonus_label": "BON:LIT↑"
+          },
+          {
+            "kind": "weapon",
+            "name": "Knife",
+            "count": 5,
+            "atk": 6,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Dagger",
+            "count": 2,
+            "atk": 8,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Mythril Knife",
+            "count": 2,
+            "atk": 10,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Wooden Arrow",
+            "count": 1,
+            "atk": 6,
+            "acc": 90,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Holy Arrow",
+            "count": 2,
+            "atk": 13,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Iron Arrow",
+            "count": 2,
+            "atk": 17,
+            "acc": 85,
+            "bonus_label": ""
+          }
+        ],
+        "head": [
+          {
+            "kind": "none",
+            "name": null
+          },
+          {
+            "kind": "armor",
+            "name": "Leather Cap",
+            "count": 1,
+            "def": 1,
+            "eva": 1,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Scholar Hat",
+            "count": 2,
+            "def": 5,
+            "eva": 10,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Ribbon",
+            "count": 4,
+            "def": 9,
+            "eva": 10,
+            "bonus_label": ""
+          }
+        ],
+        "body": [
+          {
+            "kind": "none",
+            "name": null
+          },
+          {
+            "kind": "armor",
+            "name": "Vest",
+            "count": 5,
+            "def": 1,
+            "eva": 0,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Mage Robe",
+            "count": 2,
+            "def": 9,
+            "eva": 7,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Scholar Robe",
+            "count": 2,
+            "def": 15,
+            "eva": 12,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Black Robe",
+            "count": 2,
+            "def": 20,
+            "eva": 12,
+            "bonus_label": "BON:INT+5"
+          },
+          {
+            "kind": "armor",
+            "name": "Rusty Mail",
+            "count": 2,
+            "def": 0,
+            "eva": 0,
+            "bonus_label": ""
+          }
+        ],
+        "arms": [
+          {
+            "kind": "none",
+            "name": null
+          },
+          {
+            "kind": "armor",
+            "name": "Bronze Bracers",
+            "count": 2,
+            "def": 1,
+            "eva": 2,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Mythril Bracers",
+            "count": 2,
+            "def": 2,
+            "eva": 7,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Rune Bracers",
+            "count": 2,
+            "def": 5,
+            "eva": 10,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Diamond Bracers",
+            "count": 2,
+            "def": 6,
+            "eva": 12,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Protect Ring",
+            "count": 4,
+            "def": 7,
+            "eva": 15,
+            "bonus_label": "BON:VIT+5"
+          }
+        ]
+      },
+      {
+        "main_hand": [
+          {
+            "kind": "none",
+            "name": null
+          },
+          {
+            "kind": "weapon",
+            "name": "Bow",
+            "count": 1,
+            "atk": 5,
+            "acc": 90,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Great Bow",
+            "count": 2,
+            "atk": 8,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Killer Bow",
+            "count": 2,
+            "atk": 15,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Rune Bow",
+            "count": 2,
+            "atk": 25,
+            "acc": 90,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Yoichi Bow",
+            "count": 2,
+            "atk": 50,
+            "acc": 100,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Wooden Arrow",
+            "count": 1,
+            "atk": 6,
+            "acc": 90,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Holy Arrow",
+            "count": 2,
+            "atk": 13,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Iron Arrow",
+            "count": 2,
+            "atk": 17,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Light Arrow",
+            "count": 2,
+            "atk": 30,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Fire Arrow",
+            "count": 2,
+            "atk": 30,
+            "acc": 90,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Ice Arrow",
+            "count": 2,
+            "atk": 30,
+            "acc": 90,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Medusa Arrow",
+            "count": 2,
+            "atk": 20,
+            "acc": 100,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Yoichi Arrow",
+            "count": 2,
+            "atk": 70,
+            "acc": 100,
+            "bonus_label": ""
+          }
+        ],
+        "off_hand": [
+          {
+            "kind": "none",
+            "name": null
+          },
+          {
+            "kind": "weapon",
+            "name": "Wooden Arrow",
+            "count": 1,
+            "atk": 6,
+            "acc": 90,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Holy Arrow",
+            "count": 2,
+            "atk": 13,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Iron Arrow",
+            "count": 2,
+            "atk": 17,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Light Arrow",
+            "count": 2,
+            "atk": 30,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Fire Arrow",
+            "count": 2,
+            "atk": 30,
+            "acc": 90,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Ice Arrow",
+            "count": 2,
+            "atk": 30,
+            "acc": 90,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Medusa Arrow",
+            "count": 2,
+            "atk": 20,
+            "acc": 100,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Yoichi Arrow",
+            "count": 2,
+            "atk": 70,
+            "acc": 100,
+            "bonus_label": ""
+          }
+        ],
+        "head": [
+          {
+            "kind": "none",
+            "name": null
+          },
+          {
+            "kind": "armor",
+            "name": "Leather Cap",
+            "count": 1,
+            "def": 1,
+            "eva": 1,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Ice Helm",
+            "count": 2,
+            "def": 4,
+            "eva": 6,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Feathered Hat",
+            "count": 2,
+            "def": 7,
+            "eva": 10,
+            "bonus_label": "BON:AGI+5"
+          },
+          {
+            "kind": "armor",
+            "name": "Ribbon",
+            "count": 4,
+            "def": 9,
+            "eva": 10,
+            "bonus_label": ""
+          }
+        ],
+        "body": [
+          {
+            "kind": "none",
+            "name": null
+          },
+          {
+            "kind": "armor",
+            "name": "Vest",
+            "count": 5,
+            "def": 1,
+            "eva": 0,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Mythril Armor",
+            "count": 2,
+            "def": 3,
+            "eva": 3,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Shell Armor",
+            "count": 2,
+            "def": 4,
+            "eva": 4,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Ice Armor",
+            "count": 2,
+            "def": 5,
+            "eva": 6,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Flame Mail",
+            "count": 2,
+            "def": 5,
+            "eva": 6,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Rusty Mail",
+            "count": 2,
+            "def": 0,
+            "eva": 0,
+            "bonus_label": ""
+          }
+        ],
+        "arms": [
+          {
+            "kind": "none",
+            "name": null
+          },
+          {
+            "kind": "armor",
+            "name": "Power Bracers",
+            "count": 2,
+            "def": 4,
+            "eva": 11,
+            "bonus_label": "BON:STR+5"
+          },
+          {
+            "kind": "armor",
+            "name": "Protect Ring",
+            "count": 4,
+            "def": 7,
+            "eva": 15,
+            "bonus_label": "BON:VIT+5"
+          }
+        ]
+      },
+      {
+        "main_hand": [
+          {
+            "kind": "none",
+            "name": null
+          },
+          {
+            "kind": "weapon",
+            "name": "Nunchaku",
+            "count": 2,
+            "atk": 12,
+            "acc": 70,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Tonfa",
+            "count": 2,
+            "atk": 20,
+            "acc": 80,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Three Section Staff",
+            "count": 2,
+            "atk": 25,
+            "acc": 70,
+            "bonus_label": ""
+          }
+        ],
+        "off_hand": [
+          {
+            "kind": "none",
+            "name": null
+          },
+          {
+            "kind": "weapon",
+            "name": "Nunchaku",
+            "count": 2,
+            "atk": 12,
+            "acc": 70,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Tonfa",
+            "count": 2,
+            "atk": 20,
+            "acc": 80,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Three Section Staff",
+            "count": 2,
+            "atk": 25,
+            "acc": 70,
+            "bonus_label": ""
+          }
+        ],
+        "head": [
+          {
+            "kind": "none",
+            "name": null
+          },
+          {
+            "kind": "armor",
+            "name": "Leather Cap",
+            "count": 1,
+            "def": 1,
+            "eva": 1,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Headband",
+            "count": 2,
+            "def": 4,
+            "eva": 6,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Chakra Band",
+            "count": 2,
+            "def": 6,
+            "eva": 10,
+            "bonus_label": "BON:STR+5/VIT+5"
+          },
+          {
+            "kind": "armor",
+            "name": "Ribbon",
+            "count": 4,
+            "def": 9,
+            "eva": 10,
+            "bonus_label": ""
+          }
+        ],
+        "body": [
+          {
+            "kind": "none",
+            "name": null
+          },
+          {
+            "kind": "armor",
+            "name": "Vest",
+            "count": 5,
+            "def": 1,
+            "eva": 0,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Kenpo Gi",
+            "count": 2,
+            "def": 6,
+            "eva": 8,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Black Belt Gi",
+            "count": 2,
+            "def": 11,
+            "eva": 10,
+            "bonus_label": "BON:AGI+5"
+          },
+          {
+            "kind": "armor",
+            "name": "Rusty Mail",
+            "count": 2,
+            "def": 0,
+            "eva": 0,
+            "bonus_label": ""
+          }
+        ],
+        "arms": [
+          {
+            "kind": "none",
+            "name": null
+          },
+          {
+            "kind": "armor",
+            "name": "Power Bracers",
+            "count": 2,
+            "def": 4,
+            "eva": 11,
+            "bonus_label": "BON:STR+5"
+          },
+          {
+            "kind": "armor",
+            "name": "Protect Ring",
+            "count": 4,
+            "def": 7,
+            "eva": 15,
+            "bonus_label": "BON:VIT+5"
+          }
+        ]
+      },
+      {
+        "main_hand": [
+          {
+            "kind": "none",
+            "name": null
+          },
+          {
+            "kind": "weapon",
+            "name": "Knife",
+            "count": 5,
+            "atk": 6,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Dagger",
+            "count": 2,
+            "atk": 8,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Mythril Knife",
+            "count": 2,
+            "atk": 10,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Longsword",
+            "count": 2,
+            "atk": 10,
+            "acc": 80,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Golden Sword",
+            "count": 2,
+            "atk": 5,
+            "acc": 20,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Mythril Sword",
+            "count": 2,
+            "atk": 17,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Serpent Sword",
+            "count": 2,
+            "atk": 25,
+            "acc": 80,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Freezing Blade",
+            "count": 2,
+            "atk": 40,
+            "acc": 80,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Salamand Sword",
+            "count": 2,
+            "atk": 32,
+            "acc": 80,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Royal Sword",
+            "count": 2,
+            "atk": 50,
+            "acc": 80,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Ancient Sword",
+            "count": 2,
+            "atk": 5,
+            "acc": 80,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Blood Sword",
+            "count": 2,
+            "atk": 35,
+            "acc": 80,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Bow",
+            "count": 1,
+            "atk": 5,
+            "acc": 90,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Great Bow",
+            "count": 2,
+            "atk": 8,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Wooden Arrow",
+            "count": 1,
+            "atk": 6,
+            "acc": 90,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Holy Arrow",
+            "count": 2,
+            "atk": 13,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Iron Arrow",
+            "count": 2,
+            "atk": 17,
+            "acc": 85,
+            "bonus_label": ""
+          }
+        ],
+        "off_hand": [
+          {
+            "kind": "none",
+            "name": null
+          },
+          {
+            "kind": "weapon",
+            "name": "Knife",
+            "count": 5,
+            "atk": 6,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Dagger",
+            "count": 2,
+            "atk": 8,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Mythril Knife",
+            "count": 2,
+            "atk": 10,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Longsword",
+            "count": 2,
+            "atk": 10,
+            "acc": 80,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Golden Sword",
+            "count": 2,
+            "atk": 5,
+            "acc": 20,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Mythril Sword",
+            "count": 2,
+            "atk": 17,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Serpent Sword",
+            "count": 2,
+            "atk": 25,
+            "acc": 80,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Freezing Blade",
+            "count": 2,
+            "atk": 40,
+            "acc": 80,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Salamand Sword",
+            "count": 2,
+            "atk": 32,
+            "acc": 80,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Royal Sword",
+            "count": 2,
+            "atk": 50,
+            "acc": 80,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Ancient Sword",
+            "count": 2,
+            "atk": 5,
+            "acc": 80,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Blood Sword",
+            "count": 2,
+            "atk": 35,
+            "acc": 80,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Wooden Arrow",
+            "count": 1,
+            "atk": 6,
+            "acc": 90,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Holy Arrow",
+            "count": 2,
+            "atk": 13,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "weapon",
+            "name": "Iron Arrow",
+            "count": 2,
+            "atk": 17,
+            "acc": 85,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Leather Shield",
+            "count": 2,
+            "def": 3,
+            "eva": 3,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Mythril Shield",
+            "count": 2,
+            "def": 5,
+            "eva": 7,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Ice Shield",
+            "count": 1,
+            "def": 8,
+            "eva": 9,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Crystal Shield",
+            "count": 2,
+            "def": 20,
+            "eva": 20,
+            "bonus_label": "BON:STR+5/AGI+5/VIT+5"
+          }
+        ],
+        "head": [
+          {
+            "kind": "none",
+            "name": null
+          },
+          {
+            "kind": "armor",
+            "name": "Leather Cap",
+            "count": 1,
+            "def": 1,
+            "eva": 1,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Mythril Helm",
+            "count": 2,
+            "def": 2,
+            "eva": 4,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Shell Helm",
+            "count": 2,
+            "def": 3,
+            "eva": 5,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Ice Helm",
+            "count": 2,
+            "def": 4,
+            "eva": 6,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Crystal Helm",
+            "count": 2,
+            "def": 12,
+            "eva": 15,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Ribbon",
+            "count": 4,
+            "def": 9,
+            "eva": 10,
+            "bonus_label": ""
+          }
+        ],
+        "body": [
+          {
+            "kind": "none",
+            "name": null
+          },
+          {
+            "kind": "armor",
+            "name": "Vest",
+            "count": 5,
+            "def": 1,
+            "eva": 0,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Mythril Armor",
+            "count": 2,
+            "def": 3,
+            "eva": 3,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Shell Armor",
+            "count": 2,
+            "def": 4,
+            "eva": 4,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Ice Armor",
+            "count": 2,
+            "def": 5,
+            "eva": 6,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Flame Mail",
+            "count": 2,
+            "def": 5,
+            "eva": 6,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Crystal Mail",
+            "count": 2,
+            "def": 28,
+            "eva": 20,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Rusty Mail",
+            "count": 2,
+            "def": 0,
+            "eva": 0,
+            "bonus_label": ""
+          }
+        ],
+        "arms": [
+          {
+            "kind": "none",
+            "name": null
+          },
+          {
+            "kind": "armor",
+            "name": "Mythril Gloves",
+            "count": 2,
+            "def": 1,
+            "eva": 5,
+            "bonus_label": ""
+          },
+          {
+            "kind": "armor",
+            "name": "Power Bracers",
+            "count": 2,
+            "def": 4,
+            "eva": 11,
+            "bonus_label": "BON:STR+5"
+          },
+          {
+            "kind": "armor",
+            "name": "Protect Ring",
+            "count": 4,
+            "def": 7,
+            "eva": 15,
+            "bonus_label": "BON:VIT+5"
+          },
+          {
+            "kind": "armor",
+            "name": "Crystal Gloves",
+            "count": 2,
+            "def": 10,
+            "eva": 15,
+            "bonus_label": ""
+          }
+        ]
+      }
+    ],
+    "equipment_by_member": [
+      {
+        "main_hand": "Ice Rod",
+        "off_hand": null,
+        "head": null,
+        "body": "Vest",
+        "arms": "Bronze Bracers"
+      },
+      {
+        "main_hand": "Bow",
+        "off_hand": "Wooden Arrow",
+        "head": "Leather Cap",
+        "body": "Leather Armor",
+        "arms": null
+      },
+      {
+        "main_hand": null,
+        "off_hand": null,
+        "head": "Leather Cap",
+        "body": "Leather Armor",
+        "arms": null
+      },
+      {
+        "main_hand": "Longsword",
+        "off_hand": "Leather Shield",
+        "head": "Leather Cap",
+        "body": "Leather Armor",
+        "arms": null
+      }
+    ],
+    "magic_setup": {
+      "stock_by_level": {
+        "1": [
+          "Blizzard",
+          "Fire",
+          "Sleep",
+          "Sleep",
+          "Poisona",
+          "Sight",
+          "Chocobo"
+        ],
+        "2": [
+          "Blind",
+          "Poison",
+          "Poison",
+          "Thunder",
+          "Aero",
+          "Mini",
+          "Toad"
+        ],
+        "3": [
+          "Blizzara",
+          "Blizzara",
+          "Fira",
+          "Thundara",
+          "Blindna",
+          "Teleport",
+          "Ramuh"
+        ],
+        "4": [
+          "Blizzaga",
+          "Blizzaga",
+          "Break",
+          "Shade",
+          "Confuse",
+          "Libra",
+          "Silence",
+          "Silence",
+          "Ifrit"
+        ],
+        "5": [
+          "Erase",
+          "Erase",
+          "Raze",
+          "Raze",
+          "Thundaga",
+          "Curaga",
+          "Curaga",
+          "Protect",
+          "Raise",
+          "Titan"
+        ],
+        "6": [
+          "Bio",
+          "Firaga",
+          "Warp",
+          "Aeroga",
+          "Aeroga",
+          "Haste",
+          "Haste",
+          "Stona",
+          "Stona",
+          "Odin"
+        ],
+        "7": [
+          "Breakga",
+          "Breakga",
+          "Drain",
+          "Quake",
+          "Quake",
+          "Curaja",
+          "Esuna",
+          "Reflect",
+          "Reflect",
+          "Leviathan"
+        ],
+        "8": [
+          "Death",
+          "Death",
+          "Flare",
+          "Meteor",
+          "Arise",
+          "Arise",
+          "Holy",
+          "Holy",
+          "Tornado",
+          "Tornado"
+        ]
+      },
+      "equipped_by_member": [
+        {
+          "1": [
+            "Fire",
+            "Blizzard",
+            "Cure"
+          ],
+          "2": [
+            "Blind",
+            "Thunder",
+            "Shiva"
+          ],
+          "3": [
+            "Fira",
+            "Thundara",
+            "Cura"
+          ],
+          "4": [
+            "Break",
+            "Shade",
+            "Libra"
+          ],
+          "5": [
+            "Thundaga",
+            "Protect",
+            "Raise"
+          ],
+          "6": [
+            "Firaga",
+            "Warp",
+            "Bio"
+          ],
+          "7": [
+            "Drain",
+            "Esuna",
+            "Curaja"
+          ],
+          "8": [
+            "Flare",
+            "Meteor",
+            "Bahamut"
+          ]
+        },
+        {
+          "1": [
+            "Chocobo",
+            null,
+            null
+          ],
+          "2": [
+            "Shiva",
+            null,
+            null
+          ],
+          "3": [
+            "Ramuh",
+            null,
+            null
+          ],
+          "4": [
+            "Ifrit",
+            null,
+            null
+          ],
+          "5": [
+            "Titan",
+            null,
+            null
+          ],
+          "6": [
+            "Odin",
+            null,
+            null
+          ],
+          "7": [
+            "Leviathan",
+            null,
+            null
+          ],
+          "8": [
+            "Bahamut",
+            null,
+            null
+          ]
+        },
+        {
+          "1": [
+            null,
+            null,
+            null
+          ],
+          "2": [
+            null,
+            null,
+            null
+          ],
+          "3": [
+            null,
+            null,
+            null
+          ],
+          "4": [
+            null,
+            null,
+            null
+          ],
+          "5": [
+            null,
+            null,
+            null
+          ],
+          "6": [
+            null,
+            null,
+            null
+          ],
+          "7": [
+            null,
+            null,
+            null
+          ],
+          "8": [
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "1": [
+            "Cure",
+            "Poisona",
+            "Sight"
+          ],
+          "2": [
+            "Mini",
+            "Toad",
+            "Aero"
+          ],
+          "3": [
+            "Cura",
+            "Teleport",
+            "Blindna"
+          ],
+          "4": [
+            "Confuse",
+            null,
+            null
+          ],
+          "5": [
+            null,
+            null,
+            null
+          ],
+          "6": [
+            null,
+            null,
+            null
+          ],
+          "7": [
+            null,
+            null,
+            null
+          ],
+          "8": [
+            null,
+            null,
+            null
+          ]
+        }
+      ]
+    },
+    "magic_spell_meta_by_name": {
+      "Flare": {
+        "type": "Black Magic",
+        "level": 8,
+        "effect_category": "damage",
+        "default_target_side": "Enemy",
+        "target_scope": "one_or_all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Death": {
+        "type": "Black Magic",
+        "level": 8,
+        "effect_category": "status",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": "KO",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Meteor": {
+        "type": "Black Magic",
+        "level": 8,
+        "effect_category": "damage",
+        "default_target_side": "Enemy",
+        "target_scope": "all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Quake": {
+        "type": "Black Magic",
+        "level": 7,
+        "effect_category": "damage",
+        "default_target_side": "Enemy",
+        "target_scope": "all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Breakga": {
+        "type": "Black Magic",
+        "level": 7,
+        "effect_category": "status",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": "Petrification",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Drain": {
+        "type": "Black Magic",
+        "level": 7,
+        "effect_category": "drain",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Firaga": {
+        "type": "Black Magic",
+        "level": 6,
+        "effect_category": "damage",
+        "default_target_side": "Enemy",
+        "target_scope": "one_or_all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Bio": {
+        "type": "Black Magic",
+        "level": 6,
+        "effect_category": "damage",
+        "default_target_side": "Enemy",
+        "target_scope": "one_or_all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Warp": {
+        "type": "Black Magic",
+        "level": 6,
+        "effect_category": "teleport",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": "KO",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Thundaga": {
+        "type": "Black Magic",
+        "level": 5,
+        "effect_category": "damage",
+        "default_target_side": "Enemy",
+        "target_scope": "one_or_all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Raze": {
+        "type": "Black Magic",
+        "level": 5,
+        "effect_category": "status",
+        "default_target_side": "Enemy",
+        "target_scope": "all",
+        "status_ailment": "KO",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Erase": {
+        "type": "Black Magic",
+        "level": 5,
+        "effect_category": "remove_reflect",
+        "default_target_side": "Enemy",
+        "target_scope": "one_or_all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Break": {
+        "type": "Black Magic",
+        "level": 4,
+        "effect_category": "status",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": "Partial Petrification (1/2)",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Blizzaga": {
+        "type": "Black Magic",
+        "level": 4,
+        "effect_category": "damage",
+        "default_target_side": "Enemy",
+        "target_scope": "one_or_all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Shade": {
+        "type": "Black Magic",
+        "level": 4,
+        "effect_category": "status",
+        "default_target_side": "Enemy",
+        "target_scope": "one_or_all",
+        "status_ailment": "Paralysis",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Fira": {
+        "type": "Black Magic",
+        "level": 3,
+        "effect_category": "damage",
+        "default_target_side": "Enemy",
+        "target_scope": "one_or_all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Blizzara": {
+        "type": "Black Magic",
+        "level": 3,
+        "effect_category": "damage",
+        "default_target_side": "Enemy",
+        "target_scope": "one_or_all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Thundara": {
+        "type": "Black Magic",
+        "level": 3,
+        "effect_category": "damage",
+        "default_target_side": "Enemy",
+        "target_scope": "one_or_all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Thunder": {
+        "type": "Black Magic",
+        "level": 2,
+        "effect_category": "damage",
+        "default_target_side": "Enemy",
+        "target_scope": "one_or_all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Poison": {
+        "type": "Black Magic",
+        "level": 2,
+        "effect_category": "status",
+        "default_target_side": "Enemy",
+        "target_scope": "one_or_all",
+        "status_ailment": "Poison",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Blind": {
+        "type": "Black Magic",
+        "level": 2,
+        "effect_category": "status",
+        "default_target_side": "Enemy",
+        "target_scope": "one_or_all",
+        "status_ailment": "Blind",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Fire": {
+        "type": "Black Magic",
+        "level": 1,
+        "effect_category": "damage",
+        "default_target_side": "Enemy",
+        "target_scope": "one_or_all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Blizzard": {
+        "type": "Black Magic",
+        "level": 1,
+        "effect_category": "damage",
+        "default_target_side": "Enemy",
+        "target_scope": "one_or_all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Sleep": {
+        "type": "Black Magic",
+        "level": 1,
+        "effect_category": "status",
+        "default_target_side": "Enemy",
+        "target_scope": "one_or_all",
+        "status_ailment": "Sleep",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Tornado": {
+        "type": "White Magic",
+        "level": 8,
+        "effect_category": "set_hp_critical",
+        "default_target_side": "Enemy",
+        "target_scope": "one_or_all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Arise": {
+        "type": "White Magic",
+        "level": 8,
+        "effect_category": "revive",
+        "default_target_side": "Ally",
+        "target_scope": "one",
+        "status_ailment": "KO",
+        "field_heal_hp": null,
+        "field_revive_hp": "full"
+      },
+      "Holy": {
+        "type": "White Magic",
+        "level": 8,
+        "effect_category": "damage",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Curaja": {
+        "type": "White Magic",
+        "level": 7,
+        "effect_category": "heal_hp",
+        "default_target_side": "Any",
+        "target_scope": "one_or_all",
+        "status_ailment": null,
+        "field_heal_hp": 9999,
+        "field_revive_hp": null
+      },
+      "Esuna": {
+        "type": "White Magic",
+        "level": 7,
+        "effect_category": "status_recovery",
+        "default_target_side": "Ally",
+        "target_scope": "one",
+        "status_ailment": "Blind, Confusion, Mini, Paralysis, Partial Petrification, Petrification, Poison, Silence, Sleep, Toad",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Reflect": {
+        "type": "White Magic",
+        "level": 7,
+        "effect_category": "reflect",
+        "default_target_side": "Ally",
+        "target_scope": "one",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Aeroga": {
+        "type": "White Magic",
+        "level": 6,
+        "effect_category": "damage",
+        "default_target_side": "Enemy",
+        "target_scope": "one_or_all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Stona": {
+        "type": "White Magic",
+        "level": 6,
+        "effect_category": "status_recovery",
+        "default_target_side": "Ally",
+        "target_scope": "one",
+        "status_ailment": "Partial Petrification, Petrification",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Haste": {
+        "type": "White Magic",
+        "level": 6,
+        "effect_category": "buff_attack",
+        "default_target_side": "Ally",
+        "target_scope": "one",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Curaga": {
+        "type": "White Magic",
+        "level": 5,
+        "effect_category": "heal_hp",
+        "default_target_side": "Any",
+        "target_scope": "one_or_all",
+        "status_ailment": null,
+        "field_heal_hp": 400,
+        "field_revive_hp": null
+      },
+      "Raise": {
+        "type": "White Magic",
+        "level": 5,
+        "effect_category": "revive",
+        "default_target_side": "Ally",
+        "target_scope": "one",
+        "status_ailment": "KO",
+        "field_heal_hp": null,
+        "field_revive_hp": "half"
+      },
+      "Protect": {
+        "type": "White Magic",
+        "level": 5,
+        "effect_category": "buff_defense",
+        "default_target_side": "Ally",
+        "target_scope": "one",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Libra": {
+        "type": "White Magic",
+        "level": 4,
+        "effect_category": "inspect",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Confuse": {
+        "type": "White Magic",
+        "level": 4,
+        "effect_category": "status",
+        "default_target_side": "Enemy",
+        "target_scope": "one_or_all",
+        "status_ailment": "Confusion",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Silence": {
+        "type": "White Magic",
+        "level": 4,
+        "effect_category": "status",
+        "default_target_side": "Enemy",
+        "target_scope": "one_or_all",
+        "status_ailment": "Silence",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Cura": {
+        "type": "White Magic",
+        "level": 3,
+        "effect_category": "heal_hp",
+        "default_target_side": "Any",
+        "target_scope": "one_or_all",
+        "status_ailment": null,
+        "field_heal_hp": 150,
+        "field_revive_hp": null
+      },
+      "Teleport": {
+        "type": "White Magic",
+        "level": 3,
+        "effect_category": "teleport",
+        "default_target_side": "Ally",
+        "target_scope": "one",
+        "status_ailment": "KO",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Blindna": {
+        "type": "White Magic",
+        "level": 3,
+        "effect_category": "status_recovery",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": "Blind",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Aero": {
+        "type": "White Magic",
+        "level": 2,
+        "effect_category": "damage",
+        "default_target_side": "Enemy",
+        "target_scope": "one_or_all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Toad": {
+        "type": "White Magic",
+        "level": 2,
+        "effect_category": "status",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": "Toad",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Mini": {
+        "type": "White Magic",
+        "level": 2,
+        "effect_category": "status",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": "Mini",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Cure": {
+        "type": "White Magic",
+        "level": 1,
+        "effect_category": "heal_hp",
+        "default_target_side": "Any",
+        "target_scope": "one_or_all",
+        "status_ailment": null,
+        "field_heal_hp": 50,
+        "field_revive_hp": null
+      },
+      "Poisona": {
+        "type": "White Magic",
+        "level": 1,
+        "effect_category": "status_recovery",
+        "default_target_side": "Ally",
+        "target_scope": "one",
+        "status_ailment": "Poison",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Sight": {
+        "type": "White Magic",
+        "level": 1,
+        "effect_category": "field_utility",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Bahamut: Aura": {
+        "type": "Summon",
+        "level": 8,
+        "effect_category": "buff_attack",
+        "default_target_side": "Ally",
+        "target_scope": "all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Bahamut: Rend": {
+        "type": "Summon",
+        "level": 8,
+        "effect_category": "",
+        "default_target_side": "",
+        "target_scope": "",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Bahamut: Mega Flare": {
+        "type": "Summon",
+        "level": 8,
+        "effect_category": "",
+        "default_target_side": "",
+        "target_scope": "",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Leviathan: Demon Eye": {
+        "type": "Summon",
+        "level": 7,
+        "effect_category": "status",
+        "default_target_side": "Enemy",
+        "target_scope": "all",
+        "status_ailment": "Petrification",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Leviathan: Cyclone": {
+        "type": "Summon",
+        "level": 7,
+        "effect_category": "",
+        "default_target_side": "",
+        "target_scope": "",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Leviathan: Tidal Wave": {
+        "type": "Summon",
+        "level": 7,
+        "effect_category": "",
+        "default_target_side": "",
+        "target_scope": "",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Odin: Protective Light": {
+        "type": "Summon",
+        "level": 6,
+        "effect_category": "reflect",
+        "default_target_side": "Ally",
+        "target_scope": "all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Odin: Slash": {
+        "type": "Summon",
+        "level": 6,
+        "effect_category": "",
+        "default_target_side": "",
+        "target_scope": "",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Odin: Zantetsuken": {
+        "type": "Summon",
+        "level": 6,
+        "effect_category": "",
+        "default_target_side": "",
+        "target_scope": "",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Titan: Clobber": {
+        "type": "Summon",
+        "level": 5,
+        "effect_category": "",
+        "default_target_side": "",
+        "target_scope": "",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Titan: Stomp": {
+        "type": "Summon",
+        "level": 5,
+        "effect_category": "",
+        "default_target_side": "",
+        "target_scope": "",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Titan: Earthen Fury": {
+        "type": "Summon",
+        "level": 5,
+        "effect_category": "",
+        "default_target_side": "",
+        "target_scope": "",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Ifrit: Healing Light": {
+        "type": "Summon",
+        "level": 4,
+        "effect_category": "heal_hp",
+        "default_target_side": "Ally",
+        "target_scope": "all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Ifrit: Hellfire": {
+        "type": "Summon",
+        "level": 4,
+        "effect_category": "",
+        "default_target_side": "",
+        "target_scope": "",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Ifrit: Inferno": {
+        "type": "Summon",
+        "level": 4,
+        "effect_category": "",
+        "default_target_side": "",
+        "target_scope": "",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Ramuh: Mind Blast": {
+        "type": "Summon",
+        "level": 3,
+        "effect_category": "status",
+        "default_target_side": "Enemy",
+        "target_scope": "all",
+        "status_ailment": "Paralysis",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Ramuh: Thunderstorm": {
+        "type": "Summon",
+        "level": 3,
+        "effect_category": "",
+        "default_target_side": "",
+        "target_scope": "",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Ramuh: Judgment Bolt": {
+        "type": "Summon",
+        "level": 3,
+        "effect_category": "",
+        "default_target_side": "",
+        "target_scope": "",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Shiva: Mesmerize": {
+        "type": "Summon",
+        "level": 2,
+        "effect_category": "status",
+        "default_target_side": "Enemy",
+        "target_scope": "all",
+        "status_ailment": "Sleep",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Shiva: Icy Stare": {
+        "type": "Summon",
+        "level": 2,
+        "effect_category": "",
+        "default_target_side": "",
+        "target_scope": "",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Shiva: Diamond Dust": {
+        "type": "Summon",
+        "level": 2,
+        "effect_category": "",
+        "default_target_side": "",
+        "target_scope": "",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Chocobo: Chocobo Dash": {
+        "type": "Summon",
+        "level": 1,
+        "effect_category": "",
+        "default_target_side": "",
+        "target_scope": "",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Chocobo: Chocobo Kick?": {
+        "type": "Summon",
+        "level": 1,
+        "effect_category": "",
+        "default_target_side": "",
+        "target_scope": "",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Chocobo: Chocobo Kick": {
+        "type": "Summon",
+        "level": 1,
+        "effect_category": "",
+        "default_target_side": "",
+        "target_scope": "",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Recovery": {
+        "type": "Item Magic",
+        "level": 1,
+        "effect_category": "",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Elixir": {
+        "type": "Item Magic",
+        "level": 1,
+        "effect_category": "",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Echo Herbs": {
+        "type": "Item Magic",
+        "level": 1,
+        "effect_category": "",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": "Silence",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Mallet": {
+        "type": "Item Magic",
+        "level": 1,
+        "effect_category": "",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": "Mini",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Maiden'S Kiss": {
+        "type": "Item Magic",
+        "level": 1,
+        "effect_category": "",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": "Toad",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Zantetsuken": {
+        "type": "Black Magic (used only by monsters)",
+        "level": 8,
+        "effect_category": "",
+        "default_target_side": "Enemy",
+        "target_scope": "all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Flame": {
+        "type": "Black Magic (used only by monsters)",
+        "level": 6,
+        "effect_category": "",
+        "default_target_side": "Enemy",
+        "target_scope": "all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Snowstorm": {
+        "type": "Black Magic (used only by monsters)",
+        "level": 3,
+        "effect_category": "",
+        "default_target_side": "Enemy",
+        "target_scope": "all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Lightning": {
+        "type": "Black Magic (used only by monsters)",
+        "level": 3,
+        "effect_category": "",
+        "default_target_side": "Enemy",
+        "target_scope": "all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Earthquake": {
+        "type": "Black Magic (used only by monsters)",
+        "level": 7,
+        "effect_category": "",
+        "default_target_side": "Enemy",
+        "target_scope": "all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Stare": {
+        "type": "Black Magic (used only by monsters)",
+        "level": 7,
+        "effect_category": "",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": "Petrification",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Tidal Wave": {
+        "type": "Black Magic (used only by monsters)",
+        "level": 7,
+        "effect_category": "",
+        "default_target_side": "Enemy",
+        "target_scope": "all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Particle Beam": {
+        "type": "Black Magic (used only by monsters)",
+        "level": 7,
+        "effect_category": "",
+        "default_target_side": "Enemy",
+        "target_scope": "all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Self Destruct": {
+        "type": "Black Magic (used only by monsters)",
+        "level": 3,
+        "effect_category": "",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Glare": {
+        "type": "Black Magic (used only by monsters)",
+        "level": 1,
+        "effect_category": "",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": "Sleep",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Bad Breath": {
+        "type": "Black Magic (used only by monsters)",
+        "level": 4,
+        "effect_category": "",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": "Paralysis",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Mind Blast": {
+        "type": "Black Magic (used only by monsters)",
+        "level": 4,
+        "effect_category": "",
+        "default_target_side": "Enemy",
+        "target_scope": "all",
+        "status_ailment": "Paralysis",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Summon": {
+        "type": "Monster Ability",
+        "level": 1,
+        "effect_category": "monster_utility",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Mega Flare": {
+        "type": "Black Magic (used only by monsters)",
+        "level": 8,
+        "effect_category": "",
+        "default_target_side": "Enemy",
+        "target_scope": "all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Barrier Shift": {
+        "type": "Black Magic (used only by monsters)",
+        "level": 4,
+        "effect_category": "monster_utility",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Divide": {
+        "type": "Black Magic (used only by monsters)",
+        "level": 4,
+        "effect_category": "",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Quicksand": {
+        "type": "Terrain Effect (Black Magic)",
+        "level": 1,
+        "effect_category": "",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": "KO",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Wind Slash": {
+        "type": "Terrain Effect (Black Magic)",
+        "level": 1,
+        "effect_category": "",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Sinkhole": {
+        "type": "Terrain Effect (Black Magic)",
+        "level": 1,
+        "effect_category": "",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": "KO",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Torrent": {
+        "type": "Terrain Effect (Black Magic)",
+        "level": 1,
+        "effect_category": "",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": "KO",
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Whirlpool": {
+        "type": "Terrain Effect (Black Magic)",
+        "level": 1,
+        "effect_category": "",
+        "default_target_side": "Enemy",
+        "target_scope": "all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Cyclone": {
+        "type": "Terrain Effect (Black Magic)",
+        "level": 1,
+        "effect_category": "",
+        "default_target_side": "Enemy",
+        "target_scope": "one",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      },
+      "Cave In": {
+        "type": "Terrain Effect (Black Magic)",
+        "level": 1,
+        "effect_category": "",
+        "default_target_side": "Enemy",
+        "target_scope": "all",
+        "status_ailment": null,
+        "field_heal_hp": null,
+        "field_revive_hp": null
+      }
+    },
+    "inventory_catalog": {
+      "items": [
+        "Antarctic Wind",
+        "Antidote",
+        "Arctic Wind",
+        "Bacchus's Cider",
+        "Black Hole",
+        "Black Musk",
+        "Bomb Arm",
+        "Chocobo's Wrath",
+        "Devil's Sigh",
+        "Earthen Drums",
+        "Echo Herbs",
+        "Elixir",
+        "Eureka Key",
+        "Eye Drops",
+        "Fang Of Earth",
+        "Fang Of Fire",
+        "Fang Of Water",
+        "Fang Of Wind",
+        "Gnomish Bread",
+        "Gold Needle",
+        "Gysahl Greens",
+        "Heavenly Wrath",
+        "Hi Potion",
+        "Horn Of Ice",
+        "Lamia Scale",
+        "Lilith's Kiss",
+        "Magic Key",
+        "Maiden's Kiss",
+        "Mallet",
+        "Nepto Eye",
+        "Noah's Lute",
+        "Ottershroom",
+        "Phoenix Down",
+        "Potion",
+        "Raven's Yawn",
+        "Sheep Pillow",
+        "Shining Curtain",
+        "Syrcus Key",
+        "Tranquilizer",
+        "Turtle Shell",
+        "Wheel Of Time",
+        "White Musk",
+        "Zeus's Wrath"
+      ],
+      "weapons": [
+        "Air Knife",
+        "Ancient Sword",
+        "Ashura",
+        "Battleaxe",
+        "Blood Lance",
+        "Blood Sword",
+        "Book Of Fire",
+        "Book Of Ice",
+        "Book Of Light",
+        "Boomerang",
+        "Bow",
+        "Break Blade",
+        "Cat Claws",
+        "Dagger",
+        "Defender",
+        "Diamond Bell",
+        "Dual Tomahawk",
+        "Earthen Bell",
+        "Elder Staff",
+        "Excalibur",
+        "Faerie Claws",
+        "Fire Arrow",
+        "Fire Rod",
+        "Fire Staff",
+        "Freezing Blade",
+        "Golden Sword",
+        "Golem Staff",
+        "Great Axe",
+        "Great Bow",
+        "Hellish Claws",
+        "Holy Arrow",
+        "Holy Lance",
+        "Ice Arrow",
+        "Ice Rod",
+        "Ice Staff",
+        "Iron Arrow",
+        "Kaiser Knuckles",
+        "Kiku Ichimonji",
+        "Killer Bow",
+        "Knife",
+        "Kotetsu",
+        "Lamia Harp",
+        "Light Arrow",
+        "Light Rod",
+        "Light Staff",
+        "Loki Harp",
+        "Longsword",
+        "Madhura Harp",
+        "Main Gauche",
+        "Masamune",
+        "Medusa Arrow",
+        "Moonring Blade",
+        "Morning Star",
+        "Mythril Knife",
+        "Mythril Rod",
+        "Mythril Sword",
+        "Nunchaku",
+        "Omnirod",
+        "Onion Sword",
+        "Orichalcum",
+        "Ragnarok",
+        "Royal Sword",
+        "Rune Bell",
+        "Rune Bow",
+        "Rune Staff",
+        "Salamand Sword",
+        "Serpent Sword",
+        "Shuriken",
+        "Staff",
+        "Thor'S Hammer",
+        "Three Section Staff",
+        "Thunder Spear",
+        "Tome Of Fire",
+        "Tome Of Ice",
+        "Tome Of Light",
+        "Tonfa",
+        "Triton Hammer",
+        "Tyrfing",
+        "Wightslayer",
+        "Wind Spear",
+        "Wooden Arrow",
+        "Wyvern Claws",
+        "Yoichi Arrow",
+        "Yoichi Bow"
+      ],
+      "armors": [
+        "Aegis Shield",
+        "Bard Vest",
+        "Black Belt Gi",
+        "Black Cowl",
+        "Black Garb",
+        "Black Robe",
+        "Bronze Bracers",
+        "Chakra Band",
+        "Crystal Gloves",
+        "Crystal Helm",
+        "Crystal Mail",
+        "Crystal Shield",
+        "Demon Mail",
+        "Demon Shield",
+        "Diamond Bracers",
+        "Diamond Gloves",
+        "Diamond Helm",
+        "Diamond Mail",
+        "Diamond Shield",
+        "Dragon Helm",
+        "Dragon Mail",
+        "Feathered Hat",
+        "Flame Mail",
+        "Gaia Vest",
+        "Gauntlets",
+        "Genji Armor",
+        "Genji Gloves",
+        "Genji Helm",
+        "Genji Shield",
+        "Headband",
+        "Heroic Shield",
+        "Ice Armor",
+        "Ice Helm",
+        "Ice Shield",
+        "Kenpo Gi",
+        "Knight Armor",
+        "Leather Armor",
+        "Leather Cap",
+        "Leather Shield",
+        "Mage Robe",
+        "Mythril Armor",
+        "Mythril Bracers",
+        "Mythril Gloves",
+        "Mythril Helm",
+        "Mythril Shield",
+        "Onion Armor",
+        "Onion Gauntlets",
+        "Onion Helm",
+        "Onion Shield",
+        "Power Bracers",
+        "Protect Ring",
+        "Reflect Mail",
+        "Ribbon",
+        "Rune Bracers",
+        "Rusty Mail",
+        "Scholar Hat",
+        "Scholar Robe",
+        "Shell Armor",
+        "Shell Helm",
+        "Thief Gloves",
+        "Vest",
+        "Viking Helm",
+        "Viking Mail",
+        "White Robe"
+      ],
+      "item_types": {
+        "Potion": "Anywhere",
+        "Hi Potion": "Anywhere",
+        "Elixir": "Anywhere",
+        "Phoenix Down": "Anywhere",
+        "Gold Needle": "Anywhere",
+        "Maiden's Kiss": "Anywhere",
+        "Echo Herbs": "Anywhere",
+        "Mallet": "Anywhere",
+        "Eye Drops": "Anywhere",
+        "Antidote": "Anywhere",
+        "Magic Key": "Field",
+        "Gysahl Greens": "Field",
+        "Gnomish Bread": "Field",
+        "Ottershroom": "Field",
+        "Antarctic Wind": "Combat",
+        "Zeus's Wrath": "Combat",
+        "Bomb Arm": "Combat",
+        "Arctic Wind": "Combat",
+        "Heavenly Wrath": "Combat",
+        "Earthen Drums": "Combat",
+        "Lamia Scale": "Combat",
+        "Bacchus's Cider": "Combat",
+        "Turtle Shell": "Combat",
+        "Devil's Sigh": "Combat",
+        "Black Hole": "Combat",
+        "Black Musk": "Combat",
+        "Lilith's Kiss": "Combat",
+        "Raven's Yawn": "Combat",
+        "Tranquilizer": "Combat",
+        "Sheep Pillow": "Combat",
+        "Shining Curtain": "Combat",
+        "Chocobo's Wrath": "Combat",
+        "White Musk": "Combat",
+        "Horn Of Ice": "Key Item",
+        "Nepto Eye": "Key Item",
+        "Wheel Of Time": "Key Item",
+        "Eureka Key": "Key Item",
+        "Fang Of Wind": "Key Item",
+        "Fang Of Fire": "Key Item",
+        "Fang Of Water": "Key Item",
+        "Fang Of Earth": "Key Item",
+        "Noah's Lute": "Key Item",
+        "Syrcus Key": "Key Item"
+      },
+      "item_meta": {
+        "Potion": {
+          "item_type": "Anywhere",
+          "value": 75,
+          "effect_category": "heal_hp",
+          "default_target_side": "Ally",
+          "target_scope": "one",
+          "status_ailment": null
+        },
+        "Hi Potion": {
+          "item_type": "Anywhere",
+          "value": 600,
+          "effect_category": "heal_hp",
+          "default_target_side": "Ally",
+          "target_scope": "one",
+          "status_ailment": null
+        },
+        "Elixir": {
+          "item_type": "Anywhere",
+          "value": 1500,
+          "effect_category": "heal_full",
+          "default_target_side": "Ally",
+          "target_scope": "one",
+          "status_ailment": null
+        },
+        "Phoenix Down": {
+          "item_type": "Anywhere",
+          "value": 1500,
+          "effect_category": "revive",
+          "default_target_side": "Ally",
+          "target_scope": "one",
+          "status_ailment": null
+        },
+        "Gold Needle": {
+          "item_type": "Anywhere",
+          "value": 150,
+          "effect_category": "status_recovery",
+          "default_target_side": "Ally",
+          "target_scope": "one",
+          "status_ailment": "Partial Petrification, Petrification"
+        },
+        "Maiden's Kiss": {
+          "item_type": "Anywhere",
+          "value": 50,
+          "effect_category": "status_recovery",
+          "default_target_side": "Ally",
+          "target_scope": "one",
+          "status_ailment": "Toad"
+        },
+        "Echo Herbs": {
+          "item_type": "Anywhere",
+          "value": 50,
+          "effect_category": "status_recovery",
+          "default_target_side": "Ally",
+          "target_scope": "one",
+          "status_ailment": "Silence"
+        },
+        "Mallet": {
+          "item_type": "Anywhere",
+          "value": 50,
+          "effect_category": "status_toggle",
+          "default_target_side": "Any",
+          "target_scope": "one",
+          "status_ailment": "Mini"
+        },
+        "Eye Drops": {
+          "item_type": "Anywhere",
+          "value": 20,
+          "effect_category": "status_recovery",
+          "default_target_side": "Ally",
+          "target_scope": "one",
+          "status_ailment": "Blind"
+        },
+        "Antidote": {
+          "item_type": "Anywhere",
+          "value": 40,
+          "effect_category": "status_recovery",
+          "default_target_side": "Ally",
+          "target_scope": "one",
+          "status_ailment": "Poison"
+        },
+        "Magic Key": {
+          "item_type": "Field",
+          "value": 50,
+          "effect_category": "",
+          "default_target_side": "",
+          "target_scope": "",
+          "status_ailment": null
+        },
+        "Gysahl Greens": {
+          "item_type": "Field",
+          "value": 75,
+          "effect_category": "",
+          "default_target_side": "",
+          "target_scope": "",
+          "status_ailment": null
+        },
+        "Gnomish Bread": {
+          "item_type": "Field",
+          "value": 100,
+          "effect_category": "field_utility",
+          "default_target_side": "Any",
+          "target_scope": "one",
+          "status_ailment": null
+        },
+        "Ottershroom": {
+          "item_type": "Field",
+          "value": 1000,
+          "effect_category": "teleport",
+          "default_target_side": "Ally",
+          "target_scope": "one",
+          "status_ailment": null
+        },
+        "Antarctic Wind": {
+          "item_type": "Combat",
+          "value": 500,
+          "effect_category": "damage",
+          "default_target_side": "Enemy",
+          "target_scope": "one",
+          "status_ailment": null
+        },
+        "Zeus's Wrath": {
+          "item_type": "Combat",
+          "value": 500,
+          "effect_category": "damage",
+          "default_target_side": "Enemy",
+          "target_scope": "one",
+          "status_ailment": null
+        },
+        "Bomb Arm": {
+          "item_type": "Combat",
+          "value": 750,
+          "effect_category": "damage",
+          "default_target_side": "Enemy",
+          "target_scope": "one",
+          "status_ailment": null
+        },
+        "Arctic Wind": {
+          "item_type": "Combat",
+          "value": 750,
+          "effect_category": "damage",
+          "default_target_side": "Enemy",
+          "target_scope": "one",
+          "status_ailment": null
+        },
+        "Heavenly Wrath": {
+          "item_type": "Combat",
+          "value": 750,
+          "effect_category": "damage",
+          "default_target_side": "Enemy",
+          "target_scope": "one",
+          "status_ailment": null
+        },
+        "Earthen Drums": {
+          "item_type": "Combat",
+          "value": 1250,
+          "effect_category": "damage",
+          "default_target_side": "Enemy",
+          "target_scope": "one",
+          "status_ailment": null
+        },
+        "Lamia Scale": {
+          "item_type": "Combat",
+          "value": 1500,
+          "effect_category": "status",
+          "default_target_side": "Enemy",
+          "target_scope": "one",
+          "status_ailment": "Confusion"
+        },
+        "Bacchus's Cider": {
+          "item_type": "Combat",
+          "value": 1500,
+          "effect_category": "buff_attack",
+          "default_target_side": "Ally",
+          "target_scope": "one",
+          "status_ailment": null
+        },
+        "Turtle Shell": {
+          "item_type": "Combat",
+          "value": 1500,
+          "effect_category": "buff_defense",
+          "default_target_side": "Ally",
+          "target_scope": "one",
+          "status_ailment": null
+        },
+        "Devil's Sigh": {
+          "item_type": "Combat",
+          "value": 1500,
+          "effect_category": "status",
+          "default_target_side": "Enemy",
+          "target_scope": "one",
+          "status_ailment": "KO"
+        },
+        "Black Hole": {
+          "item_type": "Combat",
+          "value": 2000,
+          "effect_category": "status",
+          "default_target_side": "Enemy",
+          "target_scope": "one",
+          "status_ailment": "KO"
+        },
+        "Black Musk": {
+          "item_type": "Combat",
+          "value": 2500,
+          "effect_category": "status",
+          "default_target_side": "Enemy",
+          "target_scope": "one",
+          "status_ailment": "KO"
+        },
+        "Lilith's Kiss": {
+          "item_type": "Combat",
+          "value": 1500,
+          "effect_category": "drain",
+          "default_target_side": "Enemy",
+          "target_scope": "one",
+          "status_ailment": null
+        },
+        "Raven's Yawn": {
+          "item_type": "Combat",
+          "value": 1500,
+          "effect_category": "damage",
+          "default_target_side": "Enemy",
+          "target_scope": "one",
+          "status_ailment": null
+        },
+        "Tranquilizer": {
+          "item_type": "Combat",
+          "value": 1500,
+          "effect_category": "status",
+          "default_target_side": "Enemy",
+          "target_scope": "one",
+          "status_ailment": "Paralysis"
+        },
+        "Sheep Pillow": {
+          "item_type": "Combat",
+          "value": 1000,
+          "effect_category": "status",
+          "default_target_side": "Enemy",
+          "target_scope": "one",
+          "status_ailment": "Sleep"
+        },
+        "Shining Curtain": {
+          "item_type": "Combat",
+          "value": 2500,
+          "effect_category": "reflect",
+          "default_target_side": "Ally",
+          "target_scope": "one",
+          "status_ailment": null
+        },
+        "Chocobo's Wrath": {
+          "item_type": "Combat",
+          "value": 2500,
+          "effect_category": "damage",
+          "default_target_side": "Enemy",
+          "target_scope": "one",
+          "status_ailment": null
+        },
+        "White Musk": {
+          "item_type": "Combat",
+          "value": 2500,
+          "effect_category": "damage",
+          "default_target_side": "Enemy",
+          "target_scope": "one",
+          "status_ailment": null
+        },
+        "Horn Of Ice": {
+          "item_type": "Key Item",
+          "value": 0,
+          "effect_category": "",
+          "default_target_side": "",
+          "target_scope": "",
+          "status_ailment": null
+        },
+        "Nepto Eye": {
+          "item_type": "Key Item",
+          "value": 0,
+          "effect_category": "",
+          "default_target_side": "",
+          "target_scope": "",
+          "status_ailment": null
+        },
+        "Wheel Of Time": {
+          "item_type": "Key Item",
+          "value": 0,
+          "effect_category": "",
+          "default_target_side": "",
+          "target_scope": "",
+          "status_ailment": null
+        },
+        "Eureka Key": {
+          "item_type": "Key Item",
+          "value": 0,
+          "effect_category": "",
+          "default_target_side": "",
+          "target_scope": "",
+          "status_ailment": null
+        },
+        "Fang Of Wind": {
+          "item_type": "Key Item",
+          "value": 0,
+          "effect_category": "",
+          "default_target_side": "",
+          "target_scope": "",
+          "status_ailment": null
+        },
+        "Fang Of Fire": {
+          "item_type": "Key Item",
+          "value": 0,
+          "effect_category": "",
+          "default_target_side": "",
+          "target_scope": "",
+          "status_ailment": null
+        },
+        "Fang Of Water": {
+          "item_type": "Key Item",
+          "value": 0,
+          "effect_category": "",
+          "default_target_side": "",
+          "target_scope": "",
+          "status_ailment": null
+        },
+        "Fang Of Earth": {
+          "item_type": "Key Item",
+          "value": 0,
+          "effect_category": "",
+          "default_target_side": "",
+          "target_scope": "",
+          "status_ailment": null
+        },
+        "Noah's Lute": {
+          "item_type": "Key Item",
+          "value": 0,
+          "effect_category": "",
+          "default_target_side": "",
+          "target_scope": "",
+          "status_ailment": null
+        },
+        "Syrcus Key": {
+          "item_type": "Key Item",
+          "value": 0,
+          "effect_category": "",
+          "default_target_side": "",
+          "target_scope": "",
+          "status_ailment": null
+        }
+      }
+    },
+    "resources": {
+      "cp": 255,
+      "cp_max": 255,
+      "gil": 5024
+    },
+    "magic_candidates_by_member": [],
+    "map_return_pending": true,
+    "map_state": {
+      "current_map_id": "Ur_Well",
+      "tile_x": 6,
+      "tile_y": 4,
+      "steps_since_reset": 19,
+      "switch_states": {},
+      "opened_treasures": {
+        "ur_well_treasure_potion_3": true,
+        "ur_well_treasure_potion_2": true,
+        "ur_well_treasure_potion_1": true
+      }
+    }
+  }
+}
