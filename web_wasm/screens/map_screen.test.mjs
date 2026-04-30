@@ -151,6 +151,7 @@ test("deriveInitialMapState merges save treasures with resumed menu state", () =
     current_map_id: "Alter_Cave_B1",
     tile_x: 2,
     tile_y: 2,
+    facing_direction: "down",
     steps_since_reset: 0,
     switch_states: {},
     opened_treasures: {
@@ -353,6 +354,7 @@ test("deriveInitialMapState can resume from saved position after battle", () => 
     current_map_id: "Alter_Cave_B1",
     tile_x: 2,
     tile_y: 2,
+    facing_direction: "down",
     steps_since_reset: 4,
     switch_states: {},
     opened_treasures: {},
@@ -388,6 +390,7 @@ test("deriveInitialMapState resumes menu map position ahead of save map position
     current_map_id: "Alter_Cave_B4",
     tile_x: 16,
     tile_y: 26,
+    facing_direction: "down",
     steps_since_reset: 7,
     switch_states: { switch1: true },
     opened_treasures: { chest1: true },
@@ -565,12 +568,14 @@ test("moveMapPosition advances only onto passable tiles", () => {
     current_map_id: "Alter_Cave_B1",
     tile_x: 1,
     tile_y: 2,
+    facing_direction: "down",
     steps_since_reset: 1,
   });
 
   const blocked = moveMapPosition(stubMap, moved.nextState, "left");
   assert.equal(blocked.moved, false);
   assert.equal(blocked.reason, "blocked");
+  assert.equal(blocked.nextState.facing_direction, "left");
 });
 
 test("interpolateMapPosition returns intermediate fractional tile positions", () => {
@@ -713,11 +718,12 @@ test("findStandingEventTrigger resolves hidden standing events until completion 
   );
 });
 
-test("findAdjacentObject returns switch next to player", () => {
+test("findAdjacentObject returns object in front of player", () => {
   const mapWithSwitch = {
     ...stubMap,
     objects: [
       { type: "switch", name: "switch1", x: 2, y: 1, switch_id: "switch1" },
+      { type: "switch", name: "switch2", x: 1, y: 2, switch_id: "switch2" },
     ],
   };
 
@@ -725,15 +731,22 @@ test("findAdjacentObject returns switch next to player", () => {
     current_map_id: "Alter_Cave_B1",
     tile_x: 1,
     tile_y: 1,
+    facing_direction: "right",
   }, (row) => row.type === "switch"), mapWithSwitch.objects[0]);
+  assert.equal(findAdjacentObject(mapWithSwitch, {
+    current_map_id: "Alter_Cave_B1",
+    tile_x: 1,
+    tile_y: 1,
+    facing_direction: "up",
+  }, (row) => row.type === "switch"), null);
 });
 
-test("findAdjacentNpc returns neighboring NPC with dialogue index", () => {
+test("findAdjacentNpc returns NPC in facing direction with dialogue index", () => {
   const mapWithNpc = {
     ...stubMap,
     objects: [
       { type: "npc", name: "Villager", x: 2, y: 1, dialogue_index: 493 },
-      { type: "npc", name: "Silent", x: 1, y: 0 },
+      { type: "npc", name: "Silent", x: 1, y: 0, dialogue_index: 494 },
     ],
   };
 
@@ -741,10 +754,17 @@ test("findAdjacentNpc returns neighboring NPC with dialogue index", () => {
     current_map_id: "Alter_Cave_B1",
     tile_x: 1,
     tile_y: 1,
+    facing_direction: "right",
   }), mapWithNpc.objects[0]);
+  assert.deepEqual(findAdjacentNpc(mapWithNpc, {
+    current_map_id: "Alter_Cave_B1",
+    tile_x: 1,
+    tile_y: 1,
+    facing_direction: "up",
+  }), mapWithNpc.objects[1]);
 });
 
-test("findAdjacentNpc returns neighboring NPC with dialogue indices", () => {
+test("findAdjacentNpc respects facing direction with dialogue indices", () => {
   const mapWithNpc = {
     ...stubMap,
     objects: [
@@ -757,6 +777,7 @@ test("findAdjacentNpc returns neighboring NPC with dialogue indices", () => {
     current_map_id: "Alter_Cave_B1",
     tile_x: 1,
     tile_y: 1,
+    facing_direction: "right",
   }), mapWithNpc.objects[0]);
   assert.deepEqual(npcDialogueIndices(mapWithNpc.objects[0]), [505, 506, 507]);
 });
@@ -1042,6 +1063,7 @@ test("toggleAdjacentSwitch toggles switch state and linked barrier", () => {
     current_map_id: "Alter_Cave_B1",
     tile_x: 1,
     tile_y: 1,
+    facing_direction: "right",
     switch_states: {},
   });
 
@@ -1087,6 +1109,7 @@ test("openAdjacentTreasure adds Potion to inventory and opens chest", () => {
     current_map_id: "Alter_Cave_B1",
     tile_x: 1,
     tile_y: 1,
+    facing_direction: "right",
     switch_states: {},
     opened_treasures: {},
   }, {
@@ -1138,6 +1161,7 @@ test("openAdjacentTreasure stores Magic treasure under inventory level buckets",
     current_map_id: "Alter_Cave_B2",
     tile_x: 1,
     tile_y: 1,
+    facing_direction: "right",
     switch_states: {},
     opened_treasures: {},
   }, {
@@ -1188,6 +1212,7 @@ test("openAdjacentTreasure leaves chest closed when Magic treasure level is unkn
     current_map_id: "Alter_Cave_B2",
     tile_x: 1,
     tile_y: 1,
+    facing_direction: "right",
     switch_states: {},
     opened_treasures: {},
   }, {

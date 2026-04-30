@@ -69,6 +69,35 @@ function buildNewGamePartyMember(index) {
   };
 }
 
+function withoutKoStatusIcons(value) {
+  return Array.isArray(value)
+    ? value.filter((icon) => String(icon || "").trim().toLowerCase().replace(/[_-]/g, " ") !== "ko")
+    : [];
+}
+
+export function reviveContinueSaveParty(save) {
+  if (!save || typeof save !== "object") return 0;
+  const party = Array.isArray(save.party) ? save.party : [];
+  let revivedCount = 0;
+
+  party.forEach((member) => {
+    if (!member || typeof member !== "object") return;
+    if (Number(member.hp ?? 0) > 0) return;
+    member.hp = 1;
+    member.status_icons = withoutKoStatusIcons(member.status_icons);
+    if (member.status_effects && typeof member.status_effects === "object" && !Array.isArray(member.status_effects)) {
+      member.status_effects = {
+        ...member.status_effects,
+        KO: false,
+      };
+    }
+    revivedCount += 1;
+  });
+
+  save.party = party;
+  return revivedCount;
+}
+
 export function createNewGameSaveData() {
   return {
     schema_version: 2,
@@ -95,6 +124,7 @@ export async function hydrateEnvelopeWithRuntime(pyodide, envelope) {
   const baseEnvelope = envelope && typeof envelope === "object"
     ? envelope
     : saveRepository.makeEnvelope(createNewGameSaveData());
+  reviveContinueSaveParty(baseEnvelope.save);
   const fallbackSelection = await getDefaultLocationSelection(pyodide);
   const selectedLocationGroup = String(
     baseEnvelope?.selected_location_group || fallbackSelection.selectedLocationGroup || "",

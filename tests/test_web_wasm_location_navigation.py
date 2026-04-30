@@ -66,6 +66,14 @@ def test_battle_screen_resets_click_to_return_state_on_reentry() -> None:
     assert source.count("resetBattleLogInteractionState();") >= 3
 
 
+def test_battle_screen_returns_to_title_after_party_wipe() -> None:
+    source = Path("web_wasm/battle.js").read_text(encoding="utf-8")
+
+    assert 'if (battleEndReason === "char_defeated") return "title";' in source
+    assert 'appNavigate(returnRoute);' in source
+    assert '"./index.html#/title"' in source
+
+
 def test_app_store_prefers_save_envelope_menu_state_on_boot() -> None:
     source = Path("web_wasm/store/app_store.js").read_text(encoding="utf-8")
 

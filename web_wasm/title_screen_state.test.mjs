@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { createNewGameSaveData } from "./title_screen_state.js";
+import { createNewGameSaveData, reviveContinueSaveParty } from "./title_screen_state.js";
 
 test("createNewGameSaveData builds FF3 new game defaults", () => {
   const save = createNewGameSaveData();
@@ -49,4 +49,30 @@ test("createNewGameSaveData builds FF3 new game defaults", () => {
     assert.equal(member.mp_levels["1"].current, 0);
     assert.equal(member.mp_levels["8"].max, 0);
   });
+});
+
+test("reviveContinueSaveParty revives KO party members to 1 HP before continue", () => {
+  const save = {
+    party: [
+      {
+        name: "Luneth",
+        hp: 0,
+        status_icons: ["ko", "poison"],
+        status_effects: { KO: true, Poison: true },
+      },
+      {
+        name: "Arc",
+        hp: 12,
+        status_icons: ["blind"],
+        status_effects: { KO: false, Blind: true },
+      },
+    ],
+  };
+
+  assert.equal(reviveContinueSaveParty(save), 1);
+  assert.equal(save.party[0].hp, 1);
+  assert.deepEqual(save.party[0].status_icons, ["poison"]);
+  assert.deepEqual(save.party[0].status_effects, { KO: false, Poison: true });
+  assert.equal(save.party[1].hp, 12);
+  assert.deepEqual(save.party[1].status_icons, ["blind"]);
 });
