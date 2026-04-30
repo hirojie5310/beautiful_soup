@@ -11,7 +11,7 @@
     "columns": 16,
     "tile_count": 128
   },
-  "collision_gids": [4, 9, 10, 11, 15, 17, 18, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30, 31, 32, 33, 34, 35, 36, 55, 56, 57, 58, 59, 60, 63, 81, 90, 92, 97, 116, 122],
+  "collision_gids": [4, 9, 10, 11, 17, 18, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30, 31, 32, 33, 34, 35, 36, 55, 56, 57, 58, 59, 60, 63, 81, 90, 92, 97, 122],
   "location_requirement": {
     "group": "Kazus",
     "locations": ["Kazus"]
@@ -37,6 +37,83 @@
     "y": 29
   },
   "objects": [
+    {
+      "type": "exit",
+      "name": "Kazus Shrine",
+      "x": 9,
+      "y": 23,
+      "target_map": "Kazus_Shrine",
+      "target_spawn": {
+        "x": 3,
+        "y": 10
+      }
+    },
+    {
+      "type": "exit",
+      "name": "Kazus Magic Shop",
+      "x": 14,
+      "y": 25,
+      "target_map": "Kazus_MagicShop",
+      "target_spawn": {
+        "x": 4,
+        "y": 7
+      }
+    },
+    {
+      "type": "exit",
+      "name": "Kazus Weapon Shop",
+      "x": 16,
+      "y": 25,
+      "target_map": "Kazus_WeaponShop",
+      "target_spawn": {
+        "x": 3,
+        "y": 6
+      }
+    },
+    {
+      "type": "exit",
+      "name": "Kazus Armor Shop",
+      "x": 18,
+      "y": 25,
+      "target_map": "Kazus_ArmorShop",
+      "target_spawn": {
+        "x": 3,
+        "y": 7
+      }
+    },
+    {
+      "type": "exit",
+      "name": "Kazus Blacksmith",
+      "x": 17,
+      "y": 16,
+      "target_map": "Kazus_Blacksmith",
+      "target_spawn": {
+        "x": 6,
+        "y": 10
+      }
+    },
+    {
+      "type": "exit",
+      "name": "Inn ItemShop 1F",
+      "x": 17,
+      "y": 21,
+      "target_map": "Inn_ItemShop_1F",
+      "target_spawn": {
+        "x": 13,
+        "y": 10
+      }
+    },
+    {
+      "type": "exit",
+      "name": "Mythril Mine B1",
+      "x": 21,
+      "y": 11,
+      "target_map": "Mythril_Mine_B1",
+      "target_spawn": {
+        "x": 5,
+        "y": 3
+      }
+    },
     {
       "type": "exit",
       "name": "Floating Continent",

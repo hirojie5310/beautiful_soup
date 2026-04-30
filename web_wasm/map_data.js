@@ -11,6 +11,7 @@ const MAP_MANIFEST = {
   Inn_ItemShop_2F: new URL("../assets/maps/Inn_ItemShop_2F.json", import.meta.url).href,
   Kazus: new URL("../assets/maps/Kazus.json", import.meta.url).href,
   Kazus_ArmorShop: new URL("../assets/maps/Kazus-ArmorShop.json", import.meta.url).href,
+  Kazus_Blacksmith: new URL("../assets/maps/Kazus-Blacksmith.json", import.meta.url).href,
   Kazus_MagicShop: new URL("../assets/maps/Kazus-MagicShop.json", import.meta.url).href,
   Kazus_Shrine: new URL("../assets/maps/Kazus-Shrine.json", import.meta.url).href,
   Kazus_WeaponShop: new URL("../assets/maps/Kazus-WeaponShop.json", import.meta.url).href,
