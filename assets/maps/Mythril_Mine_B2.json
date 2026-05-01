@@ -11,7 +11,7 @@
     "columns": 16,
     "tile_count": 128
   },
-  "collision_gids": [70, 85, 93, 98, 112, 124, 125],
+  "collision_gids": [2, 70, 85, 93, 112, 124, 125],
   "location_requirement": {
     "group": "Mythril Mines",
     "locations": ["Mythril Mines B2"]
@@ -36,8 +36,8 @@
       "y": 21,
       "target_map": "Mythril_Mine_B1",
       "target_spawn": {
-        "x": 2,
-        "y": 15
+        "x": 5,
+        "y": 2
       }
     },
     {

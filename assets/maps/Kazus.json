@@ -97,7 +97,7 @@
       "name": "Inn ItemShop 1F",
       "x": 17,
       "y": 21,
-      "target_map": "Inn_ItemShop_1F",
+      "target_map": "Kazus_Inn_ItemShop_1F",
       "target_spawn": {
         "x": 13,
         "y": 10
@@ -110,8 +110,8 @@
       "y": 11,
       "target_map": "Mythril_Mine_B1",
       "target_spawn": {
-        "x": 5,
-        "y": 3
+        "x": 2,
+        "y": 15
       }
     },
     {
