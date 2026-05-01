@@ -34,6 +34,16 @@ const NPC_DIRECTIONS = ["up", "left", "right", "down"];
 const NPC_MOVEMENT_RANDOM = "random";
 const WATER_ANIMATION_GIDS = new Set([5, 6, 9, 10, 11, 14, 15, 16, 30, 31, 32, 43, 46, 47, 48]);
 const WATER_FLOW_TILE_GIDS = new Set([31]);
+const WATER_ANIMATION_GIDS_BY_TILESET_NAME = {
+  "TILESET - Ur": new Set([6, 9, 10, 11, 14, 15, 16, 30, 43, 46, 47, 48]),
+  "TILESET - Kazus": new Set([5, 6, 9, 10, 11, 14, 16, 43, 46, 47, 48]),
+  "TILESET - FloatingContinent": new Set([5, 9, 10, 11, 14, 15, 16, 25, 26, 30, 31, 32, 46, 47, 48, 59, 67]),
+};
+const WATER_FLOW_TILE_GIDS_BY_TILESET_NAME = {
+  "TILESET - Ur": new Set([]),
+  "TILESET - Kazus": new Set([]),
+  "TILESET - FloatingContinent": new Set([31]),
+};
 const WATER_HIGHLIGHT_SHIFT_PX = 4;
 const WATER_FLOW_SHIFT_PX = DISPLAY_TILE_SIZE;
 const WATER_FLOW_ANIMATION_MS = Math.round(1800 * (WATER_FLOW_SHIFT_PX / WATER_HIGHLIGHT_SHIFT_PX));
@@ -47,16 +57,11 @@ const SHOP_START_CONTEXT_KEY = "ff3_wasm_shop_start_context_v1";
 const ALTER_CAVE_B3_INTRO_EVENT_FLAG = "altar_cave_b3_intro_complete";
 const ALTER_CAVE_B3_INTRO_MAP_ID = "Alter_Cave_B3";
 const FLOATING_CONTINENT_MAP_ID = "FloatingContinent";
-const WATER_ANIMATION_INCLUDED_GIDS_BY_MAP_ID = {
-  [FLOATING_CONTINENT_MAP_ID]: new Set([25, 26, 59, 67]),
-};
-const WATER_ANIMATION_EXCLUDED_GIDS_BY_MAP_ID = {
-  [FLOATING_CONTINENT_MAP_ID]: new Set([6, 43]),
-  Ur: new Set([5, 31, 32]),
-};
 const FLOATING_CONTINENT_BGM_URL = new URL("../../assets/sounds/bgm/eternal-wind.ogg", import.meta.url).href;
 const UR_BGM_URL = new URL("../../assets/sounds/bgm/Hometown of Ur.ogg", import.meta.url).href;
+const KAZUS_BGM_URL = new URL("../../assets/sounds/bgm/jinn-the-fire.ogg", import.meta.url).href;
 const ALTER_CAVE_BGM_URL = new URL("../../assets/sounds/bgm/crystal-cave.ogg", import.meta.url).href;
+const MAP_BGM_REPLAY_HANDLER_KEY = Symbol("mapBgmReplayHandler");
 const ALTER_CAVE_RECOVERY_MAP_ID = "Alter_Cave_B4";
 const ALTER_CAVE_RECOVERY_GID = 36;
 const ALTER_CAVE_RECOVERY_TEXT_INDEX = 582;
@@ -65,10 +70,17 @@ const UR_ELDER_HOUSE_FULL_RECOVERY_SPRING = { x: 3, y: 9 };
 const UR_ELDER_HOUSE_FULL_RECOVERY_TEXT_INDEX = 891;
 const UR_ELDER_HOUSE_REVIVE_SPRING = { x: 21, y: 9 };
 const UR_ELDER_HOUSE_REVIVE_TEXT_INDEX = 890;
+const KAZUS_SHRINE_MAP_ID = "Kazus_Shrine";
+const KAZUS_SHRINE_REVIVE_SPRING = { x: 3, y: 5 };
 const UR_INN_ITEMSHOP_MAP_ID = "Ur_Inn_ItemShop";
 const UR_INN_ITEMSHOP_RECOVERY_TILES = [
   { x: 7, y: 8 },
   { x: 9, y: 8 },
+];
+const KAZUS_INN_ITEMSHOP_2F_MAP_ID = "Kazus_Inn_ItemShop_2F";
+const KAZUS_INN_ITEMSHOP_2F_RECOVERY_TILES = [
+  { x: 4, y: 4 },
+  { x: 6, y: 4 },
 ];
 const UR_INN_ITEMSHOP_RECOVERY_TEXT_INDEX = 223;
 const ALTER_CAVE_CRYSTAL_ROOM_MAP_ID = "Alter_Cave_Crystal_Room";
@@ -148,6 +160,9 @@ export function resolveMapBgmUrl(mapDefinition, fallbackSelection = {}) {
   if (locationGroup === "Ur") {
     return UR_BGM_URL;
   }
+  if (locationGroup === "Kazus") {
+    return KAZUS_BGM_URL;
+  }
   if (locationGroup === "Alter Cave" || locationGroup === "Altar Cave") {
     return ALTER_CAVE_BGM_URL;
   }
@@ -157,14 +172,29 @@ export function resolveMapBgmUrl(mapDefinition, fallbackSelection = {}) {
 export function configureLoopingMapBgm(audioElement, sourceUrl = FLOATING_CONTINENT_BGM_URL) {
   if (!audioElement) return null;
   audioElement.src = String(sourceUrl || "");
-  audioElement.loop = true;
-  audioElement.preload = "auto";
+  audioElement.loop = false;
+  audioElement.preload = "metadata";
   try {
     audioElement.playsInline = true;
     audioElement.setAttribute?.("playsinline", "true");
     audioElement.setAttribute?.("webkit-playsinline", "true");
   } catch (_error) {
     // Ignore browsers that do not expose inline playback flags on Audio.
+  }
+  if (!audioElement[MAP_BGM_REPLAY_HANDLER_KEY] && typeof audioElement.addEventListener === "function") {
+    const replayHandler = () => {
+      try {
+        audioElement.currentTime = 0;
+        const playResult = audioElement.play?.();
+        if (playResult && typeof playResult.catch === "function") {
+          playResult.catch(() => {});
+        }
+      } catch (_error) {
+        // Ignore replay failures; the next explicit sync will retry playback.
+      }
+    };
+    audioElement.addEventListener("ended", replayHandler);
+    audioElement[MAP_BGM_REPLAY_HANDLER_KEY] = replayHandler;
   }
   return audioElement;
 }
@@ -1065,32 +1095,14 @@ function mapRenderSignature(mapDefinition) {
   ].join("|");
 }
 
-function getWaterAnimationExcludedGidsForMap(mapDefinition) {
-  const mapId = String(mapDefinition?.id || "");
-  return WATER_ANIMATION_EXCLUDED_GIDS_BY_MAP_ID[mapId] || null;
-}
-
 function getWaterAnimationGidsForMap(mapDefinition) {
-  const mapId = String(mapDefinition?.id || "");
-  const includedGids = WATER_ANIMATION_INCLUDED_GIDS_BY_MAP_ID[mapId];
-  const excludedGids = getWaterAnimationExcludedGidsForMap(mapDefinition);
-  if (!includedGids?.size && !excludedGids?.size) {
-    return WATER_ANIMATION_GIDS;
-  }
-  const animationGids = new Set(WATER_ANIMATION_GIDS);
-  includedGids?.forEach((gid) => animationGids.add(gid));
-  excludedGids?.forEach((gid) => animationGids.delete(gid));
-  return animationGids;
+  const tilesetName = String(mapDefinition?.tileset?.name || "");
+  return WATER_ANIMATION_GIDS_BY_TILESET_NAME[tilesetName] || WATER_ANIMATION_GIDS;
 }
 
 function getWaterFlowTileGidsForMap(mapDefinition) {
-  const excludedGids = getWaterAnimationExcludedGidsForMap(mapDefinition);
-  if (!excludedGids?.size) {
-    return WATER_FLOW_TILE_GIDS;
-  }
-  return new Set(
-    Array.from(WATER_FLOW_TILE_GIDS).filter((gid) => !excludedGids.has(gid)),
-  );
+  const tilesetName = String(mapDefinition?.tileset?.name || "");
+  return WATER_FLOW_TILE_GIDS_BY_TILESET_NAME[tilesetName] || WATER_FLOW_TILE_GIDS;
 }
 
 export function isWaterAnimationGid(gid, mapDefinition = null) {
@@ -1455,6 +1467,18 @@ export function isAdjacentToTileCoordinate(mapState, coordinate) {
   return Math.abs(tileX - targetX) + Math.abs(tileY - targetY) === 1;
 }
 
+export function isFacingTileCoordinate(mapState, coordinate) {
+  const tileX = Number(mapState?.tile_x);
+  const tileY = Number(mapState?.tile_y);
+  const facingDirection = normalizeMapFacingDirection(mapState?.facing_direction, "down");
+  const delta = directionDelta(facingDirection);
+  if (!delta) return false;
+  return (
+    tileX + Number(delta.x || 0) === Number(coordinate?.x)
+    && tileY + Number(delta.y || 0) === Number(coordinate?.y)
+  );
+}
+
 export function isStandingOnTileCoordinate(mapState, coordinate) {
   return (
     Number(mapState?.tile_x) === Number(coordinate?.x)
@@ -1467,6 +1491,15 @@ export function isUrInnItemShopRecoveryTile(mapDefinition, mapState) {
     return false;
   }
   return UR_INN_ITEMSHOP_RECOVERY_TILES.some((coordinate) => (
+    isStandingOnTileCoordinate(mapState, coordinate)
+  ));
+}
+
+export function isKazusInnItemShopRecoveryTile(mapDefinition, mapState) {
+  if (String(mapDefinition?.id || mapState?.current_map_id || "") !== KAZUS_INN_ITEMSHOP_2F_MAP_ID) {
+    return false;
+  }
+  return KAZUS_INN_ITEMSHOP_2F_RECOVERY_TILES.some((coordinate) => (
     isStandingOnTileCoordinate(mapState, coordinate)
   ));
 }
@@ -1936,6 +1969,12 @@ export async function mountScreen({ mountNode, store, navigate }) {
     if (!mapBgmAudio) return;
     mapBgmAudio.pause();
     mapBgmAudio.currentTime = 0;
+    if (currentMapBgmUrl) {
+      mapBgmAudio.removeAttribute?.("src");
+      mapBgmAudio.src = "";
+      mapBgmAudio.load?.();
+      currentMapBgmUrl = "";
+    }
   }
 
   function resumeMapBgmFromGesture() {
@@ -2424,7 +2463,14 @@ export async function mountScreen({ mountNode, store, navigate }) {
     }
     if (
       mapDefinition.id === UR_ELDER_HOUSE_1_MAP_ID
-      && isAdjacentToTileCoordinate(mapState, UR_ELDER_HOUSE_REVIVE_SPRING)
+      && isFacingTileCoordinate(mapState, UR_ELDER_HOUSE_REVIVE_SPRING)
+    ) {
+      await runUrElderHouseReviveEvent();
+      return;
+    }
+    if (
+      mapDefinition.id === KAZUS_SHRINE_MAP_ID
+      && isFacingTileCoordinate(mapState, KAZUS_SHRINE_REVIVE_SPRING)
     ) {
       await runUrElderHouseReviveEvent();
       return;
@@ -2624,7 +2670,10 @@ export async function mountScreen({ mountNode, store, navigate }) {
       }
       return;
     }
-    if (isUrInnItemShopRecoveryTile(mapDefinition, mapState)) {
+    if (
+      isUrInnItemShopRecoveryTile(mapDefinition, mapState)
+      || isKazusInnItemShopRecoveryTile(mapDefinition, mapState)
+    ) {
       await runFullRecoveryEvent(
         UR_INN_ITEMSHOP_RECOVERY_TEXT_INDEX,
         "HP・MP と状態異常が回復した。",

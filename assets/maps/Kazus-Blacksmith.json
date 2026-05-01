@@ -49,6 +49,18 @@
       "dialogue_index": 285,
       "movement": "fixed",
       "direction": "down"
+    },
+    {
+      "type": "treasure",
+      "name": "Kazus Blacksmith Potion",
+      "x": 2,
+      "y": 4,
+      "treasure_id": "kazus_blacksmith_treasure_potion",
+      "item_name": "Potion",
+      "inventory_bucket": "Anywhere",
+      "quantity": 1,
+      "closed_gid": 124,
+      "open_gid": 126
     }
   ],
   "rows": [

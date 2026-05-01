@@ -6,6 +6,7 @@ export const SAVE_DB_VERSION = 1;
 export const SAVE_STORE_NAME = "save_slots";
 export const DEFAULT_SAVE_SLOT_ID = "default";
 export const AUTO_SAVE_SLOT_ID = "auto-1";
+const indexedDbWriteQueue = new Map();
 
 function hasIndexedDb() {
   return typeof indexedDB !== "undefined" && indexedDB !== null;
@@ -125,6 +126,60 @@ function buildSlotRecord(slotId, envelope, options = {}) {
   };
 }
 
+function enqueueIndexedDbSave(slotId, record, rememberSelection) {
+  const key = String(slotId || DEFAULT_SAVE_SLOT_ID);
+  return new Promise((resolve) => {
+    const current = indexedDbWriteQueue.get(key);
+    if (current?.pending) {
+      current.pending.record = record;
+      current.pending.rememberSelection = current.pending.rememberSelection || Boolean(rememberSelection);
+      current.pending.resolvers.push(resolve);
+      return;
+    }
+    const state = current || {
+      inFlight: false,
+      pending: null,
+    };
+    state.pending = {
+      record,
+      rememberSelection: Boolean(rememberSelection),
+      resolvers: [resolve],
+    };
+    indexedDbWriteQueue.set(key, state);
+    if (!state.inFlight) {
+      void flushIndexedDbSaveQueue(key);
+    }
+  });
+}
+
+async function flushIndexedDbSaveQueue(slotId) {
+  const key = String(slotId || DEFAULT_SAVE_SLOT_ID);
+  const state = indexedDbWriteQueue.get(key);
+  if (!state || state.inFlight || !state.pending) return;
+  state.inFlight = true;
+  const pending = state.pending;
+  state.pending = null;
+  let stored = null;
+  let succeeded = false;
+  try {
+    stored = await runStoreRequest("readwrite", (store) => store.put(pending.record));
+    if (stored !== null && pending.rememberSelection) {
+      setLastUsedSaveSlotId(key);
+    }
+    succeeded = stored !== null || !hasIndexedDb();
+  } catch (_error) {
+    succeeded = false;
+  } finally {
+    pending.resolvers.forEach((resolver) => resolver(succeeded));
+    state.inFlight = false;
+    if (state.pending) {
+      void flushIndexedDbSaveQueue(key);
+    } else {
+      indexedDbWriteQueue.delete(key);
+    }
+  }
+}
+
 export function parseSaveEnvelope(raw) {
   if (!raw || typeof raw !== "object") return null;
   if (raw?.version === 1 && raw?.save && typeof raw.save === "object") {
@@ -229,15 +284,7 @@ export async function persistSaveEnvelopeToIndexedDB(
 ) {
   const record = buildSlotRecord(slotId, envelope, { kind });
   if (!record) return false;
-  try {
-    const stored = await runStoreRequest("readwrite", (store) => store.put(record));
-    if (stored !== null && rememberSelection) {
-      setLastUsedSaveSlotId(slotId);
-    }
-    return stored !== null || !hasIndexedDb();
-  } catch (_error) {
-    return false;
-  }
+  return enqueueIndexedDbSave(slotId, record, rememberSelection);
 }
 
 export async function persistAutoSaveEnvelope(envelope) {

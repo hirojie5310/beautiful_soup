@@ -873,19 +873,25 @@ test("water highlight animation covers town and Floating Continent water tiles",
   });
   assert.equal(isWaterAnimationGid(94), false);
   [5, 31, 32].forEach((gid) => {
-    assert.equal(isWaterAnimationGid(gid, { id: "Ur" }), false);
+    assert.equal(isWaterAnimationGid(gid, { id: "Ur", tileset: { name: "TILESET - Ur" } }), false);
   });
   [6, 9, 10, 11, 14, 15, 16, 30, 43, 46, 47, 48].forEach((gid) => {
-    assert.equal(isWaterAnimationGid(gid, { id: "Ur" }), true);
+    assert.equal(isWaterAnimationGid(gid, { id: "Ur", tileset: { name: "TILESET - Ur" } }), true);
+  });
+  [15, 30, 31, 32].forEach((gid) => {
+    assert.equal(isWaterAnimationGid(gid, { id: "Kazus", tileset: { name: "TILESET - Kazus" } }), false);
+  });
+  [5, 6, 9, 10, 11, 14, 16, 43, 46, 47, 48].forEach((gid) => {
+    assert.equal(isWaterAnimationGid(gid, { id: "Kazus", tileset: { name: "TILESET - Kazus" } }), true);
   });
   [6, 43].forEach((gid) => {
-    assert.equal(isWaterAnimationGid(gid, { id: "FloatingContinent" }), false);
+    assert.equal(isWaterAnimationGid(gid, { id: "FloatingContinent", tileset: { name: "TILESET - FloatingContinent" } }), false);
   });
   [25, 26, 59, 67].forEach((gid) => {
-    assert.equal(isWaterAnimationGid(gid, { id: "FloatingContinent" }), true);
+    assert.equal(isWaterAnimationGid(gid, { id: "FloatingContinent", tileset: { name: "TILESET - FloatingContinent" } }), true);
   });
   [5, 9, 10, 11, 14, 15, 16, 30, 31, 32, 46, 47, 48].forEach((gid) => {
-    assert.equal(isWaterAnimationGid(gid, { id: "FloatingContinent" }), true);
+    assert.equal(isWaterAnimationGid(gid, { id: "FloatingContinent", tileset: { name: "TILESET - FloatingContinent" } }), true);
   });
 });
 
@@ -897,22 +903,28 @@ test("Floating Continent BGM only targets the world map", () => {
 test("resolveMapBgmUrl selects map themes by map id or location group", () => {
   assert.match(resolveMapBgmUrl({ id: "FloatingContinent", locationRequirement: {} }), /eternal-wind\.ogg$/);
   assert.match(decodeURI(resolveMapBgmUrl({ id: "Ur_Pub", locationRequirement: { group: "Ur" } })), /Hometown of Ur\.ogg$/);
+  assert.match(resolveMapBgmUrl({ id: "Kazus", locationRequirement: { group: "Kazus" } }), /jinn-the-fire\.ogg$/);
   assert.match(resolveMapBgmUrl({ id: "Alter_Cave_B1", locationRequirement: { group: "Alter Cave" } }), /crystal-cave\.ogg$/);
   assert.match(resolveMapBgmUrl({ id: "Alter_Cave_B2", locationRequirement: { group: "Altar Cave" } }), /crystal-cave\.ogg$/);
   assert.equal(resolveMapBgmUrl({ id: "Unknown", locationRequirement: { group: "Castle Sasune" } }), "");
 });
 
 test("configureLoopingMapBgm prepares an audio element for repeated playback", () => {
+  const listeners = new Map();
   const audioElement = {
     src: "",
     loop: false,
     preload: "",
+    addEventListener(type, handler) {
+      listeners.set(type, handler);
+    },
   };
 
   assert.equal(configureLoopingMapBgm(audioElement, "/assets/sounds/bgm/eternal-wind.ogg"), audioElement);
   assert.equal(audioElement.src, "/assets/sounds/bgm/eternal-wind.ogg");
-  assert.equal(audioElement.loop, true);
-  assert.equal(audioElement.preload, "auto");
+  assert.equal(audioElement.loop, false);
+  assert.equal(audioElement.preload, "metadata");
+  assert.equal(typeof listeners.get("ended"), "function");
 });
 
 test("findAdjacentTileWithGid detects a matching neighboring tile", () => {

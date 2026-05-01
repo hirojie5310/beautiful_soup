@@ -128,6 +128,93 @@ function createFakeIndexedDb() {
   };
 }
 
+function createDelayedFakeIndexedDb({ onPut } = {}) {
+  const data = new Map();
+  const storeNames = new Set();
+  const pendingPuts = [];
+
+  function createRequest() {
+    return {
+      result: undefined,
+      error: null,
+      onsuccess: null,
+      onerror: null,
+      onupgradeneeded: null,
+    };
+  }
+
+  const db = {
+    objectStoreNames: {
+      contains(name) {
+        return storeNames.has(name);
+      },
+    },
+    createObjectStore(name) {
+      storeNames.add(name);
+      return {
+        createIndex() {
+          return undefined;
+        },
+      };
+    },
+    transaction() {
+      const tx = {
+        error: null,
+        oncomplete: null,
+        onerror: null,
+        onabort: null,
+        objectStore() {
+          return {
+            put(value) {
+              const request = createRequest();
+              pendingPuts.push(() => {
+                onPut?.(value);
+                data.set(String(value.slot_id), structuredClone(value));
+                request.result = value.slot_id;
+                tx.oncomplete?.();
+              });
+              return request;
+            },
+            get(key) {
+              const request = createRequest();
+              queueMicrotask(() => {
+                request.result = data.get(String(key)) ?? undefined;
+                tx.oncomplete?.();
+              });
+              return request;
+            },
+          };
+        },
+      };
+      return tx;
+    },
+    close() {
+      return undefined;
+    },
+  };
+
+  return {
+    flushNextPut() {
+      const runner = pendingPuts.shift();
+      runner?.();
+    },
+    pendingPutCount() {
+      return pendingPuts.length;
+    },
+    open() {
+      const request = createRequest();
+      queueMicrotask(() => {
+        request.result = db;
+        if (!storeNames.size) {
+          request.onupgradeneeded?.();
+        }
+        request.onsuccess?.();
+      });
+      return request;
+    },
+  };
+}
+
 test("shared_storage keeps localStorage mirror and persists default slot to IndexedDB", async () => {
   globalThis.localStorage = createFakeLocalStorage();
   globalThis.indexedDB = createFakeIndexedDb();
@@ -184,6 +271,67 @@ test("shared_storage tracks last used manual slot but ignores auto-save writes",
     rememberSelection: false,
   });
   assert.equal(getLastUsedSaveSlotId(), "slot-2");
+});
+
+test("shared_storage coalesces overlapping IndexedDB writes per slot to the latest envelope", async () => {
+  globalThis.localStorage = createFakeLocalStorage();
+  let putCount = 0;
+  const fakeIndexedDb = createDelayedFakeIndexedDb({
+    onPut() {
+      putCount += 1;
+    },
+  });
+  globalThis.indexedDB = fakeIndexedDb;
+
+  const firstEnvelope = makeSaveEnvelope(
+    {
+      schema_version: 1,
+      gil: 10,
+      inventory: {},
+      party: [{ name: "Luneth", level: 1 }],
+    },
+    {},
+  );
+  const secondEnvelope = makeSaveEnvelope(
+    {
+      schema_version: 1,
+      gil: 20,
+      inventory: {},
+      party: [{ name: "Arc", level: 2 }],
+    },
+    {},
+  );
+  const thirdEnvelope = makeSaveEnvelope(
+    {
+      schema_version: 1,
+      gil: 30,
+      inventory: {},
+      party: [{ name: "Refia", level: 3 }],
+    },
+    {},
+  );
+
+  const firstWrite = persistSaveEnvelopeToIndexedDB(firstEnvelope, { slotId: "slot-hot", kind: "manual" });
+  await Promise.resolve();
+  const secondWrite = persistSaveEnvelopeToIndexedDB(secondEnvelope, { slotId: "slot-hot", kind: "manual" });
+  const thirdWrite = persistSaveEnvelopeToIndexedDB(thirdEnvelope, { slotId: "slot-hot", kind: "manual" });
+
+  while (fakeIndexedDb.pendingPutCount() === 0) {
+    await Promise.resolve();
+  }
+  fakeIndexedDb.flushNextPut();
+  while (fakeIndexedDb.pendingPutCount() === 0) {
+    await Promise.resolve();
+  }
+  fakeIndexedDb.flushNextPut();
+
+  const results = await Promise.all([firstWrite, secondWrite, thirdWrite]);
+  const restored = await restoreSaveEnvelopeFromStorageAsync("slot-hot");
+
+  assert.deepEqual(results, [true, true, true]);
+  assert.equal(putCount, 2);
+  assert.equal(restored?.save?.gil, 30);
+  assert.equal(restored?.save?.party?.[0]?.name, "Refia");
 });
 
 test("shared_storage can clear local save and menu mirrors", () => {
