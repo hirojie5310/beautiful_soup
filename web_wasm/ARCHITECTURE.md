@@ -139,3 +139,28 @@ BattleResult 差分化は、次の条件をすべて満たした時点で「完�
 - RuntimeState に新しい永続フィールドを追加したら、型契約、JSON Schema、不変条件テストを同時に更新します。
 - 戦闘終了で save に新しい副作用を追加したら、`BattleSavePatch` と差分テストも更新します。
 - 旧 `*.html` は実装本体ではなく、互換性維持のためのリダイレクトとして扱います。
+
+## Map BGM 差し替えメモ
+
+### 差し替え手順
+
+1. `assets/sounds/bgm/` に差し替えたい音源を配置します。
+2. マップ画面 BGM の割り当ては `web_wasm/screens/map_screen.js` の定数と `resolveMapBgmUrl(...)` で管理します。
+3. 対象 map / location group に対応する BGM 定数を更新します。
+4. `web_wasm/screens/map_screen.test.mjs` の `resolveMapBgmUrl selects map themes by map id or location group` も更新します。
+5. 変更後は `node --test /Users/hirotaka/beautiful_soup/web_wasm/screens/map_screen.test.mjs` を実行します。
+6. ブラウザで対象マップに入り、BGM 再生とメモリ使用量が安定していることを確認します。
+
+### 推奨エンコード条件
+
+- 形式はまず `Ogg Vorbis` を優先します。
+- チャンネルは `stereo`、サンプルレートは `44.1kHz` を推奨します。
+- ビットレートは既存の安定実績に合わせて `約 112 kbps` 前後を目安にします。
+- 既存の安定ファイルと大きく異なる特殊なエンコード条件は避けます。
+- 音源差し替え後は、再生可否だけでなくブラウザのメモリ増加がないかも必ず確認します。
+
+### トラブルシュート
+
+- 特定マップでだけメモリ使用量が急増する場合、そのマップ固有ロジックではなく BGM ファイル自体が原因のことがあります。
+- Kazus では旧 `jinn-the-fire.ogg` で、再生中にメモリが増え続ける事象がありました。再エンコード版へ差し替えたところ安定しました。
+- 問題切り分けでは、まずそのマップの BGM を使用実績のある既知の安定音源へ一時的に差し替え、症状が消えるか確認します。

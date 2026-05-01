@@ -1,6 +1,10 @@
 import { mergeMenuStateIntoSave } from "../menu_save_sync.js";
 import { saveRepository } from "../save_repository.js";
 
+const AUTO_SAVE_DEBOUNCE_MS = 250;
+let pendingAutoSaveTimerId = null;
+let pendingAutoSaveEnvelope = null;
+
 export function syncMenuMemberSelection(store, requestedIndex) {
   const state = store.getState();
   const party = Array.isArray(state.menuState?.party) ? state.menuState.party : [];
@@ -63,11 +67,19 @@ export function persistMenuEnvelope(store, nextMenuState, nextEnvelope) {
 
 export function triggerAutoSaveFromEnvelope(envelope) {
   if (!envelope || typeof envelope !== "object") return;
-  void saveRepository.commit({
-    reason: "menu_confirmed",
-    envelope,
-    alreadyMirrored: true,
-  });
+  pendingAutoSaveEnvelope = envelope;
+  if (pendingAutoSaveTimerId !== null) return;
+  pendingAutoSaveTimerId = globalThis.setTimeout(() => {
+    const nextEnvelope = pendingAutoSaveEnvelope;
+    pendingAutoSaveEnvelope = null;
+    pendingAutoSaveTimerId = null;
+    if (!nextEnvelope || typeof nextEnvelope !== "object") return;
+    void saveRepository.commit({
+      reason: "menu_confirmed",
+      envelope: nextEnvelope,
+      alreadyMirrored: true,
+    });
+  }, AUTO_SAVE_DEBOUNCE_MS);
 }
 
 export function selectedLocationText(state) {
