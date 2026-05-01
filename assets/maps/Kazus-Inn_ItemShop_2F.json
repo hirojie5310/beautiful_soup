@@ -1,5 +1,5 @@
 {
-  "id": "Inn_ItemShop_2F",
+  "id": "Kazus_Inn_ItemShop_2F",
   "name": "Inn ItemShop 2F",
   "tile_width": 24,
   "tile_height": 24,
@@ -11,7 +11,7 @@
     "columns": 16,
     "tile_count": 128
   },
-  "collision_gids": [3, 11, 94, 112, 124],
+  "collision_gids": [3, 4, 11, 94, 112, 124],
   "location_requirement": {
     "group": "Kazus",
     "locations": ["Kazus"]
@@ -22,7 +22,7 @@
     "right": 10,
     "bottom": 10,
     "left": 10,
-    "fill_gid": 112
+    "fill_gid": 89
   },
   "spawn": {
     "x": 2,
@@ -34,7 +34,7 @@
       "name": "Inn ItemShop 1F",
       "x": 2,
       "y": 11,
-      "target_map": "Inn_ItemShop_1F",
+      "target_map": "Kazus_Inn_ItemShop_1F",
       "target_spawn": {
         "x": 2,
         "y": 3
