@@ -114,6 +114,50 @@ def test_cast_field_magic_uses_spell_metadata_for_full_revive() -> None:
     assert caster.state.mp_pool[1] == 2
 
 
+def test_cast_field_magic_allows_teleport_category_without_target() -> None:
+    caster = _member("Refia")
+    save = {"party": [{"name": "Refia", "hp": caster.state.hp}]}
+    cast_magic = make_cast_field_magic_fn(
+        party=[caster],
+        spells_by_name={
+            "Teleport": {
+                "name": "Teleport",
+                "effect_category": "teleport",
+                "default_target_side": "Ally",
+            }
+        },
+        build_magic_fn=lambda _idx: [("Teleport", 1, 1)],
+        save_dict=save,
+    )
+
+    changed = cast_magic(0, "Teleport", None)
+
+    assert changed is True
+    assert caster.state.mp_pool[1] == 2
+
+
+def test_cast_field_magic_allows_field_utility_category_without_target() -> None:
+    caster = _member("Refia")
+    save = {"party": [{"name": "Refia", "hp": caster.state.hp}]}
+    cast_magic = make_cast_field_magic_fn(
+        party=[caster],
+        spells_by_name={
+            "Sight": {
+                "name": "Sight",
+                "effect_category": "field_utility",
+                "default_target_side": "Enemy",
+            }
+        },
+        build_magic_fn=lambda _idx: [("Sight", 1, 1)],
+        save_dict=save,
+    )
+
+    changed = cast_magic(0, "Sight", None)
+
+    assert changed is True
+    assert caster.state.mp_pool[1] == 2
+
+
 def test_use_field_item_uses_item_metadata_for_status_recovery() -> None:
     user = _member("Refia")
     target = _member("Ingus")

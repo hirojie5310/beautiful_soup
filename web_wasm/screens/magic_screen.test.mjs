@@ -6,6 +6,7 @@ import {
   applyMagicSetupToSaveParty,
   getSpellMeta,
   parseSpellStatusAilments,
+  usableSpellNames,
 } from "./magic_screen.js";
 
 test("applyMagicSetupToSaveParty writes equipped magic rows into save entries", () => {
@@ -48,6 +49,19 @@ test("getSpellMeta resolves magic metadata by name", () => {
   assert.deepEqual(meta, { effect_category: "heal_hp", field_heal_hp: 50 });
 });
 
+test("usableSpellNames falls back to current job allowed names when candidate rows are stale", () => {
+  const names = usableSpellNames({
+    party: [{ job: "Red Mage", current_job: "Red Mage" }],
+    magic_candidates_by_member: [[]],
+    job_magic_allowed_names_by_job: {
+      "Red Mage": ["Fire", "Cure"],
+    },
+  }, 0);
+
+  assert.equal(names.has("Cure"), true);
+  assert.equal(names.has("Fire"), true);
+});
+
 test("applyFieldSpellEffect heals from spell metadata", () => {
   const result = applyFieldSpellEffect(
     { mp_levels: { "1": { current: 3, max: 3 } } },
@@ -86,4 +100,34 @@ test("applyFieldSpellEffect clears statuses from metadata", () => {
   assert.equal(result.ok, true);
   assert.deepEqual(result.target.status_icons, ["poison"]);
   assert.equal(result.caster.mp_levels["6"].current, 1);
+});
+
+test("applyFieldSpellEffect allows teleport magic in the field", () => {
+  const target = { hp: 50, max_hp: 100, status_icons: ["poison"] };
+  const result = applyFieldSpellEffect(
+    { mp_levels: { "4": { current: 2, max: 2 } } },
+    target,
+    { effect_category: "teleport" },
+    4,
+  );
+
+  assert.equal(result.ok, true);
+  assert.equal(result.usesTarget, false);
+  assert.deepEqual(result.target, target);
+  assert.equal(result.caster.mp_levels["4"].current, 1);
+});
+
+test("applyFieldSpellEffect allows field utility magic in the field", () => {
+  const target = { hp: 80, max_hp: 100, status_icons: [] };
+  const result = applyFieldSpellEffect(
+    { mp_levels: { "3": { current: 1, max: 1 } } },
+    target,
+    { effect_category: "field_utility" },
+    3,
+  );
+
+  assert.equal(result.ok, true);
+  assert.equal(result.usesTarget, false);
+  assert.deepEqual(result.target, target);
+  assert.equal(result.caster.mp_levels["3"].current, 0);
 });

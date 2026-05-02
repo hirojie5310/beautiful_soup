@@ -10,6 +10,54 @@ import {
 } from "./screen_shared.js";
 
 function asNum(v, d = 0) { const n = Number(v); return Number.isFinite(n) ? n : d; }
+function asArray(v) { return Array.isArray(v) ? v : []; }
+function asObj(v) { return v && typeof v === "object" ? v : {}; }
+
+function spellTypeSymbol(meta) {
+  const type = String(meta?.type || "");
+  if (type.includes("Black")) return "●";
+  if (type.includes("White")) return "〇";
+  if (type.includes("Summon")) return "◎";
+  return "◇";
+}
+
+export function rebuildMagicCandidatesForMember({
+  member,
+  equippedByLevel,
+  selectedJobName,
+  magicSpellMetaByName,
+  jobMagicAllowedNamesByJob,
+}) {
+  const allowedSet = new Set(asArray(asObj(jobMagicAllowedNamesByJob)[selectedJobName]));
+  if (!allowedSet.size) return [];
+  const mpLevels = asObj(member?.mp_levels);
+  const spellMetaByName = asObj(magicSpellMetaByName);
+  const rows = [];
+
+  for (let lv = 1; lv <= 8; lv += 1) {
+    const equippedRow = asArray(asObj(equippedByLevel)[String(lv)]);
+    const mpRow = asObj(mpLevels[String(lv)]);
+    const remain = asNum(mpRow.current, 0);
+    const maxUses = asNum(mpRow.max, remain);
+    for (const rawName of equippedRow) {
+      const spellName = typeof rawName === "string" ? rawName : "";
+      if (!spellName || !allowedSet.has(spellName)) continue;
+      const meta = asObj(spellMetaByName[spellName]);
+      const level = Math.max(1, asNum(meta.level, lv));
+      rows.push({
+        name: spellName,
+        type: String(meta.type || ""),
+        level,
+        remaining_uses: remain,
+        max_uses: maxUses,
+        label: `${spellTypeSymbol(meta)}${spellName}`,
+        group_label: maxUses > 0 ? `LV${level} (${remain}/${maxUses})` : `LV${level} (${remain})`,
+      });
+    }
+  }
+
+  return rows;
+}
 
 function renderLayout() {
   return renderMenuSubpageShell({
@@ -140,11 +188,25 @@ export async function mountScreen({ mountNode, store, navigate }) {
       if (idx !== memberIndex || !Array.isArray(memberRows)) return memberRows;
       return memberRows.map((cand) => ({ ...cand, is_current: String(cand?.job_name || "") === selectedName }));
     });
+    const currentMagicCandidatesByMember = asArray(
+      menuState?.magic_candidates_by_member || menuState?.magicCandidatesByMember,
+    );
+    const nextMagicCandidatesByMember = nextParty.map((_unused, idx) => {
+      if (idx !== memberIndex) return currentMagicCandidatesByMember[idx] || [];
+      return rebuildMagicCandidatesForMember({
+        member: nextParty[idx],
+        equippedByLevel: asObj(menuState?.magic_setup?.equipped_by_member?.[idx]),
+        selectedJobName: selectedName,
+        magicSpellMetaByName: menuState?.magic_spell_meta_by_name || menuState?.magicMetaByName,
+        jobMagicAllowedNamesByJob: menuState?.job_magic_allowed_names_by_job,
+      });
+    });
     const nextMenuState = {
       ...(menuState && typeof menuState === "object" ? menuState : {}),
       party: nextParty,
       resources: nextResources,
       job_candidates_by_member: nextJobCandidatesByMember,
+      magic_candidates_by_member: nextMagicCandidatesByMember,
     };
     const nextEnvelope = structuredClone(state.saveEnvelope || store.createDefaultEnvelope());
     nextEnvelope.menu_state = nextMenuState;

@@ -452,6 +452,16 @@ def _build_magic_spell_meta(session: BattleSession) -> dict[str, dict[str, Any]]
             "target_mode": target_mode,
             "type": str(raw.get("Type") or ""),
             "level": _safe_int(raw.get("Level", 1), 1),
+            "effect_category": str(raw.get("effect_category") or ""),
+            "default_target_side": str(raw.get("default_target_side") or ""),
+            "target_scope": str(raw.get("target_scope") or ""),
+            "status_ailment": (
+                raw.get("status_ailment")
+                or raw.get("StatusAilment")
+                or raw.get("StatusAilments")
+            ),
+            "field_heal_hp": raw.get("field_heal_hp"),
+            "field_revive_hp": raw.get("field_revive_hp"),
         }
 
     # Evoker では親召喚名（例: Leviathan）がメニューに表示されるため、
@@ -501,6 +511,16 @@ def _build_magic_spell_meta(session: BattleSession) -> dict[str, dict[str, Any]]
                 "target_mode": target_mode,
                 "type": str(parent_raw.get("Type") or ""),
                 "level": _safe_int(parent_raw.get("Level", 1), 1),
+                "effect_category": str(parent_raw.get("effect_category") or ""),
+                "default_target_side": str(parent_raw.get("default_target_side") or ""),
+                "target_scope": str(parent_raw.get("target_scope") or ""),
+                "status_ailment": (
+                    parent_raw.get("status_ailment")
+                    or parent_raw.get("StatusAilment")
+                    or parent_raw.get("StatusAilments")
+                ),
+                "field_heal_hp": parent_raw.get("field_heal_hp"),
+                "field_revive_hp": parent_raw.get("field_revive_hp"),
             }
     return rows
 

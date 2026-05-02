@@ -36,6 +36,7 @@ class _DummySession:
                 "default_target_side": "Any",
                 "target_scope": "one_or_all",
                 "Target": "One/All Allies",
+                "field_heal_hp": 50,
             },
             "Leviathan: Demon Eye": {
                 "Name": "Leviathan: Demon Eye",
@@ -68,6 +69,8 @@ def test_build_magic_spell_meta_marks_hp_heal_as_any_target() -> None:
 
     assert meta["Cure"]["healing_type"] == "hp"
     assert meta["Cure"]["target_mode"] == "any"
+    assert meta["Cure"]["effect_category"] == "heal_hp"
+    assert meta["Cure"]["field_heal_hp"] == 50
 
 
 def test_build_magic_spell_meta_marks_all_enemies_as_auto_all_target() -> None:

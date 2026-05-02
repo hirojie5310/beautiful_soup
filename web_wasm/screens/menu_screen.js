@@ -14,6 +14,7 @@ import {
   getLastUsedSaveSlotId,
   parseSaveEnvelope,
 } from "../shared_storage.js";
+import { getPyodideRuntime } from "../pyodide_runtime.js";
 import { saveRepository } from "../save_repository.js";
 import { mergeMenuStateIntoSave } from "../menu_save_sync.js";
 import { bindButtonHandlers, triggerAutoSaveFromEnvelope } from "./screen_shared.js";
@@ -254,6 +255,62 @@ function patchSaveWithMenuState(saveObj, menuState) {
   return mergeMenuStateIntoSave(saveObj, menuState);
 }
 
+async function rebuildEnvelopeMenuStateFromRuntime(envelope) {
+  const pyodide = await getPyodideRuntime();
+  const normalizedEnvelope = envelope && typeof envelope === "object" ? envelope : null;
+  if (!pyodide || !normalizedEnvelope?.save || typeof normalizedEnvelope.save !== "object") {
+    return {
+      envelope: normalizedEnvelope,
+      menuState: extractMenuStateFromEnvelope(normalizedEnvelope),
+    };
+  }
+
+  const selectedLocationGroup = String(normalizedEnvelope.selected_location_group || "");
+  const selectedLocation = String(normalizedEnvelope.selected_location || "");
+  if (!selectedLocationGroup || !selectedLocation) {
+    return {
+      envelope: normalizedEnvelope,
+      menuState: extractMenuStateFromEnvelope(normalizedEnvelope),
+    };
+  }
+
+  try {
+    const bootWithSave = pyodide.globals.get("boot_engine_for_location_with_save_json");
+    const getMenuStateJson = pyodide.globals.get("get_menu_state_json");
+    const exportRuntimeSaveJson = pyodide.globals.get("export_runtime_save_json");
+    if (!bootWithSave || !getMenuStateJson || !exportRuntimeSaveJson) {
+      return {
+        envelope: normalizedEnvelope,
+        menuState: extractMenuStateFromEnvelope(normalizedEnvelope),
+      };
+    }
+
+    bootWithSave(
+      selectedLocationGroup,
+      selectedLocation,
+      JSON.stringify(normalizedEnvelope.save),
+      7,
+    );
+
+    const runtimeSave = JSON.parse(String(exportRuntimeSaveJson() || "{}"));
+    const runtimeMenuState = normalizeMenuState(
+      JSON.parse(String(getMenuStateJson() || "{}")),
+    );
+    const nextEnvelope = {
+      ...normalizedEnvelope,
+      save: runtimeSave,
+      menu_state: runtimeMenuState,
+      saved_at: new Date().toISOString(),
+    };
+    return { envelope: nextEnvelope, menuState: runtimeMenuState };
+  } catch (_error) {
+    return {
+      envelope: normalizedEnvelope,
+      menuState: extractMenuStateFromEnvelope(normalizedEnvelope),
+    };
+  }
+}
+
 function buildEnvelopeForCurrentState(store, state) {
   const currentState = store.getState();
   const currentEnvelope = currentState.saveEnvelope || saveRepository.makeEnvelope({}, {});
@@ -355,6 +412,16 @@ export async function mountScreen({ mountNode, store, navigate }) {
   let highlightedSlotId = getLastUsedSaveSlotId() || MANUAL_SLOT_IDS[0];
   let isSaveSlotSelectionMode = false;
   let pendingLocalFileExport = false;
+
+  const initialEnvelope = store.getState().saveEnvelope;
+  if (initialEnvelope?.save) {
+    const rebuilt = await rebuildEnvelopeMenuStateFromRuntime(initialEnvelope);
+    if (rebuilt.envelope?.save && rebuilt.menuState) {
+      state = rebuilt.menuState;
+      store.updateMenuState(rebuilt.menuState);
+      store.updateSaveEnvelope(rebuilt.envelope, { reason: "session_restored" });
+    }
+  }
 
   if (!Array.isArray(state.party) || !state.party.length) {
     const currentEnvelope = store.getState().saveEnvelope;
@@ -643,10 +710,11 @@ export async function mountScreen({ mountNode, store, navigate }) {
         }
         highlightedSlotId = slotId;
         exitSaveSlotSelectionMode();
-        const loadedMenuState = extractMenuStateFromEnvelope(envelope);
+        const rebuilt = await rebuildEnvelopeMenuStateFromRuntime(envelope);
+        const loadedMenuState = rebuilt.menuState;
         state = loadedMenuState;
         store.updateMenuState(loadedMenuState);
-        store.updateSaveEnvelope({ ...envelope, menu_state: loadedMenuState }, { reason: "session_restored" });
+        store.updateSaveEnvelope(rebuilt.envelope || { ...envelope, menu_state: loadedMenuState }, { reason: "session_restored" });
         renderParty();
         renderResources();
         await refreshSlotList();
@@ -719,9 +787,10 @@ export async function mountScreen({ mountNode, store, navigate }) {
               window.alert("ロード失敗: セーブデータ形式が不正です。");
               return;
             }
-            const loadedMenuState = extractMenuStateFromEnvelope(envelope);
+            const rebuilt = await rebuildEnvelopeMenuStateFromRuntime(envelope);
+            const loadedMenuState = rebuilt.menuState;
             persistMenuState(loadedMenuState);
-            store.updateSaveEnvelope({ ...envelope, menu_state: loadedMenuState }, { reason: "save_imported" });
+            store.updateSaveEnvelope(rebuilt.envelope || { ...envelope, menu_state: loadedMenuState }, { reason: "save_imported" });
             renderParty();
             renderResources();
             window.alert("ロード完了: セーブデータを復元しました。");
