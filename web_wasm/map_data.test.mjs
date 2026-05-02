@@ -152,6 +152,13 @@ test("findCompatibleMapDefinition returns the map that matches selected location
         rows: ["1"],
         location_requirement: { group: "Floating Continent", locations: ["Floating Continent Near Ur"] },
       },
+      Airship_of_Cid: {
+        id: "Airship_of_Cid",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "", locations: [] },
+      },
       Ur: {
         id: "Ur",
         width: 1,
@@ -224,7 +231,20 @@ test("findCompatibleMapDefinition returns the map that matches selected location
       },
     };
     const matchedId = Object.keys(payloadById).find((id) => href.includes(id));
-    assert.ok(matchedId, `unexpected map url: ${href}`);
+    if (!matchedId) {
+      return {
+        ok: true,
+        async json() {
+          return {
+            id: "Unrelated",
+            width: 1,
+            height: 1,
+            rows: ["1"],
+            location_requirement: { group: "Other", locations: ["Other"] },
+          };
+        },
+      };
+    }
     return {
       ok: true,
       async json() {
@@ -292,6 +312,13 @@ test("findCompatibleMapDefinition returns null when no map matches selected loca
         rows: ["1"],
         location_requirement: { group: "Floating Continent", locations: ["Floating Continent Near Ur"] },
       },
+      Airship_of_Cid: {
+        id: "Airship_of_Cid",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "", locations: [] },
+      },
       Ur: {
         id: "Ur",
         width: 1,
@@ -364,7 +391,20 @@ test("findCompatibleMapDefinition returns null when no map matches selected loca
       },
     };
     const matchedId = Object.keys(payloadById).find((id) => href.includes(id));
-    assert.ok(matchedId, `unexpected map url: ${href}`);
+    if (!matchedId) {
+      return {
+        ok: true,
+        async json() {
+          return {
+            id: "Unrelated",
+            width: 1,
+            height: 1,
+            rows: ["1"],
+            location_requirement: { group: "Other", locations: ["Other"] },
+          };
+        },
+      };
+    }
     return {
       ok: true,
       async json() {
@@ -380,6 +420,61 @@ test("findCompatibleMapDefinition returns null when no map matches selected loca
     });
 
     assert.equal(result, null);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("findCompatibleMapDefinition prefers maps with explicit location requirements over generic maps", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const href = String(url);
+    const payloadById = {
+      Airship_of_Cid: {
+        id: "Airship_of_Cid",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "", locations: [] },
+      },
+      FloatingContinent: {
+        id: "FloatingContinent",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Floating Continent", locations: ["Floating Continent Near Ur"] },
+      },
+    };
+    const matchedId = Object.keys(payloadById).find((id) => href.includes(id));
+    if (!matchedId) {
+      return {
+        ok: true,
+        async json() {
+          return {
+            id: "Unrelated",
+            width: 1,
+            height: 1,
+            rows: ["1"],
+            location_requirement: { group: "Other", locations: ["Other"] },
+          };
+        },
+      };
+    }
+    return {
+      ok: true,
+      async json() {
+        return payloadById[matchedId];
+      },
+    };
+  };
+
+  try {
+    const result = await findCompatibleMapDefinition({
+      selected_location_group: "Floating Continent",
+      selected_location: "Floating Continent Near Ur",
+    });
+
+    assert.equal(result?.id, "FloatingContinent");
   } finally {
     globalThis.fetch = originalFetch;
   }

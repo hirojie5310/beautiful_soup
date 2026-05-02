@@ -42,6 +42,7 @@ import {
   resolveMapBgmUrl,
   resolveNpcInitialDirection,
   resolveInitialMapSelection,
+  resolveTransitionSpawn,
   shouldCloseEventOverlayOnConfirm,
   shouldResumeMapPosition,
   toggleAdjacentSwitch,
@@ -540,6 +541,18 @@ test("canOccupyTile rejects blocking NPC object tiles", () => {
   assert.equal(findBlockingObjectAt(mapWithNpc, 2, 2), null);
   assert.equal(canOccupyTile(mapWithNpc, 1, 1), false);
   assert.equal(canOccupyTile(mapWithNpc, 2, 2), true);
+});
+
+test("resolveTransitionSpawn preserves explicit exit targets within map bounds", () => {
+  const result = resolveTransitionSpawn(stubMap, { x: 0, y: 0 });
+
+  assert.deepEqual(result, { x: 0, y: 0 });
+});
+
+test("resolveTransitionSpawn falls back to map spawn when explicit target is out of bounds", () => {
+  const result = resolveTransitionSpawn(stubMap, { x: 99, y: 99 });
+
+  assert.deepEqual(result, { x: 1, y: 1 });
 });
 
 test("canNpcOccupyTile ignores itself but avoids player and blocking NPCs", () => {

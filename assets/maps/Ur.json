@@ -44,8 +44,8 @@
       "y": 31,
       "target_map": "FloatingContinent",
       "target_spawn": {
-        "x": 87,
-        "y": 17
+        "x": 95,
+        "y": 41
       }
     },
     {
@@ -55,8 +55,8 @@
       "y": 31,
       "target_map": "FloatingContinent",
       "target_spawn": {
-        "x": 87,
-        "y": 17
+        "x": 95,
+        "y": 41
       }
     },
     {
@@ -66,8 +66,8 @@
       "y": 19,
       "target_map": "FloatingContinent",
       "target_spawn": {
-        "x": 87,
-        "y": 17
+        "x": 95,
+        "y": 41
       }
     },
     {
@@ -77,8 +77,8 @@
       "y": 20,
       "target_map": "FloatingContinent",
       "target_spawn": {
-        "x": 87,
-        "y": 17
+        "x": 95,
+        "y": 41
       }
     },
     {

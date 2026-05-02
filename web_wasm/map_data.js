@@ -1,6 +1,7 @@
 export const DEFAULT_MAP_ID = "Alter_Cave_B1";
 
 const MAP_MANIFEST = {
+  Airship_of_Cid: new URL("../assets/maps/Airship_of_Cid.json", import.meta.url).href,
   Alter_Cave_B1: new URL("../assets/maps/Alter_Cave_B1.json", import.meta.url).href,
   Alter_Cave_B2: new URL("../assets/maps/Alter_Cave_B2.json", import.meta.url).href,
   Alter_Cave_B3: new URL("../assets/maps/Alter_Cave_B3.json", import.meta.url).href,
@@ -201,6 +202,16 @@ export function isMapSelectionCompatible(mapDefinition, selection) {
   return true;
 }
 
+function hasExplicitLocationRequirement(mapDefinition) {
+  const requirement = mapDefinition?.locationRequirement && typeof mapDefinition.locationRequirement === "object"
+    ? mapDefinition.locationRequirement
+    : { group: "", locations: [] };
+  return Boolean(
+    String(requirement.group || "")
+    || (Array.isArray(requirement.locations) && requirement.locations.length),
+  );
+}
+
 export function buildEncounterSelection(mapDefinition, fallbackSelection = {}) {
   const requirement = mapDefinition?.locationRequirement && typeof mapDefinition.locationRequirement === "object"
     ? mapDefinition.locationRequirement
@@ -262,18 +273,27 @@ export function getMapManifestUrl(mapId) {
 
 export async function findCompatibleMapDefinition(selection, options = {}) {
   const preferredMapId = String(options?.preferredMapId || "");
+  const hasSelectionContext = Boolean(
+    String(selection?.selected_location_group || selection?.selectedLocationGroup || "")
+    || String(selection?.selected_location || selection?.selectedLocation || ""),
+  );
   const candidateIds = [
     ...(preferredMapId ? [preferredMapId] : []),
     ...Object.keys(MAP_MANIFEST),
   ].filter((value, index, values) => value && values.indexOf(value) === index);
 
+  let fallbackMatch = null;
   for (const mapId of candidateIds) {
     const mapDefinition = await loadMapDefinition(mapId);
-    if (isMapSelectionCompatible(mapDefinition, selection)) {
+    if (!isMapSelectionCompatible(mapDefinition, selection)) {
+      continue;
+    }
+    if (hasExplicitLocationRequirement(mapDefinition)) {
       return mapDefinition;
     }
+    fallbackMatch ??= mapDefinition;
   }
-  return null;
+  return hasSelectionContext ? null : fallbackMatch;
 }
 
 export async function loadMapDefinition(mapId = DEFAULT_MAP_ID) {

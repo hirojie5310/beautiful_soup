@@ -629,6 +629,36 @@ export function canOccupyTile(mapDefinition, x, y) {
   return !mapDefinition.collisionGids.has(gid);
 }
 
+function isWithinMapBounds(mapDefinition, x, y) {
+  return Boolean(
+    mapDefinition
+    && x >= 0
+    && y >= 0
+    && x < mapDefinition.width
+    && y < mapDefinition.height,
+  );
+}
+
+export function resolveTransitionSpawn(mapDefinition, targetSpawn = null) {
+  const fallbackX = asNumber(mapDefinition?.spawn?.x, 0);
+  const fallbackY = asNumber(mapDefinition?.spawn?.y, 0);
+  const hasExplicitTarget = Number.isFinite(Number(targetSpawn?.x))
+    && Number.isFinite(Number(targetSpawn?.y));
+  const targetX = asNumber(targetSpawn?.x, fallbackX);
+  const targetY = asNumber(targetSpawn?.y, fallbackY);
+
+  // Explicit exit destinations should be authoritative as long as they stay on-map.
+  // Some maps intentionally land the player on trigger tiles, and collision metadata
+  // is not always reliable enough to override a hand-authored target_spawn.
+  if (hasExplicitTarget && isWithinMapBounds(mapDefinition, targetX, targetY)) {
+    return { x: targetX, y: targetY };
+  }
+  if (canOccupyTile(mapDefinition, targetX, targetY)) {
+    return { x: targetX, y: targetY };
+  }
+  return { x: fallbackX, y: fallbackY };
+}
+
 export function findBlockingObjectAt(mapDefinition, x, y) {
   return (mapDefinition?.objects || []).find((row) => (
     row?.type === "npc"
@@ -1258,6 +1288,8 @@ function drawWaterFlowCanvas(waterCanvas, mapDefinition, masks) {
   renderRows.forEach((row, y) => {
     row.forEach((gid, x) => {
       if (!isWaterFlowTileGid(gid, mapDefinition)) return;
+      const rightNeighborGid = Number(renderRows[y]?.[x + 1] ?? 0);
+      if (rightNeighborGid !== Number(gid || 0)) return;
       const mask = masks.get(Number(gid || 0));
       if (!mask) return;
       context.drawImage(
@@ -2564,11 +2596,12 @@ export async function mountScreen({ mountNode, store, navigate }) {
         selectedLocationGroup: nextSelection.selected_location_group,
         selectedLocation: nextSelection.selected_location,
       });
+      const resolvedSpawn = resolveTransitionSpawn(nextMapDefinition, targetSpawn);
       mapDefinition = nextMapDefinition;
       mapState = {
         current_map_id: nextMapDefinition.id,
-        tile_x: asNumber(targetSpawn?.x, asNumber(nextMapDefinition.spawn?.x, 0)),
-        tile_y: asNumber(targetSpawn?.y, asNumber(nextMapDefinition.spawn?.y, 0)),
+        tile_x: resolvedSpawn.x,
+        tile_y: resolvedSpawn.y,
         facing_direction: playerDirection,
         steps_since_reset: 0,
         switch_states: {},
