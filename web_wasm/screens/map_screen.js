@@ -18,6 +18,7 @@ import {
 import { mergeMenuStateIntoSave } from "../menu_save_sync.js";
 import { triggerAutoSaveFromEnvelope } from "./screen_shared.js";
 import { configureAmbientAudioSession } from "../audio_session.js";
+import { applyStoredBgmVolume } from "../audio_settings.js";
 
 const DISPLAY_TILE_SIZE = 22;
 const CHARACTER_SOURCE_TILE_SIZE = 16;
@@ -175,6 +176,7 @@ export function configureLoopingMapBgm(audioElement, sourceUrl = FLOATING_CONTIN
   audioElement.src = String(sourceUrl || "");
   audioElement.loop = false;
   audioElement.preload = "metadata";
+  applyStoredBgmVolume(audioElement);
   try {
     audioElement.playsInline = true;
     audioElement.setAttribute?.("playsinline", "true");
