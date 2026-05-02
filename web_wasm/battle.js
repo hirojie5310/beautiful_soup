@@ -59,7 +59,7 @@ import {
 import { saveRepository } from "./save_repository.js";
 import { resolveLocationMapImageUrl } from "./map_images.js";
 import { configureAmbientAudioSession } from "./audio_session.js";
-import { applyStoredBgmVolume } from "./audio_settings.js";
+import { playManagedBgm } from "./audio_output.js";
 
 const NORMAL_BATTLE_BGM_URL = new URL("../assets/sounds/bgm/battle.ogg", import.meta.url).href;
 const BOSS_BATTLE_BGM_URL = new URL("../assets/sounds/bgm/boss-battle.ogg", import.meta.url).href;
@@ -245,7 +245,6 @@ function ensureBattleBgmAudio(sourceUrl) {
       battleBgmAudio.loop = true;
       battleBgmAudio.preload = "auto";
     }
-    applyStoredBgmVolume(battleBgmAudio);
     if (battleBgmSourceUrl !== nextSourceUrl) {
       battleBgmAudio.pause();
       battleBgmAudio.currentTime = 0;
@@ -271,7 +270,8 @@ function scheduleBattleBgmUnlockRetry(sourceUrl) {
     clearPendingBattleBgmUnlock();
     const audio = ensureBattleBgmAudio(sourceUrl);
     if (!audio) return;
-    const playResult = audio.play();
+    configureAmbientAudioSession();
+    const playResult = playManagedBgm(audio);
     if (playResult && typeof playResult.catch === "function") {
       playResult.catch(() => {});
     }
@@ -300,7 +300,7 @@ function syncBattleBgm() {
   const audio = ensureBattleBgmAudio(sourceUrl);
   if (!audio || !audio.paused) return;
   configureAmbientAudioSession();
-  const playResult = audio.play();
+  const playResult = playManagedBgm(audio);
   if (playResult && typeof playResult.catch === "function") {
     playResult.catch(() => {
       scheduleBattleBgmUnlockRetry(sourceUrl);

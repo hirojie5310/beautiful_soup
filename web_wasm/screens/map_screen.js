@@ -18,7 +18,7 @@ import {
 import { mergeMenuStateIntoSave } from "../menu_save_sync.js";
 import { triggerAutoSaveFromEnvelope } from "./screen_shared.js";
 import { configureAmbientAudioSession } from "../audio_session.js";
-import { applyStoredBgmVolume } from "../audio_settings.js";
+import { playManagedBgm } from "../audio_output.js";
 
 const DISPLAY_TILE_SIZE = 22;
 const CHARACTER_SOURCE_TILE_SIZE = 16;
@@ -176,7 +176,6 @@ export function configureLoopingMapBgm(audioElement, sourceUrl = FLOATING_CONTIN
   audioElement.src = String(sourceUrl || "");
   audioElement.loop = false;
   audioElement.preload = "metadata";
-  applyStoredBgmVolume(audioElement);
   try {
     audioElement.playsInline = true;
     audioElement.setAttribute?.("playsinline", "true");
@@ -2011,7 +2010,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     const audio = ensureMapBgmAudio(sourceUrl);
     if (!audio || !audio.paused) return;
     configureAmbientAudioSession();
-    const playResult = audio.play();
+    const playResult = playManagedBgm(audio);
     if (playResult && typeof playResult.catch === "function") {
       playResult.catch(() => {
         if (resolveActiveMapBgmUrl()) {
