@@ -58,6 +58,7 @@ import {
 } from "./shared_storage.js";
 import { saveRepository } from "./save_repository.js";
 import { resolveLocationMapImageUrl } from "./map_images.js";
+import { configureAmbientAudioSession } from "./audio_session.js";
 
 const NORMAL_BATTLE_BGM_URL = new URL("../assets/sounds/bgm/battle.ogg", import.meta.url).href;
 const BOSS_BATTLE_BGM_URL = new URL("../assets/sounds/bgm/boss-battle.ogg", import.meta.url).href;
@@ -296,6 +297,7 @@ function syncBattleBgm() {
   }
   const audio = ensureBattleBgmAudio(sourceUrl);
   if (!audio || !audio.paused) return;
+  configureAmbientAudioSession();
   const playResult = audio.play();
   if (playResult && typeof playResult.catch === "function") {
     playResult.catch(() => {
