@@ -3,6 +3,45 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from combat.constants import STATUS_ICON_KEY_BY_ENUM
+from combat.enums import Status
+
+
+_STATUS_EFFECT_KEY_BY_STATUS = {
+    Status.POISON: "Poison",
+    Status.BLIND: "Blind",
+    Status.MINI: "Mini",
+    Status.SILENCE: "Silence",
+    Status.TOAD: "Toad",
+    Status.PETRIFY: "Petrification",
+    Status.KO: "KO",
+    Status.CONFUSION: "Confusion",
+    Status.SLEEP: "Sleep",
+    Status.PARALYZE: "Paralysis",
+    Status.PARTIAL_PETRIFY: "Partial Petrification",
+}
+_TRANSIENT_BATTLE_END_STATUSES = {
+    Status.SLEEP,
+    Status.CONFUSION,
+    Status.PARTIAL_PETRIFY,
+}
+_KNOWN_STATUS_EFFECT_KEYS = {
+    "Poison",
+    "Blind",
+    "Mini",
+    "Silence",
+    "Toad",
+    "Petrification",
+    "KO",
+    "Confusion",
+    "Sleep",
+    "Paralysis",
+    "Partial Petrification",
+    "Partial Petrification (1/3)",
+    "Partial Petrification (1/2)",
+    "Partial Petrification (Full)",
+}
+
 
 def _safe_int(value: Any, default: int = 0) -> int:
     try:
@@ -205,6 +244,61 @@ def _validate_party_changes(save: dict[str, Any], changes: Any) -> None:
                     unsupported_key = sorted(unsupported)[0]
                     _raise_patch_error(f"{row_path}.{unsupported_key} is unsupported")
 
+        if "status_effects" in member_patch:
+            status_patch = member_patch.get("status_effects")
+            if not isinstance(status_patch, dict):
+                _raise_patch_error(f"{path}.status_effects must be an object")
+            keys = set(status_patch.keys())
+            if keys != {"before", "after"}:
+                _raise_patch_error(f"{path}.status_effects must contain only before/after")
+            for key in ("before", "after"):
+                value = status_patch.get(key)
+                if not isinstance(value, dict):
+                    _raise_patch_error(f"{path}.status_effects.{key} must be an object")
+                for status_name, enabled in value.items():
+                    if not isinstance(status_name, str) or not status_name:
+                        _raise_patch_error(
+                            f"{path}.status_effects.{key} keys must be non-empty strings"
+                        )
+                    if not isinstance(enabled, bool):
+                        _raise_patch_error(
+                            f"{path}.status_effects.{key}.{status_name} must be a boolean"
+                        )
+            current_status_effects = entry.get("status_effects")
+            if current_status_effects is None:
+                current_status_effects = {}
+            if not isinstance(current_status_effects, dict):
+                _raise_patch_error(f"{path}.status_effects target must be an object")
+            normalized_current = {
+                str(key): bool(value)
+                for key, value in current_status_effects.items()
+            }
+            if normalized_current != status_patch["before"]:
+                _raise_patch_error(
+                    f"{path}.status_effects.before does not match current save"
+                )
+
+        if "status_icons" in member_patch:
+            status_icons_patch = member_patch.get("status_icons")
+            if not isinstance(status_icons_patch, dict):
+                _raise_patch_error(f"{path}.status_icons must be an object")
+            if set(status_icons_patch.keys()) != {"before", "after"}:
+                _raise_patch_error(f"{path}.status_icons must contain only before/after")
+            for key in ("before", "after"):
+                value = status_icons_patch.get(key)
+                if not isinstance(value, list):
+                    _raise_patch_error(f"{path}.status_icons.{key} must be a list")
+                for item_index, item in enumerate(value):
+                    if not isinstance(item, str) or not item:
+                        _raise_patch_error(
+                            f"{path}.status_icons.{key}[{item_index}] must be a non-empty string"
+                        )
+            current_status_icons = _normalize_status_icons(entry.get("status_icons"))
+            if current_status_icons != _normalize_status_icons(status_icons_patch["before"]):
+                _raise_patch_error(
+                    f"{path}.status_icons.before does not match current save"
+                )
+
 
 def _validate_leaf_changes(root: Any, changes: Any, *, path_label: str) -> None:
     if not isinstance(changes, list):
@@ -301,6 +395,21 @@ def apply_battle_save_patch(save: dict[str, Any], patch: BattleSavePatch) -> Non
                 if "max_after" in level_patch:
                     row["max"] = int(level_patch["max_after"])
 
+        status_effects_patch = member_patch.get("status_effects")
+        if isinstance(status_effects_patch, dict) and isinstance(
+            status_effects_patch.get("after"), dict
+        ):
+            entry["status_effects"] = {
+                str(key): bool(value)
+                for key, value in status_effects_patch["after"].items()
+            }
+
+        status_icons_patch = member_patch.get("status_icons")
+        if isinstance(status_icons_patch, dict) and isinstance(
+            status_icons_patch.get("after"), list
+        ):
+            entry["status_icons"] = _normalize_status_icons(status_icons_patch["after"])
+
     inventory = _ensure_dict(save, "inventory")
     for change in patch.inventory_changes:
         path = change.get("path")
@@ -378,6 +487,72 @@ def _job_level_change(before: Any, after: Any) -> dict[str, dict[str, int]]:
     return changes
 
 
+def _normalize_status_icons(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    rows: list[str] = []
+    for row in value:
+        if not isinstance(row, str) or not row:
+            continue
+        rows.append(row)
+    return sorted(set(rows))
+
+
+def _status_changes(before: Any, after: Any) -> dict[str, Any] | None:
+    before_row = before if isinstance(before, dict) else {}
+    after_row = after if isinstance(after, dict) else {}
+    if before_row == after_row:
+        return None
+    return {
+        "before": {str(key): bool(value) for key, value in before_row.items()},
+        "after": {str(key): bool(value) for key, value in after_row.items()},
+    }
+
+
+def _status_icons_change(before: Any, after: Any) -> dict[str, list[str]] | None:
+    before_rows = _normalize_status_icons(before)
+    after_rows = _normalize_status_icons(after)
+    if before_rows == after_rows:
+        return None
+    return {"before": before_rows, "after": after_rows}
+
+
+def _serialize_status_effects_from_runtime(
+    existing_effects: Any,
+    statuses: Any,
+) -> dict[str, bool]:
+    next_effects = (
+        {str(key): bool(value) for key, value in existing_effects.items()}
+        if isinstance(existing_effects, dict)
+        else {}
+    )
+    for key in _KNOWN_STATUS_EFFECT_KEYS:
+        next_effects[key] = False
+    if not isinstance(statuses, (set, list, tuple)):
+        return next_effects
+
+    for status in statuses:
+        if status in _TRANSIENT_BATTLE_END_STATUSES:
+            continue
+        save_key = _STATUS_EFFECT_KEY_BY_STATUS.get(status)
+        if save_key:
+            next_effects[save_key] = True
+    return next_effects
+
+
+def _serialize_status_icons_from_runtime(statuses: Any) -> list[str]:
+    if not isinstance(statuses, (set, list, tuple)):
+        return []
+    rows: list[str] = []
+    for status in statuses:
+        if status in _TRANSIENT_BATTLE_END_STATUSES:
+            continue
+        icon_key = STATUS_ICON_KEY_BY_ENUM.get(status)
+        if isinstance(icon_key, str) and icon_key:
+            rows.append(icon_key)
+    return sorted(set(rows))
+
+
 def _flatten_numeric_leaves(value: Any, prefix: tuple[str, ...] = ()) -> dict[tuple[str, ...], int]:
     if isinstance(value, dict):
         rows: dict[tuple[str, ...], int] = {}
@@ -448,6 +623,18 @@ def build_battle_save_patch(
         )
         if mp_levels:
             member_patch["mp_levels"] = mp_levels
+        status_effects = _status_changes(
+            before_member.get("status_effects"),
+            after_member.get("status_effects"),
+        )
+        if status_effects is not None:
+            member_patch["status_effects"] = status_effects
+        status_icons = _status_icons_change(
+            before_member.get("status_icons"),
+            after_member.get("status_icons"),
+        )
+        if status_icons is not None:
+            member_patch["status_icons"] = status_icons
         if len(member_patch) > 1:
             patch.party_changes.append(member_patch)
 
@@ -524,5 +711,11 @@ def build_party_battle_state_patch(
                 "current": current,
                 "max": max_uses,
             }
+        statuses = getattr(state, "statuses", set())
+        entry["status_effects"] = _serialize_status_effects_from_runtime(
+            entry.get("status_effects"),
+            statuses,
+        )
+        entry["status_icons"] = _serialize_status_icons_from_runtime(statuses)
 
     return build_battle_save_patch(save, after_save)

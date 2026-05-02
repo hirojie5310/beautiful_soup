@@ -445,6 +445,76 @@ def test_wasm_engine_battle_end_save_patch_reports_non_victory_state_sync(
     assert first_member_patch["hp"]["after"] == max(0, before_hp - 5)
 
 
+def test_wasm_engine_battle_end_save_patch_preserves_blind_but_clears_sleep_confusion_and_partial_petrify(
+    monkeypatch,
+) -> None:
+    engine = WasmBattleEngine.create_default(seed=47)
+    member = engine.session.party_members[0]
+    member.state.statuses = {
+        Status.BLIND,
+        Status.SLEEP,
+        Status.CONFUSION,
+        Status.PARTIAL_PETRIFY,
+    }
+    saved_calls: list[dict[str, Any]] = []
+
+    def _fake_execute_round_dto(*, session, request, rng):
+        del session, request, rng
+        return type(
+            "Output",
+            (),
+            {
+                "logs": ["Escaped!"],
+                "end_reason": "escaped",
+                "escaped": True,
+                "enemy_was_physically_hit": False,
+                "events": [],
+                "lifecycle": type(
+                    "Lifecycle",
+                    (),
+                    {
+                        "before": "resolving_round",
+                        "after": "battle_finished",
+                        "battle_finished": True,
+                    },
+                )(),
+            },
+        )()
+
+    def _fake_save_savedata(path: str | os.PathLike[str], save: dict[str, object]):
+        del path
+        saved_calls.append(json.loads(json.dumps(save)))
+
+    monkeypatch.setattr("combat.wasm_api.execute_round_dto", _fake_execute_round_dto)
+    monkeypatch.setattr("combat.wasm_api.save_savedata", _fake_save_savedata)
+
+    payload = json.loads(
+        engine.execute_round_json(
+            json.dumps(
+                {"planned_actions": [], "lifecycle_state": "ready_for_actions"},
+                ensure_ascii=False,
+            )
+        )
+    )
+
+    first_member_patch = next(
+        row
+        for row in payload["battle_save_patch"]["party_changes"]
+        if row["name"] == member.name
+    )
+    assert first_member_patch["status_effects"]["after"]["Blind"] is True
+    assert first_member_patch["status_effects"]["after"]["Sleep"] is False
+    assert first_member_patch["status_effects"]["after"]["Confusion"] is False
+    assert (
+        first_member_patch["status_effects"]["after"]["Partial Petrification"] is False
+    )
+    assert first_member_patch["status_icons"]["after"] == ["blind"]
+    assert saved_calls
+    assert saved_calls[0]["party"][0]["status_effects"]["Blind"] is True
+    assert saved_calls[0]["party"][0]["status_effects"]["Sleep"] is False
+    assert saved_calls[0]["party"][0]["status_icons"] == ["blind"]
+
+
 def test_build_session_status_snapshot_serializes_status_icons() -> None:
     engine = WasmBattleEngine.create_default(seed=1)
     engine.session.party_members[0].state.statuses = {Status.BLIND}

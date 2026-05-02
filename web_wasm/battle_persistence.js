@@ -106,6 +106,12 @@ function asPlainObject(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : {};
 }
 
+function asStringArray(value) {
+  return Array.isArray(value)
+    ? value.map((row) => String(row || "")).filter(Boolean)
+    : [];
+}
+
 function ensurePlainObject(parent, key) {
   const current = asPlainObject(parent?.[key]);
   parent[key] = current;
@@ -181,6 +187,13 @@ export function applyBattleSavePatchToSave(saveObj, battleSavePatch) {
           row.max = Number(levelPatch.max_after ?? row.max ?? 0);
         }
       });
+    }
+
+    if (memberPatch.status_effects && typeof memberPatch.status_effects === "object") {
+      entry.status_effects = { ...asPlainObject(memberPatch.status_effects.after) };
+    }
+    if (memberPatch.status_icons && typeof memberPatch.status_icons === "object") {
+      entry.status_icons = asStringArray(memberPatch.status_icons.after);
     }
   });
 

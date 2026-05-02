@@ -60,6 +60,14 @@ test("applyBattleSavePatchToSave applies resource, party, and inventory deltas",
           max_hp: { before: 10, after: 12, delta: 2 },
           level: { before: 1, after: 2, delta: 1 },
           exp: { before: 0, after: 40, delta: 40 },
+          status_effects: {
+            before: { Blind: false, Sleep: true },
+            after: { Blind: true, Sleep: false },
+          },
+          status_icons: {
+            before: ["sleep"],
+            after: ["blind"],
+          },
           job_level: {
             skill_point: { before: 0, after: 5, delta: 5 },
           },
@@ -91,6 +99,8 @@ test("applyBattleSavePatchToSave applies resource, party, and inventory deltas",
   assert.equal(nextSave.party[0].max_hp, 12);
   assert.equal(nextSave.party[0].level, 2);
   assert.equal(nextSave.party[0].exp, 40);
+  assert.deepEqual(nextSave.party[0].status_effects, { Blind: true, Sleep: false });
+  assert.deepEqual(nextSave.party[0].status_icons, ["blind"]);
   assert.equal(nextSave.party[0].job_level.skill_point, 5);
   assert.equal(nextSave.party[0].mp.L1MP, 0);
   assert.deepEqual(nextSave.party[0].mp_levels["1"], { current: 0, max: 3 });
