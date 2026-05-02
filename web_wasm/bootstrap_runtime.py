@@ -2,6 +2,7 @@
 import json
 from typing import Any, Callable, SupportsIndex, SupportsInt, cast
 
+from combat.magic_menu import allowed_spell_names_for_job
 from combat.wasm_api import WasmBattleEngine, build_session_status_snapshot
 from combat.runtime_state import init_runtime_state
 from combat.usecases import build_battle_session
@@ -810,6 +811,24 @@ def _build_magic_spell_meta(session):
     return rows
 
 
+def _build_job_magic_allowed_names_by_job(runtime_state) -> dict[str, list[str]]:
+    jobs_by_name = getattr(runtime_state, "jobs_by_name", {})
+    if not isinstance(jobs_by_name, dict):
+        return {}
+    rows: dict[str, list[str]] = {}
+    for job_name, job_data in jobs_by_name.items():
+        if not isinstance(job_name, str) or not job_name:
+            continue
+        try:
+            allowed_names = allowed_spell_names_for_job(job_data)
+        except AttributeError:
+            continue
+        rows[job_name] = sorted(
+            [name for name in allowed_names if isinstance(name, str) and name]
+        )
+    return rows
+
+
 def _load_equipped_magic_slots_from_entry(party_entry):
     raw_magic = {}
     if isinstance(party_entry, dict):
@@ -985,6 +1004,7 @@ def get_menu_state_json():
         "equipment_by_member": equip_by_member,
         "magic_setup": _ensure_menu_magic_setup(engine.session),
         "magic_spell_meta_by_name": _build_magic_spell_meta(engine.session),
+        "job_magic_allowed_names_by_job": _build_job_magic_allowed_names_by_job(runtime_state),
         "inventory_catalog": {
             "items": sorted(
                 [

@@ -30,6 +30,12 @@ const STATUS_EFFECT_KEY_BY_ICON = {
   "partial petrify": "Partial Petrification",
   partial_petrify: "Partial Petrification",
 };
+const TARGETED_FIELD_EFFECT_CATEGORIES = new Set(["heal_hp", "revive", "status_recovery"]);
+const TARGETLESS_FIELD_EFFECT_CATEGORIES = new Set(["teleport", "field_utility"]);
+const FIELD_USABLE_EFFECT_CATEGORIES = new Set([
+  ...TARGETED_FIELD_EFFECT_CATEGORIES,
+  ...TARGETLESS_FIELD_EFFECT_CATEGORIES,
+]);
 
 function asArray(v) { return Array.isArray(v) ? v : []; }
 function asObj(v) { return v && typeof v === "object" ? v : {}; }
@@ -55,6 +61,37 @@ export function getSpellMeta(metaByName, spellName) {
   return asObj(metaByName)?.[spellName] || null;
 }
 
+function resolveStatusIconCandidates(iconKey) {
+  const safe = encodeURIComponent(String(iconKey || ""));
+  if (!safe) return [];
+  return [
+    `/assets/images/status_icons/${safe}.png`,
+    `../assets/images/status_icons/${safe}.png`,
+    `/assets/status-icons/${safe}.png`,
+  ];
+}
+
+export function usableSpellNames(menuState, mIdx) {
+  const candidateNames = asArray(
+    (menuState?.magic_candidates_by_member || menuState?.magicCandidatesByMember)?.[mIdx],
+  )
+    .map((row) => String(row?.name || ""))
+    .filter(Boolean);
+  const candidateSet = new Set(candidateNames);
+
+  const member = asObj(asArray(menuState?.party)[mIdx]);
+  const currentJob = String(member?.current_job || member?.job || "").trim();
+  if (!currentJob) return candidateSet;
+
+  const allowedNames = asArray(asObj(menuState?.job_magic_allowed_names_by_job)[currentJob])
+    .map((name) => String(name || ""))
+    .filter(Boolean);
+  if (!allowedNames.length) return candidateSet;
+  const merged = new Set(allowedNames);
+  candidateSet.forEach((name) => merged.add(name));
+  return merged;
+}
+
 export function applyFieldSpellEffect(caster, target, spellMeta, selectedLevel) {
   const meta = asObj(spellMeta);
   const effectCategory = normalizeMetaKey(meta.effect_category);
@@ -68,6 +105,10 @@ export function applyFieldSpellEffect(caster, target, spellMeta, selectedLevel) 
   const targetIcons = asArray(target?.status_icons).map((row) => String(row));
   let nextTarget = { ...target };
   let changed = false;
+
+  if (!FIELD_USABLE_EFFECT_CATEGORIES.has(effectCategory)) {
+    return { ok: false, message: "フィールドではつかえないまほうです。" };
+  }
 
   if (effectCategory === "heal_hp") {
     if (targetHp <= 0 || targetHp >= targetMax) return { ok: false, message: "この対象にはこうかがありません。" };
@@ -92,13 +133,18 @@ export function applyFieldSpellEffect(caster, target, spellMeta, selectedLevel) 
     if (nextIcons.length === targetIcons.length) return { ok: false, message: "この対象にはこうかがありません。" };
     nextTarget.status_icons = nextIcons;
     changed = true;
-  } else {
-    return { ok: false, message: "フィールドではつかえないまほうです。" };
+  } else if (TARGETLESS_FIELD_EFFECT_CATEGORIES.has(effectCategory)) {
+    changed = true;
   }
 
   if (!changed) return { ok: false, message: "この対象にはこうかがありません。" };
   const nextCaster = { ...caster, mp_levels: { ...asObj(caster?.mp_levels), [lvKey]: { ...lvRow, current: mpCurrent - 1 } } };
-  return { ok: true, caster: nextCaster, target: nextTarget };
+  return {
+    ok: true,
+    caster: nextCaster,
+    target: nextTarget,
+    usesTarget: TARGETED_FIELD_EFFECT_CATEGORIES.has(effectCategory),
+  };
 }
 
 function findSavePartyIndex(saveParty, member, fallbackIndex) {
@@ -191,6 +237,11 @@ function renderLayout() {
       .sel { box-shadow: inset 0 0 0 2px rgba(255,227,127,0.6); }
       .candidate-pane { display:grid; gap:6px; max-height:20vh; overflow:auto; }
       .candidate { border:1px solid rgba(255,255,255,0.3); border-radius:6px; background:rgba(0,0,0,0.2); color:#eef2ff; padding:7px; text-align:left; }
+      .candidate.target-candidate { display:grid; grid-template-columns:1fr auto; align-items:center; gap:8px; }
+      .candidate .name { font-weight:700; }
+      .candidate .hp { color:#89f0ac; font-size:0.86rem; }
+      .candidate .icon-row { display:flex; gap:4px; justify-content:flex-end; min-height:16px; }
+      .candidate .status-icon { width:16px; height:16px; image-rendering:pixelated; }
       .desc { color:#acb6d7; font-size:0.85rem; }
       .footer { display:grid; grid-template-columns:1fr 1.6fr 1fr; gap:8px; }
       .empty { color:#acb6d7; }
@@ -246,13 +297,6 @@ export async function mountScreen({ mountNode, store, navigate }) {
     return asArray(asObj(asArray(setup?.equipped_by_member)[mIdx])[String(lv)]).slice(0, 3);
   }
   function stockRow(setup, lv) { return asArray(asObj(setup?.stock_by_level)[String(lv)]); }
-  function usableSpellNames(menuState, mIdx) {
-    return new Set(
-      asArray((menuState?.magic_candidates_by_member || menuState?.magicCandidatesByMember)?.[mIdx])
-        .map((row) => String(row?.name || ""))
-        .filter(Boolean),
-    );
-  }
   function mpText(member, lv) {
     const mp = asObj(asObj(member?.mp_levels)[String(lv)]);
     return `(${Number(mp?.current ?? 0)}/${Number(mp?.max ?? 0)})`;
@@ -341,7 +385,9 @@ export async function mountScreen({ mountNode, store, navigate }) {
       }
       party[memberIndex] = useResult.caster;
       party[targetIndex] = useResult.target;
-      messageLine.textContent = `${useResult.message}（${String(party[targetIndex]?.name || "-")}）`;
+      messageLine.textContent = useResult.usesTarget
+        ? `${useResult.message}（${String(party[targetIndex]?.name || "-")}）`
+        : useResult.message;
     }
 
     const nextMenuState = {
@@ -406,6 +452,26 @@ export async function mountScreen({ mountNode, store, navigate }) {
       if (row.kind === "stock") {
         const meta = (menuState.magic_spell_meta_by_name || menuState.magicMetaByName)?.[row.name] || {};
         btn.textContent = `${spellTypeSymbol(meta)}${row.name}`;
+      } else if (modeKey === "use") {
+        const member = asObj(asArray(menuState.party)[Number(row.member_index ?? -1)]);
+        btn.classList.add("target-candidate");
+        btn.innerHTML = `<div><div class="name">${row.name}</div><div class="hp">${Number(member?.hp ?? 0)} / ${Number(member?.max_hp ?? 0)}</div></div><div class="icon-row"></div>`;
+        const iconRow = btn.querySelector(".icon-row");
+        asArray(member?.status_icons).forEach((iconKey) => {
+          const candidates = resolveStatusIconCandidates(iconKey);
+          if (!candidates.length) return;
+          const img = document.createElement("img");
+          img.className = "status-icon";
+          img.alt = String(iconKey || "");
+          let iconIndex = 0;
+          img.addEventListener("error", () => {
+            iconIndex += 1;
+            if (iconIndex < candidates.length) img.src = candidates[iconIndex];
+            else img.remove();
+          });
+          img.src = candidates[iconIndex];
+          iconRow?.appendChild(img);
+        });
       } else {
         btn.textContent = row.name;
       }

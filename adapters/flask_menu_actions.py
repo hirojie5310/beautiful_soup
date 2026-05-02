@@ -20,6 +20,12 @@ from ui_pygame.field_effects import (
 )
 from utils.text_normalize import normalize_text_basic
 
+_TARGETED_FIELD_MAGIC_CATEGORIES = {"heal_hp", "revive", "status_recovery"}
+_TARGETLESS_FIELD_MAGIC_CATEGORIES = {"teleport", "field_utility"}
+_FIELD_USABLE_MAGIC_CATEGORIES = (
+    _TARGETED_FIELD_MAGIC_CATEGORIES | _TARGETLESS_FIELD_MAGIC_CATEGORIES
+)
+
 
 def _status_keys_from_text(raw: object) -> list[str]:
     text = str(raw or "").strip()
@@ -92,20 +98,26 @@ def make_cast_field_magic_fn(
         status_keys = _status_keys_from_text(spell_status_text(spell))
         target_side = spell_default_target_side(spell, healing_type=None)
 
-        if target_side not in {"Ally", "Any"}:
+        if effect_category not in _FIELD_USABLE_MAGIC_CATEGORIES:
             return False
-        if target_idx is None:
-            return False
-        target = party[target_idx]
+        target = None
+        if effect_category in _TARGETED_FIELD_MAGIC_CATEGORIES:
+            if target_side not in {"Ally", "Any"}:
+                return False
+            if target_idx is None:
+                return False
+            target = party[target_idx]
 
         changed = False
         if effect_category == "heal_hp":
+            assert target is not None
             amt = _field_spell_heal_amount(spell)
             if amt >= 9999:
                 changed = set_hp(target, target.max_hp)
             else:
                 changed = set_hp(target, int(target.hp) + amt)
         elif effect_category == "revive":
+            assert target is not None
             if int(target.hp) > 0:
                 changed = False
             elif _field_spell_revive_mode(spell) == "full":
@@ -113,8 +125,11 @@ def make_cast_field_magic_fn(
             else:
                 changed = set_hp(target, max(1, target.max_hp // 2))
         elif effect_category == "status_recovery":
+            assert target is not None
             for key in status_keys:
                 changed = clear_status(target, key, save_dict) or changed
+        elif effect_category in _TARGETLESS_FIELD_MAGIC_CATEGORIES:
+            changed = True
 
         if not changed:
             return False
@@ -122,7 +137,8 @@ def make_cast_field_magic_fn(
             return False
 
         sync_mp_to_save(caster, save_dict)
-        sync_hp_status_to_save(target, save_dict)
+        if target is not None:
+            sync_hp_status_to_save(target, save_dict)
         return True
 
     return cast_field_magic

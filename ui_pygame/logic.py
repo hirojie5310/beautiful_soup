@@ -18,6 +18,11 @@ from combat.models import PlannedAction, TargetSide
 from combat.inventory import is_item_visible_in_context
 from combat.battle_items import build_battle_item_list
 from combat.input_ui import normalize_battle_command
+from combat.spell_metadata import (
+    spell_default_target_side,
+    spell_effect_category,
+    spell_status_text,
+)
 from ui_pygame.state import BattleUIState
 from ui_pygame.ui_types import CommandCandidate
 from ui_pygame.field_effects import (
@@ -198,6 +203,26 @@ ESUNA_CURES = {
 
 HEAL_SPELLS = {"Cure", "Cura", "Curaga", "Curaja"}
 RAISE_SPELLS = {"Raise", "Arise"}
+TARGETED_FIELD_MAGIC_CATEGORIES = {"heal_hp", "revive", "status_recovery"}
+TARGETLESS_FIELD_MAGIC_CATEGORIES = {"teleport", "field_utility"}
+FIELD_USABLE_MAGIC_CATEGORIES = (
+    TARGETED_FIELD_MAGIC_CATEGORIES | TARGETLESS_FIELD_MAGIC_CATEGORIES
+)
+
+
+def _status_keys_from_text(raw: object) -> list[str]:
+    text = str(raw or "").strip()
+    if not text:
+        return []
+    return [normalize_text_basic(part) for part in text.split(",") if part.strip()]
+
+
+def _field_spell_heal_amount(spell: dict) -> int:
+    return int(spell.get("field_heal_hp", 0) or 0)
+
+
+def _field_spell_revive_mode(spell: dict) -> str:
+    return normalize_text_basic(spell.get("field_revive_hp") or "")
 
 
 def make_cast_field_magic_fn(
@@ -234,18 +259,6 @@ def make_cast_field_magic_fn(
         mp_pool[lv] = cur - cost
         return True
 
-    def _heal_amount(spell_name: str, caster) -> int:
-        # まず固定値でOK（あとでMind/JobLv等を入れられる）
-        if spell_name == "Cure":
-            return 50
-        if spell_name == "Cura":
-            return 150
-        if spell_name == "Curaga":
-            return 400
-        if spell_name == "Curaja":
-            return 9999  # 全回復扱い
-        return 0
-
     def cast_field_magic(
         caster_idx: int, spell_name: str, target_idx: int | None
     ) -> bool:
@@ -262,25 +275,25 @@ def make_cast_field_magic_fn(
                 toast("Cannot cast")
             return False
         lv, cost = cost_info
+        effect_category = spell_effect_category(sp)
+        status_keys = _status_keys_from_text(spell_status_text(sp))
+        target_side = spell_default_target_side(sp, healing_type=None)
+        if effect_category not in FIELD_USABLE_MAGIC_CATEGORIES:
+            if toast:
+                toast("Not implemented")
+            return False
 
-        # 対象決定（targetが不要なら caster_idx で仮置き）
         tgt_actor = None
-        if (
-            spell_name in HEAL_SPELLS
-            or spell_name in RAISE_SPELLS
-            or spell_name in STATUS_KEY_BY_SPELL
-            or spell_name == "Esuna"
-        ):
+        if effect_category in TARGETED_FIELD_MAGIC_CATEGORIES:
+            if target_side not in {"Ally", "Any"}:
+                if toast:
+                    toast("Target invalid")
+                return False
             if target_idx is None:
                 if toast:
                     toast("Target required")
                 return False
             tgt_actor = party[target_idx]
-        else:
-            # この版は回復/状態回復だけ。対象不要魔法は「未実装」で返す
-            if toast:
-                toast("Not implemented")
-            return False
 
         # MP足りる？
         mp_pool = _mp_pool(caster)
@@ -292,42 +305,32 @@ def make_cast_field_magic_fn(
         changed = False
 
         # ---- Heal ----
-        if spell_name in HEAL_SPELLS:
-            amt = _heal_amount(spell_name, caster)
+        if effect_category == "heal_hp":
+            assert tgt_actor is not None
+            amt = _field_spell_heal_amount(sp)
             if amt >= 9999:
                 changed = set_hp(tgt_actor, tgt_actor.max_hp) or changed
             else:
                 changed = set_hp(tgt_actor, int(tgt_actor.hp) + amt) or changed
 
         # ---- Raise / Arise ----
-        elif spell_name in RAISE_SPELLS:
+        elif effect_category == "revive":
+            assert tgt_actor is not None
             if int(tgt_actor.hp) > 0:
                 changed = False
             else:
-                if spell_name == "Arise":
+                if _field_spell_revive_mode(sp) == "full":
                     changed = set_hp(tgt_actor, tgt_actor.max_hp)
                 else:
-                    # Raise は半分回復などにしたければここを変更
                     changed = set_hp(tgt_actor, max(1, tgt_actor.max_hp // 2))
 
-                # KO/石化などを savedata 側で持ってるならここで解除
-                # changed = _clear_status(tgt_actor, "KO") or changed
-
         # ---- Single status cure ----
-        elif spell_name in STATUS_KEY_BY_SPELL:
-            key = STATUS_KEY_BY_SPELL[spell_name]
-            changed = clear_status(tgt_actor, key, save_dict) or changed
-            # Stona で Partial Petrification も消したいなら
-            if spell_name == "Stona":
-                changed = (
-                    clear_status(tgt_actor, "Partial Petrification", save_dict)
-                    or changed
-                )
-
-        # ---- Esuna ----
-        elif spell_name == "Esuna":
-            for k in list(ESUNA_CURES):
+        elif effect_category == "status_recovery":
+            assert tgt_actor is not None
+            for k in status_keys:
                 changed = clear_status(tgt_actor, k, save_dict) or changed
+        elif effect_category in TARGETLESS_FIELD_MAGIC_CATEGORIES:
+            changed = True
 
         if not changed:
             if toast:
@@ -341,7 +344,8 @@ def make_cast_field_magic_fn(
 
         # savedata 同期（任意）
         sync_mp_to_save(caster, save_dict, toast)
-        sync_hp_status_to_save(tgt_actor, save_dict)
+        if tgt_actor is not None:
+            sync_hp_status_to_save(tgt_actor, save_dict)
 
         if toast:
             mp_pool = _mp_pool(caster)

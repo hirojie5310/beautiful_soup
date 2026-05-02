@@ -37,6 +37,7 @@ from combat.inventory import is_item_visible_in_context
 from combat.item_effects import infer_battle_item_target_side
 from combat.battle_items import build_battle_item_definitions, build_battle_item_list
 from combat.magic_menu import (
+    allowed_spell_names_for_job,
     build_magic_stock_by_level,
     build_party_magic_info,
     build_party_magic_lists,
@@ -810,6 +811,7 @@ def _build_menu_state_payload(
             session
         ),
         "magic_setup": menu_magic_setup,
+        "job_magic_allowed_names_by_job": _build_job_magic_allowed_names_by_job(session),
         "jobs": job_names,
         "job_candidates_by_member": _build_job_candidates_by_member(session, job_attr),
         "equip_candidates_by_member": _build_equip_candidates_by_member(session),
@@ -969,7 +971,36 @@ def _build_magic_spell_meta(session: BattleSession) -> dict[str, dict[str, Any]]
             "target_mode": target_mode,
             "type": str(raw.get("Type") or ""),
             "level": _safe_int(raw.get("Level", 1), 1),
+            "effect_category": str(raw.get("effect_category") or ""),
+            "default_target_side": str(raw.get("default_target_side") or ""),
+            "target_scope": str(raw.get("target_scope") or ""),
+            "status_ailment": (
+                raw.get("status_ailment")
+                or raw.get("StatusAilment")
+                or raw.get("StatusAilments")
+            ),
+            "field_heal_hp": raw.get("field_heal_hp"),
+            "field_revive_hp": raw.get("field_revive_hp"),
         }
+    return rows
+
+
+def _build_job_magic_allowed_names_by_job(session: BattleSession) -> dict[str, list[str]]:
+    state = getattr(session, "state", None)
+    jobs_by_name = getattr(state, "jobs_by_name", {}) if state is not None else {}
+    if not isinstance(jobs_by_name, dict):
+        return {}
+    rows: dict[str, list[str]] = {}
+    for job_name, job_data in jobs_by_name.items():
+        if not isinstance(job_name, str) or not job_name:
+            continue
+        try:
+            allowed_names = allowed_spell_names_for_job(job_data)
+        except AttributeError:
+            continue
+        rows[job_name] = sorted(
+            [name for name in allowed_names if isinstance(name, str) and name]
+        )
     return rows
 
 
