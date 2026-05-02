@@ -8,6 +8,11 @@ import {
   persistAutoSave,
 } from "../title_screen_state.js";
 import { loadTitleStoryLines } from "../title_story.js";
+import {
+  normalizeBgmVolume,
+  saveAudioSettings,
+  getStoredBgmVolume,
+} from "../audio_settings.js";
 
 const TITLE_THEME_URL = new URL("../../assets/images/ffiii_theme.jpg", import.meta.url).href;
 const TITLE_HERO_CYCLE_MS = 60000;
@@ -99,7 +104,7 @@ function renderLayout() {
         }
         .title-menu-list {
           display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
+          grid-template-columns: repeat(4, minmax(0, 1fr));
           justify-content: center;
           gap: 8px;
         }
@@ -159,8 +164,34 @@ function renderLayout() {
         }
         @media (max-width: 360px) {
           .title-menu-list {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(2, minmax(0, 1fr));
           }
+        }
+        .settings-panel {
+          display: grid;
+          gap: 12px;
+        }
+        .settings-field {
+          display: grid;
+          gap: 6px;
+        }
+        .settings-range-row {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 10px;
+          align-items: center;
+        }
+        .settings-value {
+          min-width: 3.5rem;
+          text-align: right;
+          color: rgba(24, 30, 48, 0.82);
+          font-variant-numeric: tabular-nums;
+        }
+        .settings-note {
+          margin: 0;
+          color: rgba(24, 30, 48, 0.74);
+          font-size: 0.85rem;
+          line-height: 1.5;
         }
       </style>
       <section class="frame title-hero-frame">
@@ -184,6 +215,20 @@ function renderLayout() {
           <button id="closeLoadBtn" class="btn" type="button">閉じる</button>
         </div>
         <div id="loadSlotList" class="slot-list"></div>
+      </section>
+      <section id="settingsPanel" class="frame settings-panel" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+          <h2 class="title" style="margin:0;">設定</h2>
+          <button id="closeSettingsBtn" class="btn" type="button">閉じる</button>
+        </div>
+        <label class="settings-field" for="bgmVolumeRange">
+          <span>BGM音量</span>
+          <div class="settings-range-row">
+            <input id="bgmVolumeRange" type="range" min="0" max="100" step="5" value="100" />
+            <output id="bgmVolumeValue" class="settings-value" for="bgmVolumeRange">100%</output>
+          </div>
+        </label>
+        <p class="settings-note">設定した音量はこの端末のブラウザに保存され、マップ画面と戦闘画面のBGMに反映されます。</p>
       </section>
     </div>
   `;
@@ -217,6 +262,11 @@ function renderMenuButtons(menuList, handlers, slotInfo) {
     {
       id: "load",
       label: "読込",
+      disabled: false,
+    },
+    {
+      id: "settings",
+      label: "設定",
       disabled: false,
     },
   ];
@@ -307,9 +357,22 @@ export async function mountScreen({ mountNode, store, navigate }) {
   const loadPanel = mountNode.querySelector("#loadPanel");
   const closeLoadBtn = mountNode.querySelector("#closeLoadBtn");
   const loadSlotList = mountNode.querySelector("#loadSlotList");
+  const settingsPanel = mountNode.querySelector("#settingsPanel");
+  const closeSettingsBtn = mountNode.querySelector("#closeSettingsBtn");
+  const bgmVolumeRange = mountNode.querySelector("#bgmVolumeRange");
+  const bgmVolumeValue = mountNode.querySelector("#bgmVolumeValue");
 
   let storyIntervalId = 0;
   let storyCycleResetHandler = null;
+  let bgmVolume = getStoredBgmVolume();
+
+  const formatVolumeLabel = (value) => `${Math.round(normalizeBgmVolume(value) * 100)}%`;
+
+  const syncVolumeControls = () => {
+    const percent = Math.round(normalizeBgmVolume(bgmVolume) * 100);
+    if (bgmVolumeRange) bgmVolumeRange.value = String(percent);
+    if (bgmVolumeValue) bgmVolumeValue.textContent = `${percent}%`;
+  };
 
   const stopStoryLoop = () => {
     if (storyIntervalId) {
@@ -357,6 +420,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   const autoSlot = slots.find((row) => row.slot_id === AUTO_SAVE_SLOT_ID) || null;
 
   const openLoadPanel = () => {
+    settingsPanel.style.display = "none";
     loadPanel.style.display = "";
     renderLoadSlots(loadSlotList, slots, async (slotId) => {
       const envelope = await saveRepository.loadSlot(slotId);
@@ -372,6 +436,25 @@ export async function mountScreen({ mountNode, store, navigate }) {
   const closeLoadPanel = () => {
     loadPanel.style.display = "none";
     titleStatus.textContent = "開始メニューを選択してください。";
+  };
+
+  const openSettingsPanel = () => {
+    closeLoadPanel();
+    syncVolumeControls();
+    settingsPanel.style.display = "";
+    titleStatus.textContent = `BGM音量は ${formatVolumeLabel(bgmVolume)} に設定されています。`;
+  };
+
+  const closeSettingsPanel = () => {
+    settingsPanel.style.display = "none";
+    titleStatus.textContent = "開始メニューを選択してください。";
+  };
+
+  const handleBgmVolumeInput = () => {
+    const nextValue = normalizeBgmVolume(Number(bgmVolumeRange?.value ?? 100) / 100);
+    bgmVolume = saveAudioSettings({ bgmVolume: nextValue }).bgmVolume;
+    syncVolumeControls();
+    titleStatus.textContent = `BGM音量を ${formatVolumeLabel(bgmVolume)} に設定しました。`;
   };
 
   renderMenuButtons(
@@ -419,11 +502,17 @@ export async function mountScreen({ mountNode, store, navigate }) {
       load: () => {
         openLoadPanel();
       },
+      settings: () => {
+        openSettingsPanel();
+      },
     },
     { auto: autoSlot },
   );
 
   closeLoadBtn.addEventListener("click", closeLoadPanel);
+  closeSettingsBtn.addEventListener("click", closeSettingsPanel);
+  bgmVolumeRange.addEventListener("input", handleBgmVolumeInput);
+  syncVolumeControls();
   await startStoryLoop();
 
   return () => {
@@ -432,5 +521,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       titleHeroBackground.removeEventListener("animationiteration", storyCycleResetHandler);
     }
     closeLoadBtn.removeEventListener("click", closeLoadPanel);
+    closeSettingsBtn.removeEventListener("click", closeSettingsPanel);
+    bgmVolumeRange.removeEventListener("input", handleBgmVolumeInput);
   };
 }
