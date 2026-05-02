@@ -7,6 +7,7 @@ from types import SimpleNamespace
 import pytest
 
 from combat.models import BattleActorState
+from combat.enums import Status
 from combat.battle_save_patch import BattleSavePatch
 from combat.battle_save_patch import BattleSavePatchValidationError
 from combat.battle_save_patch import build_battle_save_patch
@@ -373,3 +374,64 @@ def test_build_party_battle_state_patch_can_drive_state_apply() -> None:
     assert state.save["party"][0]["max_hp"] == 12
     assert state.save["party"][0]["mp"]["L1MP"] == 0
     assert state.save["party"][0]["mp_levels"]["1"] == {"current": 0, "max": 3}
+
+
+def test_build_party_battle_state_patch_preserves_persistent_statuses_only() -> None:
+    state = RuntimeState(
+        monsters={},
+        weapons={},
+        armors={},
+        spells={},
+        items_by_name={},
+        jobs_by_name={},
+        base_dir=Path("."),
+        save={
+            "schema_version": 1,
+            "gil": 0,
+            "CP": 0,
+            "inventory": {},
+            "party": [
+                {
+                    "name": "Refia",
+                    "level": 1,
+                    "exp": 0,
+                    "job": "Onion Knight",
+                    "job_level": {"level": 1, "skill_point": 0},
+                    "hp": 10,
+                    "max_hp": 10,
+                    "mp_levels": {"1": {"current": 1, "max": 2}},
+                    "status_effects": {
+                        "Blind": False,
+                        "Poison": False,
+                        "Sleep": True,
+                        "Confusion": True,
+                        "Partial Petrification (1/3)": True,
+                    },
+                    "status_icons": ["sleep", "confusion", "petrify"],
+                    "row": "front",
+                }
+            ],
+        },
+    )
+    runtime_member = SimpleNamespace(
+        name="Refia",
+        state=BattleActorState(hp=4, max_hp=12),
+    )
+    runtime_member.state.statuses = {
+        Status.BLIND,
+        Status.POISON,
+        Status.SLEEP,
+        Status.CONFUSION,
+        Status.PARTIAL_PETRIFY,
+    }
+
+    patch = build_party_battle_state_patch(state.save, [runtime_member])
+    state.apply(patch)
+
+    entry = state.save["party"][0]
+    assert entry["status_effects"]["Blind"] is True
+    assert entry["status_effects"]["Poison"] is True
+    assert entry["status_effects"]["Sleep"] is False
+    assert entry["status_effects"]["Confusion"] is False
+    assert entry["status_effects"]["Partial Petrification (1/3)"] is False
+    assert entry["status_icons"] == ["blind", "poison"]
