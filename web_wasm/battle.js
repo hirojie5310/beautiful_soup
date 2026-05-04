@@ -1552,7 +1552,19 @@ async function executeRound() {
       && battleReturnContext?.return_route === "map"
       && battleReturnContext?.post_victory_show_opening_story === true,
     );
-    if (shouldQueuePostVictoryOverlay || shouldQueuePostVictoryEventFlags || shouldQueuePostVictoryOpeningStory) {
+    const shouldQueuePostVictoryTreasure = Boolean(
+      result?.victory_rewards
+      && battleReturnContext?.return_route === "map"
+      && battleReturnContext?.post_victory_treasure_context
+      && typeof battleReturnContext.post_victory_treasure_context === "object"
+      && battleReturnContext.post_victory_treasure_context.treasure_key,
+    );
+    if (
+      shouldQueuePostVictoryOverlay
+      || shouldQueuePostVictoryEventFlags
+      || shouldQueuePostVictoryOpeningStory
+      || shouldQueuePostVictoryTreasure
+    ) {
       writeBattleReturnContextToSession({
         ...battleReturnContext,
         ...(shouldQueuePostVictoryOverlay
@@ -1563,6 +1575,9 @@ async function executeRound() {
           : {}),
         ...(shouldQueuePostVictoryOpeningStory
           ? { pending_opening_story: true }
+          : {}),
+        ...(shouldQueuePostVictoryTreasure
+          ? { pending_treasure_context: battleReturnContext.post_victory_treasure_context }
           : {}),
       });
     }

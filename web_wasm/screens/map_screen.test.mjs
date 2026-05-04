@@ -31,6 +31,7 @@ import {
   normalizeNpcDirection,
   npcDialogueIndices,
   openAdjacentTreasure,
+  applyPendingGuardedTreasureReward,
   chooseNextNpcDirection,
   resolveNpcFacingScale,
   resolveNpcNextDirectionDelay,
@@ -1248,6 +1249,116 @@ test("openAdjacentTreasure leaves chest closed when Magic treasure level is unkn
   assert.equal(result.opened, false);
   assert.equal(result.inventoryError, true);
   assert.equal(result.mapState.opened_treasures?.treasure_magic_unknown, undefined);
+});
+
+test("openAdjacentTreasure starts guarded battle for guarded treasure chests", () => {
+  const mapWithTreasure = {
+    ...stubMap,
+    width: 3,
+    height: 3,
+    baseRows: [
+      [1, 1, 1],
+      [1, 1, 125],
+      [1, 1, 1],
+    ],
+    rows: [
+      [1, 1, 1],
+      [1, 1, 125],
+      [1, 1, 1],
+    ],
+    renderPadding: { top: 0, right: 0, bottom: 0, left: 0, fillGid: 1 },
+    objects: [
+      {
+        type: "treasure",
+        name: "guarded_treasure",
+        treasure_id: "guarded_treasure",
+        x: 2,
+        y: 1,
+        item_name: "Wightslayer",
+        inventory_bucket: "Weapon",
+        quantity: 1,
+        closed_gid: 125,
+        open_gid: 126,
+        guarded_by: ["Griffon"],
+      },
+    ],
+  };
+
+  const result = openAdjacentTreasure(mapWithTreasure, {
+    current_map_id: "Castle_Sasune_Tower_Left_4F",
+    tile_x: 1,
+    tile_y: 1,
+    facing_direction: "right",
+    switch_states: {},
+    opened_treasures: {},
+  }, {
+    save: { inventory: {} },
+    menu_state: {},
+  });
+
+  assert.equal(result.opened, false);
+  assert.equal(result.guardedBattle, true);
+  assert.deepEqual(result.enemyNames, ["Griffon"]);
+  assert.deepEqual(result.pendingTreasureContext, {
+    map_id: "Castle_Sasune_Tower_Left_4F",
+    treasure_key: "guarded_treasure",
+  });
+});
+
+test("applyPendingGuardedTreasureReward opens guarded treasure after victory", () => {
+  const mapWithTreasure = {
+    ...stubMap,
+    id: "Castle_Sasune_Tower_Left_4F",
+    width: 3,
+    height: 3,
+    baseRows: [
+      [1, 1, 1],
+      [1, 1, 125],
+      [1, 1, 1],
+    ],
+    rows: [
+      [1, 1, 1],
+      [1, 1, 125],
+      [1, 1, 1],
+    ],
+    renderPadding: { top: 0, right: 0, bottom: 0, left: 0, fillGid: 1 },
+    objects: [
+      {
+        type: "treasure",
+        name: "guarded_treasure",
+        treasure_id: "guarded_treasure",
+        x: 2,
+        y: 1,
+        item_name: "Wightslayer",
+        inventory_bucket: "Weapon",
+        quantity: 1,
+        closed_gid: 125,
+        open_gid: 126,
+        guarded_by: ["Griffon"],
+      },
+    ],
+  };
+
+  const result = applyPendingGuardedTreasureReward(mapWithTreasure, {
+    current_map_id: "Castle_Sasune_Tower_Left_4F",
+    tile_x: 1,
+    tile_y: 1,
+    facing_direction: "right",
+    switch_states: {},
+    opened_treasures: {},
+  }, {
+    save: { inventory: {} },
+    menu_state: {},
+  }, {
+    map_id: "Castle_Sasune_Tower_Left_4F",
+    treasure_key: "guarded_treasure",
+  });
+
+  assert.equal(result.opened, true);
+  assert.equal(result.itemName, "Wightslayer");
+  assert.equal(result.mapDefinition.rows[1][2], 126);
+  assert.equal(result.mapState.opened_treasures.guarded_treasure, true);
+  assert.equal(result.saveEnvelope.save.inventory.Weapon.Wightslayer, 1);
 });
 
 test("isMapSelectionCompatible requires matching location", () => {
