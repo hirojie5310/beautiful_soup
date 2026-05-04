@@ -123,6 +123,17 @@
         "x": 4,
         "y": 29
       }
+    },
+    {
+      "type": "exit",
+      "name": "Castle Sasune",
+      "x": 76,
+      "y": 48,
+      "target_map": "Castle_Sasune",
+      "target_spawn": {
+        "x": 15,
+        "y": 29
+      }
     }
   ],
   "rows": [

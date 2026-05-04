@@ -100,7 +100,10 @@ test("encounter areas restrict random encounters by tile position", () => {
   assert.equal(shouldTriggerEncounter(result, 0, 6, { tile_x: 25, tile_y: 14 }), false);
 });
 
-test("getMapManifestUrl resolves Ur Well map without falling back", () => {
+test("getMapManifestUrl resolves registered maps without falling back", () => {
+  assert.match(String(getMapManifestUrl("Castle_Sasune")), /\/assets\/maps\/Castle_Sasune\.json$/);
+  assert.match(String(getMapManifestUrl("Castle_Sasune_Tower_Left_2F")), /\/assets\/maps\/Castle_Sasune_Tower_Left_2F\.json$/);
+  assert.match(String(getMapManifestUrl("Castle_Sasune_Tower_Right_2F")), /\/assets\/maps\/Castle_Sasune_Tower_Right_2F\.json$/);
   assert.match(String(getMapManifestUrl("Ur_Well")), /\/assets\/maps\/Ur-Well\.json$/);
   assert.match(String(getMapManifestUrl("FloatingContinent")), /\/assets\/maps\/FloatingContinent\.json$/);
 });
@@ -158,6 +161,27 @@ test("findCompatibleMapDefinition returns the map that matches selected location
         height: 1,
         rows: ["1"],
         location_requirement: { group: "", locations: [] },
+      },
+      Castle_Sasune: {
+        id: "Castle_Sasune",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Castle Sasune", locations: ["Castle Sasune"] },
+      },
+      Castle_Sasune_Tower_Left_2F: {
+        id: "Castle_Sasune_Tower_Left_2F",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Castle Sasune", locations: ["Castle Sasune"] },
+      },
+      Castle_Sasune_Tower_Right_2F: {
+        id: "Castle_Sasune_Tower_Right_2F",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Castle Sasune", locations: ["Castle Sasune"] },
       },
       Ur: {
         id: "Ur",
