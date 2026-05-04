@@ -422,6 +422,14 @@ function treasureKey(row) {
   return String(row?.treasure_id || row?.name || `${row?.x},${row?.y}`);
 }
 
+function normalizeGuardedEnemyNames(value) {
+  if (Array.isArray(value)) {
+    return value.map((name) => String(name || "").trim()).filter(Boolean);
+  }
+  const single = String(value || "").trim();
+  return single ? [single] : [];
+}
+
 function normalizeEventFlagStates(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
   return Object.fromEntries(
@@ -486,6 +494,13 @@ function writeSavedTreasureStates(saveEnvelope, mapId, openedTreasures) {
   nextTreasures[mapKey] = mergedForMap;
   targetEnvelope.save.treasures = nextTreasures;
   return targetEnvelope;
+}
+
+function findTreasureByKey(mapDefinition, key) {
+  const normalizedKey = String(key || "");
+  return (mapDefinition?.objects || []).find((row) => (
+    row?.type === "treasure" && treasureKey(row) === normalizedKey
+  )) || null;
 }
 
 function addItemToInventory(save, bucketName, itemName, quantity = 1, spellLevelByName = {}) {
@@ -1742,13 +1757,44 @@ export function openAdjacentTreasure(mapDefinition, mapState, saveEnvelope, spel
   if (currentOpenedTreasures[key]) {
     return { opened: false, alreadyOpened: true, mapDefinition, mapState, saveEnvelope };
   }
+  const guardedEnemyNames = normalizeGuardedEnemyNames(adjacentTreasure.guarded_by);
+  if (guardedEnemyNames.length) {
+    return {
+      opened: false,
+      guardedBattle: true,
+      itemName: String(adjacentTreasure.item_name || "Potion"),
+      enemyNames: guardedEnemyNames,
+      pendingTreasureContext: {
+        map_id: String(mapState?.current_map_id || mapDefinition?.id || ""),
+        treasure_key: key,
+      },
+      mapDefinition,
+      mapState,
+      saveEnvelope,
+    };
+  }
+  return finalizeTreasureOpen(
+    mapDefinition,
+    mapState,
+    saveEnvelope,
+    adjacentTreasure,
+    spellLevelByName,
+  );
+}
+
+function finalizeTreasureOpen(mapDefinition, mapState, saveEnvelope, treasureRow, spellLevelByName = {}) {
+  const key = treasureKey(treasureRow);
+  const currentOpenedTreasures = normalizeTreasureStates(mapState?.opened_treasures);
+  if (currentOpenedTreasures[key]) {
+    return { opened: false, alreadyOpened: true, mapDefinition, mapState, saveEnvelope };
+  }
   const nextOpenedTreasures = {
     ...currentOpenedTreasures,
     [key]: true,
   };
-  const itemName = String(adjacentTreasure.item_name || "Potion");
-  const bucketName = String(adjacentTreasure.inventory_bucket || "Anywhere");
-  const quantity = Math.max(1, asNumber(adjacentTreasure.quantity, 1));
+  const itemName = String(treasureRow.item_name || "Potion");
+  const bucketName = String(treasureRow.inventory_bucket || "Anywhere");
+  const quantity = Math.max(1, asNumber(treasureRow.quantity, 1));
   const nextEnvelope = typeof structuredClone === "function"
     ? structuredClone(saveEnvelope || { save: {} })
     : JSON.parse(JSON.stringify(saveEnvelope || { save: {} }));
@@ -1780,6 +1826,25 @@ export function openAdjacentTreasure(mapDefinition, mapState, saveEnvelope, spel
     },
     saveEnvelope: writeSavedTreasureStates(nextEnvelope, mapState?.current_map_id || mapDefinition?.id, nextOpenedTreasures),
   };
+}
+
+export function applyPendingGuardedTreasureReward(
+  mapDefinition,
+  mapState,
+  saveEnvelope,
+  pendingTreasureContext,
+  spellLevelByName = {},
+) {
+  const pendingMapId = String(pendingTreasureContext?.map_id || "");
+  const currentMapId = String(mapState?.current_map_id || mapDefinition?.id || "");
+  if (!pendingMapId || pendingMapId !== currentMapId) {
+    return { opened: false, mapDefinition, mapState, saveEnvelope };
+  }
+  const treasure = findTreasureByKey(mapDefinition, pendingTreasureContext?.treasure_key);
+  if (!treasure) {
+    return { opened: false, missingTreasure: true, mapDefinition, mapState, saveEnvelope };
+  }
+  return finalizeTreasureOpen(mapDefinition, mapState, saveEnvelope, treasure, spellLevelByName);
 }
 
 function updateViewportTransform(mapViewport, mapLayer, mapDefinition, mapState, visualPosition = null) {
@@ -2571,6 +2636,14 @@ export async function mountScreen({ mountNode, store, navigate }) {
       mapStatus.textContent = `${treasureResult.itemName} を手に入れた！`;
       return;
     }
+    if (treasureResult.guardedBattle) {
+      mapStatus.textContent = `${treasureResult.enemyNames[0]} が宝箱を守っている！`;
+      navigateToEncounter({
+        enemyNames: treasureResult.enemyNames,
+        postVictoryTreasureContext: treasureResult.pendingTreasureContext,
+      });
+      return;
+    }
     if (treasureResult.inventoryError) {
       mapStatus.textContent = `${treasureResult.itemName} の保存先を解決できませんでした。`;
       return;
@@ -2654,6 +2727,14 @@ export async function mountScreen({ mountNode, store, navigate }) {
       ? options.postVictoryEventFlags.map((flag) => String(flag || "")).filter((flag) => Boolean(flag))
       : [];
     const postVictoryShowOpeningStory = options?.postVictoryShowOpeningStory === true;
+    const postVictoryTreasureContext = (
+      options?.postVictoryTreasureContext && typeof options.postVictoryTreasureContext === "object"
+        ? {
+          map_id: String(options.postVictoryTreasureContext.map_id || mapDefinition?.id || ""),
+          treasure_key: String(options.postVictoryTreasureContext.treasure_key || ""),
+        }
+        : null
+    );
     sessionStorage.setItem(BATTLE_START_SELECTION_KEY, JSON.stringify({
       ...encounterSelection,
       ...(forcedEnemyNames.length ? { enemy_names: forcedEnemyNames } : {}),
@@ -2666,6 +2747,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       ...(postVictoryOverlayIndices.length ? { post_victory_overlay_indices: postVictoryOverlayIndices } : {}),
       ...(postVictoryEventFlags.length ? { post_victory_event_flags: postVictoryEventFlags } : {}),
       ...(postVictoryShowOpeningStory ? { post_victory_show_opening_story: true } : {}),
+      ...(postVictoryTreasureContext?.treasure_key ? { post_victory_treasure_context: postVictoryTreasureContext } : {}),
     }));
     store.patch({
       selectedLocationGroup: encounterSelection.selected_location_group,
@@ -2845,6 +2927,11 @@ export async function mountScreen({ mountNode, store, navigate }) {
       : [];
     const postBattleShowOpeningStory = returningFromBattle
       && battleReturnContext?.pending_opening_story === true;
+    const postBattleTreasureContext = returningFromBattle
+      && battleReturnContext?.pending_treasure_context
+      && typeof battleReturnContext.pending_treasure_context === "object"
+      ? battleReturnContext.pending_treasure_context
+      : null;
     spellLevelByName = await loadSpellLevelByName();
     mapDefinition = await loadMapDefinition(requestedMapId);
     const currentSelection = resolveInitialMapSelection(appState, mapDefinition, {
@@ -2888,6 +2975,38 @@ export async function mountScreen({ mountNode, store, navigate }) {
       { ...mapDefinition, openedTreasures: mapState.opened_treasures },
       mapState.switch_states,
     );
+    let postBattleTreasureResult = null;
+    if (postBattleTreasureContext) {
+      postBattleTreasureResult = applyPendingGuardedTreasureReward(
+        mapDefinition,
+        mapState,
+        store.getState().saveEnvelope,
+        postBattleTreasureContext,
+        spellLevelByName,
+      );
+      if (postBattleTreasureResult.opened) {
+        mapDefinition = postBattleTreasureResult.mapDefinition;
+        mapState = postBattleTreasureResult.mapState;
+        const currentState = store.getState();
+        const nextEnvelope = {
+          ...(postBattleTreasureResult.saveEnvelope || currentState.saveEnvelope || { save: {}, menu_state: {} }),
+          menu_state: {
+            ...(currentState.menuState && typeof currentState.menuState === "object" ? currentState.menuState : {}),
+            map_state: {
+              ...mapState,
+            },
+          },
+          selected_location_group: currentState.selectedLocationGroup,
+          selected_location: currentState.selectedLocation,
+          saved_at: new Date().toISOString(),
+        };
+        store.updateMenuState(nextEnvelope.menu_state);
+        const persisted = store.updateSaveEnvelope(nextEnvelope, { reason: "battle_finished" });
+        if (persisted) {
+          triggerAutoSaveFromEnvelope(nextEnvelope);
+        }
+      }
+    }
     if (freshLocationEntry) {
       sessionStorage.removeItem(MAP_ENTRY_CONTEXT_KEY);
       patchMapMenuState({ map_return_pending: false });
@@ -2960,6 +3079,8 @@ export async function mountScreen({ mountNode, store, navigate }) {
         showOpeningStory: postBattleShowOpeningStory,
       });
       mapStatus.textContent = "戦いのあと、クリスタルが静かに輝いている。";
+    } else if (postBattleTreasureResult?.opened) {
+      mapStatus.textContent = `${postBattleTreasureResult.itemName} を手に入れた！`;
     } else {
       mapStatus.textContent = resumeFromSavedPosition
         ? `戦闘前の位置から再開しました。エンカウント率 ${(mapDefinition.encounterRate * 100).toFixed(0)}%。`

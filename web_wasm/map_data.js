@@ -9,6 +9,8 @@ const MAP_MANIFEST = {
   Alter_Cave_Crystal_Room: new URL("../assets/maps/Alter_Cave_Crystal_Room.json", import.meta.url).href,
   Castle_Sasune: new URL("../assets/maps/Castle_Sasune.json", import.meta.url).href,
   Castle_Sasune_Tower_Left_2F: new URL("../assets/maps/Castle_Sasune_Tower_Left_2F.json", import.meta.url).href,
+  Castle_Sasune_Tower_Left_3F: new URL("../assets/maps/Castle_Sasune_Tower_Left_3F.json", import.meta.url).href,
+  Castle_Sasune_Tower_Left_4F: new URL("../assets/maps/Castle_Sasune_Tower_Left_4F.json", import.meta.url).href,
   Castle_Sasune_Tower_Right_2F: new URL("../assets/maps/Castle_Sasune_Tower_Right_2F.json", import.meta.url).href,
   FloatingContinent: new URL("../assets/maps/FloatingContinent.json", import.meta.url).href,
   Kazus_Inn_ItemShop_1F: new URL("../assets/maps/Kazus-Inn_ItemShop_1F.json", import.meta.url).href,
