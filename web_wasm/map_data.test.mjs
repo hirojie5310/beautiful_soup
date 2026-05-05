@@ -102,10 +102,16 @@ test("encounter areas restrict random encounters by tile position", () => {
 
 test("getMapManifestUrl resolves registered maps without falling back", () => {
   assert.match(String(getMapManifestUrl("Castle_Sasune")), /\/assets\/maps\/Castle_Sasune\.json$/);
-  assert.match(String(getMapManifestUrl("Castle_Sasune_Tower_Left_2F")), /\/assets\/maps\/Castle_Sasune_Tower_Left_2F\.json$/);
-  assert.match(String(getMapManifestUrl("Castle_Sasune_Tower_Left_3F")), /\/assets\/maps\/Castle_Sasune_Tower_Left_3F\.json$/);
-  assert.match(String(getMapManifestUrl("Castle_Sasune_Tower_Left_4F")), /\/assets\/maps\/Castle_Sasune_Tower_Left_4F\.json$/);
-  assert.match(String(getMapManifestUrl("Castle_Sasune_Tower_Right_2F")), /\/assets\/maps\/Castle_Sasune_Tower_Right_2F\.json$/);
+  assert.match(String(getMapManifestUrl("Castle_Sasune_MainKeep_1F")), /\/assets\/maps\/Castle_Sasune_MainKeep_1F\.json$/);
+  assert.match(String(getMapManifestUrl("Castle_Sasune_MainKeep_2F")), /\/assets\/maps\/Castle_Sasune_MainKeep_2F\.json$/);
+  assert.match(String(getMapManifestUrl("Castle_Sasune_Tower_West_1F")), /\/assets\/maps\/Castle_Sasune_Tower_West_1F\.json$/);
+  assert.match(String(getMapManifestUrl("Castle_Sasune_Tower_West_2F")), /\/assets\/maps\/Castle_Sasune_Tower_West_2F\.json$/);
+  assert.match(String(getMapManifestUrl("Castle_Sasune_Tower_West_3F")), /\/assets\/maps\/Castle_Sasune_Tower_West_3F\.json$/);
+  assert.match(String(getMapManifestUrl("Castle_Sasune_Tower_West_4F")), /\/assets\/maps\/Castle_Sasune_Tower_West_4F\.json$/);
+  assert.match(String(getMapManifestUrl("Castle_Sasune_Tower_East_1F")), /\/assets\/maps\/Castle_Sasune_Tower_East_1F\.json$/);
+  assert.match(String(getMapManifestUrl("Castle_Sasune_Tower_East_2F")), /\/assets\/maps\/Castle_Sasune_Tower_East_2F\.json$/);
+  assert.match(String(getMapManifestUrl("Castle_Sasune_Tower_East_3F")), /\/assets\/maps\/Castle_Sasune_Tower_East_3F\.json$/);
+  assert.match(String(getMapManifestUrl("Castle_Sasune_Tower_East_4F")), /\/assets\/maps\/Castle_Sasune_Tower_East_4F\.json$/);
   assert.match(String(getMapManifestUrl("Ur_Well")), /\/assets\/maps\/Ur-Well\.json$/);
   assert.match(String(getMapManifestUrl("FloatingContinent")), /\/assets\/maps\/FloatingContinent\.json$/);
 });
@@ -171,29 +177,71 @@ test("findCompatibleMapDefinition returns the map that matches selected location
         rows: ["1"],
         location_requirement: { group: "Castle Sasune", locations: ["Castle Sasune"] },
       },
-      Castle_Sasune_Tower_Left_2F: {
-        id: "Castle_Sasune_Tower_Left_2F",
+      Castle_Sasune_MainKeep_1F: {
+        id: "Castle_Sasune_MainKeep_1F",
         width: 1,
         height: 1,
         rows: ["1"],
         location_requirement: { group: "Castle Sasune", locations: ["Castle Sasune"] },
       },
-      Castle_Sasune_Tower_Left_3F: {
-        id: "Castle_Sasune_Tower_Left_3F",
+      Castle_Sasune_MainKeep_2F: {
+        id: "Castle_Sasune_MainKeep_2F",
         width: 1,
         height: 1,
         rows: ["1"],
         location_requirement: { group: "Castle Sasune", locations: ["Castle Sasune"] },
       },
-      Castle_Sasune_Tower_Left_4F: {
-        id: "Castle_Sasune_Tower_Left_4F",
+      Castle_Sasune_Tower_West_1F: {
+        id: "Castle_Sasune_Tower_West_1F",
         width: 1,
         height: 1,
         rows: ["1"],
         location_requirement: { group: "Castle Sasune", locations: ["Castle Sasune"] },
       },
-      Castle_Sasune_Tower_Right_2F: {
-        id: "Castle_Sasune_Tower_Right_2F",
+      Castle_Sasune_Tower_West_2F: {
+        id: "Castle_Sasune_Tower_West_2F",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Castle Sasune", locations: ["Castle Sasune"] },
+      },
+      Castle_Sasune_Tower_West_3F: {
+        id: "Castle_Sasune_Tower_West_3F",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Castle Sasune", locations: ["Castle Sasune"] },
+      },
+      Castle_Sasune_Tower_West_4F: {
+        id: "Castle_Sasune_Tower_West_4F",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Castle Sasune", locations: ["Castle Sasune"] },
+      },
+      Castle_Sasune_Tower_East_1F: {
+        id: "Castle_Sasune_Tower_East_1F",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Castle Sasune", locations: ["Castle Sasune"] },
+      },
+      Castle_Sasune_Tower_East_2F: {
+        id: "Castle_Sasune_Tower_East_2F",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Castle Sasune", locations: ["Castle Sasune"] },
+      },
+      Castle_Sasune_Tower_East_3F: {
+        id: "Castle_Sasune_Tower_East_3F",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Castle Sasune", locations: ["Castle Sasune"] },
+      },
+      Castle_Sasune_Tower_East_4F: {
+        id: "Castle_Sasune_Tower_East_4F",
         width: 1,
         height: 1,
         rows: ["1"],

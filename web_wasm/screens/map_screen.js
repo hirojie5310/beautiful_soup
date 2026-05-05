@@ -84,6 +84,15 @@ const KAZUS_INN_ITEMSHOP_2F_RECOVERY_TILES = [
   { x: 4, y: 4 },
   { x: 6, y: 4 },
 ];
+const CASTLE_SASUNE_MAINKEEP_1F_MAP_ID = "Castle_Sasune_MainKeep_1F";
+const CASTLE_SASUNE_MAINKEEP_1F_RECOVERY_TILES = [
+  { x: 1, y: 4 },
+  { x: 3, y: 4 },
+];
+const CASTLE_SASUNE_TOWER_EAST_4F_MAP_ID = "Castle_Sasune_Tower_East_4F";
+const CASTLE_SASUNE_TOWER_EAST_4F_RECOVERY_TILES = [
+  { x: 4, y: 3 },
+];
 const UR_INN_ITEMSHOP_RECOVERY_TEXT_INDEX = 223;
 const ALTER_CAVE_CRYSTAL_ROOM_MAP_ID = "Alter_Cave_Crystal_Room";
 const ALTER_CAVE_CRYSTAL_BOSS_NAME = "Land Turtle";
@@ -1553,6 +1562,24 @@ export function isKazusInnItemShopRecoveryTile(mapDefinition, mapState) {
   ));
 }
 
+export function isCastleSasuneMainKeep1FRecoveryTile(mapDefinition, mapState) {
+  if (String(mapDefinition?.id || mapState?.current_map_id || "") !== CASTLE_SASUNE_MAINKEEP_1F_MAP_ID) {
+    return false;
+  }
+  return CASTLE_SASUNE_MAINKEEP_1F_RECOVERY_TILES.some((coordinate) => (
+    isStandingOnTileCoordinate(mapState, coordinate)
+  ));
+}
+
+export function isCastleSasuneTowerEast4FRecoveryTile(mapDefinition, mapState) {
+  if (String(mapDefinition?.id || mapState?.current_map_id || "") !== CASTLE_SASUNE_TOWER_EAST_4F_MAP_ID) {
+    return false;
+  }
+  return CASTLE_SASUNE_TOWER_EAST_4F_RECOVERY_TILES.some((coordinate) => (
+    isStandingOnTileCoordinate(mapState, coordinate)
+  ));
+}
+
 function withoutKoStatusIcons(value) {
   return Array.isArray(value)
     ? value.filter((icon) => String(icon || "").trim().toLowerCase().replace(/[_-]/g, " ") !== "ko")
@@ -1801,7 +1828,16 @@ function finalizeTreasureOpen(mapDefinition, mapState, saveEnvelope, treasureRow
   if (!nextEnvelope.save || typeof nextEnvelope.save !== "object") {
     nextEnvelope.save = {};
   }
-  if (!addItemToInventory(nextEnvelope.save, bucketName, itemName, quantity, spellLevelByName)) {
+  if (bucketName === "Resource" && itemName === "GIL") {
+    nextEnvelope.save.gil = Math.max(0, asNumber(nextEnvelope.save.gil, 0)) + quantity;
+    if (!nextEnvelope.menu_state || typeof nextEnvelope.menu_state !== "object") {
+      nextEnvelope.menu_state = {};
+    }
+    if (!nextEnvelope.menu_state.resources || typeof nextEnvelope.menu_state.resources !== "object") {
+      nextEnvelope.menu_state.resources = { cp: 0, cp_max: 255, gil: 0 };
+    }
+    nextEnvelope.menu_state.resources.gil = Math.max(0, asNumber(nextEnvelope.menu_state.resources.gil, 0)) + quantity;
+  } else if (!addItemToInventory(nextEnvelope.save, bucketName, itemName, quantity, spellLevelByName)) {
     return {
       opened: false,
       inventoryError: true,
@@ -1826,6 +1862,15 @@ function finalizeTreasureOpen(mapDefinition, mapState, saveEnvelope, treasureRow
     },
     saveEnvelope: writeSavedTreasureStates(nextEnvelope, mapState?.current_map_id || mapDefinition?.id, nextOpenedTreasures),
   };
+}
+
+function treasureGainStatusText(treasureResult) {
+  const itemName = String(treasureResult?.itemName || "");
+  const quantity = Math.max(1, asNumber(treasureResult?.quantity, 1));
+  if (itemName === "GIL") {
+    return `${quantity} GIL を手に入れた！`;
+  }
+  return `${itemName} を手に入れた！`;
 }
 
 export function applyPendingGuardedTreasureReward(
@@ -2633,7 +2678,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
         triggerAutoSaveFromEnvelope(nextEnvelope);
       }
       redraw();
-      mapStatus.textContent = `${treasureResult.itemName} を手に入れた！`;
+      mapStatus.textContent = treasureGainStatusText(treasureResult);
       return;
     }
     if (treasureResult.guardedBattle) {
@@ -2791,6 +2836,8 @@ export async function mountScreen({ mountNode, store, navigate }) {
     if (
       isUrInnItemShopRecoveryTile(mapDefinition, mapState)
       || isKazusInnItemShopRecoveryTile(mapDefinition, mapState)
+      || isCastleSasuneMainKeep1FRecoveryTile(mapDefinition, mapState)
+      || isCastleSasuneTowerEast4FRecoveryTile(mapDefinition, mapState)
     ) {
       await runFullRecoveryEvent(
         UR_INN_ITEMSHOP_RECOVERY_TEXT_INDEX,
@@ -3080,7 +3127,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       });
       mapStatus.textContent = "戦いのあと、クリスタルが静かに輝いている。";
     } else if (postBattleTreasureResult?.opened) {
-      mapStatus.textContent = `${postBattleTreasureResult.itemName} を手に入れた！`;
+      mapStatus.textContent = treasureGainStatusText(postBattleTreasureResult);
     } else {
       mapStatus.textContent = resumeFromSavedPosition
         ? `戦闘前の位置から再開しました。エンカウント率 ${(mapDefinition.encounterRate * 100).toFixed(0)}%。`

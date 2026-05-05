@@ -1,6 +1,6 @@
 {
-  "id": "Castle_Sasune_Tower_Right_2F",
-  "name": "Castle Sasune Tower Right 2F",
+  "id": "Castle_Sasune_Tower_East_1F",
+  "name": "Castle Sasune Tower East 1F",
   "tile_width": 24,
   "tile_height": 24,
   "width": 9,
@@ -29,6 +29,17 @@
     "y": 9
   },
   "objects": [
+    {
+      "type": "exit",
+      "name": "Castle Sasune Tower East 2F",
+      "x": 4,
+      "y": 5,
+      "target_map": "Castle_Sasune_Tower_East_2F",
+      "target_spawn": {
+        "x": 4,
+        "y": 4
+      }
+    },
     {
       "type": "exit",
       "name": "Castle Sasune",

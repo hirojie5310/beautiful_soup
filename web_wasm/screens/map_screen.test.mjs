@@ -18,7 +18,9 @@ import {
   findShopActivation,
   isAdjacentToCrystalSprite,
   isAdjacentToTileCoordinate,
+  isCastleSasuneMainKeep1FRecoveryTile,
   isStandingOnTileCoordinate,
+  isCastleSasuneTowerEast4FRecoveryTile,
   isFloatingContinentMap,
   isUrInnItemShopRecoveryTile,
   interpolateMapPosition,
@@ -815,6 +817,19 @@ test("isUrInnItemShopRecoveryTile resolves inn recovery floor tiles", () => {
   assert.equal(isUrInnItemShopRecoveryTile({ id: "Ur" }, { tile_x: 7, tile_y: 8 }), false);
 });
 
+test("isCastleSasuneMainKeep1FRecoveryTile resolves bed recovery tiles", () => {
+  assert.equal(isCastleSasuneMainKeep1FRecoveryTile({ id: "Castle_Sasune_MainKeep_1F" }, { tile_x: 1, tile_y: 4 }), true);
+  assert.equal(isCastleSasuneMainKeep1FRecoveryTile({ id: "Castle_Sasune_MainKeep_1F" }, { tile_x: 3, tile_y: 4 }), true);
+  assert.equal(isCastleSasuneMainKeep1FRecoveryTile({ id: "Castle_Sasune_MainKeep_1F" }, { tile_x: 2, tile_y: 4 }), false);
+  assert.equal(isCastleSasuneMainKeep1FRecoveryTile({ id: "Castle_Sasune" }, { tile_x: 1, tile_y: 4 }), false);
+});
+
+test("isCastleSasuneTowerEast4FRecoveryTile resolves the bed recovery tile", () => {
+  assert.equal(isCastleSasuneTowerEast4FRecoveryTile({ id: "Castle_Sasune_Tower_East_4F" }, { tile_x: 4, tile_y: 3 }), true);
+  assert.equal(isCastleSasuneTowerEast4FRecoveryTile({ id: "Castle_Sasune_Tower_East_4F" }, { tile_x: 4, tile_y: 4 }), false);
+  assert.equal(isCastleSasuneTowerEast4FRecoveryTile({ id: "Castle_Sasune_Tower_East_3F" }, { tile_x: 4, tile_y: 3 }), false);
+});
+
 test("findShopActivation resolves tiles adjacent to Ur shop counters", () => {
   assert.deepEqual(findShopActivation({ id: "Ur_ArmorShop" }, { tile_x: 3, tile_y: 6 }), {
     mapId: "Ur_ArmorShop",
@@ -1151,6 +1166,59 @@ test("openAdjacentTreasure adds Potion to inventory and opens chest", () => {
   assert.equal(result.saveEnvelope.save.treasures.Alter_Cave_B1.treasure1, true);
 });
 
+test("openAdjacentTreasure adds GIL treasure to save and menu resources", () => {
+  const mapWithTreasure = {
+    ...stubMap,
+    width: 3,
+    height: 3,
+    baseRows: [
+      [1, 1, 1],
+      [1, 1, 125],
+      [1, 1, 1],
+    ],
+    rows: [
+      [1, 1, 1],
+      [1, 1, 125],
+      [1, 1, 1],
+    ],
+    renderPadding: { top: 0, right: 0, bottom: 0, left: 0, fillGid: 1 },
+    objects: [
+      {
+        type: "treasure",
+        name: "gil_treasure",
+        treasure_id: "gil_treasure",
+        x: 2,
+        y: 1,
+        item_name: "GIL",
+        inventory_bucket: "Resource",
+        quantity: 1000,
+        closed_gid: 125,
+        open_gid: 126,
+      },
+    ],
+  };
+
+  const result = openAdjacentTreasure(mapWithTreasure, {
+    current_map_id: "Castle_Sasune_MainKeep_1F",
+    tile_x: 1,
+    tile_y: 1,
+    facing_direction: "right",
+    switch_states: {},
+    opened_treasures: {},
+  }, {
+    save: { gil: 500, inventory: {} },
+    menu_state: { resources: { cp: 0, cp_max: 255, gil: 500 } },
+  });
+
+  assert.equal(result.opened, true);
+  assert.equal(result.itemName, "GIL");
+  assert.equal(result.quantity, 1000);
+  assert.equal(result.mapDefinition.rows[1][2], 126);
+  assert.equal(result.saveEnvelope.save.gil, 1500);
+  assert.equal(result.saveEnvelope.menu_state.resources.gil, 1500);
+  assert.equal(result.saveEnvelope.save.treasures.Castle_Sasune_MainKeep_1F.gil_treasure, true);
+});
+
 test("openAdjacentTreasure stores Magic treasure under inventory level buckets", () => {
   const mapWithTreasure = {
     ...stubMap,
@@ -1285,7 +1353,7 @@ test("openAdjacentTreasure starts guarded battle for guarded treasure chests", (
   };
 
   const result = openAdjacentTreasure(mapWithTreasure, {
-    current_map_id: "Castle_Sasune_Tower_Left_4F",
+    current_map_id: "Castle_Sasune_Tower_West_4F",
     tile_x: 1,
     tile_y: 1,
     facing_direction: "right",
@@ -1300,7 +1368,7 @@ test("openAdjacentTreasure starts guarded battle for guarded treasure chests", (
   assert.equal(result.guardedBattle, true);
   assert.deepEqual(result.enemyNames, ["Griffon"]);
   assert.deepEqual(result.pendingTreasureContext, {
-    map_id: "Castle_Sasune_Tower_Left_4F",
+    map_id: "Castle_Sasune_Tower_West_4F",
     treasure_key: "guarded_treasure",
   });
 });
@@ -1308,7 +1376,7 @@ test("openAdjacentTreasure starts guarded battle for guarded treasure chests", (
 test("applyPendingGuardedTreasureReward opens guarded treasure after victory", () => {
   const mapWithTreasure = {
     ...stubMap,
-    id: "Castle_Sasune_Tower_Left_4F",
+    id: "Castle_Sasune_Tower_West_4F",
     width: 3,
     height: 3,
     baseRows: [
@@ -1340,7 +1408,7 @@ test("applyPendingGuardedTreasureReward opens guarded treasure after victory", (
   };
 
   const result = applyPendingGuardedTreasureReward(mapWithTreasure, {
-    current_map_id: "Castle_Sasune_Tower_Left_4F",
+    current_map_id: "Castle_Sasune_Tower_West_4F",
     tile_x: 1,
     tile_y: 1,
     facing_direction: "right",
@@ -1350,7 +1418,7 @@ test("applyPendingGuardedTreasureReward opens guarded treasure after victory", (
     save: { inventory: {} },
     menu_state: {},
   }, {
-    map_id: "Castle_Sasune_Tower_Left_4F",
+    map_id: "Castle_Sasune_Tower_West_4F",
     treasure_key: "guarded_treasure",
   });
 

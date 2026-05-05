@@ -1,0 +1,91 @@
+{
+  "id": "Castle_Sasune_Tower_East_3F",
+  "name": "Castle Sasune Tower East 3F",
+  "tile_width": 24,
+  "tile_height": 24,
+  "width": 9,
+  "height": 10,
+  "tileset": {
+    "name": "TILESET - Castle_Sasune_Inner",
+    "image": "../assets/images/maps/TILESET - Castle_Sasune_Inner.png",
+    "columns": 16,
+    "tile_count": 128
+  },
+  "collision_gids": [32, 69, 70, 92, 93, 120, 125],
+  "location_requirement": {
+    "group": "Castle Sasune",
+    "locations": ["Castle Sasune"]
+  },
+  "encounter_rate": 0,
+  "padding": {
+    "top": 10,
+    "right": 10,
+    "bottom": 10,
+    "left": 10,
+    "fill_gid": 32
+  },
+  "spawn": {
+    "x": 4,
+    "y": 3
+  },
+  "objects": [
+    {
+      "type": "treasure",
+      "name": "Castle Sasune Tower East 3F Holy Arrow",
+      "x": 1,
+      "y": 5,
+      "treasure_id": "castle_sasune_tower_east_3f_treasure_holy_arrow",
+      "item_name": "Holy Arrow",
+      "inventory_bucket": "Weapon",
+      "quantity": 20,
+      "closed_gid": 125,
+      "open_gid": 126
+    },
+    {
+      "type": "treasure",
+      "name": "Castle Sasune Tower East 3F Wooden Arrow",
+      "x": 7,
+      "y": 5,
+      "treasure_id": "castle_sasune_tower_east_3f_treasure_wooden_arrow",
+      "item_name": "Wooden Arrow",
+      "inventory_bucket": "Weapon",
+      "quantity": 20,
+      "closed_gid": 125,
+      "open_gid": 126
+    },
+    {
+      "type": "exit",
+      "name": "Castle Sasune Tower East 2F",
+      "x": 4,
+      "y": 2,
+      "target_map": "Castle_Sasune_Tower_East_2F",
+      "target_spawn": {
+        "x": 4,
+        "y": 2
+      }
+    },
+    {
+      "type": "exit",
+      "name": "Castle Sasune Tower East 4F",
+      "x": 4,
+      "y": 7,
+      "target_map": "Castle_Sasune_Tower_East_4F",
+      "target_spawn": {
+        "x": 4,
+        "y": 6
+      }
+    }
+  ],
+  "rows": [
+    "32,32,1,1,1,1,1,32,32",
+    "32,1,69,70,70,70,92,1,32",
+    "1,69,70,95,118,99,70,92,1",
+    "69,70,95,99,95,99,95,70,92",
+    "93,59,1,59,120,59,1,59,92",
+    "93,125,70,95,70,95,70,125,92",
+    "92,93,95,99,95,99,95,92,69",
+    "70,92,93,95,119,95,92,69,2",
+    "32,70,92,69,69,69,69,70,32",
+    "32,32,70,70,70,70,70,32,32"
+  ]
+}

@@ -39,10 +39,10 @@
   "objects": [
     {
       "type": "exit",
-      "name": "Castle Sasune Tower Left 2F",
+      "name": "Castle Sasune Tower West 1F",
       "x": 7,
       "y": 12,
-      "target_map": "Castle_Sasune_Tower_Left_2F",
+      "target_map": "Castle_Sasune_Tower_West_1F",
       "target_spawn": {
         "x": 4,
         "y": 9
@@ -50,13 +50,24 @@
     },
     {
       "type": "exit",
-      "name": "Castle Sasune Tower Right 2F",
+      "name": "Castle Sasune Tower East 1F",
       "x": 23,
       "y": 12,
-      "target_map": "Castle_Sasune_Tower_Right_2F",
+      "target_map": "Castle_Sasune_Tower_East_1F",
       "target_spawn": {
         "x": 4,
         "y": 9
+      }
+    },
+    {
+      "type": "exit",
+      "name": "Castle Sasune MainKeep 1F",
+      "x": 15,
+      "y": 18,
+      "target_map": "Castle_Sasune_MainKeep_1F",
+      "target_spawn": {
+        "x": 10,
+        "y": 10
       }
     },
     {
