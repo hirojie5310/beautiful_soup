@@ -31,6 +31,17 @@
   "objects": [
     {
       "type": "exit",
+      "name": "Castle Sasune MainKeep B1F",
+      "x": 19,
+      "y": 5,
+      "target_map": "Castle_Sasune_MainKeep_B1F",
+      "target_spawn": {
+        "x": 8,
+        "y": 6
+      }
+    },
+    {
+      "type": "exit",
       "name": "Castle Sasune MainKeep 2F",
       "x": 10,
       "y": 0,

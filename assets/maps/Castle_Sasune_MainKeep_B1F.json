@@ -1,0 +1,59 @@
+{
+  "id": "Castle_Sasune_MainKeep_B1F",
+  "name": "Castle Sasune MainKeep B1F",
+  "tile_width": 24,
+  "tile_height": 24,
+  "width": 10,
+  "height": 13,
+  "tileset": {
+    "name": "TILESET - Castle_Sasune_Inner2",
+    "image": "../assets/images/maps/TILESET - Castle_Sasune_Inner2.png",
+    "columns": 16,
+    "tile_count": 128
+  },
+  "collision_gids": [1, 4, 5, 6, 7, 10, 15, 39, 41, 42, 69, 70, 71, 85, 87, 88, 92, 93, 94, 104, 120],
+  "location_requirement": {
+    "group": "Castle Sasune",
+    "locations": ["Castle Sasune"]
+  },
+  "encounter_rate": 0,
+  "padding": {
+    "top": 10,
+    "right": 10,
+    "bottom": 10,
+    "left": 10,
+    "fill_gid": 3
+  },
+  "spawn": {
+    "x": 7,
+    "y": 5
+  },
+  "objects": [
+    {
+      "type": "exit",
+      "name": "Castle Sasune MainKeep 1F",
+      "x": 8,
+      "y": 6,
+      "target_map": "Castle_Sasune_MainKeep_1F",
+      "target_spawn": {
+        "x": 19,
+        "y": 5
+      }
+    }
+  ],
+  "rows": [
+    "88,104,1,1,1,1,1,1,1,1",
+    "104,92,69,70,70,70,70,70,70,120",
+    "69,69,70,71,71,71,71,71,71,120",
+    "69,70,71,41,6,99,99,99,99,120",
+    "93,94,41,5,42,99,7,99,7,120",
+    "93,41,5,5,42,99,15,99,15,120",
+    "93,5,5,5,42,99,99,99,111,120",
+    "93,5,5,5,42,99,7,99,7,120",
+    "69,1,5,5,42,99,15,99,15,120",
+    "70,92,1,5,42,95,99,99,99,120",
+    "94,70,92,1,1,69,69,69,69,93",
+    "87,10,70,70,70,70,70,70,70,70",
+    "85,87,10,71,71,71,71,71,71,71"
+  ]
+}

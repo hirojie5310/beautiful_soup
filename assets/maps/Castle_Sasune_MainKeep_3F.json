@@ -1,0 +1,135 @@
+{
+  "id": "Castle_Sasune_MainKeep_3F",
+  "name": "Castle Sasune MainKeep 3F",
+  "tile_width": 24,
+  "tile_height": 24,
+  "width": 15,
+  "height": 31,
+  "tileset": {
+    "name": "TILESET - Castle_Sasune_Inner2",
+    "image": "../assets/images/maps/TILESET - Castle_Sasune_Inner2.png",
+    "columns": 16,
+    "tile_count": 128
+  },
+  "collision_gids": [8, 16, 29, 30, 31, 37, 38, 39, 60, 69, 70, 71, 88, 92, 93, 94, 120, 122, 124, 125, 126],
+  "location_requirement": {
+    "group": "Castle Sasune",
+    "locations": ["Castle Sasune"]
+  },
+  "encounter_rate": 0,
+  "padding": {
+    "top": 10,
+    "right": 10,
+    "bottom": 10,
+    "left": 10,
+    "fill_gid": 88
+  },
+  "spawn": {
+    "x": 7,
+    "y": 23
+  },
+  "objects": [
+    {
+      "type": "exit",
+      "name": "Castle Sasune MainKeep 2F",
+      "x": 7,
+      "y": 23,
+      "target_map": "Castle_Sasune_MainKeep_2F",
+      "target_spawn": {
+        "x": 9,
+        "y": 4
+      }
+    },
+    {
+      "type": "exit",
+      "name": "Castle Sasune MainKeep 2F",
+      "x": 11,
+      "y": 23,
+      "target_map": "Castle_Sasune_MainKeep_2F",
+      "target_spawn": {
+        "x": 13,
+        "y": 6
+      }
+    },
+    {
+      "type": "exit",
+      "name": "Castle Sasune MainKeep 4F",
+      "x": 7,
+      "y": 18,
+      "target_map": "Castle_Sasune_MainKeep_4F",
+      "target_spawn": {
+        "x": 7,
+        "y": 12
+      }
+    },
+    {
+      "type": "treasure",
+      "name": "Castle Sasune MainKeep 3F Leather Shield",
+      "x": 1,
+      "y": 24,
+      "treasure_id": "castle_sasune_mainkeep_3f_treasure_leather_shield",
+      "item_name": "Leather Shield",
+      "inventory_bucket": "Armor",
+      "quantity": 1,
+      "closed_gid": 125,
+      "open_gid": 126
+    },
+    {
+      "type": "treasure",
+      "name": "Castle Sasune MainKeep 3F Blizzard",
+      "x": 1,
+      "y": 25,
+      "treasure_id": "castle_sasune_mainkeep_3f_treasure_blizzard",
+      "item_name": "Blizzard",
+      "inventory_bucket": "Magic",
+      "quantity": 1,
+      "closed_gid": 125,
+      "open_gid": 126
+    },
+    {
+      "type": "treasure",
+      "name": "Castle Sasune MainKeep 3F Tonfa",
+      "x": 7,
+      "y": 3,
+      "treasure_id": "castle_sasune_mainkeep_3f_treasure_tonfa",
+      "item_name": "Tonfa",
+      "inventory_bucket": "Weapon",
+      "quantity": 1,
+      "closed_gid": 125,
+      "open_gid": 126
+    }
+  ],
+  "rows": [
+    "88,88,88,91,92,69,69,69,69,69,93,117,88,88,88",
+    "88,88,88,91,92,70,70,70,70,70,120,117,88,88,88",
+    "88,88,88,91,92,94,94,94,94,94,93,117,88,88,88",
+    "88,88,88,91,120,59,8,125,8,99,120,117,88,88,88",
+    "88,88,88,91,120,59,16,99,16,99,120,117,88,88,88",
+    "88,88,88,91,120,59,99,99,99,99,120,117,88,88,88",
+    "88,88,88,91,92,1,69,69,69,1,93,117,88,88,88",
+    "88,88,88,65,70,10,70,70,70,10,70,88,88,88,88",
+    "88,88,88,65,71,10,94,94,94,10,94,88,88,88,88",
+    "88,88,88,85,46,46,46,46,46,46,46,88,88,88,88",
+    "88,88,88,88,88,3,88,88,88,3,88,88,88,88,88",
+    "88,88,88,88,88,3,88,88,88,3,88,88,88,88,88",
+    "88,88,88,88,88,3,88,88,88,3,88,88,88,88,88",
+    "88,88,88,88,88,3,88,88,88,3,88,88,88,88,88",
+    "88,88,88,88,88,3,88,88,88,3,88,88,88,88,88",
+    "88,88,88,88,88,3,88,88,88,3,88,88,88,88,88",
+    "88,88,88,88,88,3,88,88,88,3,88,88,88,88,88",
+    "88,88,88,88,88,3,88,88,88,3,88,88,88,88,88",
+    "92,69,69,69,69,1,93,91,92,1,69,69,69,69,93",
+    "92,29,30,31,92,2,93,107,93,2,92,70,70,70,120",
+    "120,37,38,39,92,10,93,74,93,10,93,94,94,94,93",
+    "120,121,121,61,120,59,120,59,120,59,120,59,99,99,120",
+    "120,121,121,61,120,59,120,67,93,59,120,67,93,59,120",
+    "120,122,60,99,120,59,120,116,93,59,120,116,93,59,120",
+    "120,125,99,99,120,59,92,92,93,59,92,69,93,59,120",
+    "120,125,99,99,70,95,124,70,124,99,70,70,70,95,120",
+    "120,59,99,99,71,95,71,71,94,95,71,94,94,95,120",
+    "120,59,99,99,99,99,99,99,99,99,99,99,99,99,120",
+    "92,69,69,69,69,69,69,69,69,69,69,69,69,69,93",
+    "70,70,70,70,70,70,70,70,70,70,70,70,70,70,70",
+    "71,94,94,94,94,94,94,94,94,94,94,94,94,94,94"
+  ]
+}
