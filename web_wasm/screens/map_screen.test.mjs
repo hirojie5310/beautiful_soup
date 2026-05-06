@@ -5,6 +5,7 @@ import {
   applySwitchStateToMap,
   createDirectionalHoldRepeater,
   canNpcOccupyTile,
+  buildMergedFixedContentPages,
   deriveMapLaunchContext,
   canOccupyTile,
   deriveInitialMapState,
@@ -894,6 +895,43 @@ test("normalizeMergedFixedContent strips merged_fixed control notation for map d
     normalizeMergedFixedContent("'>-\n    \\n\\t[0x04]こんにちは\\nまたね'\n"),
     "こんにちは\nまたね",
   );
+});
+
+test("buildMergedFixedContentPages splits Castle Sasune king dialogue into four pages", () => {
+  const pages = buildMergedFixedContentPages(544, `>-
+    「わたしはサスーンのおう。　ジンの　のろいに\\n　よって　みな　ゆうれいのようなすがたに\\n　かえられてしまった。　ジンを　たおさぬかぎり\\n　もとの　すがたには　もどれぬ。\\n『ジンはどこに？\\n「しろのきたにある　ふういんのどうくつにいる。\\n　だが　ミスリルのゆびわが　なければ\\n　ジンを　ふたたび　ふういんすることはできぬ。\\n『サラひめが　もっていると……\\n「おお　そうだ！　むかし　カズスより　サラひめに\\n　ミスリルのゆびわが　おくられた。　だが\\n　かんじんの　サラが　どこにもみあたらん。\\n　もしや　ジンにさらわれたのでは？！\\n　おお　サラひめ……\\n『ふういんのどうくつに　いってみましょう。\\n「おお　せんしたちよ　よくぞいってくれた。\\n　たしか　ふういんのどうくつには　１かしょ\\n　かくしとびらが　ある。　がいこつが　かぎに\\n　なっていたはずだ……\\n\\n　たのむ！\\n　ジンをたおし　ひとびとをすくってくれ！！\\n
+`);
+  assert.equal(pages.length, 4);
+  assert.match(pages[0], /^「わたしはサスーンのおう/);
+  assert.match(pages[1], /^『ジンはどこに？/);
+  assert.match(pages[2], /^『ふういんのどうくつに　いってみましょう。/);
+  assert.match(pages[3], /^たのむ！/);
+});
+
+test("buildMergedFixedContentPages keeps ordinary dialogue as a single page", () => {
+  assert.deepEqual(
+    buildMergedFixedContentPages(541, "ふういんのどうくつにいる　モンスターは\\nアンデッドばかりです。"),
+    ["ふういんのどうくつにいる　モンスターは\nアンデッドばかりです。"],
+  );
+});
+
+test("buildMergedFixedContentPages splits Castle Sasune gate guard dialogue into two pages", () => {
+  const pages = buildMergedFixedContentPages(538, `>-
+    しろのひとは　みんなジンの　のろいによって\\nゆうれいのようなすがたに　されてしまいました。\\nわたしは　つかいで　でていたので\\nたすかったのです……\\nミスリルのゆびわがあれば　ジンをふたたび　\\nふういんできるのですが　ゆいいつ　ゆびわを\\nつくれる　カズスのむらも　おなじような\\nありさまで……\\nいったい　わたしはどうしたらいいのか……\\n
+`);
+  assert.equal(pages.length, 2);
+  assert.match(pages[0], /^しろのひとは　みんなジンの　のろいによって/);
+  assert.match(pages[1], /^ミスリルのゆびわがあれば　ジンをふたたび/);
+});
+
+test("buildMergedFixedContentPages splits Cid dialogue in Kazus inn into three pages", () => {
+  const pages = buildMergedFixedContentPages(532, `>-
+    わしはシド。　カナーンからきたんじゃ。\\nネルブのたにが　おおいわでふさがれてしまい\\nカナーンに　かえるにかえれなくなってしまった。\\nそこでこのまちに　ひとばんの　やどを\\nもとめたのじゃが　このざまじゃ。　フォフォフォ！\\nどうだわかいの　わしの　ひくうていを　かして\\nやるから　なんとかしてくれんかのう？\\nにしのさばくにかくしてあるんじゃ。\\nシドから　ひくうていを　かくしたばしょを\\nきいた！\\nにしの　さばくだ！！\\n
+`);
+  assert.equal(pages.length, 3);
+  assert.match(pages[0], /^わしはシド。　カナーンからきたんじゃ。/);
+  assert.match(pages[1], /^もとめたのじゃが　このざまじゃ。/);
+  assert.match(pages[2], /^シドから　ひくうていを　かくしたばしょを/);
 });
 
 test("water highlight animation covers town and Floating Continent water tiles", () => {

@@ -71,6 +71,15 @@
       }
     },
     {
+      "type": "npc",
+      "name": "Castle Sasune NPC 538",
+      "x": 15,
+      "y": 21,
+      "sprite_image": "../assets/images/NPCs/fs_soldier1.png",
+      "dialogue_index": 538,
+      "movement": "random"
+    },
+    {
       "type": "exit",
       "name": "Floating Continent",
       "x": 15,
