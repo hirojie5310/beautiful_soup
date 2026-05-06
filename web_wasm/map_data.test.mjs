@@ -115,6 +115,11 @@ test("getMapManifestUrl resolves registered maps without falling back", () => {
   assert.match(String(getMapManifestUrl("Castle_Sasune_Tower_East_2F")), /\/assets\/maps\/Castle_Sasune_Tower_East_2F\.json$/);
   assert.match(String(getMapManifestUrl("Castle_Sasune_Tower_East_3F")), /\/assets\/maps\/Castle_Sasune_Tower_East_3F\.json$/);
   assert.match(String(getMapManifestUrl("Castle_Sasune_Tower_East_4F")), /\/assets\/maps\/Castle_Sasune_Tower_East_4F\.json$/);
+  assert.match(String(getMapManifestUrl("Sealed_Cave_B1")), /\/assets\/maps\/Sealed_Cave_B1\.json$/);
+  assert.match(String(getMapManifestUrl("Sealed_Cave_B2")), /\/assets\/maps\/Sealed_Cave_B2\.json$/);
+  assert.match(String(getMapManifestUrl("Sealed_Cave_B2_1")), /\/assets\/maps\/Sealed_Cave_B2_1\.json$/);
+  assert.match(String(getMapManifestUrl("Sealed_Cave_B2_2")), /\/assets\/maps\/Sealed_Cave_B2_2\.json$/);
+  assert.match(String(getMapManifestUrl("Sealed_Cave_B3")), /\/assets\/maps\/Sealed_Cave_B3\.json$/);
   assert.match(String(getMapManifestUrl("Ur_Well")), /\/assets\/maps\/Ur-Well\.json$/);
   assert.match(String(getMapManifestUrl("FloatingContinent")), /\/assets\/maps\/FloatingContinent\.json$/);
 });
@@ -165,6 +170,41 @@ test("findCompatibleMapDefinition returns the map that matches selected location
         height: 1,
         rows: ["1"],
         location_requirement: { group: "Floating Continent", locations: ["Floating Continent Near Ur"] },
+      },
+      Sealed_Cave_B1: {
+        id: "Sealed_Cave_B1",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Sealed Cave", locations: ["Sealed Cave B1"] },
+      },
+      Sealed_Cave_B2: {
+        id: "Sealed_Cave_B2",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Sealed Cave", locations: ["Sealed Cave B2"] },
+      },
+      Sealed_Cave_B2_1: {
+        id: "Sealed_Cave_B2_1",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Sealed Cave", locations: ["Sealed Cave B2_1"] },
+      },
+      Sealed_Cave_B2_2: {
+        id: "Sealed_Cave_B2_2",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Sealed Cave", locations: ["Sealed Cave B2_2"] },
+      },
+      Sealed_Cave_B3: {
+        id: "Sealed_Cave_B3",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Sealed Cave", locations: ["Sealed Cave B3"] },
       },
       Airship_of_Cid: {
         id: "Airship_of_Cid",
@@ -424,6 +464,41 @@ test("findCompatibleMapDefinition returns null when no map matches selected loca
         rows: ["1"],
         location_requirement: { group: "Floating Continent", locations: ["Floating Continent Near Ur"] },
       },
+      Sealed_Cave_B1: {
+        id: "Sealed_Cave_B1",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Sealed Cave", locations: ["Sealed Cave B1"] },
+      },
+      Sealed_Cave_B2: {
+        id: "Sealed_Cave_B2",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Sealed Cave", locations: ["Sealed Cave B2"] },
+      },
+      Sealed_Cave_B2_1: {
+        id: "Sealed_Cave_B2_1",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Sealed Cave", locations: ["Sealed Cave B2_1"] },
+      },
+      Sealed_Cave_B2_2: {
+        id: "Sealed_Cave_B2_2",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Sealed Cave", locations: ["Sealed Cave B2_2"] },
+      },
+      Sealed_Cave_B3: {
+        id: "Sealed_Cave_B3",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Sealed Cave", locations: ["Sealed Cave B3"] },
+      },
       Airship_of_Cid: {
         id: "Airship_of_Cid",
         width: 1,
@@ -555,6 +630,41 @@ test("findCompatibleMapDefinition prefers maps with explicit location requiremen
         height: 1,
         rows: ["1"],
         location_requirement: { group: "Floating Continent", locations: ["Floating Continent Near Ur"] },
+      },
+      Sealed_Cave_B1: {
+        id: "Sealed_Cave_B1",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Sealed Cave", locations: ["Sealed Cave B1"] },
+      },
+      Sealed_Cave_B2: {
+        id: "Sealed_Cave_B2",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Sealed Cave", locations: ["Sealed Cave B2"] },
+      },
+      Sealed_Cave_B2_1: {
+        id: "Sealed_Cave_B2_1",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Sealed Cave", locations: ["Sealed Cave B2_1"] },
+      },
+      Sealed_Cave_B2_2: {
+        id: "Sealed_Cave_B2_2",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Sealed Cave", locations: ["Sealed Cave B2_2"] },
+      },
+      Sealed_Cave_B3: {
+        id: "Sealed_Cave_B3",
+        width: 1,
+        height: 1,
+        rows: ["1"],
+        location_requirement: { group: "Sealed Cave", locations: ["Sealed Cave B3"] },
       },
     };
     const matchedId = Object.keys(payloadById).find((id) => href.includes(id));

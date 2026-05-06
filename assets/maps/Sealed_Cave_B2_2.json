@@ -1,0 +1,65 @@
+{
+  "id": "Sealed_Cave_B2_2",
+  "name": "Sealed Cave B2_2",
+  "tile_width": 24,
+  "tile_height": 24,
+  "width": 7,
+  "height": 8,
+  "tileset": {
+    "name": "TILESET - SealedCave",
+    "image": "../assets/images/maps/TILESET - SealedCave.png",
+    "columns": 16,
+    "tile_count": 128
+  },
+  "collision_gids": [1, 2, 70, 98],
+  "location_requirement": {
+    "group": "Sealed Cave",
+    "locations": ["Sealed Cave B2_2"]
+  },
+  "encounter_rate": 0.05,
+  "padding": {
+    "top": 10,
+    "right": 10,
+    "bottom": 10,
+    "left": 10,
+    "fill_gid": 1
+  },
+  "spawn": {
+    "x": 0,
+    "y": 2
+  },
+  "objects": [
+    {
+      "type": "exit",
+      "name": "Sealed Cave B2_1",
+      "x": 0,
+      "y": 2,
+      "target_map": "Sealed_Cave_B2_1",
+      "target_spawn": {
+        "x": 16,
+        "y": 2
+      }
+    },
+    {
+      "type": "exit",
+      "name": "Sealed Cave B3",
+      "x": 6,
+      "y": 7,
+      "target_map": "Sealed_Cave_B3",
+      "target_spawn": {
+        "x": 27,
+        "y": 1
+      }
+    }
+  ],
+  "rows": [
+    "2,2,2,70,1,1,1",
+    "2,2,2,70,1,1,1",
+    "122,122,72,124,2,2,70",
+    "1,1,1,124,2,2,70",
+    "1,1,1,122,122,122,122",
+    "1,1,1,122,122,122,122",
+    "1,1,1,1,1,1,67",
+    "1,1,1,1,1,1,108"
+  ]
+}
