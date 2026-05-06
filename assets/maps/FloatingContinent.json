@@ -104,6 +104,17 @@
     },
     {
       "type": "exit",
+      "name": "Sealed Cave B1",
+      "x": 84,
+      "y": 36,
+      "target_map": "Sealed_Cave_B1",
+      "target_spawn": {
+        "x": 7,
+        "y": 8
+      }
+    },
+    {
+      "type": "exit",
       "name": "Airship of Cid",
       "x": 90,
       "y": 59,
