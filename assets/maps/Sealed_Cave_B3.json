@@ -39,6 +39,30 @@
         "x": 6,
         "y": 7
       }
+    },
+    {
+      "type": "treasure",
+      "name": "treasure_lower_right",
+      "x": 27,
+      "y": 24,
+      "treasure_id": "sealed_cave_b3_treasure_lower_right",
+      "item_name": "Antarctic Wind",
+      "inventory_bucket": "Anywhere",
+      "quantity": 1,
+      "closed_gid": 125,
+      "open_gid": 126
+    },
+    {
+      "type": "treasure",
+      "name": "treasure_upper_mid",
+      "x": 10,
+      "y": 12,
+      "treasure_id": "sealed_cave_b3_treasure_upper_mid",
+      "item_name": "Eye Drops",
+      "inventory_bucket": "Anywhere",
+      "quantity": 1,
+      "closed_gid": 125,
+      "open_gid": 126
     }
   ],
   "rows": [

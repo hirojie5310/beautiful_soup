@@ -11,7 +11,7 @@
     "columns": 16,
     "tile_count": 128
   },
-  "collision_gids": [1, 2, 8, 51, 76, 86, 90, 97, 125],
+  "collision_gids": [1, 2, 8, 51, 76, 86, 90, 97, 125, 126],
   "location_requirement": {
     "group": "Sealed Cave",
     "locations": ["Sealed Cave B1"]
@@ -50,6 +50,30 @@
         "x": 6,
         "y": 2
       }
+    },
+    {
+      "type": "treasure",
+      "name": "treasure_upper_right",
+      "x": 21,
+      "y": 10,
+      "treasure_id": "sealed_cave_b1_treasure_upper_right",
+      "item_name": "Cure",
+      "inventory_bucket": "Magic",
+      "quantity": 1,
+      "closed_gid": 125,
+      "open_gid": 126
+    },
+    {
+      "type": "treasure",
+      "name": "treasure_lower_left",
+      "x": 0,
+      "y": 29,
+      "treasure_id": "sealed_cave_b1_treasure_lower_left",
+      "item_name": "Potion",
+      "inventory_bucket": "Anywhere",
+      "quantity": 1,
+      "closed_gid": 125,
+      "open_gid": 126
     }
   ],
   "rows": [
