@@ -50,6 +50,52 @@
         "x": 2,
         "y": 10
       }
+    },
+    {
+      "type": "npc",
+      "name": "Inn ItemShop 1F NPC 531",
+      "x": 10,
+      "y": 6,
+      "sprite_image": "../assets/images/NPCs/fs_cursed.png",
+      "dialogue_index": 531,
+      "movement": "random"
+    },
+    {
+      "type": "npc",
+      "name": "Inn ItemShop 1F NPC 527",
+      "x": 6,
+      "y": 6,
+      "sprite_image": "../assets/images/NPCs/fs_cursed.png",
+      "dialogue_index": 527,
+      "movement": "random"
+    },
+    {
+      "type": "npc",
+      "name": "Inn ItemShop 1F NPC 529",
+      "x": 4,
+      "y": 7,
+      "sprite_image": "../assets/images/NPCs/fs_cursed.png",
+      "dialogue_index": 529,
+      "movement": "random"
+    },
+    {
+      "type": "npc",
+      "name": "Inn ItemShop 1F NPC 533",
+      "x": 2,
+      "y": 5,
+      "sprite_image": "../assets/images/NPCs/fs_cursed.png",
+      "dialogue_index": 533,
+      "movement": "random"
+    },
+    {
+      "type": "npc",
+      "name": "Inn ItemShop 1F NPC 532",
+      "x": 5,
+      "y": 3,
+      "sprite_image": "../assets/images/NPCs/fs_cursed.png",
+      "dialogue_index": 532,
+      "movement": "fixed",
+      "direction": "down"
     }
   ],
   "rows": [

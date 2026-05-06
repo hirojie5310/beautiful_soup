@@ -84,6 +84,8 @@ const KAZUS_INN_ITEMSHOP_2F_RECOVERY_TILES = [
   { x: 4, y: 4 },
   { x: 6, y: 4 },
 ];
+const KAZUS_MAP_ID = "Kazus";
+const KAZUS_NPC_516_KEY = "kazus_npc_516_scripted";
 const CASTLE_SASUNE_MAINKEEP_1F_MAP_ID = "Castle_Sasune_MainKeep_1F";
 const CASTLE_SASUNE_MAINKEEP_1F_RECOVERY_TILES = [
   { x: 1, y: 4 },
@@ -94,6 +96,7 @@ const CASTLE_SASUNE_TOWER_EAST_4F_RECOVERY_TILES = [
   { x: 4, y: 3 },
 ];
 const UR_INN_ITEMSHOP_RECOVERY_TEXT_INDEX = 223;
+const CASTLE_SASUNE_TOWER_EAST_4F_RECOVERY_TEXT_INDEX = 130;
 const ALTER_CAVE_CRYSTAL_ROOM_MAP_ID = "Alter_Cave_Crystal_Room";
 const ALTER_CAVE_CRYSTAL_BOSS_NAME = "Land Turtle";
 const ALTER_CAVE_CRYSTAL_OPENING_STORY_LINES = [
@@ -101,6 +104,23 @@ const ALTER_CAVE_CRYSTAL_OPENING_STORY_LINES = [
   "さあ　やみをふりはらい\nふたたび\nこのせかいに　ひかりをとりもどすのだ",
   "クリスタルのひかりを　きぼうにかえて…",
 ];
+const MERGED_FIXED_DIALOGUE_PAGE_OVERRIDES = {
+  538: [
+    "しろのひとは　みんなジンの　のろいによって\nゆうれいのようなすがたに　されてしまいました。\nわたしは　つかいで　でていたので\nたすかったのです……",
+    "ミスリルのゆびわがあれば　ジンをふたたび\nふういんできるのですが　ゆいいつ　ゆびわを\nつくれる　カズスのむらも　おなじような\nありさまで……\nいったい　わたしはどうしたらいいのか……",
+  ],
+  532: [
+    "わしはシド。　カナーンからきたんじゃ。\nネルブのたにが　おおいわでふさがれてしまい\nカナーンに　かえるにかえれなくなってしまった。\nそこでこのまちに　ひとばんの　やどを",
+    "もとめたのじゃが　このざまじゃ。　フォフォフォ！\nどうだわかいの　わしの　ひくうていを　かして\nやるから　なんとかしてくれんかのう？\nにしのさばくにかくしてあるんじゃ。",
+    "シドから　ひくうていを　かくしたばしょを\nきいた！\nにしの　さばくだ！！",
+  ],
+  544: [
+    "「わたしはサスーンのおう。　ジンの　のろいに\nよって　みな　ゆうれいのようなすがたに\nかえられてしまった。　ジンを　たおさぬかぎり\nもとの　すがたには　もどれぬ。",
+    "『ジンはどこに？\n「しろのきたにある　ふういんのどうくつにいる。\nだが　ミスリルのゆびわが　なければ\nジンを　ふたたび　ふういんすることはできぬ。\n『サラひめが　もっていると……\n「おお　そうだ！　むかし　カズスより　サラひめに\nミスリルのゆびわが　おくられた。　だが\nかんじんの　サラが　どこにもみあたらん。\nもしや　ジンにさらわれたのでは？！\nおお　サラひめ……",
+    "『ふういんのどうくつに　いってみましょう。\n「おお　せんしたちよ　よくぞいってくれた。\nたしか　ふういんのどうくつには　１かしょ\nかくしとびらが　ある。　がいこつが　かぎに\nなっていたはずだ……",
+    "たのむ！\nジンをたおし　ひとびとをすくってくれ！！",
+  ],
+};
 const UR_SHOP_ACTIVATIONS = [
   { mapId: "Ur_ArmorShop", x: 3, y: 5, shopMap: "Ur", shopType: "Armor" },
   { mapId: "Ur_MagicShop", x: 4, y: 4, shopMap: "Ur", shopType: "Magic" },
@@ -568,11 +588,25 @@ async function loadMergedFixedContentByIndex(index) {
   return normalizeMergedFixedContent(hit?.content ?? hit?.sontent ?? "");
 }
 
+export function buildMergedFixedContentPages(index, rawContent) {
+  const normalizedIndex = Number(index);
+  const overridePages = MERGED_FIXED_DIALOGUE_PAGE_OVERRIDES[normalizedIndex];
+  if (Array.isArray(overridePages) && overridePages.length > 0) {
+    return overridePages.map((page) => normalizeMergedFixedContent(page)).filter(Boolean);
+  }
+  const normalized = normalizeMergedFixedContent(rawContent);
+  return normalized ? [normalized] : [];
+}
+
 async function loadMergedFixedContentByIndices(indices) {
   const rows = Array.isArray(indices) ? indices : [];
-  return Promise.all(
-    rows.map((index) => loadMergedFixedContentByIndex(index)),
+  const messages = await Promise.all(
+    rows.map(async (index) => {
+      const content = await loadMergedFixedContentByIndex(index);
+      return buildMergedFixedContentPages(index, content);
+    }),
   );
+  return messages.flat();
 }
 
 export function normalizeMergedFixedContent(rawContent) {
@@ -890,6 +924,9 @@ function renderLayout() {
         transition: transform ${MAP_MOVE_ANIMATION_MS}ms linear;
         will-change: transform;
       }
+      [data-screen="map"] .map-object-image::before {
+        display: none;
+      }
       [data-screen="map"] .map-object::before {
         content: "";
         position: absolute;
@@ -904,6 +941,23 @@ function renderLayout() {
       }
       [data-screen="map"] .map-object-npc::before {
         display: none;
+      }
+      [data-screen="map"] .map-object-sprite {
+        width: var(--map-tile-size);
+        height: var(--map-tile-size);
+        background-image: var(--object-sprite-url);
+        background-repeat: no-repeat;
+        background-size:
+          calc(var(--map-tile-size) * var(--object-frame-count, 1))
+          var(--map-tile-size);
+        background-position: 0 0;
+        image-rendering: pixelated;
+        filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.35));
+      }
+      [data-screen="map"] .map-object-sprite.is-animated {
+        animation-name: map-object-frames;
+        animation-timing-function: steps(var(--object-frame-count, 1));
+        animation-iteration-count: infinite;
       }
       [data-screen="map"] .map-npc-sprite {
         width: ${NPC_DISPLAY_TILE_SIZE}px;
@@ -1001,6 +1055,10 @@ function renderLayout() {
       @keyframes map-crystal-frames {
         from { background-position: 0 0; }
         to { background-position: calc(var(--map-tile-size) * -${CRYSTAL_SPRITE_FRAMES}) 0; }
+      }
+      @keyframes map-object-frames {
+        from { background-position: 0 0; }
+        to { background-position: calc(var(--map-tile-size) * var(--object-frame-count, 1) * -1) 0; }
       }
       @keyframes map-water-highlight {
         from { transform: translateX(0); }
@@ -1119,6 +1177,20 @@ function objectLabel(type) {
   if (type === "chest" || type === "treasure") return "宝";
   if (type === "npc") return "";
   return "OBJ";
+}
+
+function npcObjectKey(row, fallback = "") {
+  return String(row?.npc_key || row?.dialogue_index || row?.name || fallback);
+}
+
+function resolveObjectSpriteFrameCount(row) {
+  const value = Number(row?.sprite_frames ?? row?.frame_count ?? 1);
+  return Number.isFinite(value) && value > 0 ? Math.max(1, Math.floor(value)) : 1;
+}
+
+function resolveObjectSpriteFrameMs(row) {
+  const value = Number(row?.sprite_frame_ms ?? row?.frame_ms ?? 1000);
+  return Number.isFinite(value) && value > 0 ? Math.max(1, Math.floor(value)) : 1000;
 }
 
 function npcTileTransform(row, renderPadding = { left: 0, top: 0 }, tileSize = DISPLAY_TILE_SIZE) {
@@ -1387,7 +1459,7 @@ function ensureMapRenderState(mapLayer, mapDefinition) {
   (mapDefinition.objects || []).forEach((row, index) => {
     if (row?.hidden === true) return;
     const marker = document.createElement("div");
-    marker.className = `map-object${row?.type === "npc" ? " map-object-npc" : ""}`;
+    marker.className = `map-object${row?.type === "npc" ? " map-object-npc" : ""}${row?.type !== "npc" && row?.spriteImageUrl ? " map-object-image" : ""}`;
     if (row?.type === "npc") {
       marker.style.left = "0px";
       marker.style.top = "0px";
@@ -1399,10 +1471,21 @@ function ensureMapRenderState(mapLayer, mapDefinition) {
     marker.title = String(row?.name || row?.type || "");
     if (row?.type === "npc" && row?.spriteImageUrl) {
       marker.innerHTML = `<span class="map-npc-sprite" aria-hidden="true"></span>`;
-      marker.dataset.npcKey = String(row?.npc_key || row?.dialogue_index || row?.name || index);
+      marker.dataset.npcKey = npcObjectKey(row, index);
       const npcSprite = marker.querySelector(".map-npc-sprite");
       npcSprite?.style.setProperty("--npc-sprite-url", `url("${row.spriteImageUrl}")`);
       npcSprite?.setAttribute("data-npc-key", marker.dataset.npcKey);
+    } else if (row?.spriteImageUrl) {
+      marker.innerHTML = `<span class="map-object-sprite" aria-hidden="true"></span>`;
+      const objectSprite = marker.querySelector(".map-object-sprite");
+      const frameCount = resolveObjectSpriteFrameCount(row);
+      const frameMs = resolveObjectSpriteFrameMs(row);
+      objectSprite?.style.setProperty("--object-sprite-url", `url("${row.spriteImageUrl}")`);
+      objectSprite?.style.setProperty("--object-frame-count", String(frameCount));
+      if (frameCount > 1) {
+        objectSprite?.classList.add("is-animated");
+        objectSprite?.style.setProperty("animation-duration", `${frameCount * frameMs}ms`);
+      }
     } else {
       marker.innerHTML = `<span>${objectLabel(row?.type)}</span>`;
     }
@@ -2076,6 +2159,105 @@ export async function mountScreen({ mountNode, store, navigate }) {
   const npcAnimationStates = new Map();
   const holdRepeater = createDirectionalHoldRepeater((direction) => tryMove(direction));
 
+  function findNpcMarkerByKey(npcKey) {
+    const escapedKey = typeof CSS !== "undefined" && typeof CSS.escape === "function"
+      ? CSS.escape(String(npcKey || ""))
+      : String(npcKey || "").replace(/"/g, '\\"');
+    return mapLayer.querySelector(`.map-object-npc[data-npc-key="${escapedKey}"]`);
+  }
+
+  function setNpcMarkerTransform(marker, row) {
+    if (!marker || !row) return;
+    const renderPadding = mapDefinition?.renderPadding || { left: 0, top: 0 };
+    marker.style.transform = npcTileTransform(row, renderPadding);
+  }
+
+  function waitForDuration(ms) {
+    return new Promise((resolve) => {
+      window.setTimeout(resolve, Math.max(0, Number(ms || 0)));
+    });
+  }
+
+  function openDialogueMessagesAndWait(messages) {
+    const visibleMessages = Array.isArray(messages)
+      ? messages.map((message) => String(message || "")).filter(Boolean)
+      : [];
+    if (!visibleMessages.length) return Promise.resolve(false);
+    return new Promise((resolve) => {
+      if (visibleMessages.length === 1) {
+        openEventOverlay(visibleMessages[0], {
+          onClose: () => resolve(true),
+        });
+        return;
+      }
+      openEventOverlaySequence(visibleMessages, {
+        onComplete: () => resolve(true),
+      });
+    });
+  }
+
+  async function animateNpcStep(npcRow, npcState, marker, targetX, targetY, durationMs) {
+    if (!npcRow || !npcState || !marker) return false;
+    const fromX = Number(npcRow.x || 0);
+    const fromY = Number(npcRow.y || 0);
+    const deltaX = Number(targetX) - fromX;
+    const deltaY = Number(targetY) - fromY;
+    if (deltaX > 0) npcState.direction = "right";
+    else if (deltaX < 0) npcState.direction = "left";
+    else if (deltaY > 0) npcState.direction = "down";
+    else if (deltaY < 0) npcState.direction = "up";
+    npcState.walkFrame = npcState.walkFrame === 0 ? 1 : 0;
+    const spriteNode = marker.querySelector(".map-npc-sprite");
+    if (spriteNode) updateNpcSpriteFrame(spriteNode, npcState.direction, npcState.walkFrame);
+    marker.style.transitionDuration = `${Math.max(1, Number(durationMs || 0))}ms`;
+    npcRow.x = Number(targetX);
+    npcRow.y = Number(targetY);
+    setNpcMarkerTransform(marker, npcRow);
+    await waitForDuration(durationMs);
+    npcState.walkFrame = 0;
+    if (spriteNode) updateNpcSpriteFrame(spriteNode, npcState.direction, npcState.walkFrame);
+    return true;
+  }
+
+  async function runKazusNpc516Sequence(npcRow) {
+    const npcKey = npcObjectKey(npcRow);
+    const marker = findNpcMarkerByKey(npcKey);
+    if (!npcRow || !marker) return false;
+    const firstMessages = await loadMergedFixedContentByIndices([516]);
+    const secondMessages = await loadMergedFixedContentByIndices([517]);
+    const now = performance.now();
+    const npcState = npcAnimationStates.get(npcKey) || {
+      direction: resolveNpcInitialDirection(npcRow, 0),
+      walkFrame: 0,
+      nextFrameAt: now + NPC_FRAME_MS,
+      nextDirectionAt: now + NPC_DIRECTION_MAX_MS,
+    };
+    npcAnimationStates.set(npcKey, npcState);
+    holdRepeater.stop();
+    mapTransitionLocked = true;
+    try {
+      await openDialogueMessagesAndWait(firstMessages);
+      await animateNpcStep(npcRow, npcState, marker, 3, 27, 500);
+      await animateNpcStep(npcRow, npcState, marker, 2, 27, 500);
+      await animateNpcStep(npcRow, npcState, marker, 1, 27, 500);
+      await waitForDuration(1000);
+      await animateNpcStep(npcRow, npcState, marker, 2, 27, 1000);
+      await animateNpcStep(npcRow, npcState, marker, 3, 27, 1000);
+      await animateNpcStep(npcRow, npcState, marker, 3, 28, 1000);
+      npcState.direction = normalizeNpcDirection(npcRow?.direction, "right");
+      npcState.walkFrame = 0;
+      const spriteNode = marker.querySelector(".map-npc-sprite");
+      if (spriteNode) updateNpcSpriteFrame(spriteNode, npcState.direction, npcState.walkFrame);
+      marker.style.transitionDuration = `${MAP_MOVE_ANIMATION_MS}ms`;
+      await openDialogueMessagesAndWait(secondMessages);
+      mapStatus.textContent = `${npcRow.name || "NPC"} と話しました。`;
+      return true;
+    } finally {
+      marker.style.transitionDuration = `${MAP_MOVE_ANIMATION_MS}ms`;
+      mapTransitionLocked = false;
+    }
+  }
+
   function clearPendingBgmUnlock() {
     if (typeof cancelPendingBgmUnlock === "function") {
       cancelPendingBgmUnlock();
@@ -2375,7 +2557,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       seenKeys.add(key);
       const npcRow = (mapDefinition?.objects || []).find((row) => (
         row?.type === "npc"
-        && String(row?.npc_key || row?.dialogue_index || row?.name || "") === key
+        && npcObjectKey(row) === key
       ));
       const movement = normalizeNpcMovement(npcRow?.movement);
       let npcState = npcAnimationStates.get(key);
@@ -2622,6 +2804,13 @@ export async function mountScreen({ mountNode, store, navigate }) {
     }
     const adjacentNpc = findAdjacentNpc(mapDefinition, mapState);
     if (adjacentNpc) {
+      if (
+        mapDefinition.id === KAZUS_MAP_ID
+        && npcObjectKey(adjacentNpc) === KAZUS_NPC_516_KEY
+      ) {
+        await runKazusNpc516Sequence(adjacentNpc);
+        return;
+      }
       const dialogueIndices = npcDialogueIndices(adjacentNpc);
       const messages = await loadMergedFixedContentByIndices(dialogueIndices);
       const visibleMessages = messages.filter((message) => Boolean(message));
@@ -2833,11 +3022,17 @@ export async function mountScreen({ mountNode, store, navigate }) {
       }
       return;
     }
+    if (isCastleSasuneTowerEast4FRecoveryTile(mapDefinition, mapState)) {
+      await runFullRecoveryEvent(
+        CASTLE_SASUNE_TOWER_EAST_4F_RECOVERY_TEXT_INDEX,
+        "HP・MP と状態異常が回復した。",
+      );
+      return;
+    }
     if (
       isUrInnItemShopRecoveryTile(mapDefinition, mapState)
       || isKazusInnItemShopRecoveryTile(mapDefinition, mapState)
       || isCastleSasuneMainKeep1FRecoveryTile(mapDefinition, mapState)
-      || isCastleSasuneTowerEast4FRecoveryTile(mapDefinition, mapState)
     ) {
       await runFullRecoveryEvent(
         UR_INN_ITEMSHOP_RECOVERY_TEXT_INDEX,

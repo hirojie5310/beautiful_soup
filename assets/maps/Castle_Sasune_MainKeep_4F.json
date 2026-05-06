@@ -39,6 +39,34 @@
         "x": 7,
         "y": 18
       }
+    },
+    {
+      "type": "npc",
+      "name": "Castle Sasune MainKeep 4F NPC 544",
+      "x": 7,
+      "y": 4,
+      "sprite_image": "../assets/images/NPCs/fs_cursed.png",
+      "dialogue_index": 544,
+      "movement": "fixed",
+      "direction": "down"
+    },
+    {
+      "type": "npc",
+      "name": "Castle Sasune MainKeep 4F NPC 540",
+      "x": 6,
+      "y": 5,
+      "sprite_image": "../assets/images/NPCs/fs_cursed.png",
+      "dialogue_index": 540,
+      "movement": "random"
+    },
+    {
+      "type": "npc",
+      "name": "Castle Sasune MainKeep 4F NPC 541",
+      "x": 8,
+      "y": 5,
+      "sprite_image": "../assets/images/NPCs/fs_cursed.png",
+      "dialogue_index": 541,
+      "movement": "random"
     }
   ],
   "rows": [
