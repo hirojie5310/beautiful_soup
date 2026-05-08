@@ -417,9 +417,16 @@ export async function mountScreen({ mountNode, store, navigate }) {
   if (initialEnvelope?.save) {
     const rebuilt = await rebuildEnvelopeMenuStateFromRuntime(initialEnvelope);
     if (rebuilt.envelope?.save && rebuilt.menuState) {
-      state = rebuilt.menuState;
-      store.updateMenuState(rebuilt.menuState);
-      store.updateSaveEnvelope(rebuilt.envelope, { reason: "session_restored" });
+      const hydratedMenuState = hydrateMenuStateFromEnvelope(state, {
+        ...(rebuilt.envelope && typeof rebuilt.envelope === "object" ? rebuilt.envelope : {}),
+        menu_state: rebuilt.menuState,
+      });
+      state = hydratedMenuState;
+      store.updateMenuState(hydratedMenuState);
+      store.updateSaveEnvelope({
+        ...rebuilt.envelope,
+        menu_state: hydratedMenuState,
+      }, { reason: "session_restored" });
     }
   }
 
