@@ -45,8 +45,8 @@
       "name": "Kazus Weapon Shop NPC 285",
       "x": 3,
       "y": 3,
-      "sprite_image": "../assets/images/NPCs/fs_merchant1.png",
-      "dialogue_index": 285,
+      "sprite_image": "../assets/images/NPCs/fs_cursed.png",
+      "dialogue_index": 525,
       "movement": "fixed",
       "direction": "down"
     }

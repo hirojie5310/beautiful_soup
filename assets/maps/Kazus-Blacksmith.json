@@ -41,16 +41,6 @@
       }
     },
     {
-      "type": "npc",
-      "name": "Kazus Blacksmith NPC 285",
-      "x": 6,
-      "y": 4,
-      "sprite_image": "../assets/images/NPCs/fs_merchant1.png",
-      "dialogue_index": 285,
-      "movement": "fixed",
-      "direction": "down"
-    },
-    {
       "type": "treasure",
       "name": "Kazus Blacksmith Potion",
       "x": 2,
