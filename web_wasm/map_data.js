@@ -290,14 +290,42 @@ export function getMapManifestUrl(mapId) {
   return MAP_MANIFEST[normalizedId] || MAP_MANIFEST[DEFAULT_MAP_ID];
 }
 
+function normalizeSelectionMapKey(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/'/g, "")
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function derivePreferredMapIdsFromSelection(selection) {
+  const wantedKeys = [
+    selection?.selected_location,
+    selection?.selectedLocation,
+    selection?.selected_location_group,
+    selection?.selectedLocationGroup,
+  ]
+    .map((value) => normalizeSelectionMapKey(value))
+    .filter(Boolean);
+  if (!wantedKeys.length) return [];
+  return Object.keys(MAP_MANIFEST).filter((mapId) => {
+    const normalizedMapId = normalizeSelectionMapKey(mapId);
+    return wantedKeys.includes(normalizedMapId);
+  });
+}
+
 export async function findCompatibleMapDefinition(selection, options = {}) {
-  const preferredMapId = String(options?.preferredMapId || "");
+  const explicitPreferredMapId = String(options?.preferredMapId || "");
+  const inferredPreferredMapIds = explicitPreferredMapId
+    ? []
+    : derivePreferredMapIdsFromSelection(selection);
   const hasSelectionContext = Boolean(
     String(selection?.selected_location_group || selection?.selectedLocationGroup || "")
     || String(selection?.selected_location || selection?.selectedLocation || ""),
   );
   const candidateIds = [
-    ...(preferredMapId ? [preferredMapId] : []),
+    ...(explicitPreferredMapId ? [explicitPreferredMapId] : []),
+    ...inferredPreferredMapIds,
     ...Object.keys(MAP_MANIFEST),
   ].filter((value, index, values) => value && values.indexOf(value) === index);
 

@@ -55,9 +55,7 @@
   ],
   "location_requirement": {
     "group": "Floating Continent",
-    "locations": [
-      "Floating Continent Near Ur"
-    ]
+    "locations": []
   },
   "encounter_rate": 0.05,
   "encounter_areas": [
