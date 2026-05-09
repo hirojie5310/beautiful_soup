@@ -60,6 +60,24 @@
       "dialogue_index": 502,
       "movement": "fixed",
       "direction": "down"
+    },
+    {
+      "type": "decoration",
+      "name": "Ur Elder House 1 Balefire A",
+      "x": 11,
+      "y": 12,
+      "sprite_image": "../assets/images/objects/balefire.png",
+      "sprite_frames": 2,
+      "sprite_frame_ms": 1000
+    },
+    {
+      "type": "decoration",
+      "name": "Ur Elder House 1 Balefire B",
+      "x": 13,
+      "y": 12,
+      "sprite_image": "../assets/images/objects/balefire.png",
+      "sprite_frames": 2,
+      "sprite_frame_ms": 1000
     }
   ],
   "rows": [

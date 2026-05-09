@@ -5,6 +5,7 @@ import {
   applySwitchStateToMap,
   createDirectionalHoldRepeater,
   canNpcOccupyTile,
+  canAirshipOccupyTile,
   buildMergedFixedContentPages,
   deriveMapLaunchContext,
   canOccupyTile,
@@ -18,6 +19,7 @@ import {
   configureLoopingMapBgm,
   findShopActivation,
   isAdjacentToCrystalSprite,
+  isMapObjectAvailable,
   isAdjacentToTileCoordinate,
   isCastleSasuneMainKeep1FRecoveryTile,
   isStandingOnTileCoordinate,
@@ -28,6 +30,7 @@ import {
   findStandingObject,
   isWaterAnimationGid,
   moveMapPosition,
+  moveAirshipPosition,
   normalizeCharacterJobKey,
   normalizeMergedFixedContent,
   normalizeNpcMovement,
@@ -164,6 +167,42 @@ test("deriveInitialMapState merges save treasures with resumed menu state", () =
       treasure2: true,
     },
   });
+});
+
+test("deriveInitialMapState restores airship state on Floating Continent after obtainment", () => {
+  const result = deriveInitialMapState({
+    menuState: {
+      map_state: {
+        current_map_id: "FloatingContinent",
+        tile_x: 91,
+        tile_y: 60,
+        airship_riding: true,
+      },
+      airship_state: {
+        tile_x: 91,
+        tile_y: 60,
+        riding: true,
+      },
+    },
+    saveEnvelope: {
+      save: {
+        map: { map: "FloatingContinent", x: 91, y: 60 },
+        event_flag: {
+          cid_airship_obtained: true,
+        },
+      },
+    },
+  }, {
+    ...stubMap,
+    id: "FloatingContinent",
+    spawn: { x: 90, y: 59 },
+  }, {
+    resumeFromSavedPosition: true,
+  });
+
+  assert.equal(result.airship_riding, true);
+  assert.equal(result.airship_tile_x, 91);
+  assert.equal(result.airship_tile_y, 60);
 });
 
 test("resolveCharacterSpriteFrame maps first-row walking frames and mirrors right", () => {
@@ -577,6 +616,25 @@ test("canNpcOccupyTile ignores itself but avoids player and blocking NPCs", () =
   assert.equal(canNpcOccupyTile(mapWithNpc, walker, { tile_x: 0, tile_y: 0 }, 0, 1), false);
 });
 
+test("canAirshipOccupyTile blocks only non-corner Floating Continent mountain tiles", () => {
+  const map = {
+    ...stubMap,
+    width: 3,
+    height: 2,
+    rows: [
+      [6, 7, 8],
+      [38, 39, 40],
+    ],
+  };
+
+  assert.equal(canAirshipOccupyTile(map, 0, 0), true);
+  assert.equal(canAirshipOccupyTile(map, 2, 0), true);
+  assert.equal(canAirshipOccupyTile(map, 0, 1), true);
+  assert.equal(canAirshipOccupyTile(map, 2, 1), true);
+  assert.equal(canAirshipOccupyTile(map, 1, 0), false);
+  assert.equal(canAirshipOccupyTile(map, 1, 1), false);
+});
+
 test("moveMapPosition advances only onto passable tiles", () => {
   const start = { current_map_id: "Alter_Cave_B1", tile_x: 1, tile_y: 1, steps_since_reset: 0 };
   const moved = moveMapPosition(stubMap, start, "down");
@@ -593,6 +651,42 @@ test("moveMapPosition advances only onto passable tiles", () => {
   assert.equal(blocked.moved, false);
   assert.equal(blocked.reason, "blocked");
   assert.equal(blocked.nextState.facing_direction, "left");
+});
+
+test("moveAirshipPosition advances while updating airship coordinates", () => {
+  const map = {
+    ...stubMap,
+    id: "FloatingContinent",
+    width: 3,
+    height: 3,
+    rows: [
+      [1, 1, 1],
+      [1, 1, 1],
+      [1, 1, 1],
+    ],
+  };
+  const result = moveAirshipPosition(map, {
+    current_map_id: "FloatingContinent",
+    tile_x: 1,
+    tile_y: 1,
+    airship_tile_x: 1,
+    airship_tile_y: 1,
+    airship_riding: true,
+    facing_direction: "down",
+    steps_since_reset: 0,
+  }, "right", {
+    save: {
+      event_flag: {
+        cid_airship_obtained: true,
+      },
+    },
+  });
+
+  assert.equal(result.moved, true);
+  assert.equal(result.nextState.tile_x, 2);
+  assert.equal(result.nextState.tile_y, 1);
+  assert.equal(result.nextState.airship_tile_x, 2);
+  assert.equal(result.nextState.airship_tile_y, 1);
 });
 
 test("interpolateMapPosition returns intermediate fractional tile positions", () => {
@@ -733,6 +827,79 @@ test("findStandingEventTrigger resolves hidden standing events until completion 
     }),
     null,
   );
+});
+
+test("isMapObjectAvailable respects required event flags", () => {
+  assert.equal(isMapObjectAvailable({
+    type: "exit",
+    required_event_flag: "airship_revealed",
+  }, {
+    save: {
+      event_flag: {},
+    },
+  }), false);
+
+  assert.equal(isMapObjectAvailable({
+    type: "exit",
+    required_event_flag: "airship_revealed",
+    required_event_flag_absent: "airship_taken",
+  }, {
+    save: {
+      event_flag: {
+        airship_revealed: true,
+      },
+    },
+  }), true);
+
+  assert.equal(isMapObjectAvailable({
+    type: "exit",
+    required_event_flag: "airship_revealed",
+    required_event_flag_absent: "airship_taken",
+  }, {
+    save: {
+      event_flag: {
+        airship_revealed: true,
+        airship_taken: true,
+      },
+    },
+  }), false);
+});
+
+test("findStandingObject ignores gated exits until flags are enabled", () => {
+  const mapWithConditionalExit = {
+    ...stubMap,
+    objects: [
+      {
+        type: "exit",
+        name: "Airship of Cid",
+        x: 1,
+        y: 2,
+        required_event_flag: "airship_revealed",
+      },
+    ],
+  };
+
+  assert.equal(findStandingObject(mapWithConditionalExit, {
+    current_map_id: "FloatingContinent",
+    tile_x: 1,
+    tile_y: 2,
+  }, {
+    save: {
+      event_flag: {},
+    },
+  }), null);
+
+  assert.deepEqual(findStandingObject(mapWithConditionalExit, {
+    current_map_id: "FloatingContinent",
+    tile_x: 1,
+    tile_y: 2,
+  }, {
+    save: {
+      event_flag: {
+        airship_revealed: true,
+      },
+    },
+  }), mapWithConditionalExit.objects[0]);
 });
 
 test("findAdjacentObject returns object in front of player", () => {

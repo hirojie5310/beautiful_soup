@@ -101,6 +101,24 @@
       "direction": "down"
     },
     {
+      "type": "decoration",
+      "name": "Ur Inn ItemShop Candle A",
+      "x": 8,
+      "y": 2,
+      "sprite_image": "../assets/images/objects/candle.png",
+      "sprite_frames": 2,
+      "sprite_frame_ms": 1000
+    },
+    {
+      "type": "decoration",
+      "name": "Ur Inn ItemShop Candle B",
+      "x": 8,
+      "y": 7,
+      "sprite_image": "../assets/images/objects/candle.png",
+      "sprite_frames": 2,
+      "sprite_frame_ms": 1000
+    },
+    {
       "type": "treasure",
       "name": "Ur Inn ItemShop Potion",
       "x": 4,
