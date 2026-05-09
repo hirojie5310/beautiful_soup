@@ -44,6 +44,7 @@ import {
   resolveNpcSpriteFrame,
   reviveZeroHpPartyMembersToOneHp,
   resolveCharacterSpriteFrame,
+  resolveAirshipUpperSprite,
   resolveLeaderCharacterSprite,
   resolveLeaderCharacterSpriteUrl,
   resolveMapBgmUrl,
@@ -233,6 +234,29 @@ test("resolveCharacterSpriteFrame maps first-row walking frames and mirrors righ
   assert.deepEqual(resolveCharacterSpriteFrame("right", 1), {
     frameIndex: 3,
     facingScale: -1,
+  });
+});
+
+test("resolveAirshipUpperSprite selects directional flight frames", () => {
+  assert.deepEqual(resolveAirshipUpperSprite("up"), {
+    startFrame: 2,
+    endFrame: 3,
+    facingScale: 1,
+  });
+  assert.deepEqual(resolveAirshipUpperSprite("left"), {
+    startFrame: 4,
+    endFrame: 5,
+    facingScale: 1,
+  });
+  assert.deepEqual(resolveAirshipUpperSprite("right"), {
+    startFrame: 4,
+    endFrame: 5,
+    facingScale: -1,
+  });
+  assert.deepEqual(resolveAirshipUpperSprite("down"), {
+    startFrame: 6,
+    endFrame: 7,
+    facingScale: 1,
   });
 });
 

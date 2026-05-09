@@ -89,6 +89,7 @@ const AIRSHIP_OF_CID_MAP_ID = "Airship_of_Cid";
 const AIRSHIP_OF_CID_HELM_TILE = { x: 23, y: 11 };
 const AIRSHIP_FLOATING_CONTINENT_TILE = { x: 90, y: 59 };
 const AIRSHIP_BLOCKED_GIDS = new Set([7, 22, 23, 24, 39]);
+const AIRSHIP_SPRITE_FRAMES = 8;
 const AIRSHIP_IMAGE_URL = new URL("../../assets/images/objects/airship.png", import.meta.url).href;
 const KAZUS_MAP_ID = "Kazus";
 const KAZUS_NPC_516_KEY = "kazus_npc_516_scripted";
@@ -1154,7 +1155,7 @@ function renderLayout() {
         image-rendering: pixelated;
         background-image: url("${AIRSHIP_IMAGE_URL}");
         background-repeat: no-repeat;
-        background-size: calc(var(--map-tile-size) * 4) var(--map-tile-size);
+        background-size: calc(var(--map-tile-size) * ${AIRSHIP_SPRITE_FRAMES}) var(--map-tile-size);
         filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.45));
         z-index: 2;
       }
@@ -1171,8 +1172,10 @@ function renderLayout() {
         background-position: calc(var(--map-tile-size) * -1) 0;
       }
       [data-screen="map"] .map-airship-upper {
-        background-position: calc(var(--map-tile-size) * -2) 0;
+        background-position: calc(var(--map-tile-size) * var(--airship-upper-start-frame, -2)) 0;
         animation: map-airship-upper 1000ms steps(2) infinite;
+        transform: scaleX(var(--airship-facing-scale, 1));
+        transform-origin: center;
       }
       [data-screen="map"] .map-decoration-crystal {
         width: var(--map-tile-size);
@@ -1261,8 +1264,8 @@ function renderLayout() {
         to { background-position: calc(var(--map-tile-size) * var(--object-frame-count, 1) * -1) 0; }
       }
       @keyframes map-airship-upper {
-        from { background-position: calc(var(--map-tile-size) * -2) 0; }
-        to { background-position: calc(var(--map-tile-size) * -4) 0; }
+        from { background-position: calc(var(--map-tile-size) * var(--airship-upper-start-frame, -2)) 0; }
+        to { background-position: calc(var(--map-tile-size) * var(--airship-upper-end-frame, -3)) 0; }
       }
       @keyframes map-water-highlight {
         from { transform: translateX(0); }
@@ -2210,6 +2213,21 @@ function updateMapPlayerSprite(mapPlayer, direction, walkFrame) {
   mapPlayer.style.setProperty("--player-facing-scale", String(facingScale));
 }
 
+export function resolveAirshipUpperSprite(direction) {
+  const normalizedDirection = normalizeMapFacingDirection(direction, "left");
+  switch (normalizedDirection) {
+    case "up":
+      return { startFrame: 2, endFrame: 3, facingScale: 1 };
+    case "down":
+      return { startFrame: 6, endFrame: 7, facingScale: 1 };
+    case "right":
+      return { startFrame: 4, endFrame: 5, facingScale: -1 };
+    case "left":
+    default:
+      return { startFrame: 4, endFrame: 5, facingScale: 1 };
+  }
+}
+
 function updateNpcSpriteFrame(node, direction, walkFrame) {
   if (!node) return;
   const frameIndex = resolveNpcSpriteFrame(direction, walkFrame);
@@ -2266,6 +2284,7 @@ function updateFloatingContinentAirship(mapLayer, mapDefinition, mapState, saveE
     const viewY = asNumber(visualPosition?.y, mapState?.airship_tile_y);
     const left = (viewX + Number(renderPadding.left || 0)) * DISPLAY_TILE_SIZE;
     const top = (viewY + Number(renderPadding.top || 0)) * DISPLAY_TILE_SIZE;
+    const upperSprite = resolveAirshipUpperSprite(mapState?.facing_direction);
     existingNodes.forEach((node) => {
       if (!node.classList.contains("map-airship-lower") && !node.classList.contains("map-airship-upper")) {
         node.remove();
@@ -2277,6 +2296,9 @@ function updateFloatingContinentAirship(mapLayer, mapDefinition, mapState, saveE
     lower.style.top = `${top}px`;
     upper.style.left = `${left}px`;
     upper.style.top = `${top - DISPLAY_TILE_SIZE}px`;
+    upper.style.setProperty("--airship-upper-start-frame", String(-upperSprite.startFrame));
+    upper.style.setProperty("--airship-upper-end-frame", String(-(upperSprite.endFrame + 1)));
+    upper.style.setProperty("--airship-facing-scale", String(upperSprite.facingScale));
     return;
   }
   existingNodes.forEach((node) => {
