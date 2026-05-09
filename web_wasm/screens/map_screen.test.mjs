@@ -45,6 +45,8 @@ import {
   reviveZeroHpPartyMembersToOneHp,
   resolveCharacterSpriteFrame,
   resolveAirshipUpperSprite,
+  resolveFloatingContinentLocationFromPosition,
+  resolveFloatingContinentSpawn,
   resolveLeaderCharacterSprite,
   resolveLeaderCharacterSpriteUrl,
   resolveMapBgmUrl,
@@ -80,6 +82,27 @@ const stubMap = {
   ],
   collisionGids: new Set([19]),
 };
+
+function makeFloatingContinentMap() {
+  const width = 131;
+  const height = 132;
+  const rows = Array.from({ length: height }, () => Array.from({ length: width }, () => 1));
+  rows[74][70] = 31;
+  return {
+    ...stubMap,
+    id: "FloatingContinent",
+    name: "Floating Continent",
+    width,
+    height,
+    spawn: { x: 95, y: 39 },
+    locationRequirement: {
+      group: "Floating Continent",
+      locations: [],
+    },
+    rows,
+    collisionGids: new Set([31]),
+  };
+}
 
 test("deriveInitialMapState always starts from map spawn", () => {
   const result = deriveInitialMapState({
@@ -204,6 +227,108 @@ test("deriveInitialMapState restores airship state on Floating Continent after o
   assert.equal(result.airship_riding, true);
   assert.equal(result.airship_tile_x, 91);
   assert.equal(result.airship_tile_y, 60);
+});
+
+test("resolveFloatingContinentSpawn returns per-location spawn coordinates", () => {
+  assert.deepEqual(resolveFloatingContinentSpawn("Floating Continent Near Castle Argus"), {
+    x: 53,
+    y: 54,
+  });
+  assert.deepEqual(resolveFloatingContinentSpawn("Floating Continent Near Lake Dohr"), {
+    x: 25,
+    y: 51,
+  });
+  assert.deepEqual(resolveFloatingContinentSpawn("unknown", { x: 1, y: 2 }), {
+    x: 1,
+    y: 2,
+  });
+});
+
+test("deriveInitialMapState uses selected Floating Continent location spawn", () => {
+  const result = deriveInitialMapState({
+    selectedLocationGroup: "Floating Continent",
+    selectedLocation: "Floating Continent Near Lake Dohr",
+    menuState: {},
+    saveEnvelope: {
+      save: {
+        event_flag: {},
+      },
+    },
+  }, makeFloatingContinentMap());
+
+  assert.equal(result.tile_x, 25);
+  assert.equal(result.tile_y, 51);
+});
+
+test("deriveInitialMapState places Floating Continent airship left of spawn after obtainment", () => {
+  const result = deriveInitialMapState({
+    selectedLocationGroup: "Floating Continent",
+    selectedLocation: "Floating Continent Near Castle Argus",
+    menuState: {},
+    saveEnvelope: {
+      save: {
+        event_flag: {
+          cid_airship_obtained: true,
+        },
+      },
+    },
+  }, makeFloatingContinentMap());
+
+  assert.equal(result.tile_x, 53);
+  assert.equal(result.tile_y, 54);
+  assert.equal(result.airship_riding, false);
+  assert.equal(result.airship_tile_x, 52);
+  assert.equal(result.airship_tile_y, 54);
+});
+
+test("deriveInitialMapState starts on the airship for Floating Continent seas", () => {
+  const result = deriveInitialMapState({
+    selectedLocationGroup: "Floating Continent",
+    selectedLocation: "Floating Continent Seas",
+    menuState: {},
+    saveEnvelope: {
+      save: {
+        event_flag: {
+          cid_airship_obtained: true,
+        },
+      },
+    },
+  }, makeFloatingContinentMap());
+
+  assert.equal(result.tile_x, 70);
+  assert.equal(result.tile_y, 74);
+  assert.equal(result.airship_riding, true);
+  assert.equal(result.airship_tile_x, 70);
+  assert.equal(result.airship_tile_y, 74);
+});
+
+test("resolveFloatingContinentLocationFromPosition maps coordinates to area-specific encounters", () => {
+  const floatingMap = makeFloatingContinentMap();
+
+  assert.equal(
+    resolveFloatingContinentLocationFromPosition(floatingMap, { tile_x: 95, tile_y: 39 }),
+    "Floating Continent Near Ur",
+  );
+  assert.equal(
+    resolveFloatingContinentLocationFromPosition(floatingMap, { tile_x: 53, tile_y: 54 }),
+    "Floating Continent Near Castle Argus",
+  );
+  assert.equal(
+    resolveFloatingContinentLocationFromPosition(floatingMap, { tile_x: 38, tile_y: 44 }),
+    "Floating Continent North of Gulgan Gulch",
+  );
+  assert.equal(
+    resolveFloatingContinentLocationFromPosition(floatingMap, { tile_x: 25, tile_y: 51 }),
+    "Floating Continent Near Lake Dohr",
+  );
+  assert.equal(
+    resolveFloatingContinentLocationFromPosition(floatingMap, { tile_x: 70, tile_y: 74 }),
+    "Floating Continent Seas",
+  );
+  assert.equal(
+    resolveFloatingContinentLocationFromPosition(floatingMap, { tile_x: 57, tile_y: 84 }),
+    "Floating Continent Near desert",
+  );
 });
 
 test("resolveCharacterSpriteFrame maps first-row walking frames and mirrors right", () => {

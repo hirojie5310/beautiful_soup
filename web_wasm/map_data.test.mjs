@@ -725,3 +725,60 @@ test("findCompatibleMapDefinition prefers maps with explicit location requiremen
     globalThis.fetch = originalFetch;
   }
 });
+
+test("findCompatibleMapDefinition prefers a map whose id matches the selected Ur location", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const href = String(url);
+    if (href.includes("Ur-ElderHouse_1")) {
+      return {
+        ok: true,
+        async json() {
+          return {
+            id: "Ur_ElderHouse_1",
+            width: 1,
+            height: 1,
+            rows: ["1"],
+            location_requirement: { group: "Ur", locations: ["Ur"] },
+          };
+        },
+      };
+    }
+    if (href.includes("Ur.json")) {
+      return {
+        ok: true,
+        async json() {
+          return {
+            id: "Ur",
+            width: 1,
+            height: 1,
+            rows: ["1"],
+            location_requirement: { group: "Ur", locations: ["Ur"] },
+          };
+        },
+      };
+    }
+    return {
+      ok: true,
+      async json() {
+        return {
+          id: "Other",
+          width: 1,
+          height: 1,
+          rows: ["1"],
+          location_requirement: { group: "Other", locations: ["Other"] },
+        };
+      },
+    };
+  };
+
+  try {
+    const result = await findCompatibleMapDefinition({
+      selected_location_group: "Ur",
+      selected_location: "Ur",
+    });
+    assert.equal(result?.id, "Ur");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

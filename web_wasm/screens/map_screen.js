@@ -91,6 +91,19 @@ const AIRSHIP_FLOATING_CONTINENT_TILE = { x: 90, y: 59 };
 const AIRSHIP_BLOCKED_GIDS = new Set([7, 22, 23, 24, 39]);
 const AIRSHIP_SPRITE_FRAMES = 8;
 const AIRSHIP_IMAGE_URL = new URL("../../assets/images/objects/airship.png", import.meta.url).href;
+const FLOATING_CONTINENT_LOCATION_GROUP = "Floating Continent";
+const FLOATING_CONTINENT_DEFAULT_LOCATION = "Floating Continent Near Ur";
+const FLOATING_CONTINENT_SEA_LOCATION = "Floating Continent Seas";
+const FLOATING_CONTINENT_DESERT_LOCATION = "Floating Continent Near desert";
+const FLOATING_CONTINENT_SEA_GIDS = new Set([15, 30, 31, 32, 47]);
+const FLOATING_CONTINENT_LOCATION_SPAWNS = {
+  "Floating Continent Near Ur": { x: 95, y: 39 },
+  "Floating Continent Near Castle Argus": { x: 53, y: 54 },
+  "Floating Continent North of Gulgan Gulch": { x: 38, y: 44 },
+  "Floating Continent Near Lake Dohr": { x: 25, y: 51 },
+  "Floating Continent Seas": { x: 70, y: 74 },
+  "Floating Continent Near desert": { x: 57, y: 84 },
+};
 const KAZUS_MAP_ID = "Kazus";
 const KAZUS_NPC_516_KEY = "kazus_npc_516_scripted";
 const CASTLE_SASUNE_MAINKEEP_1F_MAP_ID = "Castle_Sasune_MainKeep_1F";
@@ -182,6 +195,149 @@ const waterFlowTileCache = new Map();
 
 export function isFloatingContinentMap(mapDefinition) {
   return String(mapDefinition?.id || "") === FLOATING_CONTINENT_MAP_ID;
+}
+
+function isFloatingContinentKnownLocation(locationName) {
+  return Object.prototype.hasOwnProperty.call(
+    FLOATING_CONTINENT_LOCATION_SPAWNS,
+    String(locationName || ""),
+  );
+}
+
+export function resolveFloatingContinentSpawn(locationName, fallbackSpawn = null) {
+  const normalizedLocation = String(locationName || "");
+  const spawn = FLOATING_CONTINENT_LOCATION_SPAWNS[normalizedLocation];
+  if (spawn) {
+    return { x: Number(spawn.x), y: Number(spawn.y) };
+  }
+  return {
+    x: Number(
+      fallbackSpawn?.x
+      ?? FLOATING_CONTINENT_LOCATION_SPAWNS[FLOATING_CONTINENT_DEFAULT_LOCATION].x,
+    ),
+    y: Number(
+      fallbackSpawn?.y
+      ?? FLOATING_CONTINENT_LOCATION_SPAWNS[FLOATING_CONTINENT_DEFAULT_LOCATION].y,
+    ),
+  };
+}
+
+function isWithinFloatingContinentRect(position, bounds) {
+  const x = Number(position?.tile_x ?? position?.x);
+  const y = Number(position?.tile_y ?? position?.y);
+  return (
+    Number.isFinite(x)
+    && Number.isFinite(y)
+    && x >= bounds.xMin
+    && x <= bounds.xMax
+    && y >= bounds.yMin
+    && y <= bounds.yMax
+  );
+}
+
+export function resolveFloatingContinentLocationFromPosition(
+  mapDefinition,
+  position,
+  saveEnvelope = null,
+) {
+  if (!isFloatingContinentMap(mapDefinition)) return "";
+  const x = Number(position?.tile_x ?? position?.x);
+  const y = Number(position?.tile_y ?? position?.y);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return "";
+  const gid = Number(mapDefinition?.rows?.[y]?.[x] ?? NaN);
+  if (FLOATING_CONTINENT_SEA_GIDS.has(gid)) {
+    return FLOATING_CONTINENT_SEA_LOCATION;
+  }
+  if (isWithinFloatingContinentRect(position, { xMin: 69, xMax: 104, yMin: 28, yMax: 99 })) {
+    return FLOATING_CONTINENT_DEFAULT_LOCATION;
+  }
+  if (isWithinFloatingContinentRect(position, { xMin: 45, xMax: 66, yMin: 29, yMax: 61 })) {
+    return "Floating Continent Near Castle Argus";
+  }
+  if (isWithinFloatingContinentRect(position, { xMin: 32, xMax: 44, yMin: 19, yMax: 44 })) {
+    return "Floating Continent North of Gulgan Gulch";
+  }
+  if (isWithinFloatingContinentRect(position, { xMin: 23, xMax: 41, yMin: 45, yMax: 63 })) {
+    return "Floating Continent Near Lake Dohr";
+  }
+  if (canOccupyTile(mapDefinition, x, y, saveEnvelope)) {
+    return FLOATING_CONTINENT_DESERT_LOCATION;
+  }
+  return "";
+}
+
+function resolveFloatingContinentSelection(
+  mapDefinition,
+  fallbackSelection = {},
+  position = null,
+  saveEnvelope = null,
+) {
+  if (!isFloatingContinentMap(mapDefinition)) {
+    return {
+      selected_location_group: String(
+        fallbackSelection?.selected_location_group
+        || fallbackSelection?.selectedLocationGroup
+        || "",
+      ),
+      selected_location: String(
+        fallbackSelection?.selected_location
+        || fallbackSelection?.selectedLocation
+        || "",
+      ),
+    };
+  }
+  const resolvedLocation = resolveFloatingContinentLocationFromPosition(
+    mapDefinition,
+    position,
+    saveEnvelope,
+  );
+  if (resolvedLocation) {
+    return {
+      selected_location_group: FLOATING_CONTINENT_LOCATION_GROUP,
+      selected_location: resolvedLocation,
+    };
+  }
+  const fallbackLocation = String(
+    fallbackSelection?.selected_location
+    || fallbackSelection?.selectedLocation
+    || "",
+  );
+  return {
+    selected_location_group: FLOATING_CONTINENT_LOCATION_GROUP,
+    selected_location: isFloatingContinentKnownLocation(fallbackLocation)
+      ? fallbackLocation
+      : FLOATING_CONTINENT_DEFAULT_LOCATION,
+  };
+}
+
+function resolveFloatingContinentFreshAirshipState(selectedLocation, saveEnvelope = null) {
+  if (!isSavedEventFlagEnabled(saveEnvelope, AIRSHIP_OBTAINED_EVENT_FLAG)) {
+    return {};
+  }
+  const spawn = resolveFloatingContinentSpawn(selectedLocation, AIRSHIP_FLOATING_CONTINENT_TILE);
+  const isSeaSpawn = String(selectedLocation || "") === FLOATING_CONTINENT_SEA_LOCATION;
+  return {
+    airship_riding: isSeaSpawn,
+    airship_tile_x: isSeaSpawn ? spawn.x : spawn.x - 1,
+    airship_tile_y: spawn.y,
+  };
+}
+
+function resolveEncounterSelectionForMapState(
+  mapDefinition,
+  fallbackSelection = {},
+  mapState = null,
+  saveEnvelope = null,
+) {
+  if (isFloatingContinentMap(mapDefinition)) {
+    return resolveFloatingContinentSelection(
+      mapDefinition,
+      fallbackSelection,
+      mapState,
+      saveEnvelope,
+    );
+  }
+  return buildEncounterSelection(mapDefinition, fallbackSelection);
 }
 
 export function resolveMapBgmUrl(mapDefinition, fallbackSelection = {}) {
@@ -742,11 +898,26 @@ export function deriveInitialMapState(appState, mapDefinition, options = {}) {
       ...airshipState,
     };
   }
-  const airshipState = resolveAirshipState(mapDefinition, {}, menuState, saveEnvelope);
+  const floatingSelection = resolveFloatingContinentSelection(mapDefinition, {
+    selected_location_group: appState?.selectedLocationGroup,
+    selected_location: appState?.selectedLocation,
+  });
+  const initialSpawn = isFloatingContinentMap(mapDefinition)
+    ? resolveFloatingContinentSpawn(floatingSelection.selected_location, mapDefinition?.spawn)
+    : {
+      x: asNumber(mapDefinition?.spawn?.x, 0),
+      y: asNumber(mapDefinition?.spawn?.y, 0),
+    };
+  const airshipState = isFloatingContinentMap(mapDefinition)
+    ? resolveFloatingContinentFreshAirshipState(
+      floatingSelection.selected_location,
+      saveEnvelope,
+    )
+    : resolveAirshipState(mapDefinition, {}, menuState, saveEnvelope);
   return {
     current_map_id: String(mapDefinition?.id || wantedMapId || DEFAULT_MAP_ID),
-    tile_x: asNumber(mapDefinition?.spawn?.x, 0),
-    tile_y: asNumber(mapDefinition?.spawn?.y, 0),
+    tile_x: asNumber(initialSpawn.x, 0),
+    tile_y: asNumber(initialSpawn.y, 0),
     steps_since_reset: 0,
     switch_states: {},
     opened_treasures: savedOpenedTreasures,
@@ -2392,16 +2563,30 @@ export function resolveInitialMapSelection(appState, mapDefinition, options = {}
   const shouldPreferMapSelection = Boolean(
     options?.returningFromBattle || options?.resumeFromSavedPosition,
   );
-  if (shouldPreferMapSelection) {
-    return buildEncounterSelection(mapDefinition, {
-      selected_location_group: appState?.selectedLocationGroup,
-      selected_location: appState?.selectedLocation,
-    });
-  }
-  return {
+  const fallbackSelection = {
     selected_location_group: appState?.selectedLocationGroup,
     selected_location: appState?.selectedLocation,
   };
+  if (isFloatingContinentMap(mapDefinition)) {
+    const mapState = (
+      appState?.menuState?.map_state && typeof appState.menuState.map_state === "object"
+        ? appState.menuState.map_state
+        : appState?.saveEnvelope?.save?.map
+    );
+    return resolveFloatingContinentSelection(
+      mapDefinition,
+      fallbackSelection,
+      shouldPreferMapSelection ? mapState : null,
+      appState?.saveEnvelope,
+    );
+  }
+  if (shouldPreferMapSelection) {
+    return buildEncounterSelection(mapDefinition, {
+      selected_location_group: fallbackSelection.selected_location_group,
+      selected_location: fallbackSelection.selected_location,
+    });
+  }
+  return fallbackSelection;
 }
 
 export async function mountScreen({ mountNode, store, navigate }) {
@@ -3231,15 +3416,14 @@ export async function mountScreen({ mountNode, store, navigate }) {
       const currentEnvelope = store.getState().saveEnvelope;
       const savedOpenedTreasures = readSavedTreasureStates(currentEnvelope, nextMapDefinition.id);
       const storeState = store.getState();
-      const nextSelection = buildEncounterSelection(nextMapDefinition, {
+      const resolvedSpawn = resolveTransitionSpawn(nextMapDefinition, targetSpawn);
+      const nextSelection = resolveEncounterSelectionForMapState(nextMapDefinition, {
         selected_location_group: storeState.selectedLocationGroup,
         selected_location: storeState.selectedLocation,
-      });
-      store.patch({
-        selectedLocationGroup: nextSelection.selected_location_group,
-        selectedLocation: nextSelection.selected_location,
-      });
-      const resolvedSpawn = resolveTransitionSpawn(nextMapDefinition, targetSpawn);
+      }, {
+        tile_x: resolvedSpawn.x,
+        tile_y: resolvedSpawn.y,
+      }, currentEnvelope);
       mapDefinition = nextMapDefinition;
       mapState = applyResolvedAirshipState(nextMapDefinition, {
         current_map_id: nextMapDefinition.id,
@@ -3250,6 +3434,10 @@ export async function mountScreen({ mountNode, store, navigate }) {
         switch_states: {},
         opened_treasures: savedOpenedTreasures,
       }, storeState.menuState, currentEnvelope);
+      store.patch({
+        selectedLocationGroup: nextSelection.selected_location_group,
+        selectedLocation: nextSelection.selected_location,
+      });
       if (!canOccupyTile(mapDefinition, mapState.tile_x, mapState.tile_y, currentEnvelope)) {
         mapState = applyResolvedAirshipState(nextMapDefinition, {
           current_map_id: nextMapDefinition.id,
@@ -3281,10 +3469,10 @@ export async function mountScreen({ mountNode, store, navigate }) {
     if (!mapDefinition || encounterLocked) return;
     encounterLocked = true;
     const storeState = store.getState();
-    const encounterSelection = buildEncounterSelection(mapDefinition, {
+    const encounterSelection = resolveEncounterSelectionForMapState(mapDefinition, {
       selected_location_group: storeState.selectedLocationGroup,
       selected_location: storeState.selectedLocation,
-    });
+    }, mapState, storeState.saveEnvelope);
     const forcedEnemyNames = Array.isArray(options?.enemyNames)
       ? options.enemyNames.map((name) => String(name || "")).filter((name) => Boolean(name))
       : [];
@@ -3347,6 +3535,28 @@ export async function mountScreen({ mountNode, store, navigate }) {
       return;
     }
     playerWalkFrame = playerWalkFrame === 0 ? 1 : 0;
+    const movementSelection = resolveEncounterSelectionForMapState(
+      mapDefinition,
+      {
+        selected_location_group: store.getState().selectedLocationGroup,
+        selected_location: store.getState().selectedLocation,
+      },
+      mapState,
+      currentEnvelope,
+    );
+    if (
+      movementSelection.selected_location_group
+      && movementSelection.selected_location
+      && (
+        movementSelection.selected_location_group !== store.getState().selectedLocationGroup
+        || movementSelection.selected_location !== store.getState().selectedLocation
+      )
+    ) {
+      store.patch({
+        selectedLocationGroup: movementSelection.selected_location_group,
+        selectedLocation: movementSelection.selected_location,
+      });
+    }
     persistCurrentMapState(mapState);
     animateVisualMapPosition(previousMapState, mapState);
     if (isAirshipRiding(mapDefinition, mapState, currentEnvelope)) {
@@ -3557,6 +3767,25 @@ export async function mountScreen({ mountNode, store, navigate }) {
     mapState = deriveInitialMapState(appState, mapDefinition, {
       resumeFromSavedPosition,
     });
+    const initialEncounterSelection = resolveEncounterSelectionForMapState(
+      mapDefinition,
+      currentSelection,
+      mapState,
+      store.getState().saveEnvelope,
+    );
+    if (
+      initialEncounterSelection.selected_location_group
+      && initialEncounterSelection.selected_location
+      && (
+        initialEncounterSelection.selected_location_group !== store.getState().selectedLocationGroup
+        || initialEncounterSelection.selected_location !== store.getState().selectedLocation
+      )
+    ) {
+      store.patch({
+        selectedLocationGroup: initialEncounterSelection.selected_location_group,
+        selectedLocation: initialEncounterSelection.selected_location,
+      });
+    }
     playerDirection = normalizeMapFacingDirection(mapState?.facing_direction, "down");
     mapDefinition = applySwitchStateToMap(
       { ...mapDefinition, openedTreasures: mapState.opened_treasures },
