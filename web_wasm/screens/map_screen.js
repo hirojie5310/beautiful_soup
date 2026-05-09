@@ -84,6 +84,12 @@ const KAZUS_INN_ITEMSHOP_2F_RECOVERY_TILES = [
   { x: 4, y: 4 },
   { x: 6, y: 4 },
 ];
+const AIRSHIP_OBTAINED_EVENT_FLAG = "cid_airship_obtained";
+const AIRSHIP_OF_CID_MAP_ID = "Airship_of_Cid";
+const AIRSHIP_OF_CID_HELM_TILE = { x: 23, y: 11 };
+const AIRSHIP_FLOATING_CONTINENT_TILE = { x: 90, y: 59 };
+const AIRSHIP_BLOCKED_GIDS = new Set([7, 22, 23, 24, 39]);
+const AIRSHIP_IMAGE_URL = new URL("../../assets/images/objects/airship.png", import.meta.url).href;
 const KAZUS_MAP_ID = "Kazus";
 const KAZUS_NPC_516_KEY = "kazus_npc_516_scripted";
 const CASTLE_SASUNE_MAINKEEP_1F_MAP_ID = "Castle_Sasune_MainKeep_1F";
@@ -405,6 +411,11 @@ function asNumber(value, fallback = 0) {
   return Number.isFinite(num) ? num : fallback;
 }
 
+function optionalNumber(value, fallback = null) {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : fallback;
+}
+
 export function npcDialogueIndices(row) {
   const rawIndices = Array.isArray(row?.dialogue_indices)
     ? row.dialogue_indices
@@ -489,6 +500,27 @@ function writeSavedEventFlag(saveEnvelope, flagKey, enabled = true) {
     [String(flagKey)]: Boolean(enabled),
   };
   return targetEnvelope;
+}
+
+function isMapObjectEventFlagSatisfied(row, saveEnvelope) {
+  const requiredFlag = String(row?.required_event_flag || "");
+  const requiredAbsentFlag = String(row?.required_event_flag_absent || "");
+  if (requiredFlag && !isSavedEventFlagEnabled(saveEnvelope, requiredFlag)) return false;
+  if (requiredAbsentFlag && isSavedEventFlagEnabled(saveEnvelope, requiredAbsentFlag)) return false;
+  return true;
+}
+
+export function isMapObjectAvailable(row, saveEnvelope = null) {
+  if (!row || typeof row !== "object") return false;
+  return isMapObjectEventFlagSatisfied(row, saveEnvelope);
+}
+
+function isMapObjectRenderable(row, saveEnvelope = null) {
+  return isMapObjectAvailable(row, saveEnvelope) && row?.hidden !== true;
+}
+
+function renderableMapObjects(mapDefinition, saveEnvelope = null) {
+  return (mapDefinition?.objects || []).filter((row) => isMapObjectRenderable(row, saveEnvelope));
 }
 
 function readSavedTreasureStates(saveEnvelope, mapId) {
@@ -633,6 +665,48 @@ function normalizeMapSaveShape(mapState, mapDefinition) {
   };
 }
 
+function isFloatingContinentAirshipEnabled(mapDefinition, saveEnvelope) {
+  return (
+    String(mapDefinition?.id || "") === FLOATING_CONTINENT_MAP_ID
+    && isSavedEventFlagEnabled(saveEnvelope, AIRSHIP_OBTAINED_EVENT_FLAG)
+  );
+}
+
+function resolveAirshipState(mapDefinition, mapState = {}, menuState = {}, saveEnvelope = null) {
+  const available = isFloatingContinentAirshipEnabled(mapDefinition, saveEnvelope);
+  if (!available) {
+    return {};
+  }
+  const storedAirshipState = menuState?.airship_state && typeof menuState.airship_state === "object"
+    ? menuState.airship_state
+    : {};
+  const defaultX = AIRSHIP_FLOATING_CONTINENT_TILE.x;
+  const defaultY = AIRSHIP_FLOATING_CONTINENT_TILE.y;
+  const airshipTileX = optionalNumber(
+    mapState?.airship_tile_x,
+    optionalNumber(storedAirshipState.tile_x, defaultX),
+  );
+  const airshipTileY = optionalNumber(
+    mapState?.airship_tile_y,
+    optionalNumber(storedAirshipState.tile_y, defaultY),
+  );
+  const riding = available && Boolean(
+    mapState?.airship_riding ?? storedAirshipState.riding ?? false
+  );
+  return {
+    airship_riding: riding,
+    airship_tile_x: airshipTileX,
+    airship_tile_y: airshipTileY,
+  };
+}
+
+function applyResolvedAirshipState(mapDefinition, mapState = {}, menuState = {}, saveEnvelope = null) {
+  return {
+    ...mapState,
+    ...resolveAirshipState(mapDefinition, mapState, menuState, saveEnvelope),
+  };
+}
+
 export function deriveInitialMapState(appState, mapDefinition, options = {}) {
   const menuState = appState?.menuState && typeof appState.menuState === "object"
     ? appState.menuState
@@ -655,6 +729,7 @@ export function deriveInitialMapState(appState, mapDefinition, options = {}) {
   const savedOpenedTreasures = readSavedTreasureStates(saveEnvelope, wantedMapId);
   const shouldResumeFromSavedPosition = Boolean(options?.resumeFromSavedPosition);
   if (shouldResumeFromSavedPosition) {
+    const airshipState = resolveAirshipState(mapDefinition, menuMapState, menuState, saveEnvelope);
     return {
       current_map_id: wantedMapId,
       tile_x: asNumber(menuMapState.tile_x, asNumber(envelopeMap.x, asNumber(mapDefinition?.spawn?.x, 0))),
@@ -663,8 +738,10 @@ export function deriveInitialMapState(appState, mapDefinition, options = {}) {
       steps_since_reset: asNumber(menuMapState.steps_since_reset, 0),
       switch_states: normalizeSwitchStates(menuMapState.switch_states),
       opened_treasures: mergeTreasureStates(savedOpenedTreasures, menuMapState.opened_treasures),
+      ...airshipState,
     };
   }
+  const airshipState = resolveAirshipState(mapDefinition, {}, menuState, saveEnvelope);
   return {
     current_map_id: String(mapDefinition?.id || wantedMapId || DEFAULT_MAP_ID),
     tile_x: asNumber(mapDefinition?.spawn?.x, 0),
@@ -672,15 +749,16 @@ export function deriveInitialMapState(appState, mapDefinition, options = {}) {
     steps_since_reset: 0,
     switch_states: {},
     opened_treasures: savedOpenedTreasures,
+    ...airshipState,
   };
 }
 
-export function canOccupyTile(mapDefinition, x, y) {
+export function canOccupyTile(mapDefinition, x, y, saveEnvelope = null) {
   if (!mapDefinition) return false;
   if (x < 0 || y < 0 || x >= mapDefinition.width || y >= mapDefinition.height) {
     return false;
   }
-  if (findBlockingObjectAt(mapDefinition, x, y)) {
+  if (findBlockingObjectAt(mapDefinition, x, y, saveEnvelope)) {
     return false;
   }
   const gid = Number(mapDefinition.rows?.[y]?.[x] ?? 0);
@@ -717,9 +795,10 @@ export function resolveTransitionSpawn(mapDefinition, targetSpawn = null) {
   return { x: fallbackX, y: fallbackY };
 }
 
-export function findBlockingObjectAt(mapDefinition, x, y) {
+export function findBlockingObjectAt(mapDefinition, x, y, saveEnvelope = null) {
   return (mapDefinition?.objects || []).find((row) => (
-    row?.type === "npc"
+    isMapObjectAvailable(row, saveEnvelope)
+    && row?.type === "npc"
     && row?.blocking !== false
     && Number(row?.x) === Number(x)
     && Number(row?.y) === Number(y)
@@ -735,7 +814,7 @@ function directionDelta(direction) {
   }[direction] || null;
 }
 
-export function canNpcOccupyTile(mapDefinition, npcRow, mapState, x, y) {
+export function canNpcOccupyTile(mapDefinition, npcRow, mapState, x, y, saveEnvelope = null) {
   if (!mapDefinition) return false;
   if (x < 0 || y < 0 || x >= mapDefinition.width || y >= mapDefinition.height) {
     return false;
@@ -748,6 +827,7 @@ export function canNpcOccupyTile(mapDefinition, npcRow, mapState, x, y) {
   }
   const occupiedObject = (mapDefinition?.objects || []).find((row) => (
     row !== npcRow
+    && isMapObjectAvailable(row, saveEnvelope)
     && row?.blocking !== false
     && Number(row?.x) === Number(x)
     && Number(row?.y) === Number(y)
@@ -759,7 +839,16 @@ export function canNpcOccupyTile(mapDefinition, npcRow, mapState, x, y) {
   return !mapDefinition.collisionGids.has(gid);
 }
 
-export function moveMapPosition(mapDefinition, mapState, direction) {
+export function canAirshipOccupyTile(mapDefinition, x, y) {
+  if (!mapDefinition) return false;
+  if (x < 0 || y < 0 || x >= mapDefinition.width || y >= mapDefinition.height) {
+    return false;
+  }
+  const gid = Number(mapDefinition.rows?.[y]?.[x] ?? 0);
+  return !AIRSHIP_BLOCKED_GIDS.has(gid);
+}
+
+export function moveMapPosition(mapDefinition, mapState, direction, saveEnvelope = null) {
   const facingDirection = normalizeMapFacingDirection(direction, mapState?.facing_direction || "down");
   const delta = directionDelta(facingDirection);
   if (!delta) {
@@ -774,7 +863,7 @@ export function moveMapPosition(mapDefinition, mapState, direction) {
   }
   const nextX = asNumber(mapState?.tile_x, 0) + delta.x;
   const nextY = asNumber(mapState?.tile_y, 0) + delta.y;
-  if (!canOccupyTile(mapDefinition, nextX, nextY)) {
+  if (!canOccupyTile(mapDefinition, nextX, nextY, saveEnvelope)) {
     return {
       moved: false,
       nextState: {
@@ -790,6 +879,79 @@ export function moveMapPosition(mapDefinition, mapState, direction) {
       ...mapState,
       tile_x: nextX,
       tile_y: nextY,
+      facing_direction: facingDirection,
+      steps_since_reset: asNumber(mapState?.steps_since_reset, 0) + 1,
+    },
+    reason: "moved",
+  };
+}
+
+function isAirshipRiding(mapDefinition, mapState, saveEnvelope = null) {
+  return Boolean(
+    isFloatingContinentAirshipEnabled(mapDefinition, saveEnvelope)
+    && mapState?.airship_riding === true
+  );
+}
+
+function isStandingOnAirship(mapDefinition, mapState, saveEnvelope = null) {
+  return Boolean(
+    isFloatingContinentAirshipEnabled(mapDefinition, saveEnvelope)
+    && mapState?.airship_riding !== true
+    && Number(mapState?.tile_x) === Number(mapState?.airship_tile_x)
+    && Number(mapState?.tile_y) === Number(mapState?.airship_tile_y)
+  );
+}
+
+function canOccupyCurrentTravelMode(mapDefinition, mapState, saveEnvelope = null) {
+  if (isAirshipRiding(mapDefinition, mapState, saveEnvelope)) {
+    return canAirshipOccupyTile(mapDefinition, mapState?.tile_x, mapState?.tile_y);
+  }
+  return canOccupyTile(mapDefinition, mapState?.tile_x, mapState?.tile_y, saveEnvelope);
+}
+
+export function moveAirshipPosition(mapDefinition, mapState, direction, saveEnvelope = null) {
+  const facingDirection = normalizeMapFacingDirection(direction, mapState?.facing_direction || "down");
+  const delta = directionDelta(facingDirection);
+  if (!delta) {
+    return {
+      moved: false,
+      nextState: {
+        ...mapState,
+        facing_direction: facingDirection,
+      },
+      reason: "invalid",
+    };
+  }
+  if (!isAirshipRiding(mapDefinition, mapState, saveEnvelope)) {
+    return {
+      moved: false,
+      nextState: {
+        ...mapState,
+        facing_direction: facingDirection,
+      },
+      reason: "inactive",
+    };
+  }
+  const nextX = asNumber(mapState?.tile_x, 0) + delta.x;
+  const nextY = asNumber(mapState?.tile_y, 0) + delta.y;
+  if (!canAirshipOccupyTile(mapDefinition, nextX, nextY)) {
+    return {
+      moved: false,
+      nextState: {
+        ...mapState,
+        facing_direction: facingDirection,
+      },
+      reason: "blocked",
+    };
+  }
+  return {
+    moved: true,
+    nextState: {
+      ...mapState,
+      tile_x: nextX,
+      tile_y: nextY,
+      airship_tile_x: nextX,
+      airship_tile_y: nextY,
       facing_direction: facingDirection,
       steps_since_reset: asNumber(mapState?.steps_since_reset, 0) + 1,
     },
@@ -815,6 +977,18 @@ function buildEnvelopeWithMapState(store, nextMapState, mapDefinition) {
       ...nextMapState,
     },
   };
+  const currentAirshipState = currentState.menuState?.airship_state && typeof currentState.menuState.airship_state === "object"
+    ? currentState.menuState.airship_state
+    : null;
+  if (Number.isFinite(Number(nextMapState?.airship_tile_x)) && Number.isFinite(Number(nextMapState?.airship_tile_y))) {
+    nextMenuState.airship_state = {
+      tile_x: Number(nextMapState.airship_tile_x),
+      tile_y: Number(nextMapState.airship_tile_y),
+      riding: Boolean(nextMapState.airship_riding),
+    };
+  } else if (currentAirshipState) {
+    nextMenuState.airship_state = currentAirshipState;
+  }
   const nextSave = {
     ...(currentEnvelope.save && typeof currentEnvelope.save === "object" ? currentEnvelope.save : {}),
     map: normalizeMapSaveShape(nextMapState, mapDefinition),
@@ -974,6 +1148,32 @@ function renderLayout() {
         pointer-events: none;
         image-rendering: pixelated;
       }
+      [data-screen="map"] .map-airship {
+        position: absolute;
+        pointer-events: none;
+        image-rendering: pixelated;
+        background-image: url("${AIRSHIP_IMAGE_URL}");
+        background-repeat: no-repeat;
+        background-size: calc(var(--map-tile-size) * 4) var(--map-tile-size);
+        filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.45));
+        z-index: 2;
+      }
+      [data-screen="map"] .map-airship-ground,
+      [data-screen="map"] .map-airship-lower,
+      [data-screen="map"] .map-airship-upper {
+        width: var(--map-tile-size);
+        height: var(--map-tile-size);
+      }
+      [data-screen="map"] .map-airship-ground {
+        background-position: 0 0;
+      }
+      [data-screen="map"] .map-airship-lower {
+        background-position: calc(var(--map-tile-size) * -1) 0;
+      }
+      [data-screen="map"] .map-airship-upper {
+        background-position: calc(var(--map-tile-size) * -2) 0;
+        animation: map-airship-upper 1000ms steps(2) infinite;
+      }
       [data-screen="map"] .map-decoration-crystal {
         width: var(--map-tile-size);
         height: calc(var(--map-tile-size) * 2);
@@ -1059,6 +1259,10 @@ function renderLayout() {
       @keyframes map-object-frames {
         from { background-position: 0 0; }
         to { background-position: calc(var(--map-tile-size) * var(--object-frame-count, 1) * -1) 0; }
+      }
+      @keyframes map-airship-upper {
+        from { background-position: calc(var(--map-tile-size) * -2) 0; }
+        to { background-position: calc(var(--map-tile-size) * -4) 0; }
       }
       @keyframes map-water-highlight {
         from { transform: translateX(0); }
@@ -1199,7 +1403,7 @@ function npcTileTransform(row, renderPadding = { left: 0, top: 0 }, tileSize = D
   return `translate3d(${x}px, ${y}px, 0)`;
 }
 
-function mapRenderSignature(mapDefinition) {
+function mapRenderSignature(mapDefinition, saveEnvelope = null) {
   return [
     String(mapDefinition?.id || ""),
     Number(mapDefinition?.renderWidth || 0),
@@ -1209,15 +1413,15 @@ function mapRenderSignature(mapDefinition) {
     Number(mapDefinition?.tileset?.tileCount || 0),
     JSON.stringify(mapDefinition?.renderPadding || {}),
     JSON.stringify(
-      Array.isArray(mapDefinition?.objects)
-        ? mapDefinition.objects.map((row) => ({
+      renderableMapObjects(mapDefinition, saveEnvelope).map((row) => ({
           type: String(row?.type || ""),
           name: String(row?.name || ""),
           x: Number(row?.x || 0),
           y: Number(row?.y || 0),
           spriteImageUrl: String(row?.spriteImageUrl || ""),
-        }))
-        : [],
+          spriteFrames: Number(row?.sprite_frames ?? row?.frame_count ?? 1),
+          spriteAnimate: row?.sprite_animate !== false,
+        })),
     ),
     JSON.stringify(findCrystalSpriteOrigin(mapDefinition)),
   ].join("|");
@@ -1417,11 +1621,11 @@ function scheduleWaterHighlightMasks(mapLayer, mapDefinition, signature) {
   });
 }
 
-function ensureMapRenderState(mapLayer, mapDefinition) {
+function ensureMapRenderState(mapLayer, mapDefinition, saveEnvelope = null) {
   const tileSize = DISPLAY_TILE_SIZE;
   const tilesetColumns = Number(mapDefinition?.tileset?.columns || 1);
   const tilesetRows = Math.max(1, Math.ceil(Number(mapDefinition?.tileset?.tileCount || 0) / tilesetColumns));
-  const signature = mapRenderSignature(mapDefinition);
+  const signature = mapRenderSignature(mapDefinition, saveEnvelope);
   const existing = mapRenderStateCache.get(mapLayer);
   if (existing?.signature === signature) {
     return existing;
@@ -1456,8 +1660,7 @@ function ensureMapRenderState(mapLayer, mapDefinition) {
   mapLayer.appendChild(waterCanvas);
 
   const renderPadding = mapDefinition.renderPadding || { left: 0, top: 0 };
-  (mapDefinition.objects || []).forEach((row, index) => {
-    if (row?.hidden === true) return;
+  renderableMapObjects(mapDefinition, saveEnvelope).forEach((row, index) => {
     const marker = document.createElement("div");
     marker.className = `map-object${row?.type === "npc" ? " map-object-npc" : ""}${row?.type !== "npc" && row?.spriteImageUrl ? " map-object-image" : ""}`;
     if (row?.type === "npc") {
@@ -1482,7 +1685,7 @@ function ensureMapRenderState(mapLayer, mapDefinition) {
       const frameMs = resolveObjectSpriteFrameMs(row);
       objectSprite?.style.setProperty("--object-sprite-url", `url("${row.spriteImageUrl}")`);
       objectSprite?.style.setProperty("--object-frame-count", String(frameCount));
-      if (frameCount > 1) {
+      if (frameCount > 1 && row?.sprite_animate !== false) {
         objectSprite?.classList.add("is-animated");
         objectSprite?.style.setProperty("animation-duration", `${frameCount * frameMs}ms`);
       }
@@ -1536,23 +1739,24 @@ function updateRenderedTile(tile, gid, tilesetColumns, mapDefinition) {
   }
 }
 
-export function findStandingObject(mapDefinition, mapState) {
+export function findStandingObject(mapDefinition, mapState, saveEnvelope = null) {
   return (mapDefinition?.objects || []).find((row) => (
-    Number(row?.x) === Number(mapState?.tile_x) && Number(row?.y) === Number(mapState?.tile_y)
-  ));
+    isMapObjectAvailable(row, saveEnvelope)
+    && Number(row?.x) === Number(mapState?.tile_x)
+    && Number(row?.y) === Number(mapState?.tile_y)
+  )) || null;
 }
 
 export function findStandingEventTrigger(mapDefinition, mapState, saveEnvelope) {
-  const hit = findStandingObject(mapDefinition, mapState);
+  const hit = (mapDefinition?.objects || []).find((row) => (
+    Number(row?.x) === Number(mapState?.tile_x) && Number(row?.y) === Number(mapState?.tile_y)
+  )) || null;
   if (hit?.type !== "event") return null;
-  const requiredFlag = String(hit?.required_event_flag || "");
-  const requiredAbsentFlag = String(hit?.required_event_flag_absent || "");
-  if (requiredFlag && !isSavedEventFlagEnabled(saveEnvelope, requiredFlag)) return null;
-  if (requiredAbsentFlag && isSavedEventFlagEnabled(saveEnvelope, requiredAbsentFlag)) return null;
+  if (!isMapObjectAvailable(hit, saveEnvelope)) return null;
   return hit;
 }
 
-export function findAdjacentObject(mapDefinition, mapState, predicate = () => true) {
+export function findAdjacentObject(mapDefinition, mapState, predicate = () => true, saveEnvelope = null) {
   const tileX = Number(mapState?.tile_x);
   const tileY = Number(mapState?.tile_y);
   const facingDirection = normalizeMapFacingDirection(mapState?.facing_direction, "down");
@@ -1563,15 +1767,16 @@ export function findAdjacentObject(mapDefinition, mapState, predicate = () => tr
   return (mapDefinition?.objects || []).find((row) => {
     const objectX = Number(row?.x);
     const objectY = Number(row?.y);
-    return objectX === targetX && objectY === targetY && predicate(row);
+    return isMapObjectAvailable(row, saveEnvelope) && objectX === targetX && objectY === targetY && predicate(row);
   }) || null;
 }
 
-export function findAdjacentNpc(mapDefinition, mapState) {
+export function findAdjacentNpc(mapDefinition, mapState, saveEnvelope = null) {
   return findAdjacentObject(
     mapDefinition,
     mapState,
     (row) => row?.type === "npc" && npcDialogueIndices(row).length > 0,
+    saveEnvelope,
   );
 }
 
@@ -1754,9 +1959,9 @@ function describeStandingObject(mapDefinition, mapState) {
   return `オブジェクト: ${hit.name || hit.type || "-"}`;
 }
 
-function renderMapTiles(mapLayer, mapDefinition) {
+function renderMapTiles(mapLayer, mapDefinition, saveEnvelope = null) {
   const renderRows = Array.isArray(mapDefinition?.renderRows) ? mapDefinition.renderRows : [];
-  const renderState = ensureMapRenderState(mapLayer, mapDefinition);
+  const renderState = ensureMapRenderState(mapLayer, mapDefinition, saveEnvelope);
   const previousRows = renderState.previousRenderRows;
   let tileIndex = 0;
 
@@ -2019,6 +2224,11 @@ function updateMapPlayerSpriteImage(mapPlayer, appState) {
   mapPlayer.style.setProperty("--player-sprite-rows", String(sprite.rows));
 }
 
+function updateMapPlayerVisibility(mapPlayer, mapDefinition, mapState, saveEnvelope = null) {
+  if (!mapPlayer) return;
+  mapPlayer.style.display = isAirshipRiding(mapDefinition, mapState, saveEnvelope) ? "none" : "block";
+}
+
 function updateMapPlayerPosition(mapPlayer, mapDefinition, viewportTransform) {
   if (!mapPlayer) return;
   const renderPadding = mapDefinition.renderPadding || { left: 0, top: 0 };
@@ -2032,8 +2242,59 @@ function updateMapPlayerPosition(mapPlayer, mapDefinition, viewportTransform) {
   mapPlayer.style.setProperty("--player-top", `${playerTop}px`);
 }
 
+function ensureAirshipNode(mapLayer, className) {
+  let node = mapLayer.querySelector(`.${className}`);
+  if (!node) {
+    node = document.createElement("div");
+    node.className = `map-airship ${className}`;
+    node.setAttribute("aria-hidden", "true");
+    mapLayer.appendChild(node);
+  }
+  return node;
+}
+
+function updateFloatingContinentAirship(mapLayer, mapDefinition, mapState, saveEnvelope = null, visualPosition = null) {
+  const existingNodes = mapLayer.querySelectorAll(".map-airship");
+  const available = isFloatingContinentAirshipEnabled(mapDefinition, saveEnvelope);
+  if (!available || !Number.isFinite(Number(mapState?.airship_tile_x)) || !Number.isFinite(Number(mapState?.airship_tile_y))) {
+    existingNodes.forEach((node) => node.remove());
+    return;
+  }
+  const renderPadding = mapDefinition.renderPadding || { left: 0, top: 0 };
+  if (isAirshipRiding(mapDefinition, mapState, saveEnvelope)) {
+    const viewX = asNumber(visualPosition?.x, mapState?.airship_tile_x);
+    const viewY = asNumber(visualPosition?.y, mapState?.airship_tile_y);
+    const left = (viewX + Number(renderPadding.left || 0)) * DISPLAY_TILE_SIZE;
+    const top = (viewY + Number(renderPadding.top || 0)) * DISPLAY_TILE_SIZE;
+    existingNodes.forEach((node) => {
+      if (!node.classList.contains("map-airship-lower") && !node.classList.contains("map-airship-upper")) {
+        node.remove();
+      }
+    });
+    const lower = ensureAirshipNode(mapLayer, "map-airship-lower");
+    const upper = ensureAirshipNode(mapLayer, "map-airship-upper");
+    lower.style.left = `${left}px`;
+    lower.style.top = `${top}px`;
+    upper.style.left = `${left}px`;
+    upper.style.top = `${top - DISPLAY_TILE_SIZE}px`;
+    return;
+  }
+  existingNodes.forEach((node) => {
+    if (!node.classList.contains("map-airship-ground")) {
+      node.remove();
+    }
+  });
+  const left = (Number(mapState.airship_tile_x) + Number(renderPadding.left || 0)) * DISPLAY_TILE_SIZE;
+  const top = (Number(mapState.airship_tile_y) + Number(renderPadding.top || 0)) * DISPLAY_TILE_SIZE;
+  const ground = ensureAirshipNode(mapLayer, "map-airship-ground");
+  ground.style.left = `${left}px`;
+  ground.style.top = `${top}px`;
+}
+
 function updateMeta(mapMeta, mapDefinition, mapState) {
-  const standing = describeStandingObject(mapDefinition, mapState);
+  const standing = isAirshipRiding(mapDefinition, mapState)
+    ? "飛空艇に搭乗中です。"
+    : (isStandingOnAirship(mapDefinition, mapState) ? "飛空艇" : describeStandingObject(mapDefinition, mapState));
   mapMeta.innerHTML = [
     `<div>Map: ${mapDefinition.name}</div>`,
     `<div>座標: (${mapState.tile_x}, ${mapState.tile_y})</div>`,
@@ -2494,7 +2755,15 @@ export async function mountScreen({ mountNode, store, navigate }) {
       mapState,
       visualMapPosition,
     );
+    updateFloatingContinentAirship(
+      mapLayer,
+      mapDefinition,
+      mapState,
+      store.getState().saveEnvelope,
+      visualMapPosition,
+    );
     updateMapPlayerPosition(mapPlayer, mapDefinition, viewportTransform);
+    updateMapPlayerVisibility(mapPlayer, mapDefinition, mapState, store.getState().saveEnvelope);
     updateMapPlayerSpriteImage(mapPlayer, store.getState());
     updateMapPlayerSprite(mapPlayer, playerDirection, playerWalkFrame);
     updateMeta(mapMeta, mapDefinition, mapState);
@@ -2758,6 +3027,31 @@ export async function mountScreen({ mountNode, store, navigate }) {
 
   async function tryConfirm() {
     if (!mapDefinition || !mapState || mapTransitionLocked || isEventOverlayOpen()) return;
+    const currentEnvelope = store.getState().saveEnvelope;
+    if (isStandingOnAirship(mapDefinition, mapState, currentEnvelope)) {
+      mapState = {
+        ...mapState,
+        airship_riding: true,
+      };
+      persistCurrentMapState(mapState);
+      redraw();
+      mapStatus.textContent = "ひくうていに のりこんだ！";
+      return;
+    }
+    if (isAirshipRiding(mapDefinition, mapState, currentEnvelope)) {
+      if (!canOccupyCurrentTravelMode(mapDefinition, mapState, currentEnvelope)) {
+        mapStatus.textContent = "ここでは ひくうていを おりられません。";
+        return;
+      }
+      mapState = {
+        ...mapState,
+        airship_riding: false,
+      };
+      persistCurrentMapState(mapState);
+      redraw();
+      mapStatus.textContent = "ひくうていを おりた。";
+      return;
+    }
     const shopActivation = findShopActivation(mapDefinition, mapState);
     if (shopActivation) {
       sessionStorage.setItem(SHOP_START_CONTEXT_KEY, JSON.stringify({
@@ -2802,7 +3096,22 @@ export async function mountScreen({ mountNode, store, navigate }) {
       await runUrElderHouseReviveEvent();
       return;
     }
-    const adjacentNpc = findAdjacentNpc(mapDefinition, mapState);
+    if (
+      mapDefinition.id === AIRSHIP_OF_CID_MAP_ID
+      && isFacingTileCoordinate(mapState, AIRSHIP_OF_CID_HELM_TILE)
+    ) {
+      if (!isSavedEventFlagEnabled(store.getState().saveEnvelope, AIRSHIP_OBTAINED_EVENT_FLAG)) {
+        if (!persistNamedEventFlag(AIRSHIP_OBTAINED_EVENT_FLAG)) return;
+      }
+      const moved = await applyMapTransition(FLOATING_CONTINENT_MAP_ID, AIRSHIP_FLOATING_CONTINENT_TILE);
+      if (moved) {
+        mapStatus.textContent = "ひくうていを てにいれた！";
+      } else {
+        mapStatus.textContent = "ひくうていの離陸に失敗しました。";
+      }
+      return;
+    }
+    const adjacentNpc = findAdjacentNpc(mapDefinition, mapState, store.getState().saveEnvelope);
     if (adjacentNpc) {
       if (
         mapDefinition.id === KAZUS_MAP_ID
@@ -2820,6 +3129,11 @@ export async function mountScreen({ mountNode, store, navigate }) {
         } else {
           openEventOverlaySequence(visibleMessages);
         }
+        if (persistNamedEventFlag(adjacentNpc.set_event_flag)) {
+          renderMapTiles(mapLayer, mapDefinition, store.getState().saveEnvelope);
+          tickNpcSprites();
+          redraw();
+        }
         mapStatus.textContent = `${adjacentNpc.name || "NPC"} と話しました。`;
       } else {
         mapStatus.textContent = "このNPCの会話テキストが見つかりません。";
@@ -2830,7 +3144,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     if (switchResult.toggled) {
       mapDefinition = switchResult.mapDefinition;
       mapState = switchResult.mapState;
-      renderMapTiles(mapLayer, mapDefinition);
+      renderMapTiles(mapLayer, mapDefinition, store.getState().saveEnvelope);
       tickNpcSprites();
       persistCurrentMapState(mapState);
       redraw();
@@ -2846,7 +3160,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     if (treasureResult.opened) {
       mapDefinition = treasureResult.mapDefinition;
       mapState = treasureResult.mapState;
-      renderMapTiles(mapLayer, mapDefinition);
+      renderMapTiles(mapLayer, mapDefinition, store.getState().saveEnvelope);
       tickNpcSprites();
       const currentState = store.getState();
       const nextEnvelope = {
@@ -2905,7 +3219,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       });
       const resolvedSpawn = resolveTransitionSpawn(nextMapDefinition, targetSpawn);
       mapDefinition = nextMapDefinition;
-      mapState = {
+      mapState = applyResolvedAirshipState(nextMapDefinition, {
         current_map_id: nextMapDefinition.id,
         tile_x: resolvedSpawn.x,
         tile_y: resolvedSpawn.y,
@@ -2913,9 +3227,9 @@ export async function mountScreen({ mountNode, store, navigate }) {
         steps_since_reset: 0,
         switch_states: {},
         opened_treasures: savedOpenedTreasures,
-      };
-      if (!canOccupyTile(mapDefinition, mapState.tile_x, mapState.tile_y)) {
-        mapState = {
+      }, storeState.menuState, currentEnvelope);
+      if (!canOccupyTile(mapDefinition, mapState.tile_x, mapState.tile_y, currentEnvelope)) {
+        mapState = applyResolvedAirshipState(nextMapDefinition, {
           current_map_id: nextMapDefinition.id,
           tile_x: asNumber(nextMapDefinition.spawn?.x, 0),
           tile_y: asNumber(nextMapDefinition.spawn?.y, 0),
@@ -2923,13 +3237,13 @@ export async function mountScreen({ mountNode, store, navigate }) {
           steps_since_reset: 0,
           switch_states: {},
           opened_treasures: savedOpenedTreasures,
-        };
+        }, storeState.menuState, currentEnvelope);
       }
       mapDefinition = applySwitchStateToMap(
         { ...mapDefinition, openedTreasures: mapState.opened_treasures },
         mapState.switch_states,
       );
-      renderMapTiles(mapLayer, mapDefinition);
+      renderMapTiles(mapLayer, mapDefinition, currentEnvelope);
       tickNpcSprites();
       setVisualMapPosition(mapState.tile_x, mapState.tile_y);
       persistCurrentMapState(mapState);
@@ -2994,21 +3308,30 @@ export async function mountScreen({ mountNode, store, navigate }) {
     if (!mapDefinition || !mapState || mapTransitionLocked) return;
     const previousMapState = mapState;
     playerDirection = normalizeMapFacingDirection(direction, playerDirection);
-    const result = moveMapPosition(mapDefinition, mapState, direction);
+    const currentEnvelope = store.getState().saveEnvelope;
+    const result = isAirshipRiding(mapDefinition, mapState, currentEnvelope)
+      ? moveAirshipPosition(mapDefinition, mapState, direction, currentEnvelope)
+      : moveMapPosition(mapDefinition, mapState, direction, currentEnvelope);
     mapState = result.nextState;
     if (!result.moved) {
       playerWalkFrame = 0;
       updateMapPlayerSprite(mapPlayer, playerDirection, playerWalkFrame);
       persistCurrentMapState(mapState);
       mapStatus.textContent = result.reason === "blocked"
-        ? "その方向には進めません。"
+        ? (isAirshipRiding(mapDefinition, mapState, currentEnvelope)
+          ? "その方向には ひくうていで進めません。"
+          : "その方向には進めません。")
         : "移動できません。";
       return;
     }
     playerWalkFrame = playerWalkFrame === 0 ? 1 : 0;
     persistCurrentMapState(mapState);
     animateVisualMapPosition(previousMapState, mapState);
-    const standingObject = findStandingObject(mapDefinition, mapState);
+    if (isAirshipRiding(mapDefinition, mapState, currentEnvelope)) {
+      mapStatus.textContent = "ひくうていで移動しました。";
+      return;
+    }
+    const standingObject = findStandingObject(mapDefinition, mapState, store.getState().saveEnvelope);
     if (standingObject?.type === "exit" && standingObject?.target_map) {
       if (!persistNamedEventFlag(standingObject.set_event_flag)) {
         return;
@@ -3273,8 +3596,8 @@ export async function mountScreen({ mountNode, store, navigate }) {
     if (postBattleEventFlags.length) {
       persistNamedEventFlags(postBattleEventFlags);
     }
-    if (!canOccupyTile(mapDefinition, mapState.tile_x, mapState.tile_y)) {
-      mapState = {
+    if (!canOccupyCurrentTravelMode(mapDefinition, mapState, store.getState().saveEnvelope)) {
+      mapState = applyResolvedAirshipState(mapDefinition, {
         current_map_id: mapDefinition.id,
         tile_x: mapDefinition.spawn.x,
         tile_y: mapDefinition.spawn.y,
@@ -3282,9 +3605,9 @@ export async function mountScreen({ mountNode, store, navigate }) {
         steps_since_reset: 0,
         switch_states: normalizeSwitchStates(mapState?.switch_states),
         opened_treasures: normalizeTreasureStates(mapState?.opened_treasures),
-      };
+      }, store.getState().menuState, store.getState().saveEnvelope);
     }
-    renderMapTiles(mapLayer, mapDefinition);
+    renderMapTiles(mapLayer, mapDefinition, store.getState().saveEnvelope);
     startNpcAnimation();
     persistCurrentMapState(mapState);
     setVisualMapPosition(mapState.tile_x, mapState.tile_y);

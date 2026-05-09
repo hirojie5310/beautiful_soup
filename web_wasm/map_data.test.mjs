@@ -81,6 +81,30 @@ test("normalizeMapDefinition resolves NPC sprite image URLs", () => {
   assert.equal(result.objects[0].direction, "down");
 });
 
+test("normalizeMapDefinition preserves animated object sprite settings", () => {
+  const result = normalizeMapDefinition({
+    id: "test",
+    width: 1,
+    height: 1,
+    rows: ["1"],
+    objects: [
+      {
+        type: "decoration",
+        name: "Candle",
+        x: 0,
+        y: 0,
+        sprite_image: "../assets/images/objects/candle.png",
+        sprite_frames: 2,
+        sprite_frame_ms: 1000,
+      },
+    ],
+  });
+
+  assert.match(result.objects[0].spriteImageUrl, /\/assets\/images\/objects\/candle\.png$/);
+  assert.equal(result.objects[0].sprite_frames, 2);
+  assert.equal(result.objects[0].sprite_frame_ms, 1000);
+});
+
 test("encounter areas restrict random encounters by tile position", () => {
   const result = normalizeMapDefinition({
     id: "test",

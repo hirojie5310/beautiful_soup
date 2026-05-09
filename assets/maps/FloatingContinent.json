@@ -122,7 +122,9 @@
       "target_spawn": {
         "x": 10,
         "y": 4
-      }
+      },
+      "required_event_flag": "cid_airship_location_revealed",
+      "required_event_flag_absent": "cid_airship_obtained"
     },
     {
       "type": "exit",

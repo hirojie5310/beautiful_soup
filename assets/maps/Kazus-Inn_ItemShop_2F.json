@@ -39,6 +39,24 @@
         "x": 2,
         "y": 3
       }
+    },
+    {
+      "type": "decoration",
+      "name": "Inn ItemShop 2F Candle A",
+      "x": 3,
+      "y": 3,
+      "sprite_image": "../assets/images/objects/candle.png",
+      "sprite_frames": 2,
+      "sprite_frame_ms": 1000
+    },
+    {
+      "type": "decoration",
+      "name": "Inn ItemShop 2F Candle B",
+      "x": 7,
+      "y": 3,
+      "sprite_image": "../assets/images/objects/candle.png",
+      "sprite_frames": 2,
+      "sprite_frame_ms": 1000
     }
   ],
   "rows": [
