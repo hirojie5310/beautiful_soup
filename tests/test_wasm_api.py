@@ -10,6 +10,7 @@ from typing import Any, cast
 from combat.battle_save_patch import build_battle_save_patch
 from combat.enums import Status
 from combat.enemy_build import build_enemies
+from combat.enemy_selection import LocationMonsters, pick_enemy_names
 from combat.models import BattleActorState, EnemyRuntime, FinalEnemyStats
 from combat.runtime_state import init_runtime_state
 from combat.wasm_api import (
@@ -754,6 +755,33 @@ def test_pick_enemy_names_for_location_returns_combatants() -> None:
 
     assert names
     assert all(isinstance(name, str) and name for name in names)
+
+
+def test_pick_enemy_names_excludes_plot_boss_when_normals_exist() -> None:
+    entry = LocationMonsters(
+        location="Sealed Cave B3",
+        monster_names=("Mummy", "Larva", "Djinn"),
+        avg_level=8,
+        min_level=5,
+        max_level=14,
+        boss_count=1,
+    )
+    monsters_by_name = {
+        "Mummy": {"name": "Mummy", "Level": 5, "Maps": ["Sealed Cave B3"]},
+        "Larva": {"name": "Larva", "Level": 6, "Maps": ["Sealed Cave B3"]},
+        "Djinn": {
+            "name": "Djinn",
+            "Level": 14,
+            "Maps": ["Sealed Cave B3"],
+            "PlotBattles": [{"Map": "Sealed Cave B3", "Monsters": "Djinn"}],
+        },
+    }
+
+    names = pick_enemy_names(entry, monsters_by_name, k_min=3, k_max=3)
+
+    assert len(names) == 3
+    assert set(names).issubset({"Mummy", "Larva"})
+    assert "Djinn" not in names
 
 
 def test_wasm_magic_meta_includes_parent_summon_with_uniform_child_target() -> None:

@@ -217,7 +217,8 @@ def pick_enemy_names(
 ) -> List[str]:
     """
     仕様:
-      - entry の候補に PlotBattles 持ち（ボス）が含まれるなら、ボスを 1 体だけ出す
+      - 通常敵がいる場所では、PlotBattles 持ち（ボス）を通常エンカウント候補から除外する
+      - 候補がボスしかいない場所だけ、ボスを 1 体だけ出す
       - それ以外は通常どおり 2〜4体を重複OKで出す
     """
     candidates = list(entry.monster_names)
@@ -234,15 +235,22 @@ def pick_enemy_names(
         else:
             normals.append(name)
 
-    # ボス候補がいる場所なら「ボス1体のみ」
+    # 通常敵がいる場所では、ボスはイベント戦専用にして通常エンカウントから外す
+    if normals:
+        if k_min < 1 or k_max < k_min:
+            raise ValueError("k_min/k_max の指定が不正です。")
+        k = random.randint(k_min, k_max)
+        return random.choices(normals, k=k)
+
+    # ボス候補しかいない場所なら「ボス1体のみ」
     if bosses:
         return [random.choice(bosses)]
 
-    # 通常：2〜4体、重複OK
+    # フォールバック：候補全体から 2〜4体、重複OK
     if k_min < 1 or k_max < k_min:
         raise ValueError("k_min/k_max の指定が不正です。")
     k = random.randint(k_min, k_max)
-    return random.choices(normals if normals else candidates, k=k)
+    return random.choices(candidates, k=k)
 
 
 # パーティメンバーの平均レベルを計算
