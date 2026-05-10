@@ -63,6 +63,15 @@
       "quantity": 1,
       "closed_gid": 125,
       "open_gid": 126
+    },
+    {
+      "type": "decoration",
+      "name": "djinn",
+      "x": 8,
+      "y": 18,
+      "sprite_image": "../assets/images/objects/djinn.png",
+      "sprite_frames": 2,
+      "sprite_frame_ms": 1000
     }
   ],
   "rows": [

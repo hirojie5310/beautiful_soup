@@ -1218,7 +1218,7 @@
         "Count": 3,
         "Rate": 0.45
       },
-      "MagicDefense": 48,
+      "MagicDefense": 6,
       "MagicResistance": {
         "Count": 2,
         "Rate": 0.4
@@ -8616,7 +8616,7 @@
         "Count": 5,
         "Rate": 0.3
       },
-      "MagicDefense": 48,
+      "MagicDefense": 10,
       "MagicResistance": {
         "Count": 2,
         "Rate": 0.4
@@ -9484,7 +9484,7 @@
         "Count": 3,
         "Rate": 0.45
       },
-      "MagicDefense": 48,
+      "MagicDefense": 6,
       "MagicResistance": {
         "Count": 2,
         "Rate": 0.4
@@ -9949,7 +9949,7 @@
         "Count": 5,
         "Rate": 0.4
       },
-      "MagicDefense": 7,
+      "MagicDefense": 16,
       "MagicResistance": {
         "Count": 2,
         "Rate": 0.6
@@ -10866,7 +10866,7 @@
         "Count": 3,
         "Rate": 0.6
       },
-      "MagicDefense": 4,
+      "MagicDefense": 7,
       "MagicResistance": {
         "Count": 2,
         "Rate": 0.2
@@ -11160,7 +11160,7 @@
         "Count": 4,
         "Rate": 0.3
       },
-      "MagicDefense": 4,
+      "MagicDefense": 10,
       "MagicResistance": {
         "Count": 2,
         "Rate": 0.25
@@ -11238,7 +11238,7 @@
         "Count": 4,
         "Rate": 0.35
       },
-      "MagicDefense": 8,
+      "MagicDefense": 17,
       "MagicResistance": {
         "Count": 3,
         "Rate": 0.5
@@ -11314,7 +11314,7 @@
         "Count": null,
         "Rate": 0.1
       },
-      "MagicDefense": 40,
+      "MagicDefense": 30,
       "MagicResistance": {
         "Count": 1,
         "Rate": 0.32
@@ -11371,7 +11371,7 @@
         "Count": null,
         "Rate": 0.3
       },
-      "MagicDefense": 32,
+      "MagicDefense": 13,
       "MagicResistance": {
         "Count": 1,
         "Rate": 0.16
@@ -11457,7 +11457,7 @@
         "Count": 1,
         "Rate": 0.45
       },
-      "MagicDefense": 32,
+      "MagicDefense": 10,
       "MagicResistance": {
         "Count": 1,
         "Rate": 0.16
@@ -11563,7 +11563,7 @@
         "Count": 2,
         "Rate": 0.1
       },
-      "MagicDefense": 48,
+      "MagicDefense": 10,
       "MagicResistance": {
         "Count": 2,
         "Rate": 0.4
@@ -11647,7 +11647,7 @@
         "Count": 1,
         "Rate": 0.35
       },
-      "MagicDefense": 48,
+      "MagicDefense": 10,
       "MagicResistance": {
         "Count": 2,
         "Rate": 0.4
@@ -11725,7 +11725,7 @@
         "Count": 2,
         "Rate": 0.1
       },
-      "MagicDefense": 48,
+      "MagicDefense": 13,
       "MagicResistance": {
         "Count": 2,
         "Rate": 0.4
@@ -11811,7 +11811,7 @@
         "Count": 4,
         "Rate": 0.6
       },
-      "MagicDefense": 5,
+      "MagicDefense": 14,
       "MagicResistance": {
         "Count": 2,
         "Rate": 0.25
@@ -11943,7 +11943,7 @@
         "Count": 2,
         "Rate": 0.5
       },
-      "MagicDefense": 40,
+      "MagicDefense": 16,
       "MagicResistance": {
         "Count": 1,
         "Rate": 0.32
@@ -12049,7 +12049,7 @@
         "Count": 3,
         "Rate": 0.3
       },
-      "MagicDefense": 80,
+      "MagicDefense": 99,
       "MagicResistance": {
         "Count": 3,
         "Rate": 0.48
@@ -12155,7 +12155,7 @@
         "Count": 3,
         "Rate": 0.6
       },
-      "MagicDefense": 80,
+      "MagicDefense": 10,
       "MagicResistance": {
         "Count": 3,
         "Rate": 0.48
@@ -12238,7 +12238,7 @@
         "Count": 4,
         "Rate": 0.35
       },
-      "MagicDefense": 48,
+      "MagicDefense": 17,
       "MagicResistance": {
         "Count": 2,
         "Rate": 0.4
@@ -12327,7 +12327,7 @@
         "Count": 4,
         "Rate": 0.4
       },
-      "MagicDefense": 48,
+      "MagicDefense": 10,
       "MagicResistance": {
         "Count": 2,
         "Rate": 0.4
@@ -12444,7 +12444,7 @@
         "Count": 4,
         "Rate": 0.4
       },
-      "MagicDefense": 48,
+      "MagicDefense": 11,
       "MagicResistance": {
         "Count": 2,
         "Rate": 0.4
@@ -12561,7 +12561,7 @@
         "Count": 4,
         "Rate": 0.45
       },
-      "MagicDefense": 48,
+      "MagicDefense": 11,
       "MagicResistance": {
         "Count": 2,
         "Rate": 0.4
@@ -12648,7 +12648,7 @@
         "Count": 4,
         "Rate": 0.5
       },
-      "MagicDefense": 48,
+      "MagicDefense": 16,
       "MagicResistance": {
         "Count": 2,
         "Rate": 0.4
@@ -12730,7 +12730,7 @@
         "Count": 5,
         "Rate": 0.2
       },
-      "MagicDefense": 48,
+      "MagicDefense": 17,
       "MagicResistance": {
         "Count": 2,
         "Rate": 0.4
@@ -12810,7 +12810,7 @@
         "Count": 5,
         "Rate": 0.3
       },
-      "MagicDefense": 48,
+      "MagicDefense": 10,
       "MagicResistance": {
         "Count": 2,
         "Rate": 0.4
@@ -12873,7 +12873,7 @@
         "Count": 5,
         "Rate": 0.3
       },
-      "MagicDefense": 48,
+      "MagicDefense": 13,
       "MagicResistance": {
         "Count": 2,
         "Rate": 0.4
@@ -12945,7 +12945,7 @@
         "Count": 5,
         "Rate": 0.3
       },
-      "MagicDefense": 48,
+      "MagicDefense": 11,
       "MagicResistance": {
         "Count": 2,
         "Rate": 0.4
@@ -13044,7 +13044,7 @@
         "Count": 5,
         "Rate": 0.3
       },
-      "MagicDefense": 48,
+      "MagicDefense": 20,
       "MagicResistance": {
         "Count": 2,
         "Rate": 0.4
@@ -13122,7 +13122,7 @@
         "Count": 5,
         "Rate": 0.3
       },
-      "MagicDefense": 48,
+      "MagicDefense": 12,
       "MagicResistance": {
         "Count": 2,
         "Rate": 0.4
@@ -13253,7 +13253,7 @@
         "Count": 5,
         "Rate": 0.4
       },
-      "MagicDefense": 96,
+      "MagicDefense": 10,
       "MagicResistance": {
         "Count": 5,
         "Rate": 0.56
@@ -13343,7 +13343,7 @@
         "Count": 5,
         "Rate": 0.5
       },
-      "MagicDefense": 80,
+      "MagicDefense": 10,
       "MagicResistance": {
         "Count": 3,
         "Rate": 0.48
@@ -13413,7 +13413,7 @@
         "Count": 5,
         "Rate": 0.5
       },
-      "MagicDefense": 80,
+      "MagicDefense": 10,
       "MagicResistance": {
         "Count": 3,
         "Rate": 0.48
@@ -13573,7 +13573,7 @@
         "Count": 5,
         "Rate": 0.5
       },
-      "MagicDefense": 80,
+      "MagicDefense": 10,
       "MagicResistance": {
         "Count": 3,
         "Rate": 0.48
