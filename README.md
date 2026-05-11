@@ -1,6 +1,20 @@
-conda activate game-env
-pip install -r requirements.txt
-python app\_pygame.py
+# 開発環境
+
+このリポジトリの Python 実行環境は `.venv/` です。
+
+- Python コマンドは `.venv/bin/python` で実行してください。
+- グローバルの `python` や `pytest` が入っている前提で進めないでください。
+- テスト実行は `.venv/bin/python -m pytest` を使用してください。
+
+例:
+
+```bash
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m pytest
+.venv/bin/python app_pygame.py
+```
+
+AI エージェントや自動化作業向けの共通ルールは `AGENTS.md` に記載しています。
 
 ## Wasm (Web Assembly) 版のビルド方法
     "combat",
