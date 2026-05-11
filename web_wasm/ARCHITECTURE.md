@@ -3,6 +3,14 @@
 `web_wasm` は現在、`index.html` を起点にした単一ページアプリとして動作します。
 以前の `menu.html` や `battle.html` などは、古いブックマークやリンクを壊さないための SPA ルート向けリダイレクトだけを担当します。
 
+## 実行環境ルール
+
+- このリポジトリの Python 実行系は `.venv/` を正とします。
+- `pytest` が `PATH` に見つからなくても、グローバル未導入を理由にテスト不能と判断しません。
+- Python コマンドは常に `.venv/bin/python` を優先します。
+- Python テストは常に `.venv/bin/python -m pytest` で実行します。
+- AI エージェント向けの共通運用ルールは、リポジトリルートの `AGENTS.md` を参照します。
+
 ## エントリポイント
 
 - `index.html`
