@@ -106,6 +106,18 @@ const FLOATING_CONTINENT_LOCATION_SPAWNS = {
 };
 const KAZUS_MAP_ID = "Kazus";
 const KAZUS_NPC_516_KEY = "kazus_npc_516_scripted";
+const SEALED_CAVE_B2_2_MAP_ID = "Sealed_Cave_B2_2";
+const SEALED_CAVE_B2_2_SARA_KEY = "sealed_cave_b2_2_sara_scripted";
+const SEALED_CAVE_B2_2_SARA_EVENT_FLAG = "sealed_cave_b2_2_sara_escort_started";
+const SEALED_CAVE_SARA_LEAVE_EVENT_FLAG = "sara_left_party";
+const SEALED_CAVE_B2_2_SARA_PATH = [
+  { x: 3, y: 2 },
+  { x: 3, y: 3 },
+  { x: 3, y: 4 },
+  { x: 4, y: 4 },
+  { x: 5, y: 4 },
+  { x: 6, y: 4 },
+];
 const CASTLE_SASUNE_MAINKEEP_1F_MAP_ID = "Castle_Sasune_MainKeep_1F";
 const CASTLE_SASUNE_MAINKEEP_1F_RECOVERY_TILES = [
   { x: 1, y: 4 },
@@ -128,6 +140,15 @@ const MERGED_FIXED_DIALOGUE_PAGE_OVERRIDES = {
   538: [
     "しろのひとは　みんなジンの　のろいによって\nゆうれいのようなすがたに　されてしまいました。\nわたしは　つかいで　でていたので\nたすかったのです……",
     "ミスリルのゆびわがあれば　ジンをふたたび\nふういんできるのですが　ゆいいつ　ゆびわを\nつくれる　カズスのむらも　おなじような\nありさまで……\nいったい　わたしはどうしたらいいのか……",
+  ],
+  550: [
+    "「わたしはサラ……　サスーンおうのむすめです。\n『サラひめ。　どうしてこんなところに？\n「わたしは　ミスリルのゆびわを　つけていたので\n　ジンの　のろいに　かからなかったのです。",
+    "しろの　みんなを　たすけたくて　ここまで\nきたのだけれど　まものがいて　さきには\nすすめません……",
+    "『ここは　きけんだ。\n　サラひめは　しろでまっていてください。\n「いいえ！いきます。\n　ひとりでもいくわ！！",
+  ],
+  551: [
+    "『こまった　おひめさまだ……\n「おねがい　いっしょにつれていって！\n　この　ミスリルのゆびわがなければ　ジンを\n　ふういんすることはできません！",
+    "『しかたがないな……\nサラひめが　パーティーにくわわった！",
   ],
   532: [
     "わしはシド。　カナーンからきたんじゃ。\nネルブのたにが　おおいわでふさがれてしまい\nカナーンに　かえるにかえれなくなってしまった。\nそこでこのまちに　ひとばんの　やどを",
@@ -1289,6 +1310,7 @@ function renderLayout() {
         display: none;
       }
       [data-screen="map"] .map-object-sprite {
+        display: block;
         width: var(--map-tile-size);
         height: var(--map-tile-size);
         background-image: var(--object-sprite-url);
@@ -1306,6 +1328,7 @@ function renderLayout() {
         animation-iteration-count: infinite;
       }
       [data-screen="map"] .map-npc-sprite {
+        display: block;
         width: ${NPC_DISPLAY_TILE_SIZE}px;
         height: ${NPC_DISPLAY_TILE_SIZE}px;
         background-image: var(--npc-sprite-url);
@@ -1314,6 +1337,18 @@ function renderLayout() {
         background-position: 0 0;
         image-rendering: pixelated;
         filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.45));
+      }
+      [data-screen="map"] .map-follower {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: ${NPC_DISPLAY_TILE_SIZE}px;
+        height: ${NPC_DISPLAY_TILE_SIZE}px;
+        contain: paint;
+        pointer-events: none;
+        transition: transform ${MAP_MOVE_ANIMATION_MS}ms linear;
+        will-change: transform;
+        z-index: 1;
       }
       [data-screen="map"] .map-decoration {
         position: absolute;
@@ -2624,6 +2659,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   let mapBgmAudio = null;
   let currentMapBgmUrl = "";
   let cancelPendingBgmUnlock = null;
+  let saraFollowerState = null;
   const npcAnimationStates = new Map();
   const holdRepeater = createDirectionalHoldRepeater((direction) => tryMove(direction));
 
@@ -2638,6 +2674,104 @@ export async function mountScreen({ mountNode, store, navigate }) {
     if (!marker || !row) return;
     const renderPadding = mapDefinition?.renderPadding || { left: 0, top: 0 };
     marker.style.transform = npcTileTransform(row, renderPadding);
+  }
+
+  function isSaraFollowerActive(saveEnvelope = store.getState().saveEnvelope) {
+    return (
+      isSavedEventFlagEnabled(saveEnvelope, SEALED_CAVE_B2_2_SARA_EVENT_FLAG)
+      && !isSavedEventFlagEnabled(saveEnvelope, SEALED_CAVE_SARA_LEAVE_EVENT_FLAG)
+    );
+  }
+
+  function ensureSaraFollowerNode() {
+    let node = mapLayer.querySelector(".map-follower");
+    if (!node) {
+      node = document.createElement("div");
+      node.className = "map-follower";
+      node.setAttribute("aria-hidden", "true");
+      node.innerHTML = `<span class="map-npc-sprite" aria-hidden="true"></span>`;
+      const sprite = node.querySelector(".map-npc-sprite");
+      sprite?.style.setProperty("--npc-sprite-url", `url("${new URL("../../assets/images/NPCs/fs_sara.png", import.meta.url).href}")`);
+      mapLayer.appendChild(node);
+    }
+    return node;
+  }
+
+  function hideSaraFollowerNode() {
+    mapLayer.querySelector(".map-follower")?.remove();
+  }
+
+  function resolveSaraFollowerSpawnPosition(nextMapDefinition, nextMapState, saveEnvelope = store.getState().saveEnvelope) {
+    const facing = normalizeMapFacingDirection(nextMapState?.facing_direction || playerDirection, "down");
+    const reverseDirection = {
+      up: "down",
+      down: "up",
+      left: "right",
+      right: "left",
+    }[facing] || "up";
+    return {
+      current_map_id: String(nextMapDefinition?.id || nextMapState?.current_map_id || ""),
+      tile_x: Number(nextMapState?.tile_x || 0),
+      tile_y: Number(nextMapState?.tile_y || 0),
+      direction: reverseDirection,
+      walkFrame: 0,
+      nextFrameAt: performance.now() + NPC_FRAME_MS,
+    };
+  }
+
+  function syncSaraFollowerStateForMap(nextMapDefinition, nextMapState, saveEnvelope = store.getState().saveEnvelope) {
+    if (!isSaraFollowerActive(saveEnvelope) || isAirshipRiding(nextMapDefinition, nextMapState, saveEnvelope)) {
+      saraFollowerState = null;
+      hideSaraFollowerNode();
+      return;
+    }
+    if (
+      saraFollowerState
+      && saraFollowerState.current_map_id === String(nextMapDefinition?.id || "")
+      && Number.isFinite(Number(saraFollowerState.tile_x))
+      && Number.isFinite(Number(saraFollowerState.tile_y))
+    ) {
+      return;
+    }
+    saraFollowerState = resolveSaraFollowerSpawnPosition(nextMapDefinition, nextMapState, saveEnvelope);
+  }
+
+  function updateSaraFollowerNode() {
+    if (!mapDefinition || !mapState || !isSaraFollowerActive(store.getState().saveEnvelope)) {
+      hideSaraFollowerNode();
+      return;
+    }
+    syncSaraFollowerStateForMap(mapDefinition, mapState, store.getState().saveEnvelope);
+    if (!saraFollowerState) {
+      hideSaraFollowerNode();
+      return;
+    }
+    const node = ensureSaraFollowerNode();
+    const renderPadding = mapDefinition?.renderPadding || { left: 0, top: 0 };
+    node.style.transform = npcTileTransform({
+      x: saraFollowerState.tile_x,
+      y: saraFollowerState.tile_y,
+    }, renderPadding);
+    const sprite = node.querySelector(".map-npc-sprite");
+    if (sprite) {
+      updateNpcSpriteFrame(sprite, saraFollowerState.direction, saraFollowerState.walkFrame);
+    }
+    node.style.display = isAirshipRiding(mapDefinition, mapState, store.getState().saveEnvelope) ? "none" : "block";
+  }
+
+  function tickSaraFollower(now = performance.now()) {
+    if (!saraFollowerState || !isSaraFollowerActive(store.getState().saveEnvelope)) {
+      hideSaraFollowerNode();
+      return;
+    }
+    if (!Number.isFinite(Number(saraFollowerState.nextFrameAt))) {
+      saraFollowerState.nextFrameAt = now + NPC_FRAME_MS;
+    }
+    if (now >= Number(saraFollowerState.nextFrameAt)) {
+      saraFollowerState.walkFrame = saraFollowerState.walkFrame === 0 ? 1 : 0;
+      saraFollowerState.nextFrameAt = now + NPC_FRAME_MS;
+    }
+    updateSaraFollowerNode();
   }
 
   function waitForDuration(ms) {
@@ -2674,6 +2808,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     else if (deltaX < 0) npcState.direction = "left";
     else if (deltaY > 0) npcState.direction = "down";
     else if (deltaY < 0) npcState.direction = "up";
+    npcRow.direction = npcState.direction;
     npcState.walkFrame = npcState.walkFrame === 0 ? 1 : 0;
     const spriteNode = marker.querySelector(".map-npc-sprite");
     if (spriteNode) updateNpcSpriteFrame(spriteNode, npcState.direction, npcState.walkFrame);
@@ -2684,6 +2819,33 @@ export async function mountScreen({ mountNode, store, navigate }) {
     await waitForDuration(durationMs);
     npcState.walkFrame = 0;
     if (spriteNode) updateNpcSpriteFrame(spriteNode, npcState.direction, npcState.walkFrame);
+    return true;
+  }
+
+  async function animatePlayerStepTo(targetX, targetY, durationMs) {
+    if (!mapState) return false;
+    const previousMapState = mapState;
+    const nextX = Number(targetX);
+    const nextY = Number(targetY);
+    const deltaX = nextX - Number(previousMapState?.tile_x || 0);
+    const deltaY = nextY - Number(previousMapState?.tile_y || 0);
+    if (deltaX > 0) playerDirection = "right";
+    else if (deltaX < 0) playerDirection = "left";
+    else if (deltaY > 0) playerDirection = "down";
+    else if (deltaY < 0) playerDirection = "up";
+    playerWalkFrame = playerWalkFrame === 0 ? 1 : 0;
+    mapState = {
+      ...previousMapState,
+      tile_x: nextX,
+      tile_y: nextY,
+      facing_direction: playerDirection,
+      steps_since_reset: asNumber(previousMapState?.steps_since_reset, 0) + 1,
+    };
+    animateVisualMapPosition(previousMapState, mapState);
+    redraw();
+    await waitForDuration(durationMs);
+    playerWalkFrame = 0;
+    redraw();
     return true;
   }
 
@@ -2724,6 +2886,93 @@ export async function mountScreen({ mountNode, store, navigate }) {
       marker.style.transitionDuration = `${MAP_MOVE_ANIMATION_MS}ms`;
       mapTransitionLocked = false;
     }
+  }
+
+  async function runSealedCaveSaraSequence(npcRow) {
+    const npcKey = npcObjectKey(npcRow);
+    const marker = findNpcMarkerByKey(npcKey);
+    if (!npcRow || !marker || !mapState) return false;
+    const openingMessages = await loadMergedFixedContentByIndices([550]);
+    const followupMessages = await loadMergedFixedContentByIndices([551]);
+    const now = performance.now();
+    const npcState = npcAnimationStates.get(npcKey) || {
+      direction: resolveNpcInitialDirection(npcRow, 0),
+      walkFrame: 0,
+      nextFrameAt: now + NPC_FRAME_MS,
+      nextDirectionAt: now + NPC_DIRECTION_MAX_MS,
+    };
+    npcAnimationStates.set(npcKey, npcState);
+    holdRepeater.stop();
+    mapTransitionLocked = true;
+    try {
+      await openDialogueMessagesAndWait(openingMessages);
+      for (const target of SEALED_CAVE_B2_2_SARA_PATH) {
+        const previousNpcPosition = {
+          x: Number(npcRow.x || 0),
+          y: Number(npcRow.y || 0),
+        };
+        await animateNpcStep(npcRow, npcState, marker, target.x, target.y, 500);
+        await animatePlayerStepTo(previousNpcPosition.x, previousNpcPosition.y, 500);
+      }
+      saraFollowerState = {
+        current_map_id: String(mapDefinition?.id || SEALED_CAVE_B2_2_MAP_ID),
+        tile_x: Number(npcRow.x || 0),
+        tile_y: Number(npcRow.y || 0),
+        direction: normalizeNpcDirection(npcRow?.direction, "right"),
+        walkFrame: 0,
+        nextFrameAt: performance.now() + NPC_FRAME_MS,
+      };
+      const persistedMapState = persistCurrentMapState(mapState);
+      const persistedEventFlag = persistNamedEventFlag(SEALED_CAVE_B2_2_SARA_EVENT_FLAG);
+      if (!persistedMapState || !persistedEventFlag) return false;
+      renderMapTiles(mapLayer, mapDefinition, store.getState().saveEnvelope);
+      tickNpcSprites();
+      redraw();
+      await openDialogueMessagesAndWait(followupMessages);
+      mapStatus.textContent = `${npcRow.name || "NPC"} と話しました。`;
+      return true;
+    } finally {
+      marker.style.transitionDuration = `${MAP_MOVE_ANIMATION_MS}ms`;
+      mapTransitionLocked = false;
+    }
+  }
+
+  async function maybeFollowWithSealedCaveSara(previousPlayerState) {
+    if (!saraFollowerState || !previousPlayerState || !isSaraFollowerActive(store.getState().saveEnvelope)) {
+      return false;
+    }
+    const targetX = Number(previousPlayerState.tile_x);
+    const targetY = Number(previousPlayerState.tile_y);
+    if (
+      Number(saraFollowerState.tile_x || 0) === targetX
+      && Number(saraFollowerState.tile_y || 0) === targetY
+    ) {
+      return false;
+    }
+    const marker = ensureSaraFollowerNode();
+    if (!marker) return false;
+    if (!canOccupyTile(mapDefinition, targetX, targetY, store.getState().saveEnvelope)) {
+      return false;
+    }
+    const followerRow = {
+      x: Number(saraFollowerState.tile_x || 0),
+      y: Number(saraFollowerState.tile_y || 0),
+      direction: saraFollowerState.direction,
+    };
+    const followerState = {
+      direction: saraFollowerState.direction,
+      walkFrame: saraFollowerState.walkFrame,
+    };
+    await animateNpcStep(followerRow, followerState, marker, targetX, targetY, MAP_MOVE_ANIMATION_MS);
+    saraFollowerState = {
+      current_map_id: String(mapDefinition?.id || ""),
+      tile_x: Number(followerRow.x || 0),
+      tile_y: Number(followerRow.y || 0),
+      direction: followerState.direction,
+      walkFrame: 0,
+      nextFrameAt: performance.now() + NPC_FRAME_MS,
+    };
+    return true;
   }
 
   function clearPendingBgmUnlock() {
@@ -2973,6 +3222,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     updateMapPlayerVisibility(mapPlayer, mapDefinition, mapState, store.getState().saveEnvelope);
     updateMapPlayerSpriteImage(mapPlayer, store.getState());
     updateMapPlayerSprite(mapPlayer, playerDirection, playerWalkFrame);
+    updateSaraFollowerNode();
     updateMeta(mapMeta, mapDefinition, mapState);
   }
 
@@ -3073,6 +3323,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     Array.from(npcAnimationStates.keys()).forEach((key) => {
       if (!seenKeys.has(key)) npcAnimationStates.delete(key);
     });
+    tickSaraFollower(now);
   }
 
   function startNpcAnimation() {
@@ -3327,6 +3578,14 @@ export async function mountScreen({ mountNode, store, navigate }) {
         await runKazusNpc516Sequence(adjacentNpc);
         return;
       }
+      if (
+        mapDefinition.id === SEALED_CAVE_B2_2_MAP_ID
+        && npcObjectKey(adjacentNpc) === SEALED_CAVE_B2_2_SARA_KEY
+        && !isSavedEventFlagEnabled(store.getState().saveEnvelope, SEALED_CAVE_B2_2_SARA_EVENT_FLAG)
+      ) {
+        await runSealedCaveSaraSequence(adjacentNpc);
+        return;
+      }
       const dialogueIndices = npcDialogueIndices(adjacentNpc);
       const messages = await loadMergedFixedContentByIndices(dialogueIndices);
       const visibleMessages = messages.filter((message) => Boolean(message));
@@ -3453,6 +3712,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
         { ...mapDefinition, openedTreasures: mapState.opened_treasures },
         mapState.switch_states,
       );
+      syncSaraFollowerStateForMap(mapDefinition, mapState, currentEnvelope);
       renderMapTiles(mapLayer, mapDefinition, currentEnvelope);
       tickNpcSprites();
       setVisualMapPosition(mapState.tile_x, mapState.tile_y);
@@ -3559,6 +3819,14 @@ export async function mountScreen({ mountNode, store, navigate }) {
     }
     persistCurrentMapState(mapState);
     animateVisualMapPosition(previousMapState, mapState);
+    if (!isAirshipRiding(mapDefinition, mapState, currentEnvelope)) {
+      mapTransitionLocked = true;
+      try {
+        await maybeFollowWithSealedCaveSara(previousMapState);
+      } finally {
+        mapTransitionLocked = false;
+      }
+    }
     if (isAirshipRiding(mapDefinition, mapState, currentEnvelope)) {
       mapStatus.textContent = "ひくうていで移動しました。";
       return;
@@ -3791,6 +4059,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       { ...mapDefinition, openedTreasures: mapState.opened_treasures },
       mapState.switch_states,
     );
+    syncSaraFollowerStateForMap(mapDefinition, mapState, store.getState().saveEnvelope);
     let postBattleTreasureResult = null;
     if (postBattleTreasureContext) {
       postBattleTreasureResult = applyPendingGuardedTreasureReward(
