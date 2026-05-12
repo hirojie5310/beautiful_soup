@@ -176,8 +176,40 @@
       }
       .resource-row {
         display: grid;
-        gap: 4px;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
         font-size: 0.95rem;
+      }
+      .resource-panel {
+        border: 1px solid rgba(255,255,255,0.35);
+        border-radius: 8px;
+        background: rgba(0,0,0,0.22);
+        padding: 10px 12px;
+        min-height: 92px;
+        box-sizing: border-box;
+      }
+      .resource-stats {
+        display: grid;
+        align-content: center;
+        gap: 8px;
+      }
+      .resource-guest {
+        width: 112px;
+        display: grid;
+        justify-items: center;
+        align-content: center;
+        gap: 8px;
+      }
+      .resource-guest-label {
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+      }
+      .resource-guest .portrait,
+      .resource-guest .portrait-fallback {
+        width: 72px;
+        height: 72px;
+        justify-self: center;
       }
       .slot-list {
         display: grid;

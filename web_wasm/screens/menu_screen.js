@@ -37,6 +37,9 @@ const MENU_ROUTE_BY_LABEL = {
   ジョブ: "job",
   マップ: "map",
 };
+const SEALED_CAVE_B2_2_SARA_EVENT_FLAG = "sealed_cave_b2_2_sara_escort_started";
+const SEALED_CAVE_SARA_LEAVE_EVENT_FLAG = "sara_left_party";
+const SARA_PORTRAIT_URL = "../assets/images/faces/portrait_sara.png";
 
 export function deriveMenuMapOpenRequest(state) {
   const requestedMapId = String(
@@ -51,6 +54,12 @@ export function deriveMenuMapOpenRequest(state) {
       && requestedMapId,
     ),
   };
+}
+
+function shouldShowSaraPortrait(envelope) {
+  const flags = envelope?.save?.event_flag;
+  if (!flags || typeof flags !== "object") return false;
+  return Boolean(flags[SEALED_CAVE_B2_2_SARA_EVENT_FLAG]) && !Boolean(flags[SEALED_CAVE_SARA_LEAVE_EVENT_FLAG]);
 }
 
 export function hydrateMenuStateFromEnvelope(currentMenuState, envelope) {
@@ -625,11 +634,40 @@ export async function mountScreen({ mountNode, store, navigate }) {
 
   function renderResources() {
     resourceRow.innerHTML = "";
+    const statsPanel = document.createElement("div");
+    statsPanel.className = "resource-panel resource-stats";
     const cp = document.createElement("div");
     cp.textContent = `CP ${Number(state.resources?.cp ?? 0)}/${Number(state.resources?.cp_max ?? 255)}`;
     const gil = document.createElement("div");
     gil.textContent = `GIL ${Number(state.resources?.gil ?? 0)}`;
-    resourceRow.append(cp, gil);
+    statsPanel.append(cp, gil);
+    resourceRow.append(statsPanel);
+
+    if (!shouldShowSaraPortrait(store.getState().saveEnvelope)) return;
+
+    const guestPanel = document.createElement("div");
+    guestPanel.className = "resource-panel resource-guest";
+    const label = document.createElement("div");
+    label.className = "resource-guest-label";
+    label.textContent = "SARA";
+    const fallback = document.createElement("div");
+    fallback.className = "portrait-fallback";
+    fallback.textContent = "SARA";
+    const img = document.createElement("img");
+    img.className = "portrait";
+    img.alt = "Sara portrait";
+    applyCachedImageSource(img, [SARA_PORTRAIT_URL], {
+      onLoad: () => fallback.remove(),
+      onError: () => {
+        img.remove();
+        if (!guestPanel.contains(fallback)) guestPanel.appendChild(fallback);
+      },
+    });
+    guestPanel.append(label, img);
+    if (!img.getAttribute("src")) {
+      guestPanel.appendChild(fallback);
+    }
+    resourceRow.append(guestPanel);
   }
 
   function renderSlots() {

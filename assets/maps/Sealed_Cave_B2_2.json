@@ -30,6 +30,18 @@
   },
   "objects": [
     {
+      "type": "npc",
+      "name": "Sealed Cave B2_2 Sara",
+      "npc_key": "sealed_cave_b2_2_sara_scripted",
+      "x": 2,
+      "y": 2,
+      "sprite_image": "../assets/images/NPCs/fs_sara.png",
+      "dialogue_index": 550,
+      "movement": "fixed",
+      "direction": "left",
+      "required_event_flag_absent": "sealed_cave_b2_2_sara_escort_started"
+    },
+    {
       "type": "exit",
       "name": "Sealed Cave B2_1",
       "x": 0,

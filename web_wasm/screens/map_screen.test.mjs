@@ -1250,6 +1250,25 @@ test("buildMergedFixedContentPages splits Cid dialogue in Kazus inn into three p
   assert.match(pages[2], /^シドから　ひくうていを　かくしたばしょを/);
 });
 
+test("buildMergedFixedContentPages splits Sara dialogue in Sealed Cave into three pages", () => {
+  const pages = buildMergedFixedContentPages(550, `>-
+    「わたしはサラ……　サスーンおうのむすめです。\\n『サラひめ。　どうしてこんなところに？\\n「わたしは　ミスリルのゆびわを　つけていたので\\n　ジンの　のろいに　かからなかったのです。\\n　しろの　みんなを　たすけたくて　ここまで\\n　きたのだけれど　まものがいて　さきには\\n　すすめません……\\n\\n『ここは　きけんだ。\\n　サラひめは　しろでまっていてください。\\n「いいえ！いきます。\\n　ひとりでもいくわ！！\\n
+`);
+  assert.equal(pages.length, 3);
+  assert.match(pages[0], /^「わたしはサラ……/);
+  assert.match(pages[1], /^しろの　みんなを　たすけたくて/);
+  assert.match(pages[2], /^『ここは　きけんだ。/);
+});
+
+test("buildMergedFixedContentPages splits Sara followup dialogue into two pages", () => {
+  const pages = buildMergedFixedContentPages(551, `>-
+    『こまった　おひめさまだ……\\n「おねがい　いっしょにつれていって！\\n　この　ミスリルのゆびわがなければ　ジンを\\n　ふういんすることはできません！\\n『しかたがないな……\\nサラひめが　パーティーにくわわった！\\n
+`);
+  assert.equal(pages.length, 2);
+  assert.match(pages[0], /^『こまった　おひめさまだ……/);
+  assert.match(pages[1], /^『しかたがないな……/);
+});
+
 test("water highlight animation covers town and Floating Continent water tiles", () => {
   [5, 6, 9, 10, 11, 14, 15, 16, 30, 31, 32, 43, 46, 47, 48].forEach((gid) => {
     assert.equal(isWaterAnimationGid(gid), true);
