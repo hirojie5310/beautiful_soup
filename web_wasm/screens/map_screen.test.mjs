@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   applySwitchStateToMap,
+  applyDialogueCharacterName,
   createDirectionalHoldRepeater,
   canNpcOccupyTile,
   canAirshipOccupyTile,
@@ -42,6 +43,7 @@ import {
   resolveNpcFacingScale,
   resolveNpcNextDirectionDelay,
   resolveNpcSpriteFrame,
+  resolveSaraFollowerDialogueIndex,
   reviveZeroHpPartyMembersToOneHp,
   resolveCharacterSpriteFrame,
   resolveAirshipUpperSprite,
@@ -50,6 +52,8 @@ import {
   resolveLeaderCharacterSprite,
   resolveLeaderCharacterSpriteUrl,
   resolveMapBgmUrl,
+  resolveMapVisualPosition,
+  resolveNpcDialogueIndicesForInteraction,
   resolveNpcInitialDirection,
   resolveInitialMapSelection,
   resolveTransitionSpawn,
@@ -856,6 +860,17 @@ test("interpolateMapPosition clamps progress to the animation range", () => {
   );
 });
 
+test("resolveMapVisualPosition prefers interpolated coordinates and falls back per axis", () => {
+  assert.deepEqual(
+    resolveMapVisualPosition({ x: 7.5 }, { x: 3, y: 4 }),
+    { x: 7.5, y: 4 },
+  );
+  assert.deepEqual(
+    resolveMapVisualPosition(null, { x: 3, y: 4 }),
+    { x: 3, y: 4 },
+  );
+});
+
 test("createDirectionalHoldRepeater runs immediately, repeats while held, and stops cleanly", () => {
   const steps = [];
   const timeouts = [];
@@ -909,6 +924,16 @@ test("createDirectionalHoldRepeater runs immediately, repeats while held, and st
 
   intervals[0].callback();
   assert.deepEqual(steps, ["right", "right", "right"]);
+});
+
+test("resolveSaraFollowerDialogueIndex uses the scripted sequence before switching to random followups", () => {
+  assert.equal(resolveSaraFollowerDialogueIndex(0, 0.9), 122);
+  assert.equal(resolveSaraFollowerDialogueIndex(1, 0.9), 123);
+  assert.equal(resolveSaraFollowerDialogueIndex(2, 0.9), 124);
+  assert.equal(resolveSaraFollowerDialogueIndex(3, 0.9), 125);
+  assert.equal(resolveSaraFollowerDialogueIndex(4, 0.0), 123);
+  assert.equal(resolveSaraFollowerDialogueIndex(5, 0.5), 124);
+  assert.equal(resolveSaraFollowerDialogueIndex(6, 0.99), 125);
 });
 
 test("findStandingObject returns exit on matching tile", () => {
@@ -1213,6 +1238,38 @@ test("normalizeMergedFixedContent strips merged_fixed control notation for map d
   );
 });
 
+test("applyDialogueCharacterName replaces xchar with the first party member name", () => {
+  assert.equal(
+    applyDialogueCharacterName("サラ「\\xcharたちが　ついてるもの。", [{ name: "Runeth" }]),
+    "サラ「Runethたちが　ついてるもの。",
+  );
+});
+
+test("applyDialogueCharacterName replaces char1[0x02] through char4[0x02] with party member names", () => {
+  assert.equal(
+    applyDialogueCharacterName(
+      "\\char1[0x02]　\\char2[0x02]　\\char3[0x02]　\\char4[0x02]",
+      [{ name: "Runeth" }, { name: "Arc" }, { name: "Refia" }, { name: "Ingus" }],
+    ),
+    "Runeth　Arc　Refia　Ingus",
+  );
+});
+
+test("applyDialogueCharacterName replaces char1[0x01] through char4[0x01] with job names", () => {
+  assert.equal(
+    applyDialogueCharacterName(
+      "\\char1[0x01]　\\char2[0x01]　\\char3[0x01]　\\char4[0x01]",
+      [
+        { name: "Runeth", current_job: "Warrior" },
+        { name: "Arc", current_job: "Red Mage" },
+        { name: "Refia", current_job: "White Mage" },
+        { name: "Ingus", current_job: "Monk" },
+      ],
+    ),
+    "Warrior　Red Mage　White Mage　Monk",
+  );
+});
+
 test("buildMergedFixedContentPages splits Castle Sasune king dialogue into four pages", () => {
   const pages = buildMergedFixedContentPages(544, `>-
     「わたしはサスーンのおう。　ジンの　のろいに\\n　よって　みな　ゆうれいのようなすがたに\\n　かえられてしまった。　ジンを　たおさぬかぎり\\n　もとの　すがたには　もどれぬ。\\n『ジンはどこに？\\n「しろのきたにある　ふういんのどうくつにいる。\\n　だが　ミスリルのゆびわが　なければ\\n　ジンを　ふたたび　ふういんすることはできぬ。\\n『サラひめが　もっていると……\\n「おお　そうだ！　むかし　カズスより　サラひめに\\n　ミスリルのゆびわが　おくられた。　だが\\n　かんじんの　サラが　どこにもみあたらん。\\n　もしや　ジンにさらわれたのでは？！\\n　おお　サラひめ……\\n『ふういんのどうくつに　いってみましょう。\\n「おお　せんしたちよ　よくぞいってくれた。\\n　たしか　ふういんのどうくつには　１かしょ\\n　かくしとびらが　ある。　がいこつが　かぎに\\n　なっていたはずだ……\\n\\n　たのむ！\\n　ジンをたおし　ひとびとをすくってくれ！！\\n
@@ -1240,6 +1297,18 @@ test("buildMergedFixedContentPages splits Castle Sasune gate guard dialogue into
   assert.match(pages[1], /^ミスリルのゆびわがあれば　ジンをふたたび/);
 });
 
+test("buildMergedFixedContentPages splits Ur elder guidance dialogue into four pages", () => {
+  const pages = buildMergedFixedContentPages(506, `>-
+    「わかっておる。　まさか　おまえたちが\\n　えらばれるとは　かんがえもしなかった。\\n　\\char1[0x02]　\\char2[0x02]\\n　\\char3[0x02]　\\char4[0x02]……\\n　これは　ぐうぜんの　せんたくではないことを\\n　まず　しらなければならない。\\n　クリスタルは　そのいしで　おまえたちを\\n　えらんだのだ。\\n　さあ　そのちからを……　おまえたちの\\n　ひかりのこころを　むだにしてはならない。\\n　たびだつのじゃ！\\n　そして　やみのちからを　ふうじるのだ。\\n
+`, [{ name: "Runeth" }, { name: "Arc" }, { name: "Refia" }, { name: "Ingus" }]);
+  assert.equal(pages.length, 4);
+  assert.match(pages[0], /^「わかっておる。　まさか　おまえたちが/);
+  assert.match(pages[1], /^Runeth　Arc/);
+  assert.match(pages[1], /Refia　Ingus……$/);
+  assert.match(pages[2], /^これは　ぐうぜんの　せんたくではないことを/);
+  assert.match(pages[3], /^さあ　そのちからを……　おまえたちの/);
+});
+
 test("buildMergedFixedContentPages splits Cid dialogue in Kazus inn into three pages", () => {
   const pages = buildMergedFixedContentPages(532, `>-
     わしはシド。　カナーンからきたんじゃ。\\nネルブのたにが　おおいわでふさがれてしまい\\nカナーンに　かえるにかえれなくなってしまった。\\nそこでこのまちに　ひとばんの　やどを\\nもとめたのじゃが　このざまじゃ。　フォフォフォ！\\nどうだわかいの　わしの　ひくうていを　かして\\nやるから　なんとかしてくれんかのう？\\nにしのさばくにかくしてあるんじゃ。\\nシドから　ひくうていを　かくしたばしょを\\nきいた！\\nにしの　さばくだ！！\\n
@@ -1248,6 +1317,20 @@ test("buildMergedFixedContentPages splits Cid dialogue in Kazus inn into three p
   assert.match(pages[0], /^わしはシド。　カナーンからきたんじゃ。/);
   assert.match(pages[1], /^もとめたのじゃが　このざまじゃ。/);
   assert.match(pages[2], /^シドから　ひくうていを　かくしたばしょを/);
+});
+
+test("buildMergedFixedContentPages replaces char1[0x01] through char4[0x01] with job names", () => {
+  const pages = buildMergedFixedContentPages(510, `>-
+    わしが　おまえたちの　ちからを　あててみせよう！\\nんー\\n……\\n……\\n\\char1[0x01]\\n\\char2[0x01]\\n\\char3[0x01]\\n\\char4[0x01]じゃな。　あたっているじゃろう！\\n
+`, [
+    { name: "Runeth", current_job: "Warrior" },
+    { name: "Arc", current_job: "Red Mage" },
+    { name: "Refia", current_job: "White Mage" },
+    { name: "Ingus", current_job: "Monk" },
+  ]);
+  assert.deepEqual(pages, [
+    "わしが　おまえたちの　ちからを　あててみせよう！\nんー\n……\n……\nWarrior\nRed Mage\nWhite Mage\nMonkじゃな。　あたっているじゃろう！",
+  ]);
 });
 
 test("buildMergedFixedContentPages splits Sara dialogue in Sealed Cave into three pages", () => {
@@ -1267,6 +1350,44 @@ test("buildMergedFixedContentPages splits Sara followup dialogue into two pages"
   assert.equal(pages.length, 2);
   assert.match(pages[0], /^『こまった　おひめさまだ……/);
   assert.match(pages[1], /^『しかたがないな……/);
+});
+
+test("buildMergedFixedContentPages splits Sara reunion dialogue in Castle Sasune into two pages", () => {
+  const pages = buildMergedFixedContentPages(518, `>-
+    おう「おお　サラひめ！　ぶじだったか！\\nサラ「まっていてね。　わたしのこのゆびわで\\n　　　ジンを　ふういんします！\\nおう「しんぱいじゃ……\\nサラ「だいじょうぶよ！\\n　　　\\xcharたちが　ついてるもの。　ねっ！\\n
+`, [{ name: "Runeth" }, { name: "Arc" }, { name: "Refia" }, { name: "Ingus" }]);
+  assert.equal(pages.length, 2);
+  assert.match(pages[0], /^おう「おお　サラひめ！/);
+  assert.match(pages[0], /おう「しんぱいじゃ……$/);
+  assert.match(pages[1], /^サラ「だいじょうぶよ！/);
+  assert.match(pages[1], /Runethたちが　ついてるもの。　ねっ！$/);
+});
+
+test("resolveNpcDialogueIndicesForInteraction swaps the Sasune king dialogue when Sara is following", () => {
+  const npcRow = { x: 7, y: 4, dialogue_index: 544 };
+  const mapDefinition = { id: "Castle_Sasune_MainKeep_4F" };
+
+  assert.deepEqual(
+    resolveNpcDialogueIndicesForInteraction(mapDefinition, npcRow, {
+      save: {
+        event_flag: {
+          sealed_cave_b2_2_sara_escort_started: true,
+        },
+      },
+    }),
+    [518],
+  );
+  assert.deepEqual(
+    resolveNpcDialogueIndicesForInteraction(mapDefinition, npcRow, {
+      save: {
+        event_flag: {
+          sealed_cave_b2_2_sara_escort_started: true,
+          sara_left_party: true,
+        },
+      },
+    }),
+    [544],
+  );
 });
 
 test("water highlight animation covers town and Floating Continent water tiles", () => {
