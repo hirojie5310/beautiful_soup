@@ -110,6 +110,7 @@ const SEALED_CAVE_B2_2_MAP_ID = "Sealed_Cave_B2_2";
 const SEALED_CAVE_B2_2_SARA_KEY = "sealed_cave_b2_2_sara_scripted";
 const SEALED_CAVE_B2_2_SARA_EVENT_FLAG = "sealed_cave_b2_2_sara_escort_started";
 const SEALED_CAVE_SARA_LEAVE_EVENT_FLAG = "sara_left_party";
+const SARA_FOLLOWER_DIALOGUE_SEQUENCE = [122, 123, 124, 125];
 const SEALED_CAVE_B2_2_SARA_PATH = [
   { x: 3, y: 2 },
   { x: 3, y: 3 },
@@ -127,6 +128,9 @@ const CASTLE_SASUNE_TOWER_EAST_4F_MAP_ID = "Castle_Sasune_Tower_East_4F";
 const CASTLE_SASUNE_TOWER_EAST_4F_RECOVERY_TILES = [
   { x: 4, y: 3 },
 ];
+const CASTLE_SASUNE_MAINKEEP_4F_MAP_ID = "Castle_Sasune_MainKeep_4F";
+const CASTLE_SASUNE_MAINKEEP_4F_SARA_DIALOGUE_TILE = { x: 7, y: 4 };
+const CASTLE_SASUNE_MAINKEEP_4F_SARA_DIALOGUE_INDEX = 518;
 const UR_INN_ITEMSHOP_RECOVERY_TEXT_INDEX = 223;
 const CASTLE_SASUNE_TOWER_EAST_4F_RECOVERY_TEXT_INDEX = 130;
 const ALTER_CAVE_CRYSTAL_ROOM_MAP_ID = "Alter_Cave_Crystal_Room";
@@ -140,6 +144,12 @@ const MERGED_FIXED_DIALOGUE_PAGE_OVERRIDES = {
   538: [
     "しろのひとは　みんなジンの　のろいによって\nゆうれいのようなすがたに　されてしまいました。\nわたしは　つかいで　でていたので\nたすかったのです……",
     "ミスリルのゆびわがあれば　ジンをふたたび\nふういんできるのですが　ゆいいつ　ゆびわを\nつくれる　カズスのむらも　おなじような\nありさまで……\nいったい　わたしはどうしたらいいのか……",
+  ],
+  506: [
+    "「わかっておる。　まさか　おまえたちが\n　えらばれるとは　かんがえもしなかった。",
+    "　\\char1[0x02]　\\char2[0x02]\n　\\char3[0x02]　\\char4[0x02]……",
+    "　これは　ぐうぜんの　せんたくではないことを\n　まず　しらなければならない。\n　クリスタルは　そのいしで　おまえたちを\n　えらんだのだ。",
+    "　さあ　そのちからを……　おまえたちの\n　ひかりのこころを　むだにしてはならない。\n　たびだつのじゃ！\n　そして　やみのちからを　ふうじるのだ。",
   ],
   550: [
     "「わたしはサラ……　サスーンおうのむすめです。\n『サラひめ。　どうしてこんなところに？\n「わたしは　ミスリルのゆびわを　つけていたので\n　ジンの　のろいに　かからなかったのです。",
@@ -160,6 +170,10 @@ const MERGED_FIXED_DIALOGUE_PAGE_OVERRIDES = {
     "『ジンはどこに？\n「しろのきたにある　ふういんのどうくつにいる。\nだが　ミスリルのゆびわが　なければ\nジンを　ふたたび　ふういんすることはできぬ。\n『サラひめが　もっていると……\n「おお　そうだ！　むかし　カズスより　サラひめに\nミスリルのゆびわが　おくられた。　だが\nかんじんの　サラが　どこにもみあたらん。\nもしや　ジンにさらわれたのでは？！\nおお　サラひめ……",
     "『ふういんのどうくつに　いってみましょう。\n「おお　せんしたちよ　よくぞいってくれた。\nたしか　ふういんのどうくつには　１かしょ\nかくしとびらが　ある。　がいこつが　かぎに\nなっていたはずだ……",
     "たのむ！\nジンをたおし　ひとびとをすくってくれ！！",
+  ],
+  518: [
+    "おう「おお　サラひめ！　ぶじだったか！\nサラ「まっていてね。　わたしのこのゆびわで\n　　　ジンを　ふういんします！\nおう「しんぱいじゃ……",
+    "サラ「だいじょうぶよ！\n　　　\\xcharたちが　ついてるもの。　ねっ！",
   ],
 };
 const UR_SHOP_ACTIVATIONS = [
@@ -430,6 +444,13 @@ export function interpolateMapPosition(fromPosition, toPosition, progress) {
   };
 }
 
+export function resolveMapVisualPosition(visualPosition, fallbackPosition = {}) {
+  return {
+    x: asNumber(visualPosition?.x, fallbackPosition?.x),
+    y: asNumber(visualPosition?.y, fallbackPosition?.y),
+  };
+}
+
 export function resolveCharacterSpriteFrame(direction, walkFrame = 0) {
   const normalizedDirection = String(direction || "down");
   const frameOffset = Math.abs(Number(walkFrame || 0)) % 2;
@@ -469,6 +490,17 @@ export function chooseNextNpcDirection(currentDirection, randomValue = Math.rand
   const rows = candidates.length ? candidates : NPC_DIRECTIONS;
   const index = clamp(Math.floor(Number(randomValue || 0) * rows.length), 0, rows.length - 1);
   return rows[index] || "down";
+}
+
+export function resolveSaraFollowerDialogueIndex(dialogueCount = 0, randomValue = Math.random()) {
+  const normalizedCount = Math.max(0, Math.floor(Number(dialogueCount || 0)));
+  if (normalizedCount < SARA_FOLLOWER_DIALOGUE_SEQUENCE.length) {
+    return SARA_FOLLOWER_DIALOGUE_SEQUENCE[normalizedCount];
+  }
+  const fallbackSequence = SARA_FOLLOWER_DIALOGUE_SEQUENCE.slice(1);
+  const normalizedRandom = clamp(Number(randomValue || 0), 0, 0.999999999);
+  const index = Math.floor(normalizedRandom * fallbackSequence.length);
+  return fallbackSequence[index] || fallbackSequence[0];
 }
 
 export function normalizeNpcDirection(direction, fallback = "down") {
@@ -601,6 +633,19 @@ export function npcDialogueIndices(row) {
   return rawIndices
     .map((index) => Number(index))
     .filter((index) => Number.isFinite(index));
+}
+
+export function resolveNpcDialogueIndicesForInteraction(mapDefinition, row, saveEnvelope = null) {
+  if (
+    String(mapDefinition?.id || "") === CASTLE_SASUNE_MAINKEEP_4F_MAP_ID
+    && Number(row?.x) === CASTLE_SASUNE_MAINKEEP_4F_SARA_DIALOGUE_TILE.x
+    && Number(row?.y) === CASTLE_SASUNE_MAINKEEP_4F_SARA_DIALOGUE_TILE.y
+    && isSavedEventFlagEnabled(saveEnvelope, SEALED_CAVE_B2_2_SARA_EVENT_FLAG)
+    && !isSavedEventFlagEnabled(saveEnvelope, SEALED_CAVE_SARA_LEAVE_EVENT_FLAG)
+  ) {
+    return [CASTLE_SASUNE_MAINKEEP_4F_SARA_DIALOGUE_INDEX];
+  }
+  return npcDialogueIndices(row);
 }
 
 function eventPostVictoryDialogueIndices(row) {
@@ -784,6 +829,59 @@ async function loadSpellLevelByName() {
 }
 
 async function loadMergedFixedContentByIndex(index) {
+  return loadMergedFixedContentByIndexWithCharacterName(index);
+}
+
+function normalizeDialogueCharacterName(characterName) {
+  const normalized = String(characterName || "").trim();
+  return normalized || "\\xchar";
+}
+
+function normalizeDialoguePartyMembers(partyMembers = []) {
+  return Array.isArray(partyMembers) ? partyMembers.slice(0, 4) : [];
+}
+
+function resolveDialogueCharacterDisplayName(memberOrName) {
+  if (memberOrName && typeof memberOrName === "object") {
+    return String(memberOrName.name || "").trim();
+  }
+  return String(memberOrName || "").trim();
+}
+
+function resolveDialogueCharacterJobName(memberOrName) {
+  if (!memberOrName || typeof memberOrName !== "object") return "";
+  return String(
+    memberOrName.current_job
+    || memberOrName.job
+    || memberOrName.job_name
+    || "",
+  ).trim();
+}
+
+function resolveDialogueCharacterTokenValue(partyMembers, index, typeCode) {
+  const members = normalizeDialoguePartyMembers(partyMembers);
+  const member = members[index];
+  if (String(typeCode || "") === "0x01") {
+    const jobName = resolveDialogueCharacterJobName(member);
+    return jobName || `\\char${index + 1}[0x01]`;
+  }
+  const characterName = resolveDialogueCharacterDisplayName(member);
+  return characterName || `\\char${index + 1}[0x02]`;
+}
+
+export function applyDialogueCharacterName(rawContent, partyMembers = []) {
+  const members = normalizeDialoguePartyMembers(partyMembers);
+  const leadReplacement = normalizeDialogueCharacterName(
+    resolveDialogueCharacterDisplayName(members[0]),
+  );
+  return String(rawContent || "")
+    .replace(/\\xchar/g, leadReplacement)
+    .replace(/\\char([1-4])\[(0x01|0x02)\]/g, (_match, numberText, typeCode) => (
+      resolveDialogueCharacterTokenValue(members, Number(numberText) - 1, typeCode)
+    ));
+}
+
+async function loadMergedFixedContentByIndexWithCharacterName(index, partyMembers = []) {
   if (!mergedFixedContentPromise) {
     mergedFixedContentPromise = loadJson("../assets/data/merged_fixed.json")
       .catch((error) => {
@@ -795,25 +893,29 @@ async function loadMergedFixedContentByIndex(index) {
   const hit = Array.isArray(rows)
     ? rows.find((row) => Number(row?.index) === Number(index))
     : null;
-  return normalizeMergedFixedContent(hit?.content ?? hit?.sontent ?? "");
+  return normalizeMergedFixedContent(
+    applyDialogueCharacterName(hit?.content ?? hit?.sontent ?? "", partyMembers),
+  );
 }
 
-export function buildMergedFixedContentPages(index, rawContent) {
+export function buildMergedFixedContentPages(index, rawContent, partyMembers = []) {
   const normalizedIndex = Number(index);
   const overridePages = MERGED_FIXED_DIALOGUE_PAGE_OVERRIDES[normalizedIndex];
   if (Array.isArray(overridePages) && overridePages.length > 0) {
-    return overridePages.map((page) => normalizeMergedFixedContent(page)).filter(Boolean);
+    return overridePages
+      .map((page) => normalizeMergedFixedContent(applyDialogueCharacterName(page, partyMembers)))
+      .filter(Boolean);
   }
-  const normalized = normalizeMergedFixedContent(rawContent);
+  const normalized = normalizeMergedFixedContent(applyDialogueCharacterName(rawContent, partyMembers));
   return normalized ? [normalized] : [];
 }
 
-async function loadMergedFixedContentByIndices(indices) {
+async function loadMergedFixedContentByIndices(indices, partyMembers = []) {
   const rows = Array.isArray(indices) ? indices : [];
   const messages = await Promise.all(
     rows.map(async (index) => {
-      const content = await loadMergedFixedContentByIndex(index);
-      return buildMergedFixedContentPages(index, content);
+      const content = await loadMergedFixedContentByIndexWithCharacterName(index, partyMembers);
+      return buildMergedFixedContentPages(index, content, partyMembers);
     }),
   );
   return messages.flat();
@@ -1346,7 +1448,6 @@ function renderLayout() {
         height: ${NPC_DISPLAY_TILE_SIZE}px;
         contain: paint;
         pointer-events: none;
-        transition: transform ${MAP_MOVE_ANIMATION_MS}ms linear;
         will-change: transform;
         z-index: 1;
       }
@@ -1502,6 +1603,8 @@ function renderLayout() {
       }
       [data-screen="map"] .map-pad-actions {
         display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
         align-items: center;
       }
       [data-screen="map"] .map-pad-spacer {
@@ -1515,7 +1618,7 @@ function renderLayout() {
         user-select: none;
         -webkit-user-select: none;
       }
-      [data-screen="map"] .map-pad-confirm {
+      [data-screen="map"] .map-pad-action {
         min-width: 88px;
         min-height: 54px;
         border-radius: 999px;
@@ -1575,7 +1678,8 @@ function renderLayout() {
               <button class="btn map-pad-btn" type="button" data-dir="right">→</button>
             </div>
             <div class="map-pad-actions">
-              <button id="confirmBtn" class="btn map-pad-btn map-pad-confirm" type="button">決定</button>
+              <button id="confirmBtn" class="btn map-pad-btn map-pad-action" type="button">A</button>
+              <button id="cancelBtn" class="btn map-pad-btn map-pad-action" type="button">B</button>
             </div>
           </div>
         </div>
@@ -2633,6 +2737,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   const mapPlayer = mountNode.querySelector(".map-player");
   const mapMeta = mountNode.querySelector("#mapMeta");
   const confirmBtn = mountNode.querySelector("#confirmBtn");
+  const cancelBtn = mountNode.querySelector("#cancelBtn");
   const locationBtn = mountNode.querySelector("#locationBtn");
   const menuBtn = mountNode.querySelector("#menuBtn");
   const battleBtn = mountNode.querySelector("#battleBtn");
@@ -2660,6 +2765,10 @@ export async function mountScreen({ mountNode, store, navigate }) {
   let currentMapBgmUrl = "";
   let cancelPendingBgmUnlock = null;
   let saraFollowerState = null;
+  let saraFollowerDialogueCount = 0;
+  let visualSaraFollowerPosition = null;
+  let saraFollowerMoveAnimation = null;
+  let saraFollowerMoveAnimationFrameId = null;
   const npcAnimationStates = new Map();
   const holdRepeater = createDirectionalHoldRepeater((direction) => tryMove(direction));
 
@@ -2683,6 +2792,15 @@ export async function mountScreen({ mountNode, store, navigate }) {
     );
   }
 
+  function currentDialoguePartyMembers() {
+    const party = Array.isArray(store.getState()?.menuState?.party)
+      ? store.getState().menuState.party
+      : Array.isArray(store.getState()?.saveEnvelope?.save?.party)
+        ? store.getState().saveEnvelope.save.party
+        : [];
+    return party.slice(0, 4).map((member) => ({ ...member }));
+  }
+
   function ensureSaraFollowerNode() {
     let node = mapLayer.querySelector(".map-follower");
     if (!node) {
@@ -2701,6 +2819,59 @@ export async function mountScreen({ mountNode, store, navigate }) {
     mapLayer.querySelector(".map-follower")?.remove();
   }
 
+  function stopSaraFollowerMoveAnimation() {
+    if (saraFollowerMoveAnimationFrameId !== null) {
+      cancelAnimationFrame(saraFollowerMoveAnimationFrameId);
+      saraFollowerMoveAnimationFrameId = null;
+    }
+    saraFollowerMoveAnimation = null;
+  }
+
+  function setSaraFollowerVisualPosition(tileX, tileY) {
+    stopSaraFollowerMoveAnimation();
+    visualSaraFollowerPosition = {
+      x: asNumber(tileX, 0),
+      y: asNumber(tileY, 0),
+    };
+  }
+
+  function animateSaraFollowerVisualPosition(previousPosition, nextPosition, durationMs = MAP_MOVE_ANIMATION_MS) {
+    const now = performance.now();
+    const fromPosition = resolveMapVisualPosition(
+      visualSaraFollowerPosition,
+      previousPosition,
+    );
+    const toPosition = resolveMapVisualPosition(null, nextPosition);
+    stopSaraFollowerMoveAnimation();
+    saraFollowerMoveAnimation = {
+      fromPosition,
+      toPosition,
+      startedAt: now,
+      durationMs: Math.max(1, Number(durationMs || 0)),
+    };
+    const tick = (frameNow) => {
+      if (!saraFollowerMoveAnimation) return;
+      const progress = (
+        frameNow - saraFollowerMoveAnimation.startedAt
+      ) / saraFollowerMoveAnimation.durationMs;
+      visualSaraFollowerPosition = interpolateMapPosition(
+        saraFollowerMoveAnimation.fromPosition,
+        saraFollowerMoveAnimation.toPosition,
+        progress,
+      );
+      redraw();
+      if (progress >= 1) {
+        visualSaraFollowerPosition = { ...saraFollowerMoveAnimation.toPosition };
+        saraFollowerMoveAnimation = null;
+        saraFollowerMoveAnimationFrameId = null;
+        redraw();
+        return;
+      }
+      saraFollowerMoveAnimationFrameId = requestAnimationFrame(tick);
+    };
+    saraFollowerMoveAnimationFrameId = requestAnimationFrame(tick);
+  }
+
   function resolveSaraFollowerSpawnPosition(nextMapDefinition, nextMapState, saveEnvelope = store.getState().saveEnvelope) {
     const facing = normalizeMapFacingDirection(nextMapState?.facing_direction || playerDirection, "down");
     const reverseDirection = {
@@ -2715,13 +2886,15 @@ export async function mountScreen({ mountNode, store, navigate }) {
       tile_y: Number(nextMapState?.tile_y || 0),
       direction: reverseDirection,
       walkFrame: 0,
-      nextFrameAt: performance.now() + NPC_FRAME_MS,
     };
   }
 
   function syncSaraFollowerStateForMap(nextMapDefinition, nextMapState, saveEnvelope = store.getState().saveEnvelope) {
     if (!isSaraFollowerActive(saveEnvelope) || isAirshipRiding(nextMapDefinition, nextMapState, saveEnvelope)) {
+      stopSaraFollowerMoveAnimation();
+      visualSaraFollowerPosition = null;
       saraFollowerState = null;
+      saraFollowerDialogueCount = 0;
       hideSaraFollowerNode();
       return;
     }
@@ -2731,9 +2904,13 @@ export async function mountScreen({ mountNode, store, navigate }) {
       && Number.isFinite(Number(saraFollowerState.tile_x))
       && Number.isFinite(Number(saraFollowerState.tile_y))
     ) {
+      if (!visualSaraFollowerPosition) {
+        setSaraFollowerVisualPosition(saraFollowerState.tile_x, saraFollowerState.tile_y);
+      }
       return;
     }
     saraFollowerState = resolveSaraFollowerSpawnPosition(nextMapDefinition, nextMapState, saveEnvelope);
+    setSaraFollowerVisualPosition(saraFollowerState.tile_x, saraFollowerState.tile_y);
   }
 
   function updateSaraFollowerNode() {
@@ -2748,9 +2925,13 @@ export async function mountScreen({ mountNode, store, navigate }) {
     }
     const node = ensureSaraFollowerNode();
     const renderPadding = mapDefinition?.renderPadding || { left: 0, top: 0 };
-    node.style.transform = npcTileTransform({
+    const visualPosition = resolveMapVisualPosition(visualSaraFollowerPosition, {
       x: saraFollowerState.tile_x,
       y: saraFollowerState.tile_y,
+    });
+    node.style.transform = npcTileTransform({
+      x: visualPosition.x,
+      y: visualPosition.y,
     }, renderPadding);
     const sprite = node.querySelector(".map-npc-sprite");
     if (sprite) {
@@ -2759,17 +2940,10 @@ export async function mountScreen({ mountNode, store, navigate }) {
     node.style.display = isAirshipRiding(mapDefinition, mapState, store.getState().saveEnvelope) ? "none" : "block";
   }
 
-  function tickSaraFollower(now = performance.now()) {
+  function tickSaraFollower() {
     if (!saraFollowerState || !isSaraFollowerActive(store.getState().saveEnvelope)) {
       hideSaraFollowerNode();
       return;
-    }
-    if (!Number.isFinite(Number(saraFollowerState.nextFrameAt))) {
-      saraFollowerState.nextFrameAt = now + NPC_FRAME_MS;
-    }
-    if (now >= Number(saraFollowerState.nextFrameAt)) {
-      saraFollowerState.walkFrame = saraFollowerState.walkFrame === 0 ? 1 : 0;
-      saraFollowerState.nextFrameAt = now + NPC_FRAME_MS;
     }
     updateSaraFollowerNode();
   }
@@ -2853,8 +3027,8 @@ export async function mountScreen({ mountNode, store, navigate }) {
     const npcKey = npcObjectKey(npcRow);
     const marker = findNpcMarkerByKey(npcKey);
     if (!npcRow || !marker) return false;
-    const firstMessages = await loadMergedFixedContentByIndices([516]);
-    const secondMessages = await loadMergedFixedContentByIndices([517]);
+    const firstMessages = await loadMergedFixedContentByIndices([516], currentDialoguePartyMembers());
+    const secondMessages = await loadMergedFixedContentByIndices([517], currentDialoguePartyMembers());
     const now = performance.now();
     const npcState = npcAnimationStates.get(npcKey) || {
       direction: resolveNpcInitialDirection(npcRow, 0),
@@ -2892,8 +3066,8 @@ export async function mountScreen({ mountNode, store, navigate }) {
     const npcKey = npcObjectKey(npcRow);
     const marker = findNpcMarkerByKey(npcKey);
     if (!npcRow || !marker || !mapState) return false;
-    const openingMessages = await loadMergedFixedContentByIndices([550]);
-    const followupMessages = await loadMergedFixedContentByIndices([551]);
+    const openingMessages = await loadMergedFixedContentByIndices([550], currentDialoguePartyMembers());
+    const followupMessages = await loadMergedFixedContentByIndices([551], currentDialoguePartyMembers());
     const now = performance.now();
     const npcState = npcAnimationStates.get(npcKey) || {
       direction: resolveNpcInitialDirection(npcRow, 0),
@@ -2920,8 +3094,8 @@ export async function mountScreen({ mountNode, store, navigate }) {
         tile_y: Number(npcRow.y || 0),
         direction: normalizeNpcDirection(npcRow?.direction, "right"),
         walkFrame: 0,
-        nextFrameAt: performance.now() + NPC_FRAME_MS,
       };
+      setSaraFollowerVisualPosition(saraFollowerState.tile_x, saraFollowerState.tile_y);
       const persistedMapState = persistCurrentMapState(mapState);
       const persistedEventFlag = persistNamedEventFlag(SEALED_CAVE_B2_2_SARA_EVENT_FLAG);
       if (!persistedMapState || !persistedEventFlag) return false;
@@ -2963,15 +3137,61 @@ export async function mountScreen({ mountNode, store, navigate }) {
       direction: saraFollowerState.direction,
       walkFrame: saraFollowerState.walkFrame,
     };
-    await animateNpcStep(followerRow, followerState, marker, targetX, targetY, MAP_MOVE_ANIMATION_MS);
+    setSaraFollowerVisualPosition(followerRow.x, followerRow.y);
+    const deltaX = targetX - followerRow.x;
+    const deltaY = targetY - followerRow.y;
+    if (deltaX > 0) followerState.direction = "right";
+    else if (deltaX < 0) followerState.direction = "left";
+    else if (deltaY > 0) followerState.direction = "down";
+    else if (deltaY < 0) followerState.direction = "up";
+    followerState.walkFrame = followerState.walkFrame === 0 ? 1 : 0;
+    saraFollowerState = {
+      ...saraFollowerState,
+      direction: followerState.direction,
+      walkFrame: followerState.walkFrame,
+    };
+    redraw();
+    followerRow.x = targetX;
+    followerRow.y = targetY;
+    animateSaraFollowerVisualPosition({
+      x: saraFollowerState.tile_x,
+      y: saraFollowerState.tile_y,
+    }, {
+      x: targetX,
+      y: targetY,
+    }, MAP_MOVE_ANIMATION_MS);
+    await waitForDuration(MAP_MOVE_ANIMATION_MS);
     saraFollowerState = {
       current_map_id: String(mapDefinition?.id || ""),
       tile_x: Number(followerRow.x || 0),
       tile_y: Number(followerRow.y || 0),
       direction: followerState.direction,
-      walkFrame: 0,
-      nextFrameAt: performance.now() + NPC_FRAME_MS,
+      walkFrame: followerState.walkFrame,
     };
+    setSaraFollowerVisualPosition(saraFollowerState.tile_x, saraFollowerState.tile_y);
+    return true;
+  }
+
+  async function maybeOpenSaraFollowerDialogue() {
+    if (!saraFollowerState || !isSaraFollowerActive(store.getState().saveEnvelope) || mapTransitionLocked) {
+      return false;
+    }
+    const dialogueIndex = resolveSaraFollowerDialogueIndex(
+      saraFollowerDialogueCount,
+      Math.random(),
+    );
+    const messages = await loadMergedFixedContentByIndices([dialogueIndex], currentDialoguePartyMembers());
+    const visibleMessages = messages.filter(Boolean);
+    if (!visibleMessages.length) {
+      return false;
+    }
+    saraFollowerDialogueCount += 1;
+    if (visibleMessages.length === 1) {
+      openEventOverlay(visibleMessages[0]);
+    } else {
+      openEventOverlaySequence(visibleMessages);
+    }
+    mapStatus.textContent = "サラひめが はなしかけてきた。";
     return true;
   }
 
@@ -3132,8 +3352,8 @@ export async function mountScreen({ mountNode, store, navigate }) {
       return;
     }
     if (options.showOpeningStory && rawIndices.length >= 2) {
-      const firstMessages = await loadMergedFixedContentByIndices([rawIndices[0]]);
-      const trailingMessages = await loadMergedFixedContentByIndices(rawIndices.slice(1));
+      const firstMessages = await loadMergedFixedContentByIndices([rawIndices[0]], currentDialoguePartyMembers());
+      const trailingMessages = await loadMergedFixedContentByIndices(rawIndices.slice(1), currentDialoguePartyMembers());
       openEventOverlaySequence(firstMessages, {
         onComplete: async () => {
           await openTitleStoryInterlude({
@@ -3147,7 +3367,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       });
       return;
     }
-    openEventOverlaySequence(await loadMergedFixedContentByIndices(rawIndices), options);
+    openEventOverlaySequence(await loadMergedFixedContentByIndices(rawIndices, currentDialoguePartyMembers()), options);
   }
 
   function triggerFlash() {
@@ -3239,14 +3459,14 @@ export async function mountScreen({ mountNode, store, navigate }) {
     const now = performance.now();
     const fromPosition = visualMapPosition
       ? { ...visualMapPosition }
-      : {
-        x: asNumber(previousMapState?.tile_x, nextMapState?.tile_x),
-        y: asNumber(previousMapState?.tile_y, nextMapState?.tile_y),
-      };
-    const toPosition = {
-      x: asNumber(nextMapState?.tile_x, fromPosition.x),
-      y: asNumber(nextMapState?.tile_y, fromPosition.y),
-    };
+      : resolveMapVisualPosition(null, {
+        x: previousMapState?.tile_x,
+        y: previousMapState?.tile_y,
+      });
+    const toPosition = resolveMapVisualPosition(null, {
+      x: nextMapState?.tile_x,
+      y: nextMapState?.tile_y,
+    });
     stopMoveAnimation();
     moveAnimation = {
       fromPosition,
@@ -3401,7 +3621,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
           postVictoryShowOpeningStory: eventRow.post_victory_show_opening_story === true,
         });
       };
-      const messages = await loadMergedFixedContentByIndices(npcDialogueIndices(eventRow));
+      const messages = await loadMergedFixedContentByIndices(npcDialogueIndices(eventRow), currentDialoguePartyMembers());
       const visibleMessages = messages.filter((message) => Boolean(message));
       if (visibleMessages.length === 1) {
         openEventOverlay(visibleMessages[0], { onClose: startEncounter });
@@ -3415,7 +3635,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     if (!persistNamedEventFlag(eventRow.set_event_flag)) {
       return true;
     }
-    const messages = await loadMergedFixedContentByIndices(npcDialogueIndices(eventRow));
+    const messages = await loadMergedFixedContentByIndices(npcDialogueIndices(eventRow), currentDialoguePartyMembers());
     const visibleMessages = messages.filter((message) => Boolean(message));
     if (visibleMessages.length === 1) {
       openEventOverlay(visibleMessages[0]);
@@ -3454,7 +3674,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     nextEnvelope.save = mergeMenuStateIntoSave(nextEnvelope.save, nextEnvelope.menu_state);
     if (!persistMapEventEnvelope(nextEnvelope)) return;
     triggerFlash();
-    openEventOverlay(await loadMergedFixedContentByIndex(textIndex));
+    openEventOverlay(await loadMergedFixedContentByIndexWithCharacterName(textIndex, currentDialoguePartyMembers()));
     mapStatus.textContent = statusText;
   }
 
@@ -3477,7 +3697,10 @@ export async function mountScreen({ mountNode, store, navigate }) {
     nextEnvelope.save = mergeMenuStateIntoSave(nextEnvelope.save, nextEnvelope.menu_state);
     if (!persistMapEventEnvelope(nextEnvelope)) return;
     triggerFlash();
-    openEventOverlay(await loadMergedFixedContentByIndex(UR_ELDER_HOUSE_REVIVE_TEXT_INDEX));
+    openEventOverlay(await loadMergedFixedContentByIndexWithCharacterName(
+      UR_ELDER_HOUSE_REVIVE_TEXT_INDEX,
+      currentDialoguePartyMembers(),
+    ));
     mapStatus.textContent = revivedCount > 0
       ? "不思議な力で倒れた仲間がよみがえった。"
       : "不思議な力があたりを満たしている。";
@@ -3586,8 +3809,12 @@ export async function mountScreen({ mountNode, store, navigate }) {
         await runSealedCaveSaraSequence(adjacentNpc);
         return;
       }
-      const dialogueIndices = npcDialogueIndices(adjacentNpc);
-      const messages = await loadMergedFixedContentByIndices(dialogueIndices);
+      const dialogueIndices = resolveNpcDialogueIndicesForInteraction(
+        mapDefinition,
+        adjacentNpc,
+        store.getState().saveEnvelope,
+      );
+      const messages = await loadMergedFixedContentByIndices(dialogueIndices, currentDialoguePartyMembers());
       const visibleMessages = messages.filter((message) => Boolean(message));
       if (visibleMessages.length > 0) {
         if (visibleMessages.length === 1) {
@@ -3925,6 +4152,19 @@ export async function mountScreen({ mountNode, store, navigate }) {
     resumeMapBgmFromGesture();
     closeEventOverlay();
   };
+  const onCancel = () => {
+    resumeMapBgmFromGesture();
+    if (isEventOverlayOpen()) {
+      closeEventOverlay();
+      return;
+    }
+    if (isSaraFollowerActive(store.getState().saveEnvelope)) {
+      void maybeOpenSaraFollowerDialogue();
+      return;
+    }
+    patchMapMenuState({ map_return_pending: true });
+    navigate("menu");
+  };
   const onGoLocation = () => {
     resumeMapBgmFromGesture();
     patchMapMenuState({ map_return_pending: false });
@@ -3942,6 +4182,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   const padHandlers = new Map();
 
   confirmBtn.addEventListener("click", onConfirm);
+  cancelBtn.addEventListener("click", onCancel);
   locationBtn.addEventListener("click", onGoLocation);
   menuBtn.addEventListener("click", onGoMenu);
   battleBtn.addEventListener("click", onGoBattle);
@@ -4014,6 +4255,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       mapMeta.innerHTML = "<div>Locationを対応する場所に合わせてから移動してください。</div>";
       return () => {
         confirmBtn.removeEventListener("click", onConfirm);
+        cancelBtn.removeEventListener("click", onCancel);
         locationBtn.removeEventListener("click", onGoLocation);
         menuBtn.removeEventListener("click", onGoMenu);
         battleBtn.removeEventListener("click", onGoBattle);
@@ -4141,6 +4383,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       await triggerStandingEvent(standingEventOnMount);
       return () => {
         confirmBtn.removeEventListener("click", onConfirm);
+        cancelBtn.removeEventListener("click", onCancel);
         locationBtn.removeEventListener("click", onGoLocation);
         menuBtn.removeEventListener("click", onGoMenu);
         battleBtn.removeEventListener("click", onGoBattle);
@@ -4184,6 +4427,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
 
   return () => {
     confirmBtn.removeEventListener("click", onConfirm);
+    cancelBtn.removeEventListener("click", onCancel);
     locationBtn.removeEventListener("click", onGoLocation);
     menuBtn.removeEventListener("click", onGoMenu);
     battleBtn.removeEventListener("click", onGoBattle);
@@ -4199,6 +4443,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     holdRepeater.stop();
     stopNpcAnimation();
     stopMoveAnimation();
+    stopSaraFollowerMoveAnimation();
     stopMapBgm();
     window.removeEventListener("keydown", onKeyDown);
     if (resizeObserver) {

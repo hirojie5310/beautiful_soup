@@ -262,7 +262,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   const rightBtn = mountNode.querySelector("#rightBtn");
   const backBtn = mountNode.querySelector("#backBtn");
 
-  let modeKey = "learn";
+  let modeKey = "use";
   let memberIndex = Number(store.getState().menuMemberIndex ?? 0);
   let selectedLevel = 1;
   let selectedSlot = 0;
