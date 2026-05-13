@@ -112,6 +112,16 @@ const SEALED_CAVE_B2_2_SARA_KEY = "sealed_cave_b2_2_sara_scripted";
 const SEALED_CAVE_B2_2_SARA_EVENT_FLAG = "sealed_cave_b2_2_sara_escort_started";
 const SEALED_CAVE_B3_DJINN_EVENT_FLAG = "sealed_cave_b3_djinn_event_complete";
 const SEALED_CAVE_B3_DJINN_CUTSCENE_ID = "sealed_cave_b3_djinn";
+const CASTLE_SASUNE_MAINKEEP_B1F_MAP_ID = "Castle_Sasune_MainKeep_B1F";
+const CASTLE_SASUNE_MAINKEEP_POST_DJINN_ENTRY = {
+  player: { x: 5, y: 5, direction: "left" },
+  sara: { x: 5, y: 6, direction: "left" },
+};
+const CASTLE_SASUNE_MAINKEEP_RING_THROW = {
+  start: { x: 5, y: 6 },
+  end: { x: 2, y: 6 },
+};
+const CASTLE_SASUNE_MAINKEEP_4F_POST_DJINN_SPAWN = { x: 7, y: 11 };
 const SEALED_CAVE_SARA_LEAVE_EVENT_FLAG = "sara_left_party";
 const SARA_FOLLOWER_DIALOGUE_SEQUENCE = [122, 123, 124, 125];
 const SEALED_CAVE_B2_2_SARA_PATH = [
@@ -192,6 +202,11 @@ const MERGED_FIXED_DIALOGUE_PAGE_OVERRIDES = {
     "ジンは　きりのように　とけてきえた。\nゆびわの　ちからによって　ふたたび　どうくつの\nおくへと　ふういんされたのだ。",
     "「ありがとうございます。\nあなたがたのおかげで　ジンを　ふたたび\nふういんすることができました。",
     "あとは　このゆびわを　サスーンじょうの\nせいなるいずみにつければ　ジンの　のろいを\nとくことができます。　ゆびわのちからで\nサスーンじょうまで　ワープしましょう！",
+  ],
+  15: [
+    "サラひめは　ゆびわを　いずみになげた。\n「さあ　これでジンの　のろいは　とけたはずです。\nありがとう。　あなたがたの　おかげだわ。\nおわかれですね……わたしは　おとうさまの",
+    "そばにいなくてはなりません。\nほんとうは　ついていきたい……\nでもきっと　あしでまといに　なってしまいますね\n『サラ……",
+    "「たびが　おわったら　かならず　かえってきて\nくださいね。　わたし　まっています。\nいつまでも……\nサラと　わかれた……",
   ],
 };
 const UR_SHOP_ACTIVATIONS = [
@@ -1508,6 +1523,16 @@ function renderLayout() {
         pointer-events: none;
         image-rendering: pixelated;
       }
+      [data-screen="map"] .map-decoration-ring {
+        width: 4px;
+        height: 4px;
+        border-radius: 999px;
+        background: radial-gradient(circle at 35% 35%, #fff8d6 0%, #f1e38a 50%, #8b6f1d 100%);
+        box-shadow:
+          0 0 0 1px rgba(72, 47, 10, 0.7),
+          0 0 6px rgba(255, 232, 126, 0.45);
+        z-index: 3;
+      }
       [data-screen="map"] .map-airship {
         position: absolute;
         pointer-events: none;
@@ -2821,6 +2846,10 @@ export async function mountScreen({ mountNode, store, navigate }) {
   let visualSaraFollowerPosition = null;
   let saraFollowerMoveAnimation = null;
   let saraFollowerMoveAnimationFrameId = null;
+  let forceSaraFollowerVisible = false;
+  let cutsceneRingNode = null;
+  let cutsceneRingAnimation = null;
+  let cutsceneRingAnimationFrameId = null;
   const npcAnimationStates = new Map();
   const holdRepeater = createDirectionalHoldRepeater((direction) => tryMove(direction));
 
@@ -2842,6 +2871,10 @@ export async function mountScreen({ mountNode, store, navigate }) {
       isSavedEventFlagEnabled(saveEnvelope, SEALED_CAVE_B2_2_SARA_EVENT_FLAG)
       && !isSavedEventFlagEnabled(saveEnvelope, SEALED_CAVE_SARA_LEAVE_EVENT_FLAG)
     );
+  }
+
+  function shouldRenderSaraFollower(saveEnvelope = store.getState().saveEnvelope) {
+    return isSaraFollowerActive(saveEnvelope) || forceSaraFollowerVisible;
   }
 
   function currentDialoguePartyMembers() {
@@ -2869,6 +2902,50 @@ export async function mountScreen({ mountNode, store, navigate }) {
 
   function hideSaraFollowerNode() {
     mapLayer.querySelector(".map-follower")?.remove();
+  }
+
+  function stopCutsceneRingAnimation() {
+    if (cutsceneRingAnimationFrameId !== null) {
+      cancelAnimationFrame(cutsceneRingAnimationFrameId);
+      cutsceneRingAnimationFrameId = null;
+    }
+    cutsceneRingAnimation = null;
+  }
+
+  function ensureCutsceneRingNode() {
+    if (!cutsceneRingNode) {
+      cutsceneRingNode = document.createElement("div");
+      cutsceneRingNode.className = "map-decoration map-decoration-ring";
+      cutsceneRingNode.setAttribute("aria-hidden", "true");
+      cutsceneRingNode.style.display = "none";
+      mapLayer.appendChild(cutsceneRingNode);
+    } else if (!cutsceneRingNode.isConnected) {
+      mapLayer.appendChild(cutsceneRingNode);
+    }
+    return cutsceneRingNode;
+  }
+
+  function hideCutsceneRingNode() {
+    stopCutsceneRingAnimation();
+    if (cutsceneRingNode) {
+      cutsceneRingNode.style.display = "none";
+    }
+  }
+
+  function setCutsceneRingPosition(tileX, tileY, pixelOffsetX = 0, pixelOffsetY = 0) {
+    const node = ensureCutsceneRingNode();
+    const renderPadding = mapDefinition?.renderPadding || { left: 0, top: 0 };
+    const left = (Number(tileX || 0) + Number(renderPadding.left || 0)) * DISPLAY_TILE_SIZE
+      + (DISPLAY_TILE_SIZE / 2)
+      + Number(pixelOffsetX || 0)
+      - 2;
+    const top = (Number(tileY || 0) + Number(renderPadding.top || 0)) * DISPLAY_TILE_SIZE
+      + (DISPLAY_TILE_SIZE / 2)
+      + Number(pixelOffsetY || 0)
+      - 2;
+    node.style.left = `${left}px`;
+    node.style.top = `${top}px`;
+    node.style.display = "block";
   }
 
   function stopSaraFollowerMoveAnimation() {
@@ -2966,7 +3043,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   }
 
   function updateSaraFollowerNode() {
-    if (!mapDefinition || !mapState || !isSaraFollowerActive(store.getState().saveEnvelope)) {
+    if (!mapDefinition || !mapState || !shouldRenderSaraFollower(store.getState().saveEnvelope)) {
       hideSaraFollowerNode();
       return;
     }
@@ -2993,7 +3070,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   }
 
   function tickSaraFollower() {
-    if (!saraFollowerState || !isSaraFollowerActive(store.getState().saveEnvelope)) {
+    if (!saraFollowerState || !shouldRenderSaraFollower(store.getState().saveEnvelope)) {
       hideSaraFollowerNode();
       return;
     }
@@ -3075,6 +3152,22 @@ export async function mountScreen({ mountNode, store, navigate }) {
     return true;
   }
 
+  async function animatePlayerStepToWithFacing(targetX, targetY, durationMs, facingDirection = "") {
+    if (!mapState) return false;
+    const previousFacing = playerDirection;
+    const moved = await animatePlayerStepTo(targetX, targetY, durationMs);
+    const resolvedFacing = normalizeMapFacingDirection(facingDirection, previousFacing);
+    playerDirection = resolvedFacing;
+    if (mapState) {
+      mapState = {
+        ...mapState,
+        facing_direction: resolvedFacing,
+      };
+      redraw();
+    }
+    return moved;
+  }
+
   async function animateSaraFollowerStepTo(targetX, targetY, durationMs) {
     if (!saraFollowerState) return false;
     const marker = ensureSaraFollowerNode();
@@ -3108,6 +3201,93 @@ export async function mountScreen({ mountNode, store, navigate }) {
     };
     setSaraFollowerVisualPosition(nextX, nextY);
     redraw();
+    return true;
+  }
+
+  async function animateSaraFollowerStepToWithFacing(targetX, targetY, durationMs, facingDirection = "") {
+    if (!saraFollowerState) return false;
+    const previousFacing = normalizeNpcDirection(saraFollowerState.direction, "down");
+    const moved = await animateSaraFollowerStepTo(targetX, targetY, durationMs);
+    const resolvedFacing = normalizeNpcDirection(facingDirection, previousFacing);
+    saraFollowerState = {
+      ...saraFollowerState,
+      direction: resolvedFacing,
+      walkFrame: 0,
+    };
+    redraw();
+    return moved;
+  }
+
+  async function animateCutsceneRingThrow(startTile, endTile, durationMs = 900) {
+    if (!mapDefinition) return false;
+    const startX = Number(startTile?.x);
+    const startY = Number(startTile?.y);
+    const endX = Number(endTile?.x);
+    const endY = Number(endTile?.y);
+    if (![startX, startY, endX, endY].every((value) => Number.isFinite(value))) {
+      return false;
+    }
+    stopCutsceneRingAnimation();
+    setCutsceneRingPosition(startX, startY, 0, -2);
+    const startedAt = performance.now();
+    const amplitudePx = DISPLAY_TILE_SIZE * 1.1;
+    return new Promise((resolve) => {
+      const tick = (frameNow) => {
+        const progress = clamp((frameNow - startedAt) / Math.max(1, Number(durationMs || 0)), 0, 1);
+        const currentTileX = startX + ((endX - startX) * progress);
+        const currentTileY = startY + ((endY - startY) * progress);
+        const arcOffsetY = -Math.sin(progress * Math.PI) * amplitudePx;
+        setCutsceneRingPosition(currentTileX, currentTileY, 0, arcOffsetY - 2);
+        if (progress >= 1) {
+          cutsceneRingAnimationFrameId = null;
+          cutsceneRingAnimation = null;
+          resolve(true);
+          return;
+        }
+        cutsceneRingAnimationFrameId = requestAnimationFrame(tick);
+      };
+      cutsceneRingAnimation = { startedAt, durationMs, startTile, endTile };
+      cutsceneRingAnimationFrameId = requestAnimationFrame(tick);
+    });
+  }
+
+  async function switchMapForCutscene(targetMapId, nextPlayerState = {}, options = {}) {
+    const nextMapDefinition = await loadMapDefinition(String(targetMapId));
+    const currentEnvelope = store.getState().saveEnvelope;
+    const savedOpenedTreasures = readSavedTreasureStates(currentEnvelope, nextMapDefinition.id);
+    mapDefinition = applySwitchStateToMap(
+      { ...nextMapDefinition, openedTreasures: savedOpenedTreasures },
+      normalizeSwitchStates(options?.switch_states),
+    );
+    mapState = {
+      current_map_id: nextMapDefinition.id,
+      tile_x: Number(nextPlayerState?.x ?? nextMapDefinition.spawn?.x ?? 0),
+      tile_y: Number(nextPlayerState?.y ?? nextMapDefinition.spawn?.y ?? 0),
+      facing_direction: normalizeMapFacingDirection(nextPlayerState?.direction, playerDirection),
+      steps_since_reset: 0,
+      switch_states: normalizeSwitchStates(options?.switch_states),
+      opened_treasures: savedOpenedTreasures,
+    };
+    playerDirection = normalizeMapFacingDirection(mapState.facing_direction, "down");
+    playerWalkFrame = 0;
+    if (options?.saraState) {
+      saraFollowerState = {
+        current_map_id: nextMapDefinition.id,
+        tile_x: Number(options.saraState.x ?? mapState.tile_x),
+        tile_y: Number(options.saraState.y ?? mapState.tile_y),
+        direction: normalizeNpcDirection(options.saraState.direction, "down"),
+        walkFrame: 0,
+      };
+      setSaraFollowerVisualPosition(saraFollowerState.tile_x, saraFollowerState.tile_y);
+    } else {
+      syncSaraFollowerStateForMap(mapDefinition, mapState, currentEnvelope);
+    }
+    renderMapTiles(mapLayer, mapDefinition, currentEnvelope);
+    tickNpcSprites();
+    setVisualMapPosition(mapState.tile_x, mapState.tile_y);
+    hideCutsceneRingNode();
+    persistCurrentMapState(mapState);
+    syncMapBgm();
     return true;
   }
 
@@ -3335,6 +3515,8 @@ export async function mountScreen({ mountNode, store, navigate }) {
     if (cutsceneId !== SEALED_CAVE_B3_DJINN_CUTSCENE_ID) return false;
     const victoryMessages = await loadMergedFixedContentByIndices([13], currentDialoguePartyMembers());
     const endingMessages = await loadMergedFixedContentByIndices([14], currentDialoguePartyMembers());
+    const castleMessages = await loadMergedFixedContentByIndices([15], currentDialoguePartyMembers());
+    const farewellMessages = await loadMergedFixedContentByIndices([6], currentDialoguePartyMembers());
     holdRepeater.stop();
     mapTransitionLocked = true;
     try {
@@ -3350,9 +3532,44 @@ export async function mountScreen({ mountNode, store, navigate }) {
       await openDialogueMessagesAndWait(victoryMessages);
       triggerFlash();
       await openDialogueMessagesAndWait(endingMessages);
-      mapStatus.textContent = "ジンは ふたたび ふういんされた。";
+      await switchMapForCutscene(
+        CASTLE_SASUNE_MAINKEEP_B1F_MAP_ID,
+        CASTLE_SASUNE_MAINKEEP_POST_DJINN_ENTRY.player,
+        { saraState: CASTLE_SASUNE_MAINKEEP_POST_DJINN_ENTRY.sara },
+      );
+      mapStatus.textContent = "サスーンじょうの いずみに たどりついた。";
+      await animateCutsceneRingThrow(
+        CASTLE_SASUNE_MAINKEEP_RING_THROW.start,
+        CASTLE_SASUNE_MAINKEEP_RING_THROW.end,
+        900,
+      );
+      hideCutsceneRingNode();
+      await openDialogueMessagesAndWait(castleMessages);
+      forceSaraFollowerVisible = true;
+      await animatePlayerStepToWithFacing(5, 6, 500, "left");
+      await animatePlayerStepToWithFacing(6, 6, 500, "left");
+      await animatePlayerStepToWithFacing(7, 6, 500, "left");
+      await animateSaraFollowerStepToWithFacing(6, 6, 500, "right");
+      await openDialogueMessagesAndWait(farewellMessages);
+      await animatePlayerStepTo(8, 6, 500);
+      mapTransitionLocked = false;
+      await applyMapTransition(
+        CASTLE_SASUNE_MAINKEEP_4F_MAP_ID,
+        CASTLE_SASUNE_MAINKEEP_4F_POST_DJINN_SPAWN,
+      );
+      mapTransitionLocked = true;
+      if (!persistNamedEventFlag(SEALED_CAVE_SARA_LEAVE_EVENT_FLAG)) {
+        forceSaraFollowerVisible = false;
+        return false;
+      }
+      forceSaraFollowerVisible = false;
+      saraFollowerState = null;
+      hideSaraFollowerNode();
+      mapStatus.textContent = "サラひめと わかれ、じょうないへ もどった。";
       return true;
     } finally {
+      forceSaraFollowerVisible = false;
+      hideCutsceneRingNode();
       mapTransitionLocked = false;
     }
   }
@@ -4616,6 +4833,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     stopNpcAnimation();
     stopMoveAnimation();
     stopSaraFollowerMoveAnimation();
+    stopCutsceneRingAnimation();
     stopMapBgm();
     window.removeEventListener("keydown", onKeyDown);
     if (resizeObserver) {
