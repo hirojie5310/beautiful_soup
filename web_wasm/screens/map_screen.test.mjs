@@ -1352,6 +1352,25 @@ test("buildMergedFixedContentPages splits Sara followup dialogue into two pages"
   assert.match(pages[1], /^『しかたがないな……/);
 });
 
+test("buildMergedFixedContentPages splits Djinn pre-battle dialogue into two pages", () => {
+  const pages = buildMergedFixedContentPages(12, `>-
+    なにも　おこらない。\\nジン「ファファファ……　いまの　おれさまには\\n\\t[0x03]そんなもの　つうようしないわ。\\n\\t[0x03]ぞうだいした　やみのちからが　おれに\\n\\t[0x03]みかたしているのだ！\\nジンがおそってきた！\\n
+`);
+  assert.equal(pages.length, 2);
+  assert.match(pages[0], /^なにも　おこらない。/);
+  assert.match(pages[1], /^みかたしているのだ！/);
+});
+
+test("buildMergedFixedContentPages splits Djinn post-battle dialogue into three pages", () => {
+  const pages = buildMergedFixedContentPages(14, `>-
+    ジンは　きりのように　とけてきえた。\\nゆびわの　ちからによって　ふたたび　どうくつの\\nおくへと　ふういんされたのだ。\\n\\n「ありがとうございます。\\n　あなたがたのおかげで　ジンを　ふたたび\\n　ふういんすることができました。\\n\\n　あとは　このゆびわを　サスーンじょうの\\n　せいなるいずみにつければ　ジンの　のろいを\\n　とくことができます。　ゆびわのちからで\\n　サスーンじょうまで　ワープしましょう！\\n
+`);
+  assert.equal(pages.length, 3);
+  assert.match(pages[0], /^ジンは　きりのように　とけてきえた。/);
+  assert.match(pages[1], /^「ありがとうございます。/);
+  assert.match(pages[2], /^あとは　このゆびわを　サスーンじょうの/);
+});
+
 test("buildMergedFixedContentPages splits Sara reunion dialogue in Castle Sasune into two pages", () => {
   const pages = buildMergedFixedContentPages(518, `>-
     おう「おお　サラひめ！　ぶじだったか！\\nサラ「まっていてね。　わたしのこのゆびわで\\n　　　ジンを　ふういんします！\\nおう「しんぱいじゃ……\\nサラ「だいじょうぶよ！\\n　　　\\xcharたちが　ついてるもの。　ねっ！\\n
