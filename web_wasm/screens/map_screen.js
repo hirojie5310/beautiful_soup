@@ -107,8 +107,11 @@ const FLOATING_CONTINENT_LOCATION_SPAWNS = {
 const KAZUS_MAP_ID = "Kazus";
 const KAZUS_NPC_516_KEY = "kazus_npc_516_scripted";
 const SEALED_CAVE_B2_2_MAP_ID = "Sealed_Cave_B2_2";
+const SEALED_CAVE_B3_MAP_ID = "Sealed_Cave_B3";
 const SEALED_CAVE_B2_2_SARA_KEY = "sealed_cave_b2_2_sara_scripted";
 const SEALED_CAVE_B2_2_SARA_EVENT_FLAG = "sealed_cave_b2_2_sara_escort_started";
+const SEALED_CAVE_B3_DJINN_EVENT_FLAG = "sealed_cave_b3_djinn_event_complete";
+const SEALED_CAVE_B3_DJINN_CUTSCENE_ID = "sealed_cave_b3_djinn";
 const SEALED_CAVE_SARA_LEAVE_EVENT_FLAG = "sara_left_party";
 const SARA_FOLLOWER_DIALOGUE_SEQUENCE = [122, 123, 124, 125];
 const SEALED_CAVE_B2_2_SARA_PATH = [
@@ -119,6 +122,12 @@ const SEALED_CAVE_B2_2_SARA_PATH = [
   { x: 5, y: 4 },
   { x: 6, y: 4 },
 ];
+const SEALED_CAVE_B3_DJINN_PLAYER_PATH = [
+  { x: 7, y: 23 },
+  { x: 8, y: 23 },
+  { x: 8, y: 22 },
+];
+const SEALED_CAVE_B3_DJINN_SARA_DESTINATION = { x: 8, y: 20 };
 const CASTLE_SASUNE_MAINKEEP_1F_MAP_ID = "Castle_Sasune_MainKeep_1F";
 const CASTLE_SASUNE_MAINKEEP_1F_RECOVERY_TILES = [
   { x: 1, y: 4 },
@@ -174,6 +183,15 @@ const MERGED_FIXED_DIALOGUE_PAGE_OVERRIDES = {
   518: [
     "おう「おお　サラひめ！　ぶじだったか！\nサラ「まっていてね。　わたしのこのゆびわで\n　　　ジンを　ふういんします！\nおう「しんぱいじゃ……",
     "サラ「だいじょうぶよ！\n　　　\\xcharたちが　ついてるもの。　ねっ！",
+  ],
+  12: [
+    "なにも　おこらない。\nジン「ファファファ……　いまの　おれさまには\nそんなもの　つうようしないわ。\nぞうだいした　やみのちからが　おれに",
+    "みかたしているのだ！\nジンがおそってきた！",
+  ],
+  14: [
+    "ジンは　きりのように　とけてきえた。\nゆびわの　ちからによって　ふたたび　どうくつの\nおくへと　ふういんされたのだ。",
+    "「ありがとうございます。\nあなたがたのおかげで　ジンを　ふたたび\nふういんすることができました。",
+    "あとは　このゆびわを　サスーンじょうの\nせいなるいずみにつければ　ジンの　のろいを\nとくことができます。　ゆびわのちからで\nサスーンじょうまで　ワープしましょう！",
   ],
 };
 const UR_SHOP_ACTIVATIONS = [
@@ -1107,6 +1125,40 @@ function directionDelta(direction) {
     left: { x: -1, y: 0 },
     right: { x: 1, y: 0 },
   }[direction] || null;
+}
+
+function buildAxisAlignedPath(startPosition, endPosition, options = {}) {
+  const startX = Number(startPosition?.x);
+  const startY = Number(startPosition?.y);
+  const endX = Number(endPosition?.x);
+  const endY = Number(endPosition?.y);
+  if (![startX, startY, endX, endY].every((value) => Number.isFinite(value))) {
+    return [];
+  }
+  const horizontalFirst = options?.horizontalFirst !== false;
+  const points = [];
+  let currentX = startX;
+  let currentY = startY;
+  const pushHorizontal = () => {
+    while (currentX !== endX) {
+      currentX += currentX < endX ? 1 : -1;
+      points.push({ x: currentX, y: currentY });
+    }
+  };
+  const pushVertical = () => {
+    while (currentY !== endY) {
+      currentY += currentY < endY ? 1 : -1;
+      points.push({ x: currentX, y: currentY });
+    }
+  };
+  if (horizontalFirst) {
+    pushHorizontal();
+    pushVertical();
+  } else {
+    pushVertical();
+    pushHorizontal();
+  }
+  return points;
 }
 
 export function canNpcOccupyTile(mapDefinition, npcRow, mapState, x, y, saveEnvelope = null) {
@@ -3023,6 +3075,42 @@ export async function mountScreen({ mountNode, store, navigate }) {
     return true;
   }
 
+  async function animateSaraFollowerStepTo(targetX, targetY, durationMs) {
+    if (!saraFollowerState) return false;
+    const marker = ensureSaraFollowerNode();
+    if (!marker) return false;
+    const fromX = Number(saraFollowerState.tile_x || 0);
+    const fromY = Number(saraFollowerState.tile_y || 0);
+    const nextX = Number(targetX);
+    const nextY = Number(targetY);
+    let direction = normalizeNpcDirection(saraFollowerState.direction, "down");
+    const deltaX = nextX - fromX;
+    const deltaY = nextY - fromY;
+    if (deltaX > 0) direction = "right";
+    else if (deltaX < 0) direction = "left";
+    else if (deltaY > 0) direction = "down";
+    else if (deltaY < 0) direction = "up";
+    saraFollowerState = {
+      ...saraFollowerState,
+      direction,
+      walkFrame: saraFollowerState.walkFrame === 0 ? 1 : 0,
+    };
+    redraw();
+    animateSaraFollowerVisualPosition({ x: fromX, y: fromY }, { x: nextX, y: nextY }, durationMs);
+    await waitForDuration(durationMs);
+    saraFollowerState = {
+      ...saraFollowerState,
+      current_map_id: String(mapDefinition?.id || saraFollowerState.current_map_id || ""),
+      tile_x: nextX,
+      tile_y: nextY,
+      direction,
+      walkFrame: 0,
+    };
+    setSaraFollowerVisualPosition(nextX, nextY);
+    redraw();
+    return true;
+  }
+
   async function runKazusNpc516Sequence(npcRow) {
     const npcKey = npcObjectKey(npcRow);
     const marker = findNpcMarkerByKey(npcKey);
@@ -3193,6 +3281,80 @@ export async function mountScreen({ mountNode, store, navigate }) {
     }
     mapStatus.textContent = "サラひめが はなしかけてきた。";
     return true;
+  }
+
+  async function runSealedCaveB3DjinnSequence(_eventRow) {
+    if (!mapState) return false;
+    const openingMessages = await loadMergedFixedContentByIndices([11], currentDialoguePartyMembers());
+    const preBattleMessages = await loadMergedFixedContentByIndices([12], currentDialoguePartyMembers());
+    holdRepeater.stop();
+    mapTransitionLocked = true;
+    try {
+      for (const target of SEALED_CAVE_B3_DJINN_PLAYER_PATH) {
+        await animatePlayerStepTo(target.x, target.y, 500);
+      }
+      persistCurrentMapState(mapState);
+      await openDialogueMessagesAndWait(openingMessages);
+      if (saraFollowerState) {
+        const saraPath = buildAxisAlignedPath(
+          {
+            x: Number(saraFollowerState.tile_x || 0),
+            y: Number(saraFollowerState.tile_y || 0),
+          },
+          SEALED_CAVE_B3_DJINN_SARA_DESTINATION,
+        );
+        for (const target of saraPath) {
+          await animateSaraFollowerStepTo(target.x, target.y, 500);
+        }
+      } else {
+        saraFollowerState = {
+          current_map_id: String(mapDefinition?.id || SEALED_CAVE_B3_MAP_ID),
+          tile_x: SEALED_CAVE_B3_DJINN_SARA_DESTINATION.x,
+          tile_y: SEALED_CAVE_B3_DJINN_SARA_DESTINATION.y,
+          direction: "up",
+          walkFrame: 0,
+        };
+        setSaraFollowerVisualPosition(saraFollowerState.tile_x, saraFollowerState.tile_y);
+        redraw();
+      }
+      triggerFlash();
+      await openDialogueMessagesAndWait(preBattleMessages);
+      navigateToEncounter({
+        enemyNames: ["Djinn"],
+        isBoss: true,
+        postVictoryEventFlags: [SEALED_CAVE_B3_DJINN_EVENT_FLAG],
+        postVictoryCutsceneId: SEALED_CAVE_B3_DJINN_CUTSCENE_ID,
+      });
+      return true;
+    } finally {
+      mapTransitionLocked = false;
+    }
+  }
+
+  async function runPostBattleCutscene(cutsceneId) {
+    if (cutsceneId !== SEALED_CAVE_B3_DJINN_CUTSCENE_ID) return false;
+    const victoryMessages = await loadMergedFixedContentByIndices([13], currentDialoguePartyMembers());
+    const endingMessages = await loadMergedFixedContentByIndices([14], currentDialoguePartyMembers());
+    holdRepeater.stop();
+    mapTransitionLocked = true;
+    try {
+      saraFollowerState = {
+        current_map_id: String(mapDefinition?.id || SEALED_CAVE_B3_MAP_ID),
+        tile_x: SEALED_CAVE_B3_DJINN_SARA_DESTINATION.x,
+        tile_y: SEALED_CAVE_B3_DJINN_SARA_DESTINATION.y,
+        direction: "up",
+        walkFrame: 0,
+      };
+      setSaraFollowerVisualPosition(saraFollowerState.tile_x, saraFollowerState.tile_y);
+      redraw();
+      await openDialogueMessagesAndWait(victoryMessages);
+      triggerFlash();
+      await openDialogueMessagesAndWait(endingMessages);
+      mapStatus.textContent = "ジンは ふたたび ふういんされた。";
+      return true;
+    } finally {
+      mapTransitionLocked = false;
+    }
   }
 
   function clearPendingBgmUnlock() {
@@ -3610,6 +3772,9 @@ export async function mountScreen({ mountNode, store, navigate }) {
 
   async function triggerStandingEvent(eventRow) {
     if (!eventRow || typeof eventRow !== "object") return false;
+    if (String(eventRow.scripted_sequence || "") === SEALED_CAVE_B3_DJINN_CUTSCENE_ID) {
+      return runSealedCaveB3DjinnSequence(eventRow);
+    }
     const enemyNames = eventEnemyNames(eventRow);
     if (enemyNames.length) {
       const startEncounter = () => {
@@ -3972,6 +4137,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       ? options.postVictoryEventFlags.map((flag) => String(flag || "")).filter((flag) => Boolean(flag))
       : [];
     const postVictoryShowOpeningStory = options?.postVictoryShowOpeningStory === true;
+    const postVictoryCutsceneId = String(options?.postVictoryCutsceneId || "");
     const postVictoryTreasureContext = (
       options?.postVictoryTreasureContext && typeof options.postVictoryTreasureContext === "object"
         ? {
@@ -3992,6 +4158,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       ...(postVictoryOverlayIndices.length ? { post_victory_overlay_indices: postVictoryOverlayIndices } : {}),
       ...(postVictoryEventFlags.length ? { post_victory_event_flags: postVictoryEventFlags } : {}),
       ...(postVictoryShowOpeningStory ? { post_victory_show_opening_story: true } : {}),
+      ...(postVictoryCutsceneId ? { post_victory_cutscene_id: postVictoryCutsceneId } : {}),
       ...(postVictoryTreasureContext?.treasure_key ? { post_victory_treasure_context: postVictoryTreasureContext } : {}),
     }));
     store.patch({
@@ -4233,6 +4400,9 @@ export async function mountScreen({ mountNode, store, navigate }) {
       : [];
     const postBattleShowOpeningStory = returningFromBattle
       && battleReturnContext?.pending_opening_story === true;
+    const postBattleCutsceneId = returningFromBattle
+      ? String(battleReturnContext?.pending_cutscene_id || "")
+      : "";
     const postBattleTreasureContext = returningFromBattle
       && battleReturnContext?.pending_treasure_context
       && typeof battleReturnContext.pending_treasure_context === "object"
@@ -4407,6 +4577,8 @@ export async function mountScreen({ mountNode, store, navigate }) {
         showOpeningStory: postBattleShowOpeningStory,
       });
       mapStatus.textContent = "戦いのあと、クリスタルが静かに輝いている。";
+    } else if (postBattleCutsceneId) {
+      await runPostBattleCutscene(postBattleCutsceneId);
     } else if (postBattleTreasureResult?.opened) {
       mapStatus.textContent = treasureGainStatusText(postBattleTreasureResult);
     } else {

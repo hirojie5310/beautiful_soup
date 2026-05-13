@@ -71,7 +71,18 @@
       "y": 18,
       "sprite_image": "../assets/images/objects/djinn.png",
       "sprite_frames": 2,
-      "sprite_frame_ms": 1000
+      "sprite_frame_ms": 1000,
+      "required_event_flag_absent": "sealed_cave_b3_djinn_event_complete"
+    },
+    {
+      "type": "event",
+      "name": "Sealed Cave B3 Djinn",
+      "x": 6,
+      "y": 23,
+      "hidden": true,
+      "scripted_sequence": "sealed_cave_b3_djinn",
+      "required_event_flag": "sealed_cave_b2_2_sara_escort_started",
+      "required_event_flag_absent": "sealed_cave_b3_djinn_event_complete"
     }
   ],
   "rows": [

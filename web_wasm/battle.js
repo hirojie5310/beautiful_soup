@@ -1552,6 +1552,11 @@ async function executeRound() {
       && battleReturnContext?.return_route === "map"
       && battleReturnContext?.post_victory_show_opening_story === true,
     );
+    const shouldQueuePostVictoryCutscene = Boolean(
+      result?.victory_rewards
+      && battleReturnContext?.return_route === "map"
+      && battleReturnContext?.post_victory_cutscene_id,
+    );
     const shouldQueuePostVictoryTreasure = Boolean(
       result?.victory_rewards
       && battleReturnContext?.return_route === "map"
@@ -1563,6 +1568,7 @@ async function executeRound() {
       shouldQueuePostVictoryOverlay
       || shouldQueuePostVictoryEventFlags
       || shouldQueuePostVictoryOpeningStory
+      || shouldQueuePostVictoryCutscene
       || shouldQueuePostVictoryTreasure
     ) {
       writeBattleReturnContextToSession({
@@ -1575,6 +1581,9 @@ async function executeRound() {
           : {}),
         ...(shouldQueuePostVictoryOpeningStory
           ? { pending_opening_story: true }
+          : {}),
+        ...(shouldQueuePostVictoryCutscene
+          ? { pending_cutscene_id: battleReturnContext.post_victory_cutscene_id }
           : {}),
         ...(shouldQueuePostVictoryTreasure
           ? { pending_treasure_context: battleReturnContext.post_victory_treasure_context }
