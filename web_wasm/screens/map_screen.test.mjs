@@ -1371,6 +1371,16 @@ test("buildMergedFixedContentPages splits Djinn post-battle dialogue into three 
   assert.match(pages[2], /^あとは　このゆびわを　サスーンじょうの/);
 });
 
+test("buildMergedFixedContentPages splits Sara farewell dialogue into three pages", () => {
+  const pages = buildMergedFixedContentPages(15, `>-
+    サラひめは　ゆびわを　いずみになげた。\\n「さあ　これでジンの　のろいは　とけたはずです。\\n　ありがとう。　あなたがたの　おかげだわ。\\n　おわかれですね……わたしは　おとうさまの\\n　そばにいなくてはなりません。\\n　ほんとうは　ついていきたい……\\n　でもきっと　あしでまといに　なってしまいますね\\n『サラ……\\n「たびが　おわったら　かならず　かえってきて\\n　くださいね。　わたし　まっています。\\n　いつまでも……\\nサラと　わかれた……\\n
+`);
+  assert.equal(pages.length, 3);
+  assert.match(pages[0], /^サラひめは　ゆびわを　いずみになげた。/);
+  assert.match(pages[1], /^そばにいなくてはなりません。/);
+  assert.match(pages[2], /^「たびが　おわったら　かならず　かえってきて/);
+});
+
 test("buildMergedFixedContentPages splits Sara reunion dialogue in Castle Sasune into two pages", () => {
   const pages = buildMergedFixedContentPages(518, `>-
     おう「おお　サラひめ！　ぶじだったか！\\nサラ「まっていてね。　わたしのこのゆびわで\\n　　　ジンを　ふういんします！\\nおう「しんぱいじゃ……\\nサラ「だいじょうぶよ！\\n　　　\\xcharたちが　ついてるもの。　ねっ！\\n
