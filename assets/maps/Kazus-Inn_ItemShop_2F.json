@@ -57,6 +57,17 @@
       "sprite_image": "../assets/images/objects/candle.png",
       "sprite_frames": 2,
       "sprite_frame_ms": 1000
+    },
+    {
+      "type": "npc",
+      "name": "Inn ItemShop 2F Woman 534",
+      "x": 6,
+      "y": 5,
+      "sprite_image": "../assets/images/NPCs/fs_woman1.png",
+      "dialogue_index": 534,
+      "movement": "random",
+      "direction": "down",
+      "required_event_flag": "sara_left_party"
     }
   ],
   "rows": [

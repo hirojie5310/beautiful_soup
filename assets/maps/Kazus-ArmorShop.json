@@ -48,7 +48,19 @@
       "sprite_image": "../assets/images/NPCs/fs_cursed.png",
       "dialogue_index": 525,
       "movement": "fixed",
-      "direction": "down"
+      "direction": "down",
+      "required_event_flag_absent": "sara_left_party"
+    },
+    {
+      "type": "npc",
+      "name": "Kazus Armor Shop Merchant 285",
+      "x": 3,
+      "y": 4,
+      "sprite_image": "../assets/images/NPCs/fs_merchant1.png",
+      "dialogue_index": 285,
+      "movement": "fixed",
+      "direction": "down",
+      "required_event_flag": "sara_left_party"
     }
   ],
   "rows": [

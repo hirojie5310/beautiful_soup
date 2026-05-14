@@ -48,7 +48,19 @@
       "sprite_image": "../assets/images/NPCs/fs_cursed.png",
       "dialogue_index": 525,
       "movement": "fixed",
-      "direction": "down"
+      "direction": "down",
+      "required_event_flag_absent": "sara_left_party"
+    },
+    {
+      "type": "npc",
+      "name": "Kazus Magic Shop Black Mage 285",
+      "x": 4,
+      "y": 4,
+      "sprite_image": "../assets/images/NPCs/fs_black_mage.png",
+      "dialogue_index": 285,
+      "movement": "fixed",
+      "direction": "down",
+      "required_event_flag": "sara_left_party"
     }
   ],
   "rows": [

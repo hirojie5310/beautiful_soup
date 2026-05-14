@@ -190,7 +190,63 @@
       "sprite_image": "../assets/images/NPCs/fs_man1.png",
       "dialogue_index": 516,
       "movement": "fixed",
-      "direction": "right"
+      "direction": "right",
+      "required_event_flag_absent": "sara_left_party"
+    },
+    {
+      "type": "npc",
+      "name": "Kazus Old Man 520",
+      "x": 18,
+      "y": 27,
+      "sprite_image": "../assets/images/NPCs/fs_old_man1.png",
+      "dialogue_index": 520,
+      "movement": "random",
+      "direction": "down",
+      "required_event_flag": "sara_left_party"
+    },
+    {
+      "type": "npc",
+      "name": "Kazus Man 521",
+      "x": 15,
+      "y": 20,
+      "sprite_image": "../assets/images/NPCs/fs_man1.png",
+      "dialogue_index": 521,
+      "movement": "random",
+      "direction": "down",
+      "required_event_flag": "sara_left_party"
+    },
+    {
+      "type": "npc",
+      "name": "Kazus Woman 522",
+      "x": 14,
+      "y": 17,
+      "sprite_image": "../assets/images/NPCs/fs_woman1.png",
+      "dialogue_index": 522,
+      "movement": "random",
+      "direction": "down",
+      "required_event_flag": "sara_left_party"
+    },
+    {
+      "type": "npc",
+      "name": "Kazus Man 524",
+      "x": 15,
+      "y": 16,
+      "sprite_image": "../assets/images/NPCs/fs_man1.png",
+      "dialogue_index": 524,
+      "movement": "fixed",
+      "direction": "down",
+      "required_event_flag": "sara_left_party"
+    },
+    {
+      "type": "npc",
+      "name": "Kazus Man 523",
+      "x": 22,
+      "y": 12,
+      "sprite_image": "../assets/images/NPCs/fs_man1.png",
+      "dialogue_index": 523,
+      "movement": "fixed",
+      "direction": "down",
+      "required_event_flag": "sara_left_party"
     }
   ],
   "rows": [
