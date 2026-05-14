@@ -58,7 +58,8 @@
       "y": 6,
       "sprite_image": "../assets/images/NPCs/fs_cursed.png",
       "dialogue_index": 531,
-      "movement": "random"
+      "movement": "random",
+      "required_event_flag_absent": "sara_left_party"
     },
     {
       "type": "npc",
@@ -67,7 +68,8 @@
       "y": 6,
       "sprite_image": "../assets/images/NPCs/fs_cursed.png",
       "dialogue_index": 527,
-      "movement": "random"
+      "movement": "random",
+      "required_event_flag_absent": "sara_left_party"
     },
     {
       "type": "npc",
@@ -76,7 +78,8 @@
       "y": 7,
       "sprite_image": "../assets/images/NPCs/fs_cursed.png",
       "dialogue_index": 529,
-      "movement": "random"
+      "movement": "random",
+      "required_event_flag_absent": "sara_left_party"
     },
     {
       "type": "npc",
@@ -85,7 +88,8 @@
       "y": 5,
       "sprite_image": "../assets/images/NPCs/fs_cursed.png",
       "dialogue_index": 533,
-      "movement": "random"
+      "movement": "random",
+      "required_event_flag_absent": "sara_left_party"
     },
     {
       "type": "npc",
@@ -96,7 +100,52 @@
       "dialogue_index": 532,
       "set_event_flag": "cid_airship_location_revealed",
       "movement": "fixed",
-      "direction": "down"
+      "direction": "down",
+      "required_event_flag_absent": "sara_left_party"
+    },
+    {
+      "type": "npc",
+      "name": "Inn ItemShop 1F Man 285",
+      "x": 13,
+      "y": 5,
+      "sprite_image": "../assets/images/NPCs/fs_man1.png",
+      "dialogue_index": 285,
+      "movement": "fixed",
+      "direction": "down",
+      "required_event_flag": "sara_left_party"
+    },
+    {
+      "type": "npc",
+      "name": "Inn ItemShop 1F Boy 530",
+      "x": 8,
+      "y": 6,
+      "sprite_image": "../assets/images/NPCs/fs_boy1.png",
+      "dialogue_index": 530,
+      "movement": "random",
+      "direction": "down",
+      "required_event_flag": "sara_left_party"
+    },
+    {
+      "type": "npc",
+      "name": "Inn ItemShop 1F Man 526",
+      "x": 8,
+      "y": 5,
+      "sprite_image": "../assets/images/NPCs/fs_man1.png",
+      "dialogue_index": 526,
+      "movement": "random",
+      "direction": "down",
+      "required_event_flag": "sara_left_party"
+    },
+    {
+      "type": "npc",
+      "name": "Inn ItemShop 1F Woman 285",
+      "x": 7,
+      "y": 3,
+      "sprite_image": "../assets/images/NPCs/fs_woman1.png",
+      "dialogue_index": 285,
+      "movement": "random",
+      "direction": "down",
+      "required_event_flag": "sara_left_party"
     }
   ],
   "rows": [

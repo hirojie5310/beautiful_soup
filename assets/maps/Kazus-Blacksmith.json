@@ -51,6 +51,17 @@
       "quantity": 1,
       "closed_gid": 124,
       "open_gid": 126
+    },
+    {
+      "type": "npc",
+      "name": "Kazus Blacksmith Old Man 537",
+      "x": 6,
+      "y": 6,
+      "sprite_image": "../assets/images/NPCs/fs_old_man1.png",
+      "dialogue_index": 537,
+      "movement": "fixed",
+      "direction": "up",
+      "required_event_flag": "sara_left_party"
     }
   ],
   "rows": [
