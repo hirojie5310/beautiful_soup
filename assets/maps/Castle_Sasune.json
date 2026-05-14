@@ -77,7 +77,74 @@
       "y": 21,
       "sprite_image": "../assets/images/NPCs/fs_soldier1.png",
       "dialogue_index": 538,
-      "movement": "random"
+      "movement": "random",
+      "required_event_flag_absent": "sara_left_party"
+    },
+    {
+      "type": "npc",
+      "name": "Castle Sasune Soldier 811",
+      "x": 15,
+      "y": 20,
+      "sprite_image": "../assets/images/NPCs/fs_soldier1.png",
+      "dialogue_index": 811,
+      "movement": "random",
+      "direction": "down",
+      "required_event_flag": "sara_left_party"
+    },
+    {
+      "type": "npc",
+      "name": "Castle Sasune Soldier 549 Random",
+      "x": 8,
+      "y": 19,
+      "sprite_image": "../assets/images/NPCs/fs_soldier1.png",
+      "dialogue_index": 549,
+      "movement": "random",
+      "direction": "down",
+      "required_event_flag": "sara_left_party"
+    },
+    {
+      "type": "npc",
+      "name": "Castle Sasune Soldier 549 Fixed Down",
+      "x": 22,
+      "y": 19,
+      "sprite_image": "../assets/images/NPCs/fs_soldier1.png",
+      "dialogue_index": 549,
+      "movement": "fixed",
+      "direction": "down",
+      "required_event_flag": "sara_left_party"
+    },
+    {
+      "type": "npc",
+      "name": "Castle Sasune Soldier 549 Fixed Right",
+      "x": 23,
+      "y": 18,
+      "sprite_image": "../assets/images/NPCs/fs_soldier1.png",
+      "dialogue_index": 549,
+      "movement": "fixed",
+      "direction": "right",
+      "required_event_flag": "sara_left_party"
+    },
+    {
+      "type": "npc",
+      "name": "Castle Sasune Soldier 549 Fixed Left",
+      "x": 7,
+      "y": 17,
+      "sprite_image": "../assets/images/NPCs/fs_soldier1.png",
+      "dialogue_index": 549,
+      "movement": "fixed",
+      "direction": "left",
+      "required_event_flag": "sara_left_party"
+    },
+    {
+      "type": "npc",
+      "name": "Castle Sasune Woman 548",
+      "x": 16,
+      "y": 21,
+      "sprite_image": "../assets/images/NPCs/fs_woman1.png",
+      "dialogue_index": 548,
+      "movement": "fixed",
+      "direction": "down",
+      "required_event_flag": "sara_left_party"
     },
     {
       "type": "exit",

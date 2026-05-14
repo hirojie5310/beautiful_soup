@@ -93,7 +93,8 @@
       "y": 4,
       "sprite_image": "../assets/images/NPCs/fs_cursed.png",
       "dialogue_index": 543,
-      "movement": "random"
+      "movement": "random",
+      "required_event_flag_absent": "sara_left_party"
     },
     {
       "type": "npc",
@@ -102,7 +103,8 @@
       "y": 3,
       "sprite_image": "../assets/images/NPCs/fs_cursed.png",
       "dialogue_index": 543,
-      "movement": "random"
+      "movement": "random",
+      "required_event_flag_absent": "sara_left_party"
     },
     {
       "type": "npc",
@@ -111,7 +113,8 @@
       "y": 3,
       "sprite_image": "../assets/images/NPCs/fs_cursed.png",
       "dialogue_index": 543,
-      "movement": "random"
+      "movement": "random",
+      "required_event_flag_absent": "sara_left_party"
     },
     {
       "type": "npc",
@@ -120,7 +123,30 @@
       "y": 3,
       "sprite_image": "../assets/images/NPCs/fs_cursed.png",
       "dialogue_index": 543,
-      "movement": "random"
+      "movement": "random",
+      "required_event_flag_absent": "sara_left_party"
+    },
+    {
+      "type": "npc",
+      "name": "Castle Sasune MainKeep 1F Soldier 811 1",
+      "x": 9,
+      "y": 3,
+      "sprite_image": "../assets/images/NPCs/fs_soldier1.png",
+      "dialogue_index": 811,
+      "movement": "fixed",
+      "direction": "down",
+      "required_event_flag": "sara_left_party"
+    },
+    {
+      "type": "npc",
+      "name": "Castle Sasune MainKeep 1F Soldier 811 2",
+      "x": 11,
+      "y": 3,
+      "sprite_image": "../assets/images/NPCs/fs_soldier1.png",
+      "dialogue_index": 811,
+      "movement": "fixed",
+      "direction": "down",
+      "required_event_flag": "sara_left_party"
     },
     {
       "type": "exit",

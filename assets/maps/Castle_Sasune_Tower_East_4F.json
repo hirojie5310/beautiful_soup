@@ -75,6 +75,28 @@
         "x": 4,
         "y": 6
       }
+    },
+    {
+      "type": "npc",
+      "name": "Castle Sasune Tower East 4F Old Man 547",
+      "x": 3,
+      "y": 6,
+      "sprite_image": "../assets/images/NPCs/fs_old_man1.png",
+      "dialogue_index": 547,
+      "movement": "random",
+      "direction": "down",
+      "required_event_flag": "sara_left_party"
+    },
+    {
+      "type": "npc",
+      "name": "Castle Sasune Tower East 4F Sara 546",
+      "x": 5,
+      "y": 3,
+      "sprite_image": "../assets/images/NPCs/fs_sara.png",
+      "dialogue_index": 546,
+      "movement": "random",
+      "direction": "down",
+      "required_event_flag": "sara_left_party"
     }
   ],
   "rows": [

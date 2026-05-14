@@ -48,7 +48,8 @@
       "sprite_image": "../assets/images/NPCs/fs_cursed.png",
       "dialogue_index": 544,
       "movement": "fixed",
-      "direction": "down"
+      "direction": "down",
+      "required_event_flag_absent": "sara_left_party"
     },
     {
       "type": "npc",
@@ -57,7 +58,8 @@
       "y": 5,
       "sprite_image": "../assets/images/NPCs/fs_cursed.png",
       "dialogue_index": 540,
-      "movement": "random"
+      "movement": "random",
+      "required_event_flag_absent": "sara_left_party"
     },
     {
       "type": "npc",
@@ -66,7 +68,102 @@
       "y": 5,
       "sprite_image": "../assets/images/NPCs/fs_cursed.png",
       "dialogue_index": 541,
-      "movement": "random"
+      "movement": "random",
+      "required_event_flag_absent": "sara_left_party"
+    },
+    {
+      "type": "npc",
+      "name": "Castle Sasune MainKeep 4F Guard 539 Right",
+      "x": 6,
+      "y": 8,
+      "sprite_image": "../assets/images/NPCs/fs_soldier1.png",
+      "dialogue_index": 539,
+      "set_event_flag": "castle_sasune_mainkeep_4f_guard_539_spoken",
+      "movement": "fixed",
+      "direction": "right",
+      "required_event_flag": "sara_left_party",
+      "required_event_flag_absent": "castle_sasune_mainkeep_4f_guard_539_spoken"
+    },
+    {
+      "type": "npc",
+      "name": "Castle Sasune MainKeep 4F Guard 811 Right",
+      "x": 6,
+      "y": 8,
+      "sprite_image": "../assets/images/NPCs/fs_soldier1.png",
+      "dialogue_index": 811,
+      "movement": "fixed",
+      "direction": "right",
+      "required_event_flag": "castle_sasune_mainkeep_4f_guard_539_spoken"
+    },
+    {
+      "type": "npc",
+      "name": "Castle Sasune MainKeep 4F Guard 539 Left",
+      "x": 8,
+      "y": 8,
+      "sprite_image": "../assets/images/NPCs/fs_soldier1.png",
+      "dialogue_index": 539,
+      "set_event_flag": "castle_sasune_mainkeep_4f_guard_539_spoken",
+      "movement": "fixed",
+      "direction": "left",
+      "required_event_flag": "sara_left_party",
+      "required_event_flag_absent": "castle_sasune_mainkeep_4f_guard_539_spoken"
+    },
+    {
+      "type": "npc",
+      "name": "Castle Sasune MainKeep 4F Guard 811 Left",
+      "x": 8,
+      "y": 8,
+      "sprite_image": "../assets/images/NPCs/fs_soldier1.png",
+      "dialogue_index": 811,
+      "movement": "fixed",
+      "direction": "left",
+      "required_event_flag": "castle_sasune_mainkeep_4f_guard_539_spoken"
+    },
+    {
+      "type": "npc",
+      "name": "Castle Sasune MainKeep 4F Soldier 540",
+      "x": 6,
+      "y": 5,
+      "sprite_image": "../assets/images/NPCs/fs_soldier1.png",
+      "dialogue_index": 540,
+      "movement": "fixed",
+      "direction": "right",
+      "required_event_flag": "sara_left_party"
+    },
+    {
+      "type": "npc",
+      "name": "Castle Sasune MainKeep 4F Soldier 542",
+      "x": 8,
+      "y": 5,
+      "sprite_image": "../assets/images/NPCs/fs_soldier1.png",
+      "dialogue_index": 542,
+      "movement": "fixed",
+      "direction": "left",
+      "required_event_flag": "sara_left_party"
+    },
+    {
+      "type": "npc",
+      "name": "Castle Sasune MainKeep 4F King 545",
+      "x": 7,
+      "y": 4,
+      "sprite_image": "../assets/images/NPCs/fs_king1.png",
+      "dialogue_index": 545,
+      "set_event_flag": "castle_sasune_mainkeep_4f_king_545_spoken",
+      "movement": "fixed",
+      "direction": "down",
+      "required_event_flag": "sara_left_party",
+      "required_event_flag_absent": "castle_sasune_mainkeep_4f_king_545_spoken"
+    },
+    {
+      "type": "npc",
+      "name": "Castle Sasune MainKeep 4F King 576",
+      "x": 7,
+      "y": 4,
+      "sprite_image": "../assets/images/NPCs/fs_king1.png",
+      "dialogue_index": 576,
+      "movement": "fixed",
+      "direction": "down",
+      "required_event_flag": "castle_sasune_mainkeep_4f_king_545_spoken"
     }
   ],
   "rows": [

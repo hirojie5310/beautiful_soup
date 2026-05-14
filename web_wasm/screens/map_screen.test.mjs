@@ -1281,6 +1281,24 @@ test("buildMergedFixedContentPages splits Castle Sasune king dialogue into four 
   assert.match(pages[3], /^たのむ！/);
 });
 
+test("buildMergedFixedContentPages splits post-Djinn king dialogue into two pages", () => {
+  const pages = buildMergedFixedContentPages(545, `>-
+    ありがとう　せんしたちよ。\\nふたたび　ジンをふういんし\\nサラひめを　たすけだしてくれたこと\\nれいをいう。\\nこれを　もっていくといい。\\nなにかのやくにたつかもしれん。\\n\\nおうさまから　カヌーをもらった！\\n
+`);
+  assert.equal(pages.length, 2);
+  assert.match(pages[0], /^ありがとう　せんしたちよ。/);
+  assert.match(pages[1], /^これを　もっていくといい。/);
+});
+
+test("buildMergedFixedContentPages splits Sara room dialogue into two pages", () => {
+  const pages = buildMergedFixedContentPages(546, `>-
+    サラ「わたしは　おとうさまの　そばについて\\n\\t[0x03]いなくてはなりません。\\n\\t[0x03]ほんとうは　あなたについていきたい……\\n\\t[0x03]でもきっと　あしでまといになってしまいますね……\\n『サラひめ……\\n「たびが　おわったら　かならず　かえってきて\\n　くださいね。\\n　わたし　まっています。\\n
+`);
+  assert.equal(pages.length, 2);
+  assert.match(pages[0], /^サラ「わたしは　おとうさまの　そばについて/);
+  assert.match(pages[1], /^『サラひめ……/);
+});
+
 test("buildMergedFixedContentPages keeps ordinary dialogue as a single page", () => {
   assert.deepEqual(
     buildMergedFixedContentPages(541, "ふういんのどうくつにいる　モンスターは\\nアンデッドばかりです。"),
