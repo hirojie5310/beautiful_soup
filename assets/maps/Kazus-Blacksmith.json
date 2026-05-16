@@ -53,15 +53,56 @@
       "open_gid": 126
     },
     {
+      "type": "decoration",
+      "name": "Kazus Blacksmith Candle 1",
+      "x": 4,
+      "y": 9,
+      "sprite_image": "../assets/images/objects/candle.png",
+      "sprite_frames": 2,
+      "sprite_frame_ms": 1000
+    },
+    {
+      "type": "decoration",
+      "name": "Kazus Blacksmith Candle 2",
+      "x": 7,
+      "y": 9,
+      "sprite_image": "../assets/images/objects/candle.png",
+      "sprite_frames": 2,
+      "sprite_frame_ms": 1000
+    },
+    {
+      "type": "decoration",
+      "name": "Kazus Blacksmith Candle 3",
+      "x": 4,
+      "y": 4,
+      "sprite_image": "../assets/images/objects/candle.png",
+      "sprite_frames": 2,
+      "sprite_frame_ms": 1000
+    },
+    {
       "type": "npc",
-      "name": "Kazus Blacksmith Old Man 537",
+      "name": "Kazus Blacksmith Taka Scripted",
+      "npc_key": "kazus_blacksmith_taka_scripted",
       "x": 6,
       "y": 6,
       "sprite_image": "../assets/images/NPCs/fs_old_man1.png",
       "dialogue_index": 537,
       "movement": "fixed",
       "direction": "up",
-      "required_event_flag": "sara_left_party"
+      "required_event_flag": "sara_left_party",
+      "required_event_flag_absent": "kazus_blacksmith_mythril_ram_complete"
+    },
+    {
+      "type": "npc",
+      "name": "Kazus Blacksmith Old Man 537",
+      "npc_key": "kazus_blacksmith_taka_scripted",
+      "x": 6,
+      "y": 6,
+      "sprite_image": "../assets/images/NPCs/fs_old_man1.png",
+      "dialogue_index": 537,
+      "movement": "fixed",
+      "direction": "down",
+      "required_event_flag": "kazus_blacksmith_mythril_ram_complete"
     }
   ],
   "rows": [
@@ -69,12 +110,12 @@
     "92,94,25,26,25,94,26,26,92",
     "92,94,94,94,94,94,94,94,92",
     "92,124,124,124,95,30,30,30,92",
-    "92,124,124,95,95,30,30,30,92",
+    "92,124,124,95,3,30,30,30,92",
     "92,124,124,95,95,65,65,65,92",
+    "92,92,92,92,95,95,60,95,92",
     "92,92,92,92,95,95,95,95,92",
     "92,92,92,92,95,95,95,95,92",
-    "92,92,92,92,95,95,95,95,92",
-    "92,92,92,92,95,95,95,95,92",
+    "92,92,92,92,3,95,95,3,92",
     "92,92,92,92,95,95,95,95,92",
     "92,92,92,92,92,92,93,92,92",
     "94,94,94,94,94,94,70,94,94",
