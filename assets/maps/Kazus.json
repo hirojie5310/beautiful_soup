@@ -155,7 +155,7 @@
       "y": 11,
       "treasure_id": "kazus_treasure_zeuss_wrath",
       "item_name": "Zeus's Wrath",
-      "inventory_bucket": "Anywhere",
+      "inventory_bucket": "Combat",
       "quantity": 1,
       "closed_gid": 4,
       "open_gid": 121
@@ -179,7 +179,8 @@
       "y": 28,
       "sprite_image": "../assets/images/objects/bonfire.png",
       "sprite_frames": 2,
-      "sprite_frame_ms": 1000
+      "sprite_frame_ms": 1000,
+      "required_event_flag_absent": "sara_left_party"
     },
     {
       "type": "npc",
@@ -192,6 +193,29 @@
       "movement": "fixed",
       "direction": "right",
       "required_event_flag_absent": "sara_left_party"
+    },
+    {
+      "type": "npc",
+      "name": "Kazus Cid Join Scripted",
+      "npc_key": "kazus_cid_join_scripted",
+      "x": 12,
+      "y": 19,
+      "sprite_image": "../assets/images/NPCs/fs_cid.png",
+      "dialogue_index": 16,
+      "movement": "fixed",
+      "direction": "down",
+      "required_event_flag": "sara_left_party",
+      "required_event_flag_absent": "kazus_cid_follower_joined"
+    },
+    {
+      "type": "event",
+      "name": "Kazus Cid Join Event",
+      "x": 8,
+      "y": 28,
+      "hidden": true,
+      "scripted_sequence": "kazus_cid_join",
+      "required_event_flag": "sara_left_party",
+      "required_event_flag_absent": "kazus_cid_follower_joined"
     },
     {
       "type": "npc",
