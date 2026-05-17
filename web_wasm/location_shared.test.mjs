@@ -8,6 +8,8 @@ import {
   LOCAL_LOCATION_SELECTION_KEY,
   LOCAL_SAVE_STORAGE_KEY,
   getStoredLocationSelection,
+  normalizeShopTypeToInventoryBucket,
+  resolveInventoryBucketForItem,
   syncMenuStateAfterPurchase,
   syncStoredLocationSelection,
 } from "./location_shared.js";
@@ -138,4 +140,33 @@ test("syncMenuStateAfterPurchase stocks Magic from lowercase spell master names"
 
   assert.equal(envelope.menu_state.resources.gil, 123);
   assert.deepEqual(envelope.menu_state.magic_setup.stock_by_level["5"], ["Raise"]);
+});
+
+test("resolveInventoryBucketForItem prefers catalog item types over mistaken preferred buckets", () => {
+  const masterData = {
+    itemTypeByName: {
+      "Antarctic Wind": "Combat",
+    },
+    spellLevelByName: {},
+    weaponNameSet: new Set(),
+    armorNameSet: new Set(),
+  };
+  assert.equal(resolveInventoryBucketForItem(masterData, "Antarctic Wind", "Anywhere"), "Combat");
+});
+
+test("normalizeShopTypeToInventoryBucket still resolves magic and equipment buckets", () => {
+  const masterData = {
+    itemTypeByName: {
+      Potion: "Anywhere",
+    },
+    spellLevelByName: {
+      Cure: 1,
+    },
+    weaponNameSet: new Set(["Staff"]),
+    armorNameSet: new Set(["Leather Armor"]),
+  };
+  assert.equal(normalizeShopTypeToInventoryBucket(masterData, { type: "Magic" }, "Cure"), "Magic");
+  assert.equal(normalizeShopTypeToInventoryBucket(masterData, { type: "Weapons" }, "Staff"), "Weapon");
+  assert.equal(normalizeShopTypeToInventoryBucket(masterData, { type: "Armor" }, "Leather Armor"), "Armor");
+  assert.equal(normalizeShopTypeToInventoryBucket(masterData, { inventory_bucket: "Anywhere" }, "Potion"), "Anywhere");
 });

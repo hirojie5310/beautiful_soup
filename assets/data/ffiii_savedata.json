@@ -4,7 +4,7 @@
     {
       "name": "Runeth",
       "level": 45,
-      "exp": 542321,
+      "exp": 544221,
       "job": "Sage",
       "job_level": {
         "level": 99,
@@ -28,7 +28,7 @@
           "skill_point": 0
         }
       },
-      "hp": 1994,
+      "hp": 1828,
       "max_hp": 2658,
       "mp": {
         "L1MP": 48,
@@ -108,7 +108,8 @@
         "Paralysis": false,
         "Partial Petrification (1/3)": false,
         "Partial Petrification (1/2)": false,
-        "Partial Petrification (Full)": false
+        "Partial Petrification (Full)": false,
+        "Partial Petrification": false
       },
       "image_name": "",
       "portrait_key": "runeth",
@@ -145,16 +146,19 @@
           "current": 7,
           "max": 10
         }
-      }
+      },
+      "status_icons": [
+        "poison"
+      ]
     },
     {
       "name": "Arc",
       "level": 48,
-      "exp": 674044,
+      "exp": 675944,
       "job": "Evoker",
       "job_level": {
         "level": 32,
-        "skill_point": 0
+        "skill_point": 12
       },
       "job_levels": {
         "Dragoon": {
@@ -175,7 +179,7 @@
         },
         "Evoker": {
           "level": 32,
-          "skill_point": 0
+          "skill_point": 12
         }
       },
       "hp": 1776,
@@ -216,7 +220,8 @@
         "Paralysis": false,
         "Partial Petrification (1/3)": false,
         "Partial Petrification (1/2)": false,
-        "Partial Petrification (Full)": false
+        "Partial Petrification (Full)": false,
+        "Partial Petrification": false
       },
       "image_name": "",
       "portrait_key": "arc",
@@ -300,7 +305,7 @@
     {
       "name": "Refia",
       "level": 46,
-      "exp": 568463,
+      "exp": 570363,
       "job": "Dragoon",
       "job_level": {
         "level": 99,
@@ -358,7 +363,8 @@
         "Paralysis": false,
         "Partial Petrification (1/3)": false,
         "Partial Petrification (1/2)": false,
-        "Partial Petrification (Full)": false
+        "Partial Petrification (Full)": false,
+        "Partial Petrification": false
       },
       "image_name": "",
       "portrait_key": "refia",
@@ -408,7 +414,7 @@
     {
       "name": "Ingus",
       "level": 45,
-      "exp": 538729,
+      "exp": 540629,
       "job": "Thief",
       "job_level": {
         "level": 46,
@@ -478,7 +484,8 @@
         "Paralysis": false,
         "Partial Petrification (1/3)": false,
         "Partial Petrification (1/2)": false,
-        "Partial Petrification (Full)": false
+        "Partial Petrification (Full)": false,
+        "Partial Petrification": false
       },
       "image_name": "",
       "portrait_key": "ingus",
@@ -526,7 +533,7 @@
       }
     }
   ],
-  "gil": 1015237,
+  "gil": 1019937,
   "CP": 255,
   "map": {
     "map": "grassland",

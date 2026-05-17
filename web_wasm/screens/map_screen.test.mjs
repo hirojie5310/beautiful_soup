@@ -19,6 +19,7 @@ import {
   findStandingEventTrigger,
   configureLoopingMapBgm,
   findShopActivation,
+  isPlayerInCanoe,
   isAdjacentToCrystalSprite,
   isMapObjectAvailable,
   isAdjacentToTileCoordinate,
@@ -37,18 +38,21 @@ import {
   normalizeNpcMovement,
   normalizeNpcDirection,
   npcDialogueIndices,
+  npcObjectKey,
   openAdjacentTreasure,
   applyPendingGuardedTreasureReward,
   chooseNextNpcDirection,
   resolveNpcFacingScale,
   resolveNpcNextDirectionDelay,
   resolveNpcSpriteFrame,
+  resolveCidFollowerDialogueIndex,
   resolveSaraFollowerDialogueIndex,
   reviveZeroHpPartyMembersToOneHp,
   resolveCharacterSpriteFrame,
   resolveAirshipUpperSprite,
   resolveFloatingContinentLocationFromPosition,
   resolveFloatingContinentSpawn,
+  resolveCanoeSpriteFrame,
   resolveLeaderCharacterSprite,
   resolveLeaderCharacterSpriteUrl,
   resolveMapBgmUrl,
@@ -57,6 +61,8 @@ import {
   resolveNpcInitialDirection,
   resolveInitialMapSelection,
   resolveTransitionSpawn,
+  shouldTriggerFloatingContinentBigRockCrash,
+  shouldRenderGuestFollowerOnMap,
   shouldCloseEventOverlayOnConfirm,
   shouldResumeMapPosition,
   toggleAdjacentSwitch,
@@ -306,6 +312,26 @@ test("deriveInitialMapState starts on the airship for Floating Continent seas", 
   assert.equal(result.airship_tile_y, 74);
 });
 
+test("deriveInitialMapState does not restore the airship after it is destroyed", () => {
+  const result = deriveInitialMapState({
+    selectedLocationGroup: "Floating Continent",
+    selectedLocation: "Floating Continent Near Castle Argus",
+    menuState: {},
+    saveEnvelope: {
+      save: {
+        event_flag: {
+          cid_airship_obtained: true,
+          cid_airship_destroyed: true,
+        },
+      },
+    },
+  }, makeFloatingContinentMap());
+
+  assert.equal(result.airship_riding, undefined);
+  assert.equal(result.airship_tile_x, undefined);
+  assert.equal(result.airship_tile_y, undefined);
+});
+
 test("resolveFloatingContinentLocationFromPosition maps coordinates to area-specific encounters", () => {
   const floatingMap = makeFloatingContinentMap();
 
@@ -363,6 +389,25 @@ test("resolveCharacterSpriteFrame maps first-row walking frames and mirrors righ
   assert.deepEqual(resolveCharacterSpriteFrame("right", 1), {
     frameIndex: 3,
     facingScale: -1,
+  });
+});
+
+test("resolveCanoeSpriteFrame maps horizontal and vertical rowing frames", () => {
+  assert.deepEqual(resolveCanoeSpriteFrame("left", 0), {
+    frameIndex: 0,
+    facingScale: 1,
+  });
+  assert.deepEqual(resolveCanoeSpriteFrame("right", 1), {
+    frameIndex: 1,
+    facingScale: 1,
+  });
+  assert.deepEqual(resolveCanoeSpriteFrame("up", 0), {
+    frameIndex: 2,
+    facingScale: 1,
+  });
+  assert.deepEqual(resolveCanoeSpriteFrame("down", 1), {
+    frameIndex: 3,
+    facingScale: 1,
   });
 });
 
@@ -429,6 +474,34 @@ test("NPC movement config supports fixed facing and random movement", () => {
   assert.equal(normalizeNpcDirection("bad", "down"), "down");
   assert.equal(resolveNpcInitialDirection({ direction: "left" }, 0.99), "left");
   assert.equal(resolveNpcInitialDirection({ movement: "random" }, 0.99), "down");
+});
+
+test("npcObjectKey keeps duplicate dialogue NPCs distinct and stable after movement", () => {
+  const cursedNpc = {
+    name: "Castle Sasune MainKeep 4F NPC 540",
+    dialogue_index: 540,
+    x: 6,
+    y: 5,
+    movement: "random",
+    sprite_image: "../assets/images/NPCs/fs_cursed.png",
+  };
+  const guardNpc = {
+    name: "Castle Sasune MainKeep 4F Soldier 540",
+    dialogue_index: 540,
+    x: 6,
+    y: 5,
+    movement: "fixed",
+    sprite_image: "../assets/images/NPCs/fs_soldier1.png",
+  };
+
+  const cursedKey = npcObjectKey(cursedNpc);
+  const guardKey = npcObjectKey(guardNpc);
+
+  assert.notEqual(cursedKey, guardKey);
+
+  cursedNpc.x = 7;
+  cursedNpc.y = 5;
+  assert.equal(npcObjectKey(cursedNpc), cursedKey);
 });
 
 test("normalizeCharacterJobKey builds sprite lookup keys from job names", () => {
@@ -724,6 +797,29 @@ test("canOccupyTile rejects collision gids and bounds", () => {
   assert.equal(canOccupyTile(stubMap, -1, 1), false);
 });
 
+test("canOccupyTile allows Floating Continent canoe water after the canoe is obtained", () => {
+  const floatingWaterMap = {
+    ...stubMap,
+    id: "FloatingContinent",
+    width: 2,
+    height: 2,
+    rows: [
+      [1, 1],
+      [1, 9],
+    ],
+    collisionGids: new Set([9]),
+  };
+
+  assert.equal(canOccupyTile(floatingWaterMap, 1, 1), false);
+  assert.equal(canOccupyTile(floatingWaterMap, 1, 1, {
+    save: {
+      event_flag: {
+        canoe_obtained: true,
+      },
+    },
+  }), true);
+});
+
 test("canOccupyTile rejects blocking NPC object tiles", () => {
   const mapWithNpc = {
     ...stubMap,
@@ -737,6 +833,31 @@ test("canOccupyTile rejects blocking NPC object tiles", () => {
   assert.equal(findBlockingObjectAt(mapWithNpc, 2, 2), null);
   assert.equal(canOccupyTile(mapWithNpc, 1, 1), false);
   assert.equal(canOccupyTile(mapWithNpc, 2, 2), true);
+});
+
+test("canOccupyTile and canAirshipOccupyTile reject blocking decoration objects", () => {
+  const mapWithBlockingDecoration = {
+    ...stubMap,
+    rows: [
+      [1, 1, 1],
+      [1, 1, 1],
+      [1, 1, 1],
+    ],
+    collisionGids: new Set(),
+    objects: [
+      {
+        type: "decoration",
+        name: "Big Rock",
+        x: 1,
+        y: 1,
+        blocking: true,
+      },
+    ],
+  };
+  assert.deepEqual(findBlockingObjectAt(mapWithBlockingDecoration, 1, 1), mapWithBlockingDecoration.objects[0]);
+  assert.equal(canOccupyTile(mapWithBlockingDecoration, 1, 1), false);
+  assert.equal(canAirshipOccupyTile(mapWithBlockingDecoration, 1, 1), false);
+  assert.equal(canAirshipOccupyTile(mapWithBlockingDecoration, 2, 2), true);
 });
 
 test("resolveTransitionSpawn preserves explicit exit targets within map bounds", () => {
@@ -806,6 +927,87 @@ test("moveMapPosition advances only onto passable tiles", () => {
   assert.equal(blocked.nextState.facing_direction, "left");
 });
 
+test("moveMapPosition enters Floating Continent canoe water after the canoe is obtained", () => {
+  const floatingWaterMap = {
+    ...stubMap,
+    id: "FloatingContinent",
+    width: 2,
+    height: 2,
+    rows: [
+      [1, 1],
+      [1, 9],
+    ],
+    collisionGids: new Set([9]),
+  };
+  const start = { current_map_id: "FloatingContinent", tile_x: 1, tile_y: 0, steps_since_reset: 0 };
+
+  const blocked = moveMapPosition(floatingWaterMap, start, "down");
+  assert.equal(blocked.moved, false);
+
+  const moved = moveMapPosition(floatingWaterMap, start, "down", {
+    save: {
+      event_flag: {
+        canoe_obtained: true,
+      },
+    },
+  });
+  assert.equal(moved.moved, true);
+  assert.equal(moved.nextState.tile_x, 1);
+  assert.equal(moved.nextState.tile_y, 1);
+});
+
+test("isPlayerInCanoe becomes true only on Floating Continent canoe water after obtainment", () => {
+  const floatingWaterMap = {
+    ...stubMap,
+    id: "FloatingContinent",
+    width: 2,
+    height: 2,
+    rows: [
+      [1, 1],
+      [1, 25],
+    ],
+    collisionGids: new Set([25]),
+  };
+  assert.equal(isPlayerInCanoe(floatingWaterMap, { tile_x: 1, tile_y: 1 }, null), false);
+  assert.equal(isPlayerInCanoe(floatingWaterMap, { tile_x: 1, tile_y: 1 }, {
+    save: {
+      event_flag: {
+        canoe_obtained: true,
+      },
+    },
+  }), true);
+});
+
+test("shouldRenderGuestFollowerOnMap hides followers while riding a canoe", () => {
+  const floatingWaterMap = {
+    ...stubMap,
+    id: "FloatingContinent",
+    width: 2,
+    height: 2,
+    rows: [
+      [1, 1],
+      [1, 25],
+    ],
+    collisionGids: new Set([25]),
+  };
+  const cidFollowerSave = {
+    save: {
+      event_flag: {
+        canoe_obtained: true,
+        kazus_cid_follower_joined: true,
+      },
+    },
+  };
+  assert.equal(
+    shouldRenderGuestFollowerOnMap(floatingWaterMap, { tile_x: 1, tile_y: 1 }, cidFollowerSave),
+    false,
+  );
+  assert.equal(
+    shouldRenderGuestFollowerOnMap(floatingWaterMap, { tile_x: 0, tile_y: 0 }, cidFollowerSave),
+    true,
+  );
+});
+
 test("moveAirshipPosition advances while updating airship coordinates", () => {
   const map = {
     ...stubMap,
@@ -840,6 +1042,36 @@ test("moveAirshipPosition advances while updating airship coordinates", () => {
   assert.equal(result.nextState.tile_y, 1);
   assert.equal(result.nextState.airship_tile_x, 2);
   assert.equal(result.nextState.airship_tile_y, 1);
+});
+
+test("shouldTriggerFloatingContinentBigRockCrash requires the upgraded airship route conditions", () => {
+  const floatingMap = { id: "FloatingContinent" };
+  const ridingState = {
+    current_map_id: "FloatingContinent",
+    tile_x: 81,
+    tile_y: 54,
+    airship_riding: true,
+  };
+  const saveEnvelope = {
+    save: {
+      event_flag: {
+        cid_airship_obtained: true,
+        sara_left_party: true,
+        kazus_cid_follower_joined: true,
+        kazus_blacksmith_mythril_ram_complete: true,
+      },
+    },
+  };
+  assert.equal(
+    shouldTriggerFloatingContinentBigRockCrash(floatingMap, ridingState, 82, 54, saveEnvelope),
+    true,
+  );
+  assert.equal(
+    shouldTriggerFloatingContinentBigRockCrash(floatingMap, ridingState, 82, 54, {
+      save: { event_flag: { cid_airship_obtained: true, sara_left_party: true } },
+    }),
+    false,
+  );
 });
 
 test("interpolateMapPosition returns intermediate fractional tile positions", () => {
@@ -934,6 +1166,15 @@ test("resolveSaraFollowerDialogueIndex uses the scripted sequence before switchi
   assert.equal(resolveSaraFollowerDialogueIndex(4, 0.0), 123);
   assert.equal(resolveSaraFollowerDialogueIndex(5, 0.5), 124);
   assert.equal(resolveSaraFollowerDialogueIndex(6, 0.99), 125);
+});
+
+test("resolveCidFollowerDialogueIndex uses the first line once, then random followups", () => {
+  assert.equal(resolveCidFollowerDialogueIndex(0, 0.9), 108);
+  assert.equal(resolveCidFollowerDialogueIndex(1, 0.0), 109);
+  assert.equal(resolveCidFollowerDialogueIndex(2, 0.5), 110);
+  assert.equal(resolveCidFollowerDialogueIndex(3, 0.99), 112);
+  assert.equal(resolveCidFollowerDialogueIndex(1, 0.0, true), 112);
+  assert.equal(resolveCidFollowerDialogueIndex(5, 0.5, true), 112);
 });
 
 test("findStandingObject returns exit on matching tile", () => {
@@ -1205,6 +1446,39 @@ test("findShopActivation resolves tiles adjacent to Ur shop counters", () => {
   assert.equal(findShopActivation({ id: "Ur_ArmorShop" }, { tile_x: 2, tile_y: 4 }), null);
 });
 
+test("findShopActivation resolves tiles adjacent to Kazus shopkeepers", () => {
+  assert.deepEqual(findShopActivation({ id: "Kazus_ArmorShop" }, { tile_x: 3, tile_y: 6 }), {
+    mapId: "Kazus_ArmorShop",
+    x: 3,
+    y: 5,
+    shopMap: "Kazus",
+    shopType: "Armor",
+  });
+  assert.deepEqual(findShopActivation({ id: "Kazus_MagicShop" }, { tile_x: 4, tile_y: 5 }), {
+    mapId: "Kazus_MagicShop",
+    x: 4,
+    y: 4,
+    shopMap: "Kazus",
+    shopType: "Magic",
+  });
+  assert.deepEqual(findShopActivation({ id: "Kazus_WeaponShop" }, { tile_x: 3, tile_y: 5 }), {
+    mapId: "Kazus_WeaponShop",
+    x: 3,
+    y: 4,
+    shopMap: "Kazus",
+    shopType: "Weapons",
+  });
+  assert.deepEqual(findShopActivation({ id: "Kazus_Inn_ItemShop_1F" }, { tile_x: 13, tile_y: 7 }), {
+    mapId: "Kazus_Inn_ItemShop_1F",
+    x: 13,
+    y: 6,
+    shopMap: "Kazus",
+    shopType: "Items",
+  });
+  assert.equal(findShopActivation({ id: "Kazus_ArmorShop" }, { tile_x: 3, tile_y: 5 }), null);
+  assert.equal(findShopActivation({ id: "Kazus_MagicShop" }, { tile_x: 6, tile_y: 4 }), null);
+});
+
 test("reviveZeroHpPartyMembersToOneHp revives only KO members and clears KO status", () => {
   const save = {
     party: [
@@ -1397,6 +1671,33 @@ test("buildMergedFixedContentPages splits Sara farewell dialogue into three page
   assert.match(pages[0], /^サラひめは　ゆびわを　いずみになげた。/);
   assert.match(pages[1], /^そばにいなくてはなりません。/);
   assert.match(pages[2], /^「たびが　おわったら　かならず　かえってきて/);
+});
+
+test("buildMergedFixedContentPages splits Cid join dialogue in Kazus into two pages", () => {
+  const pages = buildMergedFixedContentPages(16, `>-
+    よくやった！\\nさすが　わしが　みこんだだけのことはあるわい。\\nひくうていは　おまえさんたちが　やくにたてるのが\\n１ばんいいじゃろう。\\nそれより　わしを　ばあさんのまつ　カナーンの\\nむらまで　つれていってくれ。\\nなっ　たのむ！\\nシドじいさんが　パーティーにくわわった。\\n
+`);
+  assert.equal(pages.length, 2);
+  assert.match(pages[0], /^よくやった！/);
+  assert.match(pages[1], /^それより　わしを　ばあさんのまつ　カナーンの/);
+});
+
+test("buildMergedFixedContentPages splits Kazus blacksmith intro into two pages", () => {
+  const pages = buildMergedFixedContentPages(535, `>-
+    シド「カナーンへいくために　ネルブのおおいわを\\n　　　くだこうとおもうのだが……\\n　　　ひくうていにミスリルせいの　せんしゅを\\n　　　つければなんとかなるかもしれん。\\nタカ「よーしまっておれ！　いま　つくってやる！！\\n
+`);
+  assert.equal(pages.length, 2);
+  assert.match(pages[0], /^シド「カナーンへいくために/);
+  assert.match(pages[1], /^タカ「よーしまっておれ！　いま　つくってやる！！/);
+});
+
+test("buildMergedFixedContentPages splits Kazus blacksmith completion into two pages", () => {
+  const pages = buildMergedFixedContentPages(536, `>-
+    そーれ　おわったぞい！\\nなーに　れいはいらんよ。　むらを　すくって\\nくれたんじゃからの。　あたりまえじゃ。\\nそれでは　きをつけていきなされ！\\nタカじいさんが　ひくうていに\\nミスリルのせんしゅを　つけてくれた！\\nシド「よーし　ひくうていで　おおいわに\\n　　　たいあたりじゃ！！\\n
+`);
+  assert.equal(pages.length, 2);
+  assert.match(pages[0], /^そーれ　おわったぞい！/);
+  assert.match(pages[1], /^タカじいさんが　ひくうていに/);
 });
 
 test("buildMergedFixedContentPages splits Sara reunion dialogue in Castle Sasune into two pages", () => {
@@ -1707,7 +2008,7 @@ test("openAdjacentTreasure adds Potion to inventory and opens chest", () => {
   assert.equal(result.saveEnvelope.save.treasures.Alter_Cave_B1.treasure1, true);
 });
 
-test("openAdjacentTreasure adds GIL treasure to save and menu resources", () => {
+test("openAdjacentTreasure adds GIL treasure to save and menu resources regardless of bucket", () => {
   const mapWithTreasure = {
     ...stubMap,
     width: 3,
@@ -1731,7 +2032,7 @@ test("openAdjacentTreasure adds GIL treasure to save and menu resources", () => 
         x: 2,
         y: 1,
         item_name: "GIL",
-        inventory_bucket: "Resource",
+        inventory_bucket: "Anywhere",
         quantity: 1000,
         closed_gid: 125,
         open_gid: 126,
@@ -1757,7 +2058,62 @@ test("openAdjacentTreasure adds GIL treasure to save and menu resources", () => 
   assert.equal(result.mapDefinition.rows[1][2], 126);
   assert.equal(result.saveEnvelope.save.gil, 1500);
   assert.equal(result.saveEnvelope.menu_state.resources.gil, 1500);
+  assert.deepEqual(result.saveEnvelope.save.inventory, {});
   assert.equal(result.saveEnvelope.save.treasures.Castle_Sasune_MainKeep_1F.gil_treasure, true);
+});
+
+test("openAdjacentTreasure corrects mistaken treasure inventory buckets from item metadata", () => {
+  const mapWithTreasure = {
+    ...stubMap,
+    width: 3,
+    height: 3,
+    baseRows: [
+      [1, 1, 1],
+      [1, 1, 125],
+      [1, 1, 1],
+    ],
+    rows: [
+      [1, 1, 1],
+      [1, 1, 125],
+      [1, 1, 1],
+    ],
+    renderPadding: { top: 0, right: 0, bottom: 0, left: 0, fillGid: 1 },
+    objects: [
+      {
+        type: "treasure",
+        name: "combat_treasure",
+        treasure_id: "combat_treasure",
+        x: 2,
+        y: 1,
+        item_name: "Antarctic Wind",
+        inventory_bucket: "Anywhere",
+        quantity: 1,
+        closed_gid: 125,
+        open_gid: 126,
+      },
+    ],
+  };
+
+  const result = openAdjacentTreasure(mapWithTreasure, {
+    current_map_id: "Sealed_Cave_B3",
+    tile_x: 1,
+    tile_y: 1,
+    facing_direction: "right",
+    switch_states: {},
+    opened_treasures: {},
+  }, {
+    save: { gil: 0, inventory: {} },
+    menu_state: { resources: { cp: 0, cp_max: 255, gil: 0 } },
+  }, {
+    spellLevelByName: {},
+    itemTypeByName: { "Antarctic Wind": "Combat" },
+    weaponNameSet: new Set(),
+    armorNameSet: new Set(),
+  });
+
+  assert.equal(result.opened, true);
+  assert.equal(result.saveEnvelope.save.inventory.Combat["Antarctic Wind"], 1);
+  assert.equal(result.saveEnvelope.save.inventory.Anywhere, undefined);
 });
 
 test("openAdjacentTreasure stores Magic treasure under inventory level buckets", () => {

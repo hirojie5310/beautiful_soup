@@ -36,6 +36,7 @@
     51,
     52,
     53,
+    59,
     62,
     63,
     64,
@@ -145,6 +146,15 @@
         "x": 15,
         "y": 29
       }
+    },
+    {
+      "type": "decoration",
+      "name": "Floating Continent Big Rock",
+      "x": 81,
+      "y": 54,
+      "sprite_image": "../assets/images/objects/big_rock.png",
+      "blocking": true,
+      "required_event_flag_absent": "cid_airship_destroyed"
     }
   ],
   "rows": [
