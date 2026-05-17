@@ -28,11 +28,12 @@ export function resolveFaceImageCandidates(member, memberIndex = -1) {
     variants.forEach((variantKey) => {
       const safeKey = encodeURIComponent(variantKey);
       exts.forEach((ext) => {
+        paths.push(`/web_wasm/portraits/${safeKey}.${ext}`);
         paths.push(`/web_wasm/faces/${safeKey}.${ext}`);
-        paths.push(`./faces/${safeKey}.${ext}`);
-        paths.push(`../assets/images/faces/${safeKey}.${ext}`);
-        paths.push(new URL(`../assets/images/faces/${safeKey}.${ext}`, import.meta.url).href);
-        paths.push(`/assets/images/faces/${safeKey}.${ext}`);
+        paths.push(`./portraits/${safeKey}.${ext}`);
+        paths.push(`../assets/images/portraits/${safeKey}.${ext}`);
+        paths.push(new URL(`../assets/images/portraits/${safeKey}.${ext}`, import.meta.url).href);
+        paths.push(`/assets/images/portraits/${safeKey}.${ext}`);
         paths.push(`../assets/images/motions/${safeKey}.${ext}`);
         paths.push(new URL(`../assets/images/motions/${safeKey}.${ext}`, import.meta.url).href);
         paths.push(`/assets/images/motions/${safeKey}.${ext}`);

@@ -7,7 +7,7 @@
   "height": 12,
   "tileset": {
     "name": "TILESET - Castle_Sasune_Inner",
-    "image": "../assets/images/maps/TILESET - Castle_Sasune_Inner.png",
+    "image": "../assets/images/maps/TILESET/TILESET - Castle_Sasune_Inner.png",
     "columns": 16,
     "tile_count": 128
   },

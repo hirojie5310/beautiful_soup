@@ -7,7 +7,7 @@
   "height": 14,
   "tileset": {
     "name": "TILESET - Shop_1",
-    "image": "../assets/images/maps/TILESET - Shop_1.png",
+    "image": "../assets/images/maps/TILESET/TILESET - Shop_1.png",
     "columns": 16,
     "tile_count": 128
   },
