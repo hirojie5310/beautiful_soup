@@ -74,7 +74,7 @@ test("guest portrait descriptor resolves Sara and Cid portraits", () => {
   }), {
     label: "SARA",
     alt: "Sara portrait",
-    imageUrl: "../assets/images/faces/portrait_sara.png",
+    imageUrl: "../assets/images/portraits/portrait_sara.png",
     fallbackText: "SARA",
   });
   assert.deepEqual(resolveGuestPortraitDescriptor({
@@ -87,7 +87,7 @@ test("guest portrait descriptor resolves Sara and Cid portraits", () => {
   }), {
     label: "CID",
     alt: "Cid portrait",
-    imageUrl: "../assets/images/faces/portrait_cid.png",
+    imageUrl: "../assets/images/portraits/portrait_cid.png",
     fallbackText: "CID",
   });
 });

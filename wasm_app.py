@@ -23,7 +23,8 @@ class WasmRequestHandler(SimpleHTTPRequestHandler):
     def _rewrite_web_wasm_asset_path(self) -> bool:
         request_path = unquote(self.path.split("?", 1)[0])
         asset_dirs = {
-            "/web_wasm/faces/": "faces",
+            "/web_wasm/portraits/": "portraits",
+            "/web_wasm/faces/": "portraits",
             "/web_wasm/enemy_sprites/": "enemy_sprites",
             "/web_wasm/maps/": "maps",
             "/web_wasm/effects/": "effects",

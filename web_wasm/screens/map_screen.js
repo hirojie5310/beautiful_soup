@@ -299,7 +299,7 @@ const MAP_SHOP_ACTIVATIONS = [
 ];
 const CRYSTAL_SPRITE_FRAMES = 4;
 const CRYSTAL_SPRITE_FRAME_MS = 500;
-const CRYSTAL_IMAGE_URL = new URL("../../assets/images/maps/Crystal.png", import.meta.url).href;
+const CRYSTAL_IMAGE_URL = new URL("../../assets/images/objects/crystal.png", import.meta.url).href;
 const ONION_KNIGHT_IMAGE_URL = new URL("../../assets/images/characters/fs_onion_knight.png", import.meta.url).href;
 const ONION_KNIGHT_CHARACTER_SPRITE = {
   rows: 4,

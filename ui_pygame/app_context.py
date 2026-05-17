@@ -97,7 +97,7 @@ class BattleAppConfig:
 
     # ★追加
     audio_dir: str = "assets/sounds/"
-    face_dir: str = "assets/images/faces/"
+    face_dir: str = "assets/images/portraits/"
     status_icon_dir: str = "assets/images/status_icons/"
 
     # ★BGM 定義（論理名 → ファイル名）
