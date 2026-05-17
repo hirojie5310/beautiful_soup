@@ -9,6 +9,7 @@ import {
   getLastUsedSaveSlotId,
   listSaveSlotsFromIndexedDB,
   makeSaveEnvelope,
+  parseSaveEnvelope,
   persistSaveEnvelopeToIndexedDB,
   persistSaveEnvelopeToStorage,
   restoreSaveEnvelopeFromStorage,
@@ -245,6 +246,82 @@ test("shared_storage keeps localStorage mirror and persists default slot to Inde
   assert.equal(slots.length, 1);
   assert.equal(slots[0].slot_id, DEFAULT_SAVE_SLOT_ID);
   assert.equal(slots[0].summary.lead_name, "Refia");
+});
+
+test("parseSaveEnvelope migrates legacy GIL inventory entries into save and menu gil", () => {
+  const parsed = parseSaveEnvelope({
+    version: 1,
+    saved_at: "2026-05-16T00:00:00.000Z",
+    selected_location_group: "Kazus",
+    selected_location: "Kazus",
+    save: {
+      gil: 500,
+      inventory: {
+        Anywhere: {
+          GIL: 1000,
+          Potion: 2,
+        },
+        Resource: {
+          GIL: 250,
+        },
+      },
+      party: [],
+    },
+    menu_state: {
+      resources: {
+        cp: 0,
+        cp_max: 255,
+        gil: 500,
+      },
+    },
+  });
+
+  assert.equal(parsed?.save?.gil, 1750);
+  assert.equal(parsed?.menu_state?.resources?.gil, 1750);
+  assert.deepEqual(parsed?.save?.inventory, {
+    Anywhere: {
+      Potion: 2,
+    },
+  });
+});
+
+test("parseSaveEnvelope migrates legacy item buckets using inventory catalog item types", () => {
+  const parsed = parseSaveEnvelope({
+    version: 1,
+    saved_at: "2026-05-16T00:00:00.000Z",
+    selected_location_group: "Kazus",
+    selected_location: "Kazus",
+    save: {
+      gil: 100,
+      inventory: {
+        Anywhere: {
+          "Antarctic Wind": 1,
+          "Zeus's Wrath": 2,
+          Potion: 3,
+        },
+      },
+      party: [],
+    },
+    menu_state: {
+      inventory_catalog: {
+        item_types: {
+          "Antarctic Wind": "Combat",
+          "Zeus's Wrath": "Combat",
+          Potion: "Anywhere",
+        },
+      },
+    },
+  });
+
+  assert.deepEqual(parsed?.save?.inventory, {
+    Anywhere: {
+      Potion: 3,
+    },
+    Combat: {
+      "Antarctic Wind": 1,
+      "Zeus's Wrath": 2,
+    },
+  });
 });
 
 test("shared_storage tracks last used manual slot but ignores auto-save writes", async () => {

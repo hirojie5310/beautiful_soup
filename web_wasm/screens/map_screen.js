@@ -7,14 +7,21 @@ import {
   shouldTriggerEncounter,
 } from "../map_data.js";
 import {
+  asArray,
   buildSpellLevelByName,
   buildRecoveredPartySnapshot,
   clone,
   loadJson,
   persistMenuStateFromEnvelope,
+  resolveInventoryBucketForItem,
   syncMenuPartyRecovery,
   syncSavePartyRecovery,
 } from "../location_shared.js";
+import {
+  isCidGuestActive,
+  isSaraGuestActive,
+  resolveActiveGuestFollowerType,
+} from "../guest_companion.js";
 import { mergeMenuStateIntoSave } from "../menu_save_sync.js";
 import { triggerAutoSaveFromEnvelope } from "./screen_shared.js";
 import { configureAmbientAudioSession } from "../audio_session.js";
@@ -85,12 +92,19 @@ const KAZUS_INN_ITEMSHOP_2F_RECOVERY_TILES = [
   { x: 6, y: 4 },
 ];
 const AIRSHIP_OBTAINED_EVENT_FLAG = "cid_airship_obtained";
+const AIRSHIP_DESTROYED_EVENT_FLAG = "cid_airship_destroyed";
+const CANOE_OBTAINED_EVENT_FLAG = "canoe_obtained";
 const AIRSHIP_OF_CID_MAP_ID = "Airship_of_Cid";
 const AIRSHIP_OF_CID_HELM_TILE = { x: 23, y: 11 };
 const AIRSHIP_FLOATING_CONTINENT_TILE = { x: 90, y: 59 };
+const FLOATING_CONTINENT_BIG_ROCK_CRASH_TILE = { x: 82, y: 54 };
+const CANOE_IMAGE_URL = new URL("../../assets/images/objects/canoe.png", import.meta.url).href;
+const CANOE_SPRITE_COLUMNS = 4;
+const CANOE_WATER_GIDS = new Set([9, 10, 25, 26, 59, 67]);
 const AIRSHIP_BLOCKED_GIDS = new Set([7, 22, 23, 24, 39]);
 const AIRSHIP_SPRITE_FRAMES = 8;
 const AIRSHIP_IMAGE_URL = new URL("../../assets/images/objects/airship.png", import.meta.url).href;
+const AIRSHIP_CRASH_DURATION_MS = 1400;
 const FLOATING_CONTINENT_LOCATION_GROUP = "Floating Continent";
 const FLOATING_CONTINENT_DEFAULT_LOCATION = "Floating Continent Near Ur";
 const FLOATING_CONTINENT_SEA_LOCATION = "Floating Continent Seas";
@@ -105,7 +119,48 @@ const FLOATING_CONTINENT_LOCATION_SPAWNS = {
   "Floating Continent Near desert": { x: 57, y: 84 },
 };
 const KAZUS_MAP_ID = "Kazus";
+const KAZUS_BLACKSMITH_MAP_ID = "Kazus_Blacksmith";
 const KAZUS_NPC_516_KEY = "kazus_npc_516_scripted";
+const KAZUS_CID_JOIN_KEY = "kazus_cid_join_scripted";
+const KAZUS_CID_JOIN_SEQUENCE_ID = "kazus_cid_join";
+const KAZUS_CID_FOLLOWER_EVENT_FLAG = "kazus_cid_follower_joined";
+const KAZUS_BLACKSMITH_TAKA_KEY = "kazus_blacksmith_taka_scripted";
+const KAZUS_BLACKSMITH_MITHRIL_RAM_EVENT_FLAG = "kazus_blacksmith_mythril_ram_complete";
+const KAZUS_BLACKSMITH_TAKA_OUTBOUND_PATH = [
+  { x: 5, y: 6 },
+  { x: 5, y: 7 },
+  { x: 5, y: 8 },
+  { x: 5, y: 9 },
+  { x: 6, y: 9 },
+  { x: 6, y: 10 },
+  { x: 6, y: 11 },
+  { x: 6, y: 12 },
+];
+const KAZUS_BLACKSMITH_TAKA_RETURN_PATH = [
+  { x: 6, y: 11 },
+  { x: 6, y: 10 },
+  { x: 6, y: 9 },
+  { x: 5, y: 9 },
+  { x: 5, y: 8 },
+  { x: 5, y: 7 },
+  { x: 5, y: 6 },
+  { x: 6, y: 6 },
+];
+const KAZUS_CID_JOIN_PATH = [
+  { x: 12, y: 20 },
+  { x: 12, y: 21 },
+  { x: 12, y: 22 },
+  { x: 12, y: 23 },
+  { x: 12, y: 24 },
+  { x: 12, y: 25 },
+  { x: 11, y: 25 },
+  { x: 10, y: 25 },
+  { x: 10, y: 26 },
+  { x: 10, y: 27 },
+  { x: 10, y: 28 },
+  { x: 9, y: 28 },
+];
+const KAZUS_CID_FOLLOWER_START = { x: 9, y: 28, direction: "left" };
 const SEALED_CAVE_B2_2_MAP_ID = "Sealed_Cave_B2_2";
 const SEALED_CAVE_B3_MAP_ID = "Sealed_Cave_B3";
 const SEALED_CAVE_B2_2_SARA_KEY = "sealed_cave_b2_2_sara_scripted";
@@ -123,7 +178,10 @@ const CASTLE_SASUNE_MAINKEEP_RING_THROW = {
 };
 const CASTLE_SASUNE_MAINKEEP_4F_POST_DJINN_SPAWN = { x: 7, y: 11 };
 const SEALED_CAVE_SARA_LEAVE_EVENT_FLAG = "sara_left_party";
+const CASTLE_SASUNE_MAINKEEP_4F_KING_545_SPOKEN_FLAG = "castle_sasune_mainkeep_4f_king_545_spoken";
 const SARA_FOLLOWER_DIALOGUE_SEQUENCE = [122, 123, 124, 125];
+const CID_FOLLOWER_INITIAL_DIALOGUE_INDEX = 108;
+const CID_FOLLOWER_RANDOM_DIALOGUE_INDICES = [109, 110, 112];
 const SEALED_CAVE_B2_2_SARA_PATH = [
   { x: 3, y: 2 },
   { x: 3, y: 3 },
@@ -216,12 +274,28 @@ const MERGED_FIXED_DIALOGUE_PAGE_OVERRIDES = {
     "そばにいなくてはなりません。\nほんとうは　ついていきたい……\nでもきっと　あしでまといに　なってしまいますね\n『サラ……",
     "「たびが　おわったら　かならず　かえってきて\nくださいね。　わたし　まっています。\nいつまでも……\nサラと　わかれた……",
   ],
+  16: [
+    "よくやった！\nさすが　わしが　みこんだだけのことはあるわい。\nひくうていは　おまえさんたちが　やくにたてるのが\n１ばんいいじゃろう。",
+    "それより　わしを　ばあさんのまつ　カナーンの\nむらまで　つれていってくれ。\nなっ　たのむ！\nシドじいさんが　パーティーにくわわった。",
+  ],
+  535: [
+    "シド「カナーンへいくために\n　　　ネルブのおおいわを　くだこうとおもうのだが……\n　　　ひくうていにミスリルせいの　せんしゅを\n　　　つければなんとかなるかもしれん。",
+    "タカ「よーしまっておれ！　いま　つくってやる！！",
+  ],
+  536: [
+    "そーれ　おわったぞい！\nなーに　れいはいらんよ。　むらを　すくって\nくれたんじゃからの。　あたりまえじゃ。\nそれでは　きをつけていきなされ！",
+    "タカじいさんが　ひくうていに\nミスリルのせんしゅを　つけてくれた！\nシド「よーし　ひくうていで　おおいわに\n　　　たいあたりじゃ！！",
+  ],
 };
-const UR_SHOP_ACTIVATIONS = [
+const MAP_SHOP_ACTIVATIONS = [
   { mapId: "Ur_ArmorShop", x: 3, y: 5, shopMap: "Ur", shopType: "Armor" },
   { mapId: "Ur_MagicShop", x: 4, y: 4, shopMap: "Ur", shopType: "Magic" },
   { mapId: "Ur_WeaponShop", x: 3, y: 4, shopMap: "Ur", shopType: "Weapons" },
   { mapId: "Ur_Inn_ItemShop", x: 8, y: 15, shopMap: "Ur", shopType: "Items" },
+  { mapId: "Kazus_ArmorShop", x: 3, y: 5, shopMap: "Kazus", shopType: "Armor" },
+  { mapId: "Kazus_MagicShop", x: 4, y: 4, shopMap: "Kazus", shopType: "Magic" },
+  { mapId: "Kazus_WeaponShop", x: 3, y: 4, shopMap: "Kazus", shopType: "Weapons" },
+  { mapId: "Kazus_Inn_ItemShop_1F", x: 13, y: 6, shopMap: "Kazus", shopType: "Items" },
 ];
 const CRYSTAL_SPRITE_FRAMES = 4;
 const CRYSTAL_SPRITE_FRAME_MS = 500;
@@ -263,11 +337,12 @@ const CHARACTER_SPRITES_BY_JOB_KEY = {
   warrior: buildFieldCharacterSprite("warrior"),
   "white-mage": buildFieldCharacterSprite("white-mage"),
 };
-let spellLevelByNamePromise = null;
+let inventoryResolverDataPromise = null;
 let mergedFixedContentPromise = null;
 const mapRenderStateCache = new WeakMap();
 const waterHighlightMaskCache = new Map();
 const waterFlowTileCache = new Map();
+let activeAirshipCrashAnimationFrameId = null;
 
 export function isFloatingContinentMap(mapDefinition) {
   return String(mapDefinition?.id || "") === FLOATING_CONTINENT_MAP_ID;
@@ -387,7 +462,10 @@ function resolveFloatingContinentSelection(
 }
 
 function resolveFloatingContinentFreshAirshipState(selectedLocation, saveEnvelope = null) {
-  if (!isSavedEventFlagEnabled(saveEnvelope, AIRSHIP_OBTAINED_EVENT_FLAG)) {
+  if (
+    !isSavedEventFlagEnabled(saveEnvelope, AIRSHIP_OBTAINED_EVENT_FLAG)
+    || isSavedEventFlagEnabled(saveEnvelope, AIRSHIP_DESTROYED_EVENT_FLAG)
+  ) {
     return {};
   }
   const spawn = resolveFloatingContinentSpawn(selectedLocation, AIRSHIP_FLOATING_CONTINENT_TILE);
@@ -542,6 +620,23 @@ export function resolveSaraFollowerDialogueIndex(dialogueCount = 0, randomValue 
   const normalizedRandom = clamp(Number(randomValue || 0), 0, 0.999999999);
   const index = Math.floor(normalizedRandom * fallbackSequence.length);
   return fallbackSequence[index] || fallbackSequence[0];
+}
+
+export function resolveCidFollowerDialogueIndex(
+  dialogueCount = 0,
+  randomValue = Math.random(),
+  hasKazusBlacksmithRamUpgrade = false,
+) {
+  const normalizedCount = Math.max(0, Math.floor(Number(dialogueCount || 0)));
+  if (normalizedCount === 0) {
+    return CID_FOLLOWER_INITIAL_DIALOGUE_INDEX;
+  }
+  if (hasKazusBlacksmithRamUpgrade) {
+    return 112;
+  }
+  const normalizedRandom = clamp(Number(randomValue || 0), 0, 0.999999999);
+  const index = Math.floor(normalizedRandom * CID_FOLLOWER_RANDOM_DIALOGUE_INDICES.length);
+  return CID_FOLLOWER_RANDOM_DIALOGUE_INDICES[index] || CID_FOLLOWER_RANDOM_DIALOGUE_INDICES[0];
 }
 
 export function normalizeNpcDirection(direction, fallback = "down") {
@@ -856,17 +951,33 @@ function addItemToInventory(save, bucketName, itemName, quantity = 1, spellLevel
 }
 
 async function loadSpellLevelByName() {
-  if (!spellLevelByNamePromise) {
-    spellLevelByNamePromise = loadJson("../assets/data/ffiii_spells.json")
-      .then((payload) => {
-        return buildSpellLevelByName(payload);
+  if (!inventoryResolverDataPromise) {
+    inventoryResolverDataPromise = Promise.all([
+      loadJson("../assets/data/ffiii_items.json"),
+      loadJson("../assets/data/ffiii_weapons.json"),
+      loadJson("../assets/data/ffiii_armors.json"),
+      loadJson("../assets/data/ffiii_spells.json"),
+    ])
+      .then(([itemsPayload, weaponsPayload, armorsPayload, spellsPayload]) => {
+        const itemTypeByName = {};
+        asArray(itemsPayload?.items).forEach((item) => {
+          const name = String(item?.name || item?.Name || "");
+          if (!name) return;
+          itemTypeByName[name] = String(item?.ItemType || "");
+        });
+        return {
+          itemTypeByName,
+          weaponNameSet: new Set(asArray(weaponsPayload?.weapons).map((row) => String(row?.name || "")).filter(Boolean)),
+          armorNameSet: new Set(asArray(armorsPayload?.armors).map((row) => String(row?.name || "")).filter(Boolean)),
+          spellLevelByName: buildSpellLevelByName(spellsPayload),
+        };
       })
       .catch((error) => {
-        spellLevelByNamePromise = null;
+        inventoryResolverDataPromise = null;
         throw error;
       });
   }
-  return spellLevelByNamePromise;
+  return inventoryResolverDataPromise;
 }
 
 async function loadMergedFixedContentByIndex(index) {
@@ -990,7 +1101,22 @@ function isFloatingContinentAirshipEnabled(mapDefinition, saveEnvelope) {
   return (
     String(mapDefinition?.id || "") === FLOATING_CONTINENT_MAP_ID
     && isSavedEventFlagEnabled(saveEnvelope, AIRSHIP_OBTAINED_EVENT_FLAG)
+    && !isSavedEventFlagEnabled(saveEnvelope, AIRSHIP_DESTROYED_EVENT_FLAG)
   );
+}
+
+function isFloatingContinentCanoeEnabled(mapDefinition, saveEnvelope) {
+  return (
+    String(mapDefinition?.id || "") === FLOATING_CONTINENT_MAP_ID
+    && (
+      isSavedEventFlagEnabled(saveEnvelope, CANOE_OBTAINED_EVENT_FLAG)
+      || isSavedEventFlagEnabled(saveEnvelope, CASTLE_SASUNE_MAINKEEP_4F_KING_545_SPOKEN_FLAG)
+    )
+  );
+}
+
+function isCanoeWaterGid(gid) {
+  return CANOE_WATER_GIDS.has(Number(gid || 0));
 }
 
 function resolveAirshipState(mapDefinition, mapState = {}, menuState = {}, saveEnvelope = null) {
@@ -1098,7 +1224,13 @@ export function canOccupyTile(mapDefinition, x, y, saveEnvelope = null) {
     return false;
   }
   const gid = Number(mapDefinition.rows?.[y]?.[x] ?? 0);
-  return !mapDefinition.collisionGids.has(gid);
+  if (!mapDefinition.collisionGids.has(gid)) {
+    return true;
+  }
+  return Boolean(
+    isFloatingContinentCanoeEnabled(mapDefinition, saveEnvelope)
+    && isCanoeWaterGid(gid)
+  );
 }
 
 function isWithinMapBounds(mapDefinition, x, y) {
@@ -1134,8 +1266,10 @@ export function resolveTransitionSpawn(mapDefinition, targetSpawn = null) {
 export function findBlockingObjectAt(mapDefinition, x, y, saveEnvelope = null) {
   return (mapDefinition?.objects || []).find((row) => (
     isMapObjectAvailable(row, saveEnvelope)
-    && row?.type === "npc"
-    && row?.blocking !== false
+    && (
+      (row?.type === "npc" && row?.blocking !== false)
+      || row?.blocking === true
+    )
     && Number(row?.x) === Number(x)
     && Number(row?.y) === Number(y)
   )) || null;
@@ -1206,7 +1340,13 @@ export function canNpcOccupyTile(mapDefinition, npcRow, mapState, x, y, saveEnve
     return false;
   }
   const gid = Number(mapDefinition.rows?.[y]?.[x] ?? 0);
-  return !mapDefinition.collisionGids.has(gid);
+  if (!mapDefinition.collisionGids.has(gid)) {
+    return true;
+  }
+  return Boolean(
+    isFloatingContinentCanoeEnabled(mapDefinition, saveEnvelope)
+    && isCanoeWaterGid(gid)
+  );
 }
 
 export function canAirshipOccupyTile(mapDefinition, x, y) {
@@ -1214,8 +1354,30 @@ export function canAirshipOccupyTile(mapDefinition, x, y) {
   if (x < 0 || y < 0 || x >= mapDefinition.width || y >= mapDefinition.height) {
     return false;
   }
+  if (findBlockingObjectAt(mapDefinition, x, y, null)) {
+    return false;
+  }
   const gid = Number(mapDefinition.rows?.[y]?.[x] ?? 0);
   return !AIRSHIP_BLOCKED_GIDS.has(gid);
+}
+
+export function shouldTriggerFloatingContinentBigRockCrash(
+  mapDefinition,
+  mapState,
+  nextX,
+  nextY,
+  saveEnvelope = null,
+) {
+  return Boolean(
+    isFloatingContinentMap(mapDefinition)
+    && isAirshipRiding(mapDefinition, mapState, saveEnvelope)
+    && Number(nextX) === FLOATING_CONTINENT_BIG_ROCK_CRASH_TILE.x
+    && Number(nextY) === FLOATING_CONTINENT_BIG_ROCK_CRASH_TILE.y
+    && isSavedEventFlagEnabled(saveEnvelope, SEALED_CAVE_SARA_LEAVE_EVENT_FLAG)
+    && isSavedEventFlagEnabled(saveEnvelope, KAZUS_CID_FOLLOWER_EVENT_FLAG)
+    && isSavedEventFlagEnabled(saveEnvelope, KAZUS_BLACKSMITH_MITHRIL_RAM_EVENT_FLAG)
+    && !isSavedEventFlagEnabled(saveEnvelope, AIRSHIP_DESTROYED_EVENT_FLAG)
+  );
 }
 
 export function moveMapPosition(mapDefinition, mapState, direction, saveEnvelope = null) {
@@ -1329,7 +1491,7 @@ export function moveAirshipPosition(mapDefinition, mapState, direction, saveEnve
   };
 }
 
-function buildEnvelopeWithMapState(store, nextMapState, mapDefinition) {
+function buildEnvelopeWithMapState(store, nextMapState, mapDefinition, options = {}) {
   const currentState = store.getState();
   const currentEnvelope = currentState.saveEnvelope && typeof currentState.saveEnvelope === "object"
     ? currentState.saveEnvelope
@@ -1356,6 +1518,8 @@ function buildEnvelopeWithMapState(store, nextMapState, mapDefinition) {
       tile_y: Number(nextMapState.airship_tile_y),
       riding: Boolean(nextMapState.airship_riding),
     };
+  } else if (options?.clearAirshipState === true) {
+    delete nextMenuState.airship_state;
   } else if (currentAirshipState) {
     nextMenuState.airship_state = currentAirshipState;
   }
@@ -1569,6 +1733,31 @@ function renderLayout() {
         transform: scaleX(var(--airship-facing-scale, 1));
         transform-origin: center;
       }
+      [data-screen="map"] .map-airship-crash-piece,
+      [data-screen="map"] .map-airship-crash-burst {
+        position: absolute;
+        pointer-events: none;
+        will-change: transform, opacity;
+        z-index: 4;
+      }
+      [data-screen="map"] .map-airship-crash-piece {
+        width: var(--map-tile-size);
+        height: var(--map-tile-size);
+        background-image: url("${AIRSHIP_IMAGE_URL}");
+        background-repeat: no-repeat;
+        background-size: calc(var(--map-tile-size) * ${AIRSHIP_SPRITE_FRAMES}) var(--map-tile-size);
+        background-position: 0 0;
+        image-rendering: pixelated;
+        transform-origin: center;
+        filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.4));
+      }
+      [data-screen="map"] .map-airship-crash-burst {
+        width: calc(var(--map-tile-size) * 0.9);
+        height: calc(var(--map-tile-size) * 0.9);
+        border-radius: 999px;
+        background: radial-gradient(circle, rgba(255,245,190,0.98) 0%, rgba(255,182,76,0.95) 45%, rgba(255,112,32,0.75) 65%, rgba(255,112,32,0) 100%);
+        mix-blend-mode: screen;
+      }
       [data-screen="map"] .map-decoration-crystal {
         width: var(--map-tile-size);
         height: calc(var(--map-tile-size) * 2);
@@ -1589,7 +1778,7 @@ function renderLayout() {
         background-image: var(--player-sprite-url, url("${ONION_KNIGHT_IMAGE_URL}"));
         background-repeat: no-repeat;
         background-size:
-          ${CHARACTER_DISPLAY_TILE_SIZE * CHARACTER_SHEET_COLUMNS}px
+          calc(${CHARACTER_DISPLAY_TILE_SIZE}px * var(--player-sprite-columns, ${CHARACTER_SHEET_COLUMNS}))
           calc(${CHARACTER_DISPLAY_TILE_SIZE}px * var(--player-sprite-rows, 4));
         image-rendering: pixelated;
         filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.45));
@@ -1781,8 +1970,28 @@ function objectLabel(type) {
   return "OBJ";
 }
 
-function npcObjectKey(row, fallback = "") {
-  return String(row?.npc_key || row?.dialogue_index || row?.name || fallback);
+const NPC_RUNTIME_KEY = Symbol("npcRuntimeKey");
+
+export function npcObjectKey(row, fallback = "") {
+  if (!row || typeof row !== "object") return String(fallback);
+  if (row[NPC_RUNTIME_KEY]) return row[NPC_RUNTIME_KEY];
+  if (row?.npc_key) {
+    row[NPC_RUNTIME_KEY] = String(row.npc_key);
+    return row[NPC_RUNTIME_KEY];
+  }
+  const parts = [];
+  if (row?.name) parts.push(`name:${row.name}`);
+  if (row?.dialogue_index !== undefined && row?.dialogue_index !== null && row?.dialogue_index !== "") {
+    parts.push(`dialogue:${row.dialogue_index}`);
+  }
+  if (Number.isFinite(Number(row?.x)) && Number.isFinite(Number(row?.y))) {
+    parts.push(`spawn:${Number(row.x)},${Number(row.y)}`);
+  }
+  const spriteSource = row?.sprite_image || row?.spriteImageUrl;
+  if (spriteSource) parts.push(`sprite:${spriteSource}`);
+  if (fallback !== "") parts.push(`fallback:${String(fallback)}`);
+  row[NPC_RUNTIME_KEY] = parts.length > 0 ? parts.join("|") : String(fallback);
+  return row[NPC_RUNTIME_KEY];
 }
 
 function resolveObjectSpriteFrameCount(row) {
@@ -2197,7 +2406,7 @@ export function findShopActivation(mapDefinition, mapState) {
   const mapId = String(mapDefinition?.id || mapState?.current_map_id || "");
   const tileX = Number(mapState?.tile_x);
   const tileY = Number(mapState?.tile_y);
-  return UR_SHOP_ACTIVATIONS.find((row) => (
+  return MAP_SHOP_ACTIVATIONS.find((row) => (
     row.mapId === mapId
     && Math.abs(tileX - Number(row.x)) + Math.abs(tileY - Number(row.y)) === 1
   )) || null;
@@ -2495,7 +2704,7 @@ export function openAdjacentTreasure(mapDefinition, mapState, saveEnvelope, spel
   );
 }
 
-function finalizeTreasureOpen(mapDefinition, mapState, saveEnvelope, treasureRow, spellLevelByName = {}) {
+function finalizeTreasureOpen(mapDefinition, mapState, saveEnvelope, treasureRow, inventoryResolverData = {}) {
   const key = treasureKey(treasureRow);
   const currentOpenedTreasures = normalizeTreasureStates(mapState?.opened_treasures);
   if (currentOpenedTreasures[key]) {
@@ -2506,15 +2715,31 @@ function finalizeTreasureOpen(mapDefinition, mapState, saveEnvelope, treasureRow
     [key]: true,
   };
   const itemName = String(treasureRow.item_name || "Potion");
-  const bucketName = String(treasureRow.inventory_bucket || "Anywhere");
+  const requestedBucketName = String(treasureRow.inventory_bucket || "Anywhere");
   const quantity = Math.max(1, asNumber(treasureRow.quantity, 1));
+  const normalizedInventoryResolverData = (
+    inventoryResolverData
+    && typeof inventoryResolverData === "object"
+    && (
+      "spellLevelByName" in inventoryResolverData
+      || "itemTypeByName" in inventoryResolverData
+      || "weaponNameSet" in inventoryResolverData
+      || "armorNameSet" in inventoryResolverData
+    )
+  )
+    ? inventoryResolverData
+    : { spellLevelByName: inventoryResolverData || {} };
+  const spellLevelByName = normalizedInventoryResolverData.spellLevelByName || {};
+  const bucketName = itemName === "GIL"
+    ? requestedBucketName
+    : resolveInventoryBucketForItem(normalizedInventoryResolverData, itemName, requestedBucketName);
   const nextEnvelope = typeof structuredClone === "function"
     ? structuredClone(saveEnvelope || { save: {} })
     : JSON.parse(JSON.stringify(saveEnvelope || { save: {} }));
   if (!nextEnvelope.save || typeof nextEnvelope.save !== "object") {
     nextEnvelope.save = {};
   }
-  if (bucketName === "Resource" && itemName === "GIL") {
+  if (itemName === "GIL") {
     nextEnvelope.save.gil = Math.max(0, asNumber(nextEnvelope.save.gil, 0)) + quantity;
     if (!nextEnvelope.menu_state || typeof nextEnvelope.menu_state !== "object") {
       nextEnvelope.menu_state = {};
@@ -2608,6 +2833,15 @@ function updateMapPlayerSprite(mapPlayer, direction, walkFrame) {
   mapPlayer.style.setProperty("--player-facing-scale", String(facingScale));
 }
 
+export function resolveCanoeSpriteFrame(direction, walkFrame = 0) {
+  const normalizedDirection = normalizeMapFacingDirection(direction, "down");
+  const frameOffset = Math.abs(Number(walkFrame || 0)) % 2;
+  if (normalizedDirection === "left" || normalizedDirection === "right") {
+    return { frameIndex: frameOffset, facingScale: 1 };
+  }
+  return { frameIndex: 2 + frameOffset, facingScale: 1 };
+}
+
 export function resolveAirshipUpperSprite(direction) {
   const normalizedDirection = normalizeMapFacingDirection(direction, "left");
   switch (normalizedDirection) {
@@ -2630,11 +2864,54 @@ function updateNpcSpriteFrame(node, direction, walkFrame) {
   node.style.transform = `scaleX(${resolveNpcFacingScale(direction)})`;
 }
 
-function updateMapPlayerSpriteImage(mapPlayer, appState) {
+export function isPlayerInCanoe(mapDefinition, mapState, saveEnvelope = null) {
+  if (
+    !mapDefinition
+    || !mapState
+    || isAirshipRiding(mapDefinition, mapState, saveEnvelope)
+    || !isFloatingContinentCanoeEnabled(mapDefinition, saveEnvelope)
+  ) {
+    return false;
+  }
+  const gid = Number(mapDefinition.rows?.[Number(mapState?.tile_y) || 0]?.[Number(mapState?.tile_x) || 0] ?? 0);
+  return isCanoeWaterGid(gid);
+}
+
+export function shouldRenderGuestFollowerOnMap(mapDefinition, mapState, saveEnvelope = null, options = {}) {
+  const followerType = resolveActiveGuestFollowerType(saveEnvelope, options);
+  if (!followerType) {
+    return false;
+  }
+  if (isAirshipRiding(mapDefinition, mapState, saveEnvelope)) {
+    return false;
+  }
+  if (isPlayerInCanoe(mapDefinition, mapState, saveEnvelope)) {
+    return false;
+  }
+  return true;
+}
+
+function updateMapPlayerSpriteImage(mapPlayer, mapDefinition, mapState, appState) {
   if (!mapPlayer) return;
+  if (isPlayerInCanoe(mapDefinition, mapState, appState?.saveEnvelope)) {
+    mapPlayer.style.setProperty("--player-sprite-url", `url("${CANOE_IMAGE_URL}")`);
+    mapPlayer.style.setProperty("--player-sprite-rows", "1");
+    mapPlayer.style.setProperty("--player-sprite-columns", String(CANOE_SPRITE_COLUMNS));
+    return;
+  }
   const sprite = resolveLeaderCharacterSprite(appState);
   mapPlayer.style.setProperty("--player-sprite-url", `url("${sprite.url}")`);
   mapPlayer.style.setProperty("--player-sprite-rows", String(sprite.rows));
+  mapPlayer.style.setProperty("--player-sprite-columns", String(CHARACTER_SHEET_COLUMNS));
+}
+
+function updateMapPlayerSpriteForState(mapPlayer, direction, walkFrame, mapDefinition, mapState, saveEnvelope = null) {
+  if (!mapPlayer) return;
+  const spriteFrame = isPlayerInCanoe(mapDefinition, mapState, saveEnvelope)
+    ? resolveCanoeSpriteFrame(direction, walkFrame)
+    : resolveCharacterSpriteFrame(direction, walkFrame);
+  mapPlayer.style.backgroundPosition = `${-spriteFrame.frameIndex * CHARACTER_DISPLAY_TILE_SIZE}px 0`;
+  mapPlayer.style.setProperty("--player-facing-scale", String(spriteFrame.facingScale));
 }
 
 function updateMapPlayerVisibility(mapPlayer, mapDefinition, mapState, saveEnvelope = null) {
@@ -2666,10 +2943,22 @@ function ensureAirshipNode(mapLayer, className) {
   return node;
 }
 
-function updateFloatingContinentAirship(mapLayer, mapDefinition, mapState, saveEnvelope = null, visualPosition = null) {
+function updateFloatingContinentAirship(
+  mapLayer,
+  mapDefinition,
+  mapState,
+  saveEnvelope = null,
+  visualPosition = null,
+  options = {},
+) {
   const existingNodes = mapLayer.querySelectorAll(".map-airship");
   const available = isFloatingContinentAirshipEnabled(mapDefinition, saveEnvelope);
-  if (!available || !Number.isFinite(Number(mapState?.airship_tile_x)) || !Number.isFinite(Number(mapState?.airship_tile_y))) {
+  if (
+    options?.suppressAirship === true
+    || !available
+    || !Number.isFinite(Number(mapState?.airship_tile_x))
+    || !Number.isFinite(Number(mapState?.airship_tile_y))
+  ) {
     existingNodes.forEach((node) => node.remove());
     return;
   }
@@ -2706,6 +2995,88 @@ function updateFloatingContinentAirship(mapLayer, mapDefinition, mapState, saveE
   const ground = ensureAirshipNode(mapLayer, "map-airship-ground");
   ground.style.left = `${left}px`;
   ground.style.top = `${top}px`;
+}
+
+function removeAirshipCrashNodes(mapLayer) {
+  if (!mapLayer) return;
+  mapLayer.querySelectorAll(".map-airship-crash-piece, .map-airship-crash-burst").forEach((node) => node.remove());
+}
+
+function stopAirshipCrashAnimation(mapLayer) {
+  if (activeAirshipCrashAnimationFrameId !== null) {
+    cancelAnimationFrame(activeAirshipCrashAnimationFrameId);
+    activeAirshipCrashAnimationFrameId = null;
+  }
+  removeAirshipCrashNodes(mapLayer);
+}
+
+async function playAirshipCrashAnimation(mapLayer, mapDefinition, tileX, tileY, durationMs = AIRSHIP_CRASH_DURATION_MS) {
+  if (!mapLayer || !mapDefinition) return false;
+  stopAirshipCrashAnimation(mapLayer);
+  const renderPadding = mapDefinition.renderPadding || { left: 0, top: 0 };
+  const anchorLeft = (Number(tileX || 0) + Number(renderPadding.left || 0)) * DISPLAY_TILE_SIZE;
+  const anchorTop = (Number(tileY || 0) + Number(renderPadding.top || 0)) * DISPLAY_TILE_SIZE;
+  const pieceConfigs = [
+    { dx: -3.4, dy: -1.8, rotation: -260, delay: 0.00, clipPath: "polygon(0 0, 58% 0, 44% 48%, 0 42%)" },
+    { dx: 3.2, dy: -1.4, rotation: 230, delay: 0.03, clipPath: "polygon(42% 0, 100% 0, 100% 44%, 58% 52%)" },
+    { dx: -2.8, dy: 0.4, rotation: -190, delay: 0.06, clipPath: "polygon(0 40%, 48% 46%, 42% 100%, 0 100%)" },
+    { dx: 2.9, dy: 0.7, rotation: 210, delay: 0.08, clipPath: "polygon(54% 48%, 100% 42%, 100% 100%, 58% 100%)" },
+    { dx: -1.0, dy: -2.6, rotation: -320, delay: 0.02, clipPath: "polygon(18% 18%, 82% 12%, 70% 60%, 26% 58%)" },
+    { dx: 0.6, dy: 2.5, rotation: 280, delay: 0.10, clipPath: "polygon(24% 54%, 78% 50%, 72% 86%, 30% 88%)" },
+  ];
+  const burstConfigs = [
+    { dx: -0.2, dy: -0.3, scale: 1.9, delay: 0.00 },
+    { dx: 1.4, dy: -1.0, scale: 1.2, delay: 0.16 },
+    { dx: -1.7, dy: 0.8, scale: 1.1, delay: 0.24 },
+    { dx: 0.9, dy: 1.5, scale: 1.35, delay: 0.34 },
+  ];
+  const pieceNodes = pieceConfigs.map((config) => {
+    const node = document.createElement("div");
+    node.className = "map-airship-crash-piece";
+    node.style.left = `${anchorLeft}px`;
+    node.style.top = `${anchorTop}px`;
+    node.style.clipPath = config.clipPath;
+    mapLayer.appendChild(node);
+    return { node, config };
+  });
+  const burstNodes = burstConfigs.map((config) => {
+    const node = document.createElement("div");
+    node.className = "map-airship-crash-burst";
+    node.style.left = `${anchorLeft + (DISPLAY_TILE_SIZE * 0.05)}px`;
+    node.style.top = `${anchorTop + (DISPLAY_TILE_SIZE * 0.05)}px`;
+    mapLayer.appendChild(node);
+    return { node, config };
+  });
+  const startedAt = performance.now();
+  return new Promise((resolve) => {
+    const tick = (frameNow) => {
+      const elapsed = frameNow - startedAt;
+      const progress = clamp(elapsed / Math.max(1, Number(durationMs || 0)), 0, 1);
+      pieceNodes.forEach(({ node, config }) => {
+        const localProgress = clamp((progress - config.delay) / Math.max(0.2, 1 - config.delay), 0, 1);
+        const distance = localProgress * (1 + (localProgress * 0.8));
+        const translateX = config.dx * DISPLAY_TILE_SIZE * distance;
+        const translateY = (config.dy * DISPLAY_TILE_SIZE * localProgress) + (DISPLAY_TILE_SIZE * 1.6 * localProgress * localProgress);
+        const opacity = 1 - clamp((localProgress - 0.58) / 0.42, 0, 1);
+        node.style.opacity = `${opacity}`;
+        node.style.transform = `translate(${translateX}px, ${translateY}px) rotate(${config.rotation * localProgress}deg) scale(${1 - (localProgress * 0.18)})`;
+      });
+      burstNodes.forEach(({ node, config }) => {
+        const localProgress = clamp((progress - config.delay) / 0.28, 0, 1);
+        const opacity = 1 - localProgress;
+        node.style.opacity = `${opacity}`;
+        node.style.transform = `translate(${config.dx * DISPLAY_TILE_SIZE * localProgress}px, ${config.dy * DISPLAY_TILE_SIZE * localProgress}px) scale(${config.scale * localProgress})`;
+      });
+      if (progress >= 1) {
+        activeAirshipCrashAnimationFrameId = null;
+        removeAirshipCrashNodes(mapLayer);
+        resolve(true);
+        return;
+      }
+      activeAirshipCrashAnimationFrameId = requestAnimationFrame(tick);
+    };
+    activeAirshipCrashAnimationFrameId = requestAnimationFrame(tick);
+  });
 }
 
 function updateMeta(mapMeta, mapDefinition, mapState) {
@@ -2838,6 +3209,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   let encounterLocked = false;
   let mapTransitionLocked = false;
   let spellLevelByName = {};
+  let suppressFloatingContinentAirship = false;
   let pyodide = null;
   let eventOverlayCloseAction = null;
   let visualMapPosition = null;
@@ -2875,14 +3247,34 @@ export async function mountScreen({ mountNode, store, navigate }) {
   }
 
   function isSaraFollowerActive(saveEnvelope = store.getState().saveEnvelope) {
-    return (
-      isSavedEventFlagEnabled(saveEnvelope, SEALED_CAVE_B2_2_SARA_EVENT_FLAG)
-      && !isSavedEventFlagEnabled(saveEnvelope, SEALED_CAVE_SARA_LEAVE_EVENT_FLAG)
-    );
+    return isSaraGuestActive(saveEnvelope);
+  }
+
+  function isCidFollowerActive(saveEnvelope = store.getState().saveEnvelope) {
+    return isCidGuestActive(saveEnvelope);
+  }
+
+  function activeFollowerType(saveEnvelope = store.getState().saveEnvelope) {
+    return resolveActiveGuestFollowerType(saveEnvelope, { forceSaraVisible: forceSaraFollowerVisible });
   }
 
   function shouldRenderSaraFollower(saveEnvelope = store.getState().saveEnvelope) {
-    return isSaraFollowerActive(saveEnvelope) || forceSaraFollowerVisible;
+    return shouldRenderGuestFollowerOnMap(
+      mapDefinition,
+      mapState,
+      saveEnvelope,
+      { forceSaraVisible: forceSaraFollowerVisible },
+    );
+  }
+
+  function followerSpriteUrlForType(type) {
+    if (type === "sara") {
+      return new URL("../../assets/images/NPCs/fs_sara.png", import.meta.url).href;
+    }
+    if (type === "cid") {
+      return new URL("../../assets/images/NPCs/fs_cid.png", import.meta.url).href;
+    }
+    return "";
   }
 
   function currentDialoguePartyMembers() {
@@ -2896,15 +3288,18 @@ export async function mountScreen({ mountNode, store, navigate }) {
 
   function ensureSaraFollowerNode() {
     let node = mapLayer.querySelector(".map-follower");
+    const followerType = activeFollowerType(store.getState().saveEnvelope);
+    const spriteUrl = followerSpriteUrlForType(followerType);
     if (!node) {
       node = document.createElement("div");
       node.className = "map-follower";
       node.setAttribute("aria-hidden", "true");
       node.innerHTML = `<span class="map-npc-sprite" aria-hidden="true"></span>`;
-      const sprite = node.querySelector(".map-npc-sprite");
-      sprite?.style.setProperty("--npc-sprite-url", `url("${new URL("../../assets/images/NPCs/fs_sara.png", import.meta.url).href}")`);
       mapLayer.appendChild(node);
     }
+    node.dataset.followerType = followerType;
+    const sprite = node.querySelector(".map-npc-sprite");
+    sprite?.style.setProperty("--npc-sprite-url", `url("${spriteUrl}")`);
     return node;
   }
 
@@ -3027,7 +3422,12 @@ export async function mountScreen({ mountNode, store, navigate }) {
   }
 
   function syncSaraFollowerStateForMap(nextMapDefinition, nextMapState, saveEnvelope = store.getState().saveEnvelope) {
-    if (!isSaraFollowerActive(saveEnvelope) || isAirshipRiding(nextMapDefinition, nextMapState, saveEnvelope)) {
+    if (!shouldRenderGuestFollowerOnMap(
+      nextMapDefinition,
+      nextMapState,
+      saveEnvelope,
+      { forceSaraVisible: forceSaraFollowerVisible },
+    )) {
       stopSaraFollowerMoveAnimation();
       visualSaraFollowerPosition = null;
       saraFollowerState = null;
@@ -3074,7 +3474,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     if (sprite) {
       updateNpcSpriteFrame(sprite, saraFollowerState.direction, saraFollowerState.walkFrame);
     }
-    node.style.display = isAirshipRiding(mapDefinition, mapState, store.getState().saveEnvelope) ? "none" : "block";
+    node.style.display = shouldRenderSaraFollower(store.getState().saveEnvelope) ? "block" : "none";
   }
 
   function tickSaraFollower() {
@@ -3338,6 +3738,144 @@ export async function mountScreen({ mountNode, store, navigate }) {
     }
   }
 
+  async function runKazusCidJoinSequence() {
+    const cidRow = (mapDefinition?.objects || []).find((row) => (
+      row?.type === "npc" && npcObjectKey(row) === KAZUS_CID_JOIN_KEY
+    ));
+    const marker = findNpcMarkerByKey(KAZUS_CID_JOIN_KEY);
+    if (!cidRow || !marker || !mapState) return false;
+    const messages = await loadMergedFixedContentByIndices([16], currentDialoguePartyMembers());
+    const now = performance.now();
+    const npcState = npcAnimationStates.get(KAZUS_CID_JOIN_KEY) || {
+      direction: resolveNpcInitialDirection(cidRow, 0),
+      walkFrame: 0,
+      nextFrameAt: now + NPC_FRAME_MS,
+      nextDirectionAt: now + NPC_DIRECTION_MAX_MS,
+    };
+    npcAnimationStates.set(KAZUS_CID_JOIN_KEY, npcState);
+    holdRepeater.stop();
+    mapTransitionLocked = true;
+    try {
+      for (const step of KAZUS_CID_JOIN_PATH) {
+        await animateNpcStep(cidRow, npcState, marker, step.x, step.y, 500);
+      }
+      npcState.direction = KAZUS_CID_FOLLOWER_START.direction;
+      npcState.walkFrame = 0;
+      cidRow.direction = KAZUS_CID_FOLLOWER_START.direction;
+      const spriteNode = marker.querySelector(".map-npc-sprite");
+      if (spriteNode) updateNpcSpriteFrame(spriteNode, npcState.direction, npcState.walkFrame);
+      marker.style.transitionDuration = `${MAP_MOVE_ANIMATION_MS}ms`;
+      await openDialogueMessagesAndWait(messages);
+      if (!persistNamedEventFlag(KAZUS_CID_FOLLOWER_EVENT_FLAG)) {
+        return false;
+      }
+      saraFollowerState = {
+        current_map_id: String(mapDefinition?.id || KAZUS_MAP_ID),
+        tile_x: KAZUS_CID_FOLLOWER_START.x,
+        tile_y: KAZUS_CID_FOLLOWER_START.y,
+        direction: KAZUS_CID_FOLLOWER_START.direction,
+        walkFrame: 0,
+      };
+      setSaraFollowerVisualPosition(saraFollowerState.tile_x, saraFollowerState.tile_y);
+      renderMapTiles(mapLayer, mapDefinition, store.getState().saveEnvelope);
+      tickNpcSprites();
+      mapStatus.textContent = "シドじいさんが　ついてきた。";
+      return true;
+    } finally {
+      marker.style.transitionDuration = `${MAP_MOVE_ANIMATION_MS}ms`;
+      mapTransitionLocked = false;
+    }
+  }
+
+  async function runKazusBlacksmithTakaSequence(npcRow) {
+    const npcKey = npcObjectKey(npcRow);
+    const marker = findNpcMarkerByKey(npcKey);
+    if (!npcRow || !marker || !mapState) return false;
+    const openingMessages = await loadMergedFixedContentByIndices([535], currentDialoguePartyMembers());
+    const completionMessages = await loadMergedFixedContentByIndices([536], currentDialoguePartyMembers());
+    const now = performance.now();
+    const npcState = npcAnimationStates.get(npcKey) || {
+      direction: resolveNpcInitialDirection(npcRow, 0),
+      walkFrame: 0,
+      nextFrameAt: now + NPC_FRAME_MS,
+      nextDirectionAt: now + NPC_DIRECTION_MAX_MS,
+    };
+    npcAnimationStates.set(npcKey, npcState);
+    holdRepeater.stop();
+    mapTransitionLocked = true;
+    try {
+      await openDialogueMessagesAndWait(openingMessages);
+      for (const step of KAZUS_BLACKSMITH_TAKA_OUTBOUND_PATH) {
+        await animateNpcStep(npcRow, npcState, marker, step.x, step.y, 500);
+      }
+      marker.style.display = "none";
+      await waitForDuration(3000);
+      marker.style.display = "block";
+      setNpcMarkerTransform(marker, npcRow);
+      for (const step of KAZUS_BLACKSMITH_TAKA_RETURN_PATH) {
+        await animateNpcStep(npcRow, npcState, marker, step.x, step.y, 500);
+      }
+      npcState.direction = "down";
+      npcState.walkFrame = 0;
+      npcRow.direction = "down";
+      const spriteNode = marker.querySelector(".map-npc-sprite");
+      if (spriteNode) updateNpcSpriteFrame(spriteNode, npcState.direction, npcState.walkFrame);
+      if (!persistNamedEventFlag(KAZUS_BLACKSMITH_MITHRIL_RAM_EVENT_FLAG)) {
+        return false;
+      }
+      renderMapTiles(mapLayer, mapDefinition, store.getState().saveEnvelope);
+      tickNpcSprites();
+      redraw();
+      await openDialogueMessagesAndWait(completionMessages);
+      mapStatus.textContent = `${npcRow.name || "NPC"} と話しました。`;
+      return true;
+    } finally {
+      marker.style.display = "block";
+      marker.style.transitionDuration = `${MAP_MOVE_ANIMATION_MS}ms`;
+      mapTransitionLocked = false;
+    }
+  }
+
+  async function runFloatingContinentBigRockCrashSequence() {
+    if (!mapDefinition || !mapState) return false;
+    holdRepeater.stop();
+    mapTransitionLocked = true;
+    try {
+      await waitForDuration(MAP_MOVE_ANIMATION_MS + 80);
+      suppressFloatingContinentAirship = true;
+      redraw();
+      triggerFlash();
+      await playAirshipCrashAnimation(mapLayer, mapDefinition, mapState.tile_x, mapState.tile_y);
+      const crashedMapState = {
+        ...mapState,
+        airship_riding: false,
+      };
+      delete crashedMapState.airship_tile_x;
+      delete crashedMapState.airship_tile_y;
+      mapState = crashedMapState;
+      const nextEnvelope = buildEnvelopeWithMapState(
+        store,
+        crashedMapState,
+        mapDefinition,
+        { clearAirshipState: true },
+      );
+      ensureMutableSaveEnvelope(nextEnvelope);
+      writeSavedEventFlag(nextEnvelope, AIRSHIP_DESTROYED_EVENT_FLAG, true);
+      if (!persistMapEventEnvelope(nextEnvelope)) {
+        return false;
+      }
+      renderMapTiles(mapLayer, mapDefinition, store.getState().saveEnvelope);
+      tickNpcSprites();
+      redraw();
+      mapStatus.textContent = "ひくうていが　たいはした！";
+      return true;
+    } finally {
+      suppressFloatingContinentAirship = false;
+      stopAirshipCrashAnimation(mapLayer);
+      mapTransitionLocked = false;
+    }
+  }
+
   async function runSealedCaveSaraSequence(npcRow) {
     const npcKey = npcObjectKey(npcRow);
     const marker = findNpcMarkerByKey(npcKey);
@@ -3388,7 +3926,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
   }
 
   async function maybeFollowWithSealedCaveSara(previousPlayerState) {
-    if (!saraFollowerState || !previousPlayerState || !isSaraFollowerActive(store.getState().saveEnvelope)) {
+    if (!saraFollowerState || !previousPlayerState || !shouldRenderSaraFollower(store.getState().saveEnvelope)) {
       return false;
     }
     const targetX = Number(previousPlayerState.tile_x);
@@ -3449,13 +3987,18 @@ export async function mountScreen({ mountNode, store, navigate }) {
   }
 
   async function maybeOpenSaraFollowerDialogue() {
-    if (!saraFollowerState || !isSaraFollowerActive(store.getState().saveEnvelope) || mapTransitionLocked) {
+    if (!saraFollowerState || !shouldRenderSaraFollower(store.getState().saveEnvelope) || mapTransitionLocked) {
       return false;
     }
-    const dialogueIndex = resolveSaraFollowerDialogueIndex(
-      saraFollowerDialogueCount,
-      Math.random(),
-    );
+    const saveEnvelope = store.getState().saveEnvelope;
+    const followerType = activeFollowerType(saveEnvelope);
+    const dialogueIndex = followerType === "cid"
+      ? resolveCidFollowerDialogueIndex(
+        saraFollowerDialogueCount,
+        Math.random(),
+        isSavedEventFlagEnabled(saveEnvelope, KAZUS_BLACKSMITH_MITHRIL_RAM_EVENT_FLAG),
+      )
+      : resolveSaraFollowerDialogueIndex(saraFollowerDialogueCount, Math.random());
     const messages = await loadMergedFixedContentByIndices([dialogueIndex], currentDialoguePartyMembers());
     const visibleMessages = messages.filter(Boolean);
     if (!visibleMessages.length) {
@@ -3467,7 +4010,9 @@ export async function mountScreen({ mountNode, store, navigate }) {
     } else {
       openEventOverlaySequence(visibleMessages);
     }
-    mapStatus.textContent = "サラひめが はなしかけてきた。";
+    mapStatus.textContent = followerType === "cid"
+      ? "シドじいさんが はなしかけてきた。"
+      : "サラひめが はなしかけてきた。";
     return true;
   }
 
@@ -3560,16 +4105,18 @@ export async function mountScreen({ mountNode, store, navigate }) {
       await animateSaraFollowerStepToWithFacing(6, 6, 500, "right");
       await openDialogueMessagesAndWait(farewellMessages);
       await animatePlayerStepTo(8, 6, 500);
+      if (!persistNamedEventFlag(SEALED_CAVE_SARA_LEAVE_EVENT_FLAG)) {
+        forceSaraFollowerVisible = false;
+        return false;
+      }
       mapTransitionLocked = false;
+      // Re-enter 4F after the Sara departure flag is saved so the restored NPC set
+      // is chosen during the initial render instead of after the first interaction.
       await applyMapTransition(
         CASTLE_SASUNE_MAINKEEP_4F_MAP_ID,
         CASTLE_SASUNE_MAINKEEP_4F_POST_DJINN_SPAWN,
       );
       mapTransitionLocked = true;
-      if (!persistNamedEventFlag(SEALED_CAVE_SARA_LEAVE_EVENT_FLAG)) {
-        forceSaraFollowerVisible = false;
-        return false;
-      }
       forceSaraFollowerVisible = false;
       saraFollowerState = null;
       hideSaraFollowerNode();
@@ -3824,11 +4371,12 @@ export async function mountScreen({ mountNode, store, navigate }) {
       mapState,
       store.getState().saveEnvelope,
       visualMapPosition,
+      { suppressAirship: suppressFloatingContinentAirship },
     );
     updateMapPlayerPosition(mapPlayer, mapDefinition, viewportTransform);
     updateMapPlayerVisibility(mapPlayer, mapDefinition, mapState, store.getState().saveEnvelope);
-    updateMapPlayerSpriteImage(mapPlayer, store.getState());
-    updateMapPlayerSprite(mapPlayer, playerDirection, playerWalkFrame);
+    updateMapPlayerSpriteImage(mapPlayer, mapDefinition, mapState, store.getState());
+    updateMapPlayerSpriteForState(mapPlayer, playerDirection, playerWalkFrame, mapDefinition, mapState, store.getState().saveEnvelope);
     updateSaraFollowerNode();
     updateMeta(mapMeta, mapDefinition, mapState);
   }
@@ -3962,6 +4510,9 @@ export async function mountScreen({ mountNode, store, navigate }) {
     nextEnvelope.saved_at = new Date().toISOString();
     nextEnvelope.selected_location_group = currentState.selectedLocationGroup;
     nextEnvelope.selected_location = currentState.selectedLocation;
+    if (nextEnvelope.menu_state && typeof nextEnvelope.menu_state === "object") {
+      store.updateMenuState(nextEnvelope.menu_state);
+    }
 
     if (!store.updateSaveEnvelope(nextEnvelope, { reason: "menu_confirmed" })) {
       mapStatus.textContent = "イベント結果の保存に失敗しました。";
@@ -3999,6 +4550,9 @@ export async function mountScreen({ mountNode, store, navigate }) {
     if (!eventRow || typeof eventRow !== "object") return false;
     if (String(eventRow.scripted_sequence || "") === SEALED_CAVE_B3_DJINN_CUTSCENE_ID) {
       return runSealedCaveB3DjinnSequence(eventRow);
+    }
+    if (String(eventRow.scripted_sequence || "") === KAZUS_CID_JOIN_SEQUENCE_ID) {
+      return runKazusCidJoinSequence();
     }
     const enemyNames = eventEnemyNames(eventRow);
     if (enemyNames.length) {
@@ -4199,6 +4753,15 @@ export async function mountScreen({ mountNode, store, navigate }) {
         await runSealedCaveSaraSequence(adjacentNpc);
         return;
       }
+      if (
+        mapDefinition.id === KAZUS_BLACKSMITH_MAP_ID
+        && npcObjectKey(adjacentNpc) === KAZUS_BLACKSMITH_TAKA_KEY
+        && isCidFollowerActive(store.getState().saveEnvelope)
+        && !isSavedEventFlagEnabled(store.getState().saveEnvelope, KAZUS_BLACKSMITH_MITHRIL_RAM_EVENT_FLAG)
+      ) {
+        await runKazusBlacksmithTakaSequence(adjacentNpc);
+        return;
+      }
       const dialogueIndices = resolveNpcDialogueIndicesForInteraction(
         mapDefinition,
         adjacentNpc,
@@ -4212,7 +4775,14 @@ export async function mountScreen({ mountNode, store, navigate }) {
         } else {
           openEventOverlaySequence(visibleMessages);
         }
-        if (persistNamedEventFlag(adjacentNpc.set_event_flag)) {
+        const eventFlagsToPersist = [
+          adjacentNpc.set_event_flag,
+          (
+            mapDefinition.id === CASTLE_SASUNE_MAINKEEP_4F_MAP_ID
+            && dialogueIndices.includes(545)
+          ) ? CANOE_OBTAINED_EVENT_FLAG : "",
+        ];
+        if (persistNamedEventFlags(eventFlagsToPersist)) {
           renderMapTiles(mapLayer, mapDefinition, store.getState().saveEnvelope);
           tickNpcSprites();
           redraw();
@@ -4398,13 +4968,16 @@ export async function mountScreen({ mountNode, store, navigate }) {
     const previousMapState = mapState;
     playerDirection = normalizeMapFacingDirection(direction, playerDirection);
     const currentEnvelope = store.getState().saveEnvelope;
+    const delta = directionDelta(playerDirection);
+    const attemptedNextX = asNumber(mapState?.tile_x, 0) + asNumber(delta?.x, 0);
+    const attemptedNextY = asNumber(mapState?.tile_y, 0) + asNumber(delta?.y, 0);
     const result = isAirshipRiding(mapDefinition, mapState, currentEnvelope)
       ? moveAirshipPosition(mapDefinition, mapState, direction, currentEnvelope)
       : moveMapPosition(mapDefinition, mapState, direction, currentEnvelope);
     mapState = result.nextState;
     if (!result.moved) {
       playerWalkFrame = 0;
-      updateMapPlayerSprite(mapPlayer, playerDirection, playerWalkFrame);
+      updateMapPlayerSpriteForState(mapPlayer, playerDirection, playerWalkFrame, mapDefinition, mapState, currentEnvelope);
       persistCurrentMapState(mapState);
       mapStatus.textContent = result.reason === "blocked"
         ? (isAirshipRiding(mapDefinition, mapState, currentEnvelope)
@@ -4438,6 +5011,16 @@ export async function mountScreen({ mountNode, store, navigate }) {
     }
     persistCurrentMapState(mapState);
     animateVisualMapPosition(previousMapState, mapState);
+    if (shouldTriggerFloatingContinentBigRockCrash(
+      mapDefinition,
+      mapState,
+      attemptedNextX,
+      attemptedNextY,
+      currentEnvelope,
+    )) {
+      await runFloatingContinentBigRockCrashSequence();
+      return;
+    }
     if (!isAirshipRiding(mapDefinition, mapState, currentEnvelope)) {
       mapTransitionLocked = true;
       try {
@@ -4550,7 +5133,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       closeEventOverlay();
       return;
     }
-    if (isSaraFollowerActive(store.getState().saveEnvelope)) {
+    if (shouldRenderSaraFollower(store.getState().saveEnvelope)) {
       void maybeOpenSaraFollowerDialogue();
       return;
     }
@@ -4665,6 +5248,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
         });
         holdRepeater.stop();
         stopNpcAnimation();
+        stopAirshipCrashAnimation(mapLayer);
         stopMapBgm();
         window.removeEventListener("keydown", onKeyDown);
       };
@@ -4842,6 +5426,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
     stopMoveAnimation();
     stopSaraFollowerMoveAnimation();
     stopCutsceneRingAnimation();
+    stopAirshipCrashAnimation(mapLayer);
     stopMapBgm();
     window.removeEventListener("keydown", onKeyDown);
     if (resizeObserver) {

@@ -8,6 +8,118 @@ export const DEFAULT_SAVE_SLOT_ID = "default";
 export const AUTO_SAVE_SLOT_ID = "auto-1";
 const indexedDbWriteQueue = new Map();
 
+function asNumber(value, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function migrateLegacyGilInventory(save, menuState) {
+  if (!save || typeof save !== "object") {
+    return { save, menuState };
+  }
+  const inventory = save.inventory;
+  if (!inventory || typeof inventory !== "object") {
+    return { save, menuState };
+  }
+  let migratedGil = 0;
+  const nextInventory = cloneValue(inventory);
+  Object.entries(nextInventory).forEach(([bucketName, bucketValue]) => {
+    if (!bucketValue || typeof bucketValue !== "object" || bucketName === "Magic") return;
+    const gilQuantity = asNumber(bucketValue.GIL, 0);
+    if (gilQuantity > 0) {
+      migratedGil += gilQuantity;
+      delete bucketValue.GIL;
+    }
+    if (!Object.keys(bucketValue).length) {
+      delete nextInventory[bucketName];
+    }
+  });
+  if (migratedGil <= 0) {
+    return { save, menuState };
+  }
+  const nextSave = {
+    ...cloneValue(save),
+    gil: Math.max(0, asNumber(save.gil, 0)) + migratedGil,
+    inventory: nextInventory,
+  };
+  let nextMenuState = menuState && typeof menuState === "object"
+    ? cloneValue(menuState)
+    : null;
+  if (!nextMenuState || typeof nextMenuState !== "object") {
+    nextMenuState = {};
+  }
+  if (!nextMenuState.resources || typeof nextMenuState.resources !== "object") {
+    nextMenuState.resources = {};
+  }
+  nextMenuState.resources.gil = Math.max(
+    0,
+    asNumber(nextMenuState.resources.gil, asNumber(save.gil, 0)),
+  ) + migratedGil;
+  return {
+    save: nextSave,
+    menuState: nextMenuState,
+  };
+}
+
+function resolveCatalogItemTypes(menuState) {
+  const inventoryCatalog = menuState?.inventory_catalog;
+  const itemTypes = inventoryCatalog?.item_types && typeof inventoryCatalog.item_types === "object"
+    ? { ...inventoryCatalog.item_types }
+    : {};
+  const itemMeta = inventoryCatalog?.item_meta && typeof inventoryCatalog.item_meta === "object"
+    ? inventoryCatalog.item_meta
+    : {};
+  Object.entries(itemMeta).forEach(([name, meta]) => {
+    const itemType = String(meta?.item_type || "");
+    if (!itemType || itemTypes[name]) return;
+    itemTypes[name] = itemType;
+  });
+  return itemTypes;
+}
+
+function migrateLegacyInventoryBuckets(save, menuState) {
+  if (!save || typeof save !== "object") {
+    return { save, menuState };
+  }
+  const inventory = save.inventory;
+  if (!inventory || typeof inventory !== "object") {
+    return { save, menuState };
+  }
+  const itemTypes = resolveCatalogItemTypes(menuState);
+  if (!Object.keys(itemTypes).length) {
+    return { save, menuState };
+  }
+  const nextInventory = cloneValue(inventory);
+  let changed = false;
+  Object.entries(nextInventory).forEach(([bucketName, bucketValue]) => {
+    if (!bucketValue || typeof bucketValue !== "object" || bucketName === "Magic") return;
+    Object.entries(bucketValue).forEach(([itemName, rawCount]) => {
+      const targetBucket = String(itemTypes[itemName] || "");
+      const count = asNumber(rawCount, 0);
+      if (!targetBucket || targetBucket === bucketName || count <= 0) return;
+      if (!nextInventory[targetBucket] || typeof nextInventory[targetBucket] !== "object") {
+        nextInventory[targetBucket] = {};
+      }
+      nextInventory[targetBucket][itemName] = asNumber(nextInventory[targetBucket][itemName], 0) + count;
+      delete bucketValue[itemName];
+      changed = true;
+    });
+    if (!Object.keys(bucketValue).length) {
+      delete nextInventory[bucketName];
+    }
+  });
+  if (!changed) {
+    return { save, menuState };
+  }
+  return {
+    save: {
+      ...cloneValue(save),
+      inventory: nextInventory,
+    },
+    menuState,
+  };
+}
+
 function hasIndexedDb() {
   return typeof indexedDB !== "undefined" && indexedDB !== null;
 }
@@ -183,25 +295,32 @@ async function flushIndexedDbSaveQueue(slotId) {
 export function parseSaveEnvelope(raw) {
   if (!raw || typeof raw !== "object") return null;
   if (raw?.version === 1 && raw?.save && typeof raw.save === "object") {
+    const gilMigrated = migrateLegacyGilInventory(
+      raw.save,
+      raw?.menu_state && typeof raw.menu_state === "object"
+        ? raw.menu_state
+        : null,
+    );
+    const migrated = migrateLegacyInventoryBuckets(gilMigrated.save, gilMigrated.menuState);
     return {
       version: 1,
       saved_at: String(raw.saved_at || ""),
       selected_location_group: String(raw.selected_location_group || ""),
       selected_location: String(raw.selected_location || ""),
-      save: raw.save,
-      menu_state: raw?.menu_state && typeof raw.menu_state === "object"
-        ? raw.menu_state
-        : null,
+      save: migrated.save,
+      menu_state: migrated.menuState,
     };
   }
   if (raw?.party && Array.isArray(raw.party)) {
+    const gilMigrated = migrateLegacyGilInventory(raw, null);
+    const migrated = migrateLegacyInventoryBuckets(gilMigrated.save, gilMigrated.menuState);
     return {
       version: 1,
       saved_at: "",
       selected_location_group: "",
       selected_location: "",
-      save: raw,
-      menu_state: null,
+      save: migrated.save,
+      menu_state: migrated.menuState,
     };
   }
   return null;

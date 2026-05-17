@@ -167,10 +167,27 @@ export async function loadShopMasterData() {
   ]);
 
   const itemTypeByName = {};
+  const sellValueByName = {};
   asArray(itemsRaw?.items).forEach((item) => {
     const name = String(item?.name || item?.Name || "");
     if (!name) return;
     itemTypeByName[name] = String(item?.ItemType || "");
+    sellValueByName[name] = asNumber(item?.Value ?? item?.value, 0);
+  });
+  asArray(weaponsRaw?.weapons).forEach((weapon) => {
+    const name = String(weapon?.name || weapon?.Name || "");
+    if (!name) return;
+    sellValueByName[name] = asNumber(weapon?.Value ?? weapon?.value, 0);
+  });
+  asArray(armorsRaw?.armors).forEach((armor) => {
+    const name = String(armor?.name || armor?.Name || "");
+    if (!name) return;
+    sellValueByName[name] = asNumber(armor?.Value ?? armor?.value, 0);
+  });
+  asArray(spellsRaw?.spells).forEach((spell) => {
+    const name = String(spell?.name || spell?.Name || "");
+    if (!name) return;
+    sellValueByName[name] = asNumber(spell?.Value ?? spell?.value, 0);
   });
 
   const spellLevelByName = buildSpellLevelByName(spellsRaw);
@@ -178,10 +195,27 @@ export async function loadShopMasterData() {
   return {
     shopEntries: asArray(shopsRaw),
     itemTypeByName,
+    sellValueByName,
     weaponNameSet: new Set(asArray(weaponsRaw?.weapons).map((row) => String(row?.name || "")).filter(Boolean)),
     armorNameSet: new Set(asArray(armorsRaw?.armors).map((row) => String(row?.name || "")).filter(Boolean)),
     spellLevelByName,
   };
+}
+
+export function resolveInventoryBucketForItem(masterData, itemName, preferredBucket = "") {
+  const normalizedItemName = String(itemName || "");
+  const fallbackBucket = String(preferredBucket || "Anywhere");
+  const spellLevel = asNumber(masterData?.spellLevelByName?.[normalizedItemName], 0);
+  if (spellLevel > 0) return "Magic";
+  const itemType = String(masterData?.itemTypeByName?.[normalizedItemName] || "");
+  if (itemType) return itemType;
+  if (masterData?.weaponNameSet instanceof Set && masterData.weaponNameSet.has(normalizedItemName)) {
+    return "Weapon";
+  }
+  if (masterData?.armorNameSet instanceof Set && masterData.armorNameSet.has(normalizedItemName)) {
+    return "Armor";
+  }
+  return fallbackBucket;
 }
 
 export function buildSpellLevelByName(spellsRaw) {
@@ -199,20 +233,14 @@ export function normalizeShopTypeToInventoryBucket(masterData, shopRowOrType, it
     ? shopRowOrType
     : { type: shopRowOrType };
   const inventoryBucket = String(shopRow?.inventory_bucket || "");
-  if (inventoryBucket) return inventoryBucket;
   const rawType = String(shopRow?.type || "");
-  if (rawType === "Armor") return "Armor";
-  if (rawType === "Weapons") return "Weapon";
-  if (rawType === "Weapons & Armor") {
-    if (masterData.weaponNameSet.has(itemName)) return "Weapon";
-    if (masterData.armorNameSet.has(itemName)) return "Armor";
+  let preferredBucket = inventoryBucket;
+  if (!preferredBucket) {
+    if (rawType === "Armor") preferredBucket = "Armor";
+    else if (rawType === "Weapons") preferredBucket = "Weapon";
+    else if (rawType === "Magic" || rawType === "Summon Magic") preferredBucket = "Magic";
   }
-  if (rawType === "Magic" || rawType === "Summon Magic") return "Magic";
-  const itemType = String(masterData.itemTypeByName[itemName] || "");
-  if (itemType) return itemType;
-  if (masterData.weaponNameSet.has(itemName)) return "Weapon";
-  if (masterData.armorNameSet.has(itemName)) return "Armor";
-  return "Anywhere";
+  return resolveInventoryBucketForItem(masterData, itemName, preferredBucket || "Anywhere");
 }
 
 export function shopRowLabel(shopRow) {

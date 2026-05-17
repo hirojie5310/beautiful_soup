@@ -14,6 +14,7 @@ import {
   getLastUsedSaveSlotId,
   parseSaveEnvelope,
 } from "../shared_storage.js";
+import { resolveGuestPortraitDescriptor } from "../guest_companion.js";
 import { getPyodideRuntime } from "../pyodide_runtime.js";
 import { saveRepository } from "../save_repository.js";
 import { mergeMenuStateIntoSave } from "../menu_save_sync.js";
@@ -37,10 +38,6 @@ const MENU_ROUTE_BY_LABEL = {
   ジョブ: "job",
   マップ: "map",
 };
-const SEALED_CAVE_B2_2_SARA_EVENT_FLAG = "sealed_cave_b2_2_sara_escort_started";
-const SEALED_CAVE_SARA_LEAVE_EVENT_FLAG = "sara_left_party";
-const SARA_PORTRAIT_URL = "../assets/images/faces/portrait_sara.png";
-
 export function deriveMenuMapOpenRequest(state) {
   const requestedMapId = String(
     state?.menuState?.map_state?.current_map_id
@@ -54,12 +51,6 @@ export function deriveMenuMapOpenRequest(state) {
       && requestedMapId,
     ),
   };
-}
-
-function shouldShowSaraPortrait(envelope) {
-  const flags = envelope?.save?.event_flag;
-  if (!flags || typeof flags !== "object") return false;
-  return Boolean(flags[SEALED_CAVE_B2_2_SARA_EVENT_FLAG]) && !Boolean(flags[SEALED_CAVE_SARA_LEAVE_EVENT_FLAG]);
 }
 
 export function hydrateMenuStateFromEnvelope(currentMenuState, envelope) {
@@ -643,20 +634,21 @@ export async function mountScreen({ mountNode, store, navigate }) {
     statsPanel.append(cp, gil);
     resourceRow.append(statsPanel);
 
-    if (!shouldShowSaraPortrait(store.getState().saveEnvelope)) return;
+    const guestPortrait = resolveGuestPortraitDescriptor(store.getState().saveEnvelope);
+    if (!guestPortrait) return;
 
     const guestPanel = document.createElement("div");
     guestPanel.className = "resource-panel resource-guest";
     const label = document.createElement("div");
     label.className = "resource-guest-label";
-    label.textContent = "SARA";
+    label.textContent = guestPortrait.label;
     const fallback = document.createElement("div");
     fallback.className = "portrait-fallback";
-    fallback.textContent = "SARA";
+    fallback.textContent = guestPortrait.fallbackText;
     const img = document.createElement("img");
     img.className = "portrait";
-    img.alt = "Sara portrait";
-    applyCachedImageSource(img, [SARA_PORTRAIT_URL], {
+    img.alt = guestPortrait.alt;
+    applyCachedImageSource(img, [guestPortrait.imageUrl], {
       onLoad: () => fallback.remove(),
       onError: () => {
         img.remove();

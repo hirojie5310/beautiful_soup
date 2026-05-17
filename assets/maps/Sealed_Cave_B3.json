@@ -47,7 +47,7 @@
       "y": 24,
       "treasure_id": "sealed_cave_b3_treasure_lower_right",
       "item_name": "Antarctic Wind",
-      "inventory_bucket": "Anywhere",
+      "inventory_bucket": "Combat",
       "quantity": 1,
       "closed_gid": 125,
       "open_gid": 126

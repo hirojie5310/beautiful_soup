@@ -4,22 +4,22 @@ import csv
 import numpy as np
 from PIL import Image
 
-TILE_SIZE = 19
+TILE_SIZE = 24
 INNER_MARGIN = 1
 SUSPICIOUS_SCORE_THRESHOLD = 500
 INNER_SCORE_TIE_THRESHOLD = 32
 MAP_OFFSET_X = 0    # Floating Continents: 10
-MAP_OFFSET_Y = 1    # Floating Continents: 5
+MAP_OFFSET_Y = 0    # Floating Continents: 5
 MAP_TILE_COLUMNS = None
 MAP_TILE_ROWS = None
 BASE_DIR = Path(__file__).resolve().parent
-TILESET_PATH = BASE_DIR / "TILESET - Airship.png"
-MAP_PATH = BASE_DIR / "Airship_of_Cid.png"
-RECONSTRUCTED_PATH = BASE_DIR / "Airship_of_Cid_reconstructed.png"
-COMPARISON_PATH = BASE_DIR / "Airship_of_Cid_comparison.png"
-CSV_PATH = BASE_DIR / "Airship_of_Cid_tiles.csv"
-DEBUG_CSV_PATH = BASE_DIR / "Airship_of_Cid_tiles_debug.csv"
-SUSPICIOUS_PATH = BASE_DIR / "Airship_of_Cid_suspicious_tiles.png"
+TILESET_PATH = BASE_DIR / "TILESET - SealedCave.png"
+MAP_PATH = BASE_DIR / "Sealed_Cave_B2_2.png"
+RECONSTRUCTED_PATH = BASE_DIR / "Sealed_Cave_B2_2_reconstructed.png"
+COMPARISON_PATH = BASE_DIR / "Sealed_Cave_B2_2_comparison.png"
+CSV_PATH = BASE_DIR / "Sealed_Cave_B2_2_tiles.csv"
+DEBUG_CSV_PATH = BASE_DIR / "Sealed_Cave_B2_2_tiles_debug.csv"
+SUSPICIOUS_PATH = BASE_DIR / "Sealed_Cave_B2_2_suspicious_tiles.png"
 
 
 def open_image(path: Path) -> Image.Image:
@@ -39,6 +39,8 @@ h, w = tileset_np.shape[:2]
 for y in range(0, h, TILE_SIZE):
     for x in range(0, w, TILE_SIZE):
         tile = tileset_np[y : y + TILE_SIZE, x : x + TILE_SIZE]
+        if tile.shape[:2] != (TILE_SIZE, TILE_SIZE):
+            continue
         tiles.append(tile)
 
 
@@ -53,11 +55,16 @@ def find_tile(chunk: np.ndarray) -> tuple[int, str, int]:
 
     scored_tiles = []
     for index, tile in enumerate(tiles):
+        if tile.shape != chunk.shape:
+            continue
         diff = inner_chunk.astype(np.int32) - inner_view(tile).astype(np.int32)
         inner_score = int(np.abs(diff).sum())
         full_diff = chunk.astype(np.int32) - tile.astype(np.int32)
         full_score = int(np.abs(full_diff).sum())
         scored_tiles.append((index + 1, inner_score, full_score))
+
+    if not scored_tiles:
+        raise ValueError(f"No valid tiles found for chunk shape {chunk.shape}")
 
     scored_tiles.sort(key=lambda item: (item[1], item[2], item[0]))
     best_inner_score = scored_tiles[0][1]

@@ -93,12 +93,12 @@
     },
     {
       "type": "npc",
-      "name": "Castle Sasune Soldier 549 Random",
+      "name": "Castle Sasune Soldier 549 Fixed Down",
       "x": 8,
       "y": 19,
       "sprite_image": "../assets/images/NPCs/fs_soldier1.png",
       "dialogue_index": 549,
-      "movement": "random",
+      "movement": "fixed",
       "direction": "down",
       "required_event_flag": "sara_left_party"
     },
@@ -142,7 +142,7 @@
       "y": 21,
       "sprite_image": "../assets/images/NPCs/fs_woman1.png",
       "dialogue_index": 548,
-      "movement": "fixed",
+      "movement": "random",
       "direction": "down",
       "required_event_flag": "sara_left_party"
     },
