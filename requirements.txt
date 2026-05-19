@@ -2,3 +2,5 @@ Flask
 gunicorn
 typing_extensions
 jsonschema
+numpy
+Pillow
