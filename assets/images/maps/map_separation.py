@@ -37,17 +37,16 @@ MAP_FULL_HEIGHT_COLUMN_RATIO = 0.9
 MAP_COMPONENT_MIN_AREA = 400
 MAP_COMPONENT_MIN_SIDE = 24
 MAP_COMPONENT_MIN_THICKNESS = 8
+MAP_GREEN_AREA_MIN_RATIO = 0.02
+MAP_GREEN_AREA_MIN_PIXELS = 5000
 BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_TILESET_PATH = BASE_DIR / "TILESET" / "TILESET - SealedCave.png"
 DEFAULT_MAP_PATH = BASE_DIR / "Sealed_Cave_B2_2.png"
 
 
 class OutputPaths(TypedDict):
-    reconstructed: Path
     comparison: Path
     csv: Path
-    debug_csv: Path
-    suspicious: Path
 
 
 class DebugCell(TypedDict):
@@ -188,19 +187,24 @@ def find_map_canvas_bbox(image_np: np.ndarray, workspace_top: int) -> BoundingBo
     component_bbox: BoundingBox | None = None
     if green_mask.any():
         green_components = component_bboxes(green_mask)
+        min_green_area = max(
+            MAP_GREEN_AREA_MIN_PIXELS,
+            (search_region.shape[0] * search_region.shape[1]) * MAP_GREEN_AREA_MIN_RATIO,
+        )
         large_green_components = [
-            bbox
+            (area, bbox)
             for area, bbox in green_components
             if area >= MAP_COMPONENT_MIN_AREA
             and max(bbox.width, bbox.height) >= MAP_COMPONENT_MIN_SIDE
             and min(bbox.width, bbox.height) >= MAP_COMPONENT_MIN_THICKNESS
         ]
-        if large_green_components:
+        total_green_area = sum(area for area, _ in large_green_components)
+        if total_green_area >= min_green_area:
             component_bbox = BoundingBox(
-                left=min(bbox.left for bbox in large_green_components),
-                top=min(bbox.top for bbox in large_green_components),
-                right=max(bbox.right for bbox in large_green_components),
-                bottom=max(bbox.bottom for bbox in large_green_components),
+                left=min(bbox.left for _, bbox in large_green_components),
+                top=min(bbox.top for _, bbox in large_green_components),
+                right=max(bbox.right for _, bbox in large_green_components),
+                bottom=max(bbox.bottom for _, bbox in large_green_components),
             )
         else:
             green_mask = None
@@ -762,12 +766,10 @@ def find_tile(
 
 def derive_output_paths(map_path: Path) -> OutputPaths:
     stem = map_path.stem
+    base_stem = stem[:-4] if stem.endswith("_map") else stem
     return {
-        "reconstructed": map_path.with_name(f"{stem}_reconstructed.png"),
-        "comparison": map_path.with_name(f"{stem}_comparison.png"),
-        "csv": map_path.with_name(f"{stem}_tiles.csv"),
-        "debug_csv": map_path.with_name(f"{stem}_tiles_debug.csv"),
-        "suspicious": map_path.with_name(f"{stem}_suspicious_tiles.png"),
+        "comparison": map_path.with_name(f"{base_stem}_comparison.png"),
+        "csv": map_path.with_name(f"{base_stem}_tiles.csv"),
     }
 
 
@@ -829,7 +831,7 @@ def analyze_map(
 
     output_paths = derive_output_paths(map_path)
     reconstructed_img = Image.fromarray(reconstructed)
-    reconstructed_img.save(output_paths["reconstructed"])
+    # reconstructed_img.save(map_path.with_name(f"{map_path.stem}_reconstructed.png"))
 
     cropped_map_img = Image.fromarray(map_np)
     comparison = Image.new("RGBA", (cropped_map_img.width * 2, cropped_map_img.height), (0, 0, 0, 255))
@@ -841,35 +843,35 @@ def analyze_map(
         writer = csv.writer(csv_file)
         writer.writerows(result)
 
-    with output_paths["debug_csv"].open("w", newline="", encoding="utf-8") as csv_file:
-        writer = csv.writer(csv_file)
-        writer.writerow(["row", "col", "tile_id", "mode", "score"])
-        for row_index, row in enumerate(debug_rows):
-            for col_index, cell in enumerate(row):
-                writer.writerow(
-                    [
-                        row_index,
-                        col_index,
-                        cell["tile_id"],
-                        cell["mode"],
-                        cell["score"],
-                    ]
-                )
+    # with map_path.with_name(f"{map_path.stem}_tiles_debug.csv").open("w", newline="", encoding="utf-8") as csv_file:
+    #     writer = csv.writer(csv_file)
+    #     writer.writerow(["row", "col", "tile_id", "mode", "score"])
+    #     for row_index, row in enumerate(debug_rows):
+    #         for col_index, cell in enumerate(row):
+    #             writer.writerow(
+    #                 [
+    #                     row_index,
+    #                     col_index,
+    #                     cell["tile_id"],
+    #                     cell["mode"],
+    #                     cell["score"],
+    #                 ]
+    #             )
 
-    suspicious_img = cropped_map_img.copy()
-    suspicious_overlay = Image.new("RGBA", cropped_map_img.size, (0, 0, 0, 0))
-    suspicious_np = np.array(suspicious_overlay)
-    for row_index, row in enumerate(debug_rows):
-        for col_index, cell in enumerate(row):
-            if cell["mode"] != "nearest" or cell["score"] < SUSPICIOUS_SCORE_THRESHOLD:
-                continue
-            y = row_index * tile_size
-            x = col_index * tile_size
-            suspicious_np[y : y + tile_size, x : x + tile_size] = np.array([255, 0, 0, 96], dtype=np.uint8)
-
-    suspicious_overlay = Image.fromarray(suspicious_np, mode="RGBA")
-    suspicious_img.alpha_composite(suspicious_overlay)
-    suspicious_img.save(output_paths["suspicious"])
+    # suspicious_img = cropped_map_img.copy()
+    # suspicious_overlay = Image.new("RGBA", cropped_map_img.size, (0, 0, 0, 0))
+    # suspicious_np = np.array(suspicious_overlay)
+    # for row_index, row in enumerate(debug_rows):
+    #     for col_index, cell in enumerate(row):
+    #         if cell["mode"] != "nearest" or cell["score"] < SUSPICIOUS_SCORE_THRESHOLD:
+    #             continue
+    #         y = row_index * tile_size
+    #         x = col_index * tile_size
+    #         suspicious_np[y : y + tile_size, x : x + tile_size] = np.array([255, 0, 0, 96], dtype=np.uint8)
+    #
+    # suspicious_overlay = Image.fromarray(suspicious_np, mode="RGBA")
+    # suspicious_img.alpha_composite(suspicious_overlay)
+    # suspicious_img.save(map_path.with_name(f"{map_path.stem}_suspicious_tiles.png"))
 
     return {
         "result": result,
@@ -907,8 +909,9 @@ def resolve_output_paths(args: argparse.Namespace) -> tuple[Path, Path]:
     if args.screenshot is None:
         return args.map_path, args.tileset_path
 
-    map_name = args.map_name or args.screenshot.stem
-    tileset_name = args.tileset_name or map_name
+    screenshot_stem = args.screenshot.stem
+    map_name = args.map_name or f"{screenshot_stem}_map"
+    tileset_name = args.tileset_name or screenshot_stem
     map_path = BASE_DIR / f"{map_name}.png"
     tileset_path = BASE_DIR / "TILESET" / f"TILESET - {tileset_name}.png"
     return map_path, tileset_path
@@ -932,11 +935,11 @@ def print_results(summary: AnalyzeSummary, map_path: Path, tileset_path: Path) -
         print([f"{cell['tile_id']}:{cell['mode']}:{cell['score']}" for cell in row])
 
     print()
-    print(f"# reconstructed_image: {output_paths['reconstructed']}")
     print(f"# comparison_image: {output_paths['comparison']}")
     print(f"# csv: {output_paths['csv']}")
-    print(f"# debug_csv: {output_paths['debug_csv']}")
-    print(f"# suspicious_tiles_image: {output_paths['suspicious']}")
+    # print(f"# reconstructed_image: {map_path.with_name(f'{map_path.stem}_reconstructed.png')}")
+    # print(f"# debug_csv: {map_path.with_name(f'{map_path.stem}_tiles_debug.csv')}")
+    # print(f"# suspicious_tiles_image: {map_path.with_name(f'{map_path.stem}_suspicious_tiles.png')}")
 
 
 def main() -> None:
