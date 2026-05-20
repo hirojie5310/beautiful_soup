@@ -39,6 +39,12 @@ MAP_COMPONENT_MIN_SIDE = 24
 MAP_COMPONENT_MIN_THICKNESS = 8
 MAP_GREEN_AREA_MIN_RATIO = 0.02
 MAP_GREEN_AREA_MIN_PIXELS = 5000
+MAP_NEUTRAL_COLUMN_RATIO = 0.95
+TILESET_NEUTRAL_ROW_RATIO = 0.98
+TILESET_LIGHT_ROW_RATIO = 0.98
+MAP_COMPONENT_SCORE_WINDOW = 5000.0
+MAP_SCORE_MIN_TILE_COUNT = 4
+MAP_SCORE_BRANCH_MIN_AREA_RATIO = 0.15
 BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_TILESET_PATH = BASE_DIR / "TILESET" / "TILESET - SealedCave.png"
 DEFAULT_MAP_PATH = BASE_DIR / "Sealed_Cave_B2_2.png"
@@ -95,10 +101,14 @@ def is_light_pixel(rgb: np.ndarray) -> np.ndarray:
     return np.asarray((rgb >= 232).all(axis=-1))
 
 
+def is_pale_ui_pixel(rgb: np.ndarray) -> np.ndarray:
+    return np.asarray((rgb >= 220).all(axis=-1))
+
+
 def is_checker_pixel(rgb: np.ndarray) -> np.ndarray:
     spread = rgb.max(axis=-1) - rgb.min(axis=-1)
     mean = rgb.mean(axis=-1)
-    return np.asarray((spread <= 8) & (mean >= 38) & (mean <= 62))
+    return np.asarray((spread <= 10) & (mean >= 38) & (mean <= 96))
 
 
 def is_green_canvas_pixel(rgb: np.ndarray) -> np.ndarray:
@@ -251,12 +261,213 @@ def floor_length_to_tile(length: int, tile_size: int) -> int:
     return (length // tile_size) * tile_size
 
 
-def refine_map_canvas_bbox(image_np: np.ndarray, map_bbox: BoundingBox, tile_size: int) -> BoundingBox:
+def trim_map_component_bbox(
+    map_region: np.ndarray,
+    content_mask: np.ndarray,
+    component_bbox: BoundingBox,
+    tile_size: int,
+) -> BoundingBox | None:
+    mean = map_region.mean(axis=-1)
+    visual_mask = ~( (mean <= MAP_BLACK_THRESHOLD) | is_checker_pixel(map_region) )
+    row_counts = content_mask.sum(axis=1)
+    col_counts = content_mask.sum(axis=0)
+    full_height_threshold = max(1, int(content_mask.shape[0] * MAP_FULL_HEIGHT_COLUMN_RATIO))
+    row_threshold = max(MAP_ROW_CONTENT_THRESHOLD, tile_size // 2)
+    col_threshold = max(MAP_COL_CONTENT_THRESHOLD, tile_size // 4)
+
+    row_start = component_bbox.top
+    row_end = component_bbox.bottom
+    col_start = component_bbox.left
+    col_end = component_bbox.right
+
+    left_margin = 0
+    for count in col_counts[col_start:col_end]:
+        if count >= full_height_threshold:
+            left_margin += 1
+            continue
+        break
+    if 0 < left_margin < tile_size:
+        neutral_ratio = is_checker_pixel(
+            map_region[row_start:row_end, col_start : col_start + left_margin]
+        ).mean()
+        if neutral_ratio >= MAP_NEUTRAL_COLUMN_RATIO:
+            col_start += left_margin
+
+    significant_rows = np.where(row_counts[row_start:row_end] >= row_threshold)[0]
+    significant_cols = np.where(col_counts[col_start:col_end] >= col_threshold)[0]
+    if len(significant_rows) == 0 or len(significant_cols) == 0:
+        return None
+
+    row_start += int(significant_rows[0])
+    row_end = row_start + int(significant_rows[-1] - significant_rows[0]) + 1
+    col_start += int(significant_cols[0])
+    col_end = col_start + int(significant_cols[-1] - significant_cols[0]) + 1
+
+    while True:
+        right_search_end = min(map_region.shape[1], col_end + tile_size)
+        if right_search_end <= col_end:
+            break
+        right_strip = visual_mask[row_start:row_end, col_end:right_search_end]
+        if right_strip.size == 0:
+            break
+        right_cols = np.where(right_strip.sum(axis=0) >= col_threshold)[0]
+        if len(right_cols) == 0:
+            break
+        new_col_end = col_end + int(right_cols[-1]) + 1
+        if new_col_end <= col_end:
+            break
+        col_end = new_col_end
+
+    while True:
+        bottom_search_end = min(map_region.shape[0], row_end + tile_size)
+        if bottom_search_end <= row_end:
+            break
+        bottom_strip = visual_mask[row_end:bottom_search_end, col_start:col_end]
+        if bottom_strip.size == 0:
+            break
+        bottom_rows = np.where(bottom_strip.sum(axis=1) >= row_threshold)[0]
+        if len(bottom_rows) == 0:
+            break
+        new_row_end = row_end + int(bottom_rows[-1]) + 1
+        if new_row_end <= row_end:
+            break
+        row_end = new_row_end
+
+    raw_width = col_end - col_start
+    raw_height = row_end - row_start
+    refined_width = floor_length_to_tile(raw_width, tile_size)
+    refined_height = floor_length_to_tile(raw_height, tile_size)
+    if refined_width < tile_size:
+        refined_width = snap_length_to_tile(raw_width, tile_size)
+    if refined_height < tile_size:
+        refined_height = snap_length_to_tile(raw_height, tile_size)
+
+    discarded_width = raw_width - refined_width
+    if (
+        tile_size > 0
+        and 0 < discarded_width < tile_size
+        and refined_width + tile_size <= content_mask.shape[1] - col_start
+    ):
+        right_strip = col_counts[col_start + refined_width : col_end]
+        if len(right_strip) > 0 and right_strip.max(initial=0) >= col_threshold:
+            refined_width = snap_length_to_tile(raw_width, tile_size)
+
+    discarded_height = raw_height - refined_height
+    if (
+        tile_size > 0
+        and 0 < discarded_height < tile_size
+        and refined_height + tile_size <= content_mask.shape[0] - row_start
+    ):
+        bottom_strip = row_counts[row_start + refined_height : row_end]
+        if len(bottom_strip) > 0 and bottom_strip.max(initial=0) >= row_threshold:
+            refined_height = snap_length_to_tile(raw_height, tile_size)
+
+    refined_right = min(content_mask.shape[1], col_start + refined_width)
+    refined_bottom = min(content_mask.shape[0], row_start + refined_height)
+    if refined_right - col_start < tile_size or refined_bottom - row_start < tile_size:
+        return None
+
+    return BoundingBox(
+        left=col_start,
+        top=row_start,
+        right=refined_right,
+        bottom=refined_bottom,
+    )
+
+
+def score_map_candidate_bbox(
+    map_region: np.ndarray,
+    candidate_bbox: BoundingBox,
+    tileset_np: np.ndarray,
+    tile_size: int,
+) -> float:
+    usable_width = floor_length_to_tile(candidate_bbox.width, tile_size)
+    usable_height = floor_length_to_tile(candidate_bbox.height, tile_size)
+    if usable_width < tile_size or usable_height < tile_size:
+        return float("-inf")
+    tile_count = (usable_width // tile_size) * (usable_height // tile_size)
+    if tile_count < MAP_SCORE_MIN_TILE_COUNT:
+        return float("-inf")
+
+    candidate_map = map_region[
+        candidate_bbox.top : candidate_bbox.top + usable_height,
+        candidate_bbox.left : candidate_bbox.left + usable_width,
+    ]
+    return score_tileset_against_map(candidate_map, tileset_np, tile_size)
+
+
+def trim_neutral_columns(
+    map_region: np.ndarray,
+    candidate_bbox: BoundingBox,
+    tile_size: int,
+) -> BoundingBox:
+    candidate = map_region[candidate_bbox.top : candidate_bbox.bottom, candidate_bbox.left : candidate_bbox.right]
+    neutral_ratio = is_checker_pixel(candidate).mean(axis=0)
+    left_trim = 0
+    for ratio in neutral_ratio:
+        if ratio < MAP_NEUTRAL_COLUMN_RATIO:
+            break
+        left_trim += 1
+
+    if 0 < left_trim < candidate_bbox.width:
+        shifted_right = min(map_region.shape[1], candidate_bbox.right + left_trim)
+        shifted_width = shifted_right - (candidate_bbox.left + left_trim)
+        if shifted_width >= tile_size:
+            return BoundingBox(
+                left=candidate_bbox.left + left_trim,
+                top=candidate_bbox.top,
+                right=shifted_right,
+                bottom=candidate_bbox.bottom,
+            )
+
+        remaining_width = candidate_bbox.width - left_trim
+        snapped_trim = min(left_trim, max(0, remaining_width - tile_size))
+        return BoundingBox(
+            left=candidate_bbox.left + snapped_trim,
+            top=candidate_bbox.top,
+            right=candidate_bbox.right,
+            bottom=candidate_bbox.bottom,
+        )
+
+    return candidate_bbox
+
+
+def bbox_omits_significant_content(
+    content_mask: np.ndarray,
+    outer_bbox: BoundingBox,
+    inner_bbox: BoundingBox,
+    row_threshold: int,
+    col_threshold: int,
+) -> bool:
+    if inner_bbox.left > outer_bbox.left:
+        left_strip = content_mask[outer_bbox.top : outer_bbox.bottom, outer_bbox.left : inner_bbox.left]
+        if left_strip.size > 0 and left_strip.sum(axis=0).max() >= row_threshold:
+            return True
+    if inner_bbox.right < outer_bbox.right:
+        right_strip = content_mask[outer_bbox.top : outer_bbox.bottom, inner_bbox.right : outer_bbox.right]
+        if right_strip.size > 0 and right_strip.sum(axis=0).max() >= row_threshold:
+            return True
+    if inner_bbox.top > outer_bbox.top:
+        top_strip = content_mask[outer_bbox.top : inner_bbox.top, outer_bbox.left : outer_bbox.right]
+        if top_strip.size > 0 and top_strip.sum(axis=1).max() >= col_threshold:
+            return True
+    if inner_bbox.bottom < outer_bbox.bottom:
+        bottom_strip = content_mask[inner_bbox.bottom : outer_bbox.bottom, outer_bbox.left : outer_bbox.right]
+        if bottom_strip.size > 0 and bottom_strip.sum(axis=1).max() >= col_threshold:
+            return True
+    return False
+
+
+def refine_map_canvas_bbox(
+    image_np: np.ndarray,
+    map_bbox: BoundingBox,
+    tile_size: int,
+    tileset_np: np.ndarray | None = None,
+) -> BoundingBox:
     map_region = rgb_view(image_np[map_bbox.top : map_bbox.bottom, map_bbox.left : map_bbox.right])
     mean = map_region.mean(axis=-1)
-    spread = map_region.max(axis=-1) - map_region.min(axis=-1)
     black_mask = mean <= MAP_BLACK_THRESHOLD
-    checker_mask = (spread <= 8) & (mean >= 38) & (mean <= 62)
+    checker_mask = is_checker_pixel(map_region)
     light_mask = (map_region >= 232).all(axis=-1)
     content_mask = ~(black_mask | checker_mask | light_mask)
     components = component_bboxes(content_mask)
@@ -276,56 +487,64 @@ def refine_map_canvas_bbox(image_np: np.ndarray, map_bbox: BoundingBox, tile_siz
         right=max(bbox.right for bbox in large_components),
         bottom=max(bbox.bottom for bbox in large_components),
     )
-
-    row_counts = content_mask.sum(axis=1)
-    col_counts = content_mask.sum(axis=0)
-    full_height_threshold = max(1, int(content_mask.shape[0] * MAP_FULL_HEIGHT_COLUMN_RATIO))
     row_threshold = max(MAP_ROW_CONTENT_THRESHOLD, tile_size // 2)
     col_threshold = max(MAP_COL_CONTENT_THRESHOLD, tile_size // 4)
+    trimmed_union_bbox = trim_map_component_bbox(map_region, content_mask, component_bbox, tile_size)
+    if trimmed_union_bbox is not None:
+        trimmed_union_bbox = trim_neutral_columns(map_region, trimmed_union_bbox, tile_size)
 
-    row_start = component_bbox.top
-    row_end = component_bbox.bottom
-    col_start = component_bbox.left
-    col_end = component_bbox.right
+    if tileset_np is not None:
+        scored_candidates: list[tuple[float, int, BoundingBox]] = []
+        for candidate_bbox in large_components:
+            trimmed_bbox = trim_map_component_bbox(map_region, content_mask, candidate_bbox, tile_size)
+            if trimmed_bbox is None:
+                continue
+            trimmed_bbox = trim_neutral_columns(map_region, trimmed_bbox, tile_size)
+            score = score_map_candidate_bbox(map_region, trimmed_bbox, tileset_np, tile_size)
+            scored_candidates.append((score, trimmed_bbox.width * trimmed_bbox.height, trimmed_bbox))
 
-    left_margin = 0
-    for count in col_counts[col_start:col_end]:
-        if count >= full_height_threshold:
-            left_margin += 1
-            continue
-        break
-    if 0 < left_margin < tile_size:
-        col_start += left_margin
-
-    significant_rows = np.where(row_counts[row_start:row_end] >= row_threshold)[0]
-    significant_cols = np.where(col_counts[col_start:col_end] >= col_threshold)[0]
-    if len(significant_rows) == 0 or len(significant_cols) == 0:
-        return map_bbox
-
-    row_start += int(significant_rows[0])
-    row_end = row_start + int(significant_rows[-1] - significant_rows[0]) + 1
-    col_start += int(significant_cols[0])
-    col_end = col_start + int(significant_cols[-1] - significant_cols[0]) + 1
-
-    raw_width = col_end - col_start
-    raw_height = row_end - row_start
-    refined_width = floor_length_to_tile(raw_width, tile_size)
-    refined_height = floor_length_to_tile(raw_height, tile_size)
-    if refined_width < tile_size:
-        refined_width = snap_length_to_tile(raw_width, tile_size)
-    if refined_height < tile_size:
-        refined_height = snap_length_to_tile(raw_height, tile_size)
-
-    refined_right = min(map_bbox.width, col_start + refined_width)
-    refined_bottom = min(map_bbox.height, row_start + refined_height)
-    if refined_right - col_start < tile_size or refined_bottom - row_start < tile_size:
+        if scored_candidates:
+            best_score = max(score for score, _, _ in scored_candidates)
+            merged_candidates = [
+                bbox
+                for score, _, bbox in scored_candidates
+                if score >= best_score - MAP_COMPONENT_SCORE_WINDOW
+            ]
+            best_bbox = BoundingBox(
+                left=min(bbox.left for bbox in merged_candidates),
+                top=min(bbox.top for bbox in merged_candidates),
+                right=max(bbox.right for bbox in merged_candidates),
+                bottom=max(bbox.bottom for bbox in merged_candidates),
+            )
+            union_area = max(1, component_bbox.width * component_bbox.height)
+            selected_area_ratio = (best_bbox.width * best_bbox.height) / union_area
+            if (
+                selected_area_ratio >= MAP_SCORE_BRANCH_MIN_AREA_RATIO
+                and (
+                    trimmed_union_bbox is None
+                    or not bbox_omits_significant_content(
+                        content_mask,
+                        trimmed_union_bbox,
+                        best_bbox,
+                        row_threshold,
+                        col_threshold,
+                    )
+                )
+            ):
+                return BoundingBox(
+                    left=map_bbox.left + best_bbox.left,
+                    top=map_bbox.top + best_bbox.top,
+                    right=map_bbox.left + best_bbox.right,
+                    bottom=map_bbox.top + best_bbox.bottom,
+                )
+    if trimmed_union_bbox is None:
         return map_bbox
 
     return BoundingBox(
-        left=map_bbox.left + col_start,
-        top=map_bbox.top + row_start,
-        right=map_bbox.left + refined_right,
-        bottom=map_bbox.top + refined_bottom,
+        left=map_bbox.left + trimmed_union_bbox.left,
+        top=map_bbox.top + trimmed_union_bbox.top,
+        right=map_bbox.left + trimmed_union_bbox.right,
+        bottom=map_bbox.top + trimmed_union_bbox.bottom,
     )
 
 
@@ -457,12 +676,12 @@ def is_layer1_blue_pixel(rgb: np.ndarray) -> np.ndarray:
     return (rgb[..., 2] > 180) & (rgb[..., 0] < 80) & (rgb[..., 1] < 170)
 
 
-def detect_layer1_tab_bbox(image_np: np.ndarray) -> BoundingBox:
+def detect_layer1_tab_bbox(image_np: np.ndarray, workspace_top: int) -> BoundingBox:
     height, width = image_np.shape[:2]
     panel_left = max(0, width - TILESET_SEARCH_WIDTH)
     panel_top = 0
     panel_right = width
-    panel_bottom = min(height, TILESET_TAB_SEARCH_HEIGHT)
+    panel_bottom = min(height, max(workspace_top, 1))
     panel_region = rgb_view(image_np[panel_top:panel_bottom, panel_left:panel_right])
     blue_mask = is_layer1_blue_pixel(panel_region)
     components = component_bboxes(blue_mask)
@@ -603,21 +822,143 @@ def build_tileset_candidate_bbox(
     return BoundingBox(left, search_top, right, bottom)
 
 
+def score_tileset_candidate_bbox(
+    image_np: np.ndarray,
+    candidate_bbox: BoundingBox,
+    tile_size: int,
+    map_np: np.ndarray | None = None,
+) -> float:
+    candidate_crop = rgb_view(
+        image_np[
+            candidate_bbox.top : candidate_bbox.bottom,
+            candidate_bbox.left : candidate_bbox.right,
+        ]
+    )
+    candidate_score = score_tileset_crop(candidate_crop, tile_size)
+    if map_np is not None:
+        candidate_score += score_tileset_against_map(map_np, candidate_crop, tile_size)
+    return candidate_score
+
+
+def refine_anchored_tileset_bbox(
+    image_np: np.ndarray,
+    anchor_left: int,
+    anchor_top: int,
+    tile_size: int,
+) -> BoundingBox | None:
+    height, width = image_np.shape[:2]
+    crop_width = tile_size * TILESET_COLUMNS
+    crop_height = tile_size * TILESET_ROWS
+    if anchor_left < 0 or anchor_left + crop_width > width:
+        return None
+
+    best_bbox = None
+    best_score = None
+    max_shift = min(8, tile_size)
+    for top in range(max(0, anchor_top - max_shift), min(height - crop_height, anchor_top + max_shift) + 1):
+        candidate_bbox = BoundingBox(
+            left=anchor_left,
+            top=top,
+            right=anchor_left + crop_width,
+            bottom=top + crop_height,
+        )
+        candidate_score = score_tileset_candidate_bbox(
+            image_np=image_np,
+            candidate_bbox=candidate_bbox,
+            tile_size=tile_size,
+        )
+        if best_score is None or candidate_score > best_score:
+            best_score = candidate_score
+            best_bbox = candidate_bbox
+
+    return best_bbox
+
+
+def trim_tileset_bottom_neutral_rows(
+    image_np: np.ndarray,
+    candidate_bbox: BoundingBox,
+    tile_size: int,
+) -> BoundingBox:
+    crop = rgb_view(image_np[candidate_bbox.top : candidate_bbox.bottom, candidate_bbox.left : candidate_bbox.right])
+    neutral_ratio = is_checker_pixel(crop).mean(axis=1)
+    bottom_trim = 0
+    for ratio in reversed(neutral_ratio):
+        if ratio < TILESET_NEUTRAL_ROW_RATIO:
+            break
+        bottom_trim += 1
+
+    if bottom_trim <= 0 or bottom_trim >= tile_size:
+        return candidate_bbox
+
+    new_top = max(0, candidate_bbox.top - bottom_trim)
+    new_bottom = candidate_bbox.bottom - bottom_trim
+    if new_bottom - new_top != candidate_bbox.height:
+        return candidate_bbox
+
+    return BoundingBox(
+        left=candidate_bbox.left,
+        top=new_top,
+        right=candidate_bbox.right,
+        bottom=new_bottom,
+    )
+
+
+def trim_tileset_top_noncontent_rows(
+    image_np: np.ndarray,
+    candidate_bbox: BoundingBox,
+    tile_size: int,
+) -> BoundingBox:
+    crop = rgb_view(image_np[candidate_bbox.top : candidate_bbox.bottom, candidate_bbox.left : candidate_bbox.right])
+    neutral_ratio = is_checker_pixel(crop).mean(axis=1)
+    light_ratio = is_pale_ui_pixel(crop).mean(axis=1)
+    blue_ratio = is_layer1_blue_pixel(crop).mean(axis=1)
+    top_trim = 0
+    for neutral, light, blue in zip(neutral_ratio, light_ratio, blue_ratio):
+        if neutral < TILESET_NEUTRAL_ROW_RATIO and (light + blue) < TILESET_LIGHT_ROW_RATIO:
+            break
+        top_trim += 1
+
+    if top_trim <= 0 or top_trim >= tile_size:
+        return candidate_bbox
+
+    new_top = candidate_bbox.top + top_trim
+    new_bottom = min(image_np.shape[0], candidate_bbox.bottom + top_trim)
+    if new_bottom - new_top != candidate_bbox.height:
+        return candidate_bbox
+
+    return BoundingBox(
+        left=candidate_bbox.left,
+        top=new_top,
+        right=candidate_bbox.right,
+        bottom=new_bottom,
+    )
+
+
 def find_tileset_bbox(
     image_np: np.ndarray,
     workspace_top: int,
     map_bbox: BoundingBox | None = None,
 ) -> BoundingBox:
     height, width = image_np.shape[:2]
+    map_np = (
+        None
+        if map_bbox is None
+        else rgb_view(image_np[map_bbox.top : map_bbox.bottom, map_bbox.left : map_bbox.right])
+    )
     try:
-        tab_bbox = detect_layer1_tab_bbox(image_np)
+        tab_bbox = detect_layer1_tab_bbox(image_np, workspace_top)
         tile_size = max(1, round(tab_bbox.width / 4))
         left = tab_bbox.left
         top = tab_bbox.bottom + 1
-        right = left + (tile_size * TILESET_COLUMNS)
-        bottom = top + (tile_size * TILESET_ROWS)
-        if right <= width and bottom <= height:
-            return BoundingBox(left=left, top=top, right=right, bottom=bottom)
+        refined_bbox = refine_anchored_tileset_bbox(
+            image_np=image_np,
+            anchor_left=left,
+            anchor_top=top,
+            tile_size=tile_size,
+        )
+        if refined_bbox is not None:
+            refined_bbox = trim_tileset_top_noncontent_rows(image_np, refined_bbox, tile_size)
+            return trim_tileset_bottom_neutral_rows(image_np, refined_bbox, tile_size)
     except ValueError:
         pass
 
@@ -642,7 +983,6 @@ def find_tileset_bbox(
     tile_size = detect_tileset_tile_size(search_region, rough_width=(rough_right - rough_left + 1))
     crop_height = tile_size * TILESET_ROWS
     max_top_offset = max(0, min(tile_size - 1, search_bottom - search_top - crop_height))
-    map_np = None if map_bbox is None else image_np[map_bbox.top : map_bbox.bottom, map_bbox.left : map_bbox.right]
 
     best_bbox = None
     best_score = None
@@ -655,22 +995,12 @@ def find_tileset_bbox(
             search_bottom=search_bottom,
             tile_size=tile_size,
         )
-        candidate_crop = rgb_view(
-            image_np[
-                candidate_bbox.top : candidate_bbox.bottom,
-                candidate_bbox.left : candidate_bbox.right,
-            ]
+        candidate_score = score_tileset_candidate_bbox(
+            image_np=image_np,
+            candidate_bbox=candidate_bbox,
+            tile_size=tile_size,
+            map_np=map_np,
         )
-        candidate_score = score_tileset_crop(candidate_crop, tile_size)
-        if map_np is not None:
-            candidate_score += score_tileset_against_map(
-                map_np,
-                image_np[
-                    candidate_bbox.top : candidate_bbox.bottom,
-                    candidate_bbox.left : candidate_bbox.right,
-                ],
-                tile_size,
-            )
 
         if best_score is None or candidate_score > best_score:
             best_score = candidate_score
@@ -679,7 +1009,8 @@ def find_tileset_bbox(
     if best_bbox is None:
         raise ValueError("Could not determine the tileset preview bounds in the screenshot.")
 
-    return best_bbox
+    best_bbox = trim_tileset_top_noncontent_rows(image_np, best_bbox, tile_size)
+    return trim_tileset_bottom_neutral_rows(image_np, best_bbox, tile_size)
 
 
 def extract_assets_from_screenshot(
@@ -693,7 +1024,8 @@ def extract_assets_from_screenshot(
     map_bbox = find_map_canvas_bbox(screenshot_np, workspace_top)
     tileset_bbox = find_tileset_bbox(screenshot_np, workspace_top, map_bbox=map_bbox)
     tile_size = tileset_bbox.width // TILESET_COLUMNS
-    map_bbox = refine_map_canvas_bbox(screenshot_np, map_bbox, tile_size)
+    tileset_np = rgb_view(screenshot_np[tileset_bbox.top : tileset_bbox.bottom, tileset_bbox.left : tileset_bbox.right])
+    map_bbox = refine_map_canvas_bbox(screenshot_np, map_bbox, tile_size, tileset_np=tileset_np)
 
     map_output_path.parent.mkdir(parents=True, exist_ok=True)
     tileset_output_path.parent.mkdir(parents=True, exist_ok=True)
