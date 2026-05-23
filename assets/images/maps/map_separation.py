@@ -17,14 +17,17 @@ DEFAULT_MAP_OFFSET_X = 0
 DEFAULT_MAP_OFFSET_Y = 0
 DEFAULT_MAP_TILE_COLUMNS = None
 DEFAULT_MAP_TILE_ROWS = None
+DEFAULT_SCREENSHOT_TILESET_TILE_SIZE = 38
+DEFAULT_SCREENSHOT_MAP_TILE_SIZE = 32
 TILESET_COLUMNS = 16
 TILESET_ROWS = 8
 WORKSPACE_TOP_SEARCH_LIMIT = 120
-TILESET_SEARCH_HEIGHT = 300
-TILESET_SEARCH_WIDTH = 560
+TILESET_SEARCH_HEIGHT = 380
+TILESET_SEARCH_WIDTH = 700
 TILESET_TAB_SEARCH_HEIGHT = 90
 TILESET_TAB_SEARCH_WIDTH = 220
 TILESET_TAB_BLUE_THRESHOLD = 0.1
+TILESET_TAB_TOP_OFFSET = 2
 TILESET_EDGE_RUN = 4
 TILESET_EDGE_CHECKER_THRESHOLD = 0.2
 TILESET_EDGE_LIGHT_THRESHOLD = 0.05
@@ -65,7 +68,32 @@ class AnalyzeSummary(TypedDict):
     result: list[list[int]]
     debug_rows: list[list[DebugCell]]
     tile_size: int
+    tileset_tile_size: int
     output_paths: OutputPaths
+
+
+@dataclass(frozen=True)
+class TileFeatures:
+    tile: np.ndarray
+    inner_tile_i32: np.ndarray
+    inner_edge_view: np.ndarray
+    col_signature: np.ndarray
+    row_signature: np.ndarray
+    full_tile_i32: np.ndarray
+    left_edge_i32: np.ndarray
+    top_edge_i32: np.ndarray
+
+
+@dataclass(frozen=True)
+class ChunkFeatures:
+    chunk: np.ndarray
+    inner_chunk_i32: np.ndarray
+    inner_edge_view: np.ndarray
+    col_signature: np.ndarray
+    row_signature: np.ndarray
+    full_chunk_i32: np.ndarray
+    left_neighbor_edge_i32: np.ndarray | None
+    top_neighbor_edge_i32: np.ndarray | None
 
 
 @dataclass(frozen=True)
@@ -626,18 +654,26 @@ def periodicity_score(col_signal: np.ndarray, row_signal: np.ndarray, tile_size:
     )
 
 
-def detect_tileset_tile_size(search_region: np.ndarray, rough_width: int) -> int:
-    max_tile_size = min(search_region.shape[1] // TILESET_COLUMNS, search_region.shape[0] // TILESET_ROWS)
+def rank_tile_sizes_from_region(
+    region: np.ndarray,
+    min_tile_size: int = 8,
+    max_tile_size: int | None = None,
+    prefer_larger: bool = True,
+) -> list[int]:
+    inferred_max_tile_size = min(region.shape[1], region.shape[0])
+    if max_tile_size is None:
+        max_tile_size = inferred_max_tile_size
+    else:
+        max_tile_size = min(max_tile_size, inferred_max_tile_size)
     if max_tile_size <= 0:
-        raise ValueError("Search region is too small to contain the tileset preview.")
+        raise ValueError("Search region is too small to contain tile patterns.")
 
-    min_tile_size = 8
     max_candidate = max_tile_size
 
-    gray = grayscale_view(search_region)
+    gray = grayscale_view(region)
     intensity_col_signal = np.abs(np.diff(gray, axis=1)).mean(axis=0)
     intensity_row_signal = np.abs(np.diff(gray, axis=0)).mean(axis=1)
-    edge_col_signal, edge_row_signal = edge_projection_signals(search_region)
+    edge_col_signal, edge_row_signal = edge_projection_signals(region)
 
     candidate_scores = []
     for tile_size in range(min_tile_size, max_candidate + 1):
@@ -650,12 +686,43 @@ def detect_tileset_tile_size(search_region: np.ndarray, rough_width: int) -> int
         raise ValueError("Could not derive any tile-size candidates from the tileset preview.")
 
     best_score = max(score for score, _ in candidate_scores)
-    near_best = [
-        (score, tile_size)
-        for score, tile_size in candidate_scores
-        if score >= best_score * 0.98
-    ]
-    return max(tile_size for _, tile_size in near_best)
+    ranked = sorted(
+        (
+            (score, tile_size)
+            for score, tile_size in candidate_scores
+            if score >= best_score * 0.92
+        ),
+        key=lambda item: (-item[0], -item[1] if prefer_larger else item[1]),
+    )
+    if not ranked:
+        ranked = sorted(
+            candidate_scores,
+            key=lambda item: (-item[0], -item[1] if prefer_larger else item[1]),
+        )
+    return [tile_size for _, tile_size in ranked[:8]]
+
+
+def rank_tileset_tile_sizes(search_region: np.ndarray, rough_width: int) -> list[int]:
+    max_tile_size = min(search_region.shape[1] // TILESET_COLUMNS, search_region.shape[0] // TILESET_ROWS)
+    return rank_tile_sizes_from_region(
+        search_region,
+        min_tile_size=8,
+        max_tile_size=max_tile_size,
+        prefer_larger=True,
+    )
+
+
+def detect_tileset_tile_size(search_region: np.ndarray, rough_width: int) -> int:
+    return rank_tileset_tile_sizes(search_region, rough_width)[0]
+
+
+def detect_map_tile_size(map_region: np.ndarray, max_tile_size: int = 64) -> int:
+    return rank_tile_sizes_from_region(
+        map_region,
+        min_tile_size=8,
+        max_tile_size=max_tile_size,
+        prefer_larger=False,
+    )[0]
 
 
 def detect_tileset_top_boundary(image_np: np.ndarray, workspace_top: int) -> int:
@@ -732,6 +799,7 @@ def score_tileset_against_map(
     max_samples_per_axis: int = 24,
 ) -> float:
     tiles = split_tiles(tileset_np, tile_size)
+    tile_features = build_tile_features(tiles)
     map_height, map_width = map_np.shape[:2]
     tile_rows = map_height // tile_size
     tile_columns = map_width // tile_size
@@ -751,8 +819,14 @@ def score_tileset_against_map(
         for col_index in col_indices:
             x = col_index * tile_size
             chunk = map_np[y : y + tile_size, x : x + tile_size]
-            _, match_mode, score = find_tile(chunk, tiles)
-            total_score += score
+            chunk_features = build_chunk_features(chunk)
+            _, match_mode, score = find_tile(
+                chunk,
+                tiles,
+                tile_features=tile_features,
+                chunk_features=chunk_features,
+            )
+            total_score += score / max(1, chunk_features.inner_chunk_i32.size)
             exact_matches += int(match_mode == "inner_exact")
             sample_count += 1
 
@@ -760,15 +834,20 @@ def score_tileset_against_map(
         return float("-inf")
 
     average_score = total_score / sample_count
-    return -average_score + (exact_matches * 250.0)
+    exact_match_ratio = exact_matches / sample_count
+    return -average_score + (exact_match_ratio * 250.0)
 
 
 def refine_tileset_left(search_region: np.ndarray, rough_left: int, tile_size: int) -> int:
     crop_width = tile_size * TILESET_COLUMNS
     crop_height = tile_size * TILESET_ROWS
     max_left = search_region.shape[1] - crop_width
-    left_start = max(0, rough_left)
-    left_end = min(max_left, rough_left + tile_size - 1)
+    if max_left < 0:
+        raise ValueError("Search region is narrower than the expected tileset preview width.")
+
+    clamped_left = min(max_left, max(0, rough_left))
+    left_start = clamped_left
+    left_end = min(max_left, clamped_left + tile_size - 1)
 
     best_score = None
     best_left = None
@@ -782,7 +861,7 @@ def refine_tileset_left(search_region: np.ndarray, rough_left: int, tile_size: i
             best_left = left
 
     if best_left is None:
-        raise ValueError("Could not refine the tileset left edge.")
+        return clamped_left
     return best_left
 
 
@@ -934,10 +1013,61 @@ def trim_tileset_top_noncontent_rows(
     )
 
 
+def shift_tileset_bbox_up_one_tile(
+    image_np: np.ndarray,
+    candidate_bbox: BoundingBox,
+    tile_size: int,
+    workspace_top: int | None = None,
+) -> BoundingBox:
+    if tile_size <= 0 or candidate_bbox.top < tile_size:
+        return candidate_bbox
+    if workspace_top is not None and candidate_bbox.top - workspace_top < tile_size:
+        return candidate_bbox
+
+    new_top = candidate_bbox.top - tile_size
+    new_bottom = candidate_bbox.bottom - tile_size
+    if new_bottom > image_np.shape[0]:
+        return candidate_bbox
+
+    return BoundingBox(
+        left=candidate_bbox.left,
+        top=new_top,
+        right=candidate_bbox.right,
+        bottom=new_bottom,
+    )
+
+
+def align_tileset_bbox_to_tab_left(
+    image_np: np.ndarray,
+    candidate_bbox: BoundingBox,
+    tab_bbox: BoundingBox | None,
+) -> BoundingBox:
+    if tab_bbox is None or tab_bbox.left >= candidate_bbox.right:
+        return candidate_bbox
+
+    aligned_width = candidate_bbox.right - tab_bbox.left
+    if aligned_width <= 0 or aligned_width % TILESET_COLUMNS != 0:
+        return candidate_bbox
+
+    tile_size = aligned_width // TILESET_COLUMNS
+    aligned_top = tab_bbox.bottom + TILESET_TAB_TOP_OFFSET
+    aligned_bottom = aligned_top + (tile_size * TILESET_ROWS)
+    if tile_size <= 0 or aligned_bottom > image_np.shape[0]:
+        return candidate_bbox
+
+    return BoundingBox(
+        left=tab_bbox.left,
+        top=aligned_top,
+        right=candidate_bbox.right,
+        bottom=aligned_bottom,
+    )
+
+
 def find_tileset_bbox(
     image_np: np.ndarray,
     workspace_top: int,
     map_bbox: BoundingBox | None = None,
+    forced_tile_size: int | None = None,
 ) -> BoundingBox:
     height, width = image_np.shape[:2]
     map_np = (
@@ -945,22 +1075,36 @@ def find_tileset_bbox(
         if map_bbox is None
         else rgb_view(image_np[map_bbox.top : map_bbox.bottom, map_bbox.left : map_bbox.right])
     )
+    tab_bbox = None
     try:
         tab_bbox = detect_layer1_tab_bbox(image_np, workspace_top)
-        tile_size = max(1, round(tab_bbox.width / 4))
-        left = tab_bbox.left
-        top = tab_bbox.bottom + 1
-        refined_bbox = refine_anchored_tileset_bbox(
-            image_np=image_np,
-            anchor_left=left,
-            anchor_top=top,
-            tile_size=tile_size,
-        )
-        if refined_bbox is not None:
-            refined_bbox = trim_tileset_top_noncontent_rows(image_np, refined_bbox, tile_size)
-            return trim_tileset_bottom_neutral_rows(image_np, refined_bbox, tile_size)
     except ValueError:
         pass
+
+    anchored_bbox = None
+    anchored_score = None
+    if forced_tile_size is None and tab_bbox is not None:
+        try:
+            tile_size = max(1, round(tab_bbox.width / 4))
+            left = tab_bbox.left
+            top = tab_bbox.bottom + 1
+            refined_bbox = refine_anchored_tileset_bbox(
+                image_np=image_np,
+                anchor_left=left,
+                anchor_top=top,
+                tile_size=tile_size,
+            )
+            if refined_bbox is not None:
+                refined_bbox = trim_tileset_top_noncontent_rows(image_np, refined_bbox, tile_size)
+                anchored_bbox = trim_tileset_bottom_neutral_rows(image_np, refined_bbox, tile_size)
+                anchored_score = score_tileset_candidate_bbox(
+                    image_np=image_np,
+                    candidate_bbox=anchored_bbox,
+                    tile_size=tile_size,
+                    map_np=map_np,
+                )
+        except ValueError:
+            pass
 
     search_left = max(0, width - TILESET_SEARCH_WIDTH)
     search_top = detect_tileset_top_boundary(image_np, workspace_top)
@@ -980,52 +1124,93 @@ def find_tileset_bbox(
     if rough_left is None or rough_right is None or rough_right <= rough_left:
         raise ValueError("Could not detect the rough tileset preview bounds in the screenshot.")
 
-    tile_size = detect_tileset_tile_size(search_region, rough_width=(rough_right - rough_left + 1))
-    crop_height = tile_size * TILESET_ROWS
-    max_top_offset = max(0, min(tile_size - 1, search_bottom - search_top - crop_height))
-
     best_bbox = None
     best_score = None
-    for top_offset in range(max_top_offset + 1):
-        candidate_top = search_top + top_offset
-        candidate_bbox = build_tileset_candidate_bbox(
-            image_np=image_np,
-            search_left=search_left,
-            search_top=candidate_top,
-            search_bottom=search_bottom,
-            tile_size=tile_size,
-        )
-        candidate_score = score_tileset_candidate_bbox(
-            image_np=image_np,
-            candidate_bbox=candidate_bbox,
-            tile_size=tile_size,
-            map_np=map_np,
-        )
+    candidate_tile_sizes = (
+        [forced_tile_size]
+        if forced_tile_size is not None
+        else rank_tileset_tile_sizes(search_region, rough_width=(rough_right - rough_left + 1))
+    )
+    for tile_size in candidate_tile_sizes:
+        crop_height = tile_size * TILESET_ROWS
+        max_top_offset = max(0, min((tile_size * 2) - 1, search_bottom - search_top - crop_height))
 
-        if best_score is None or candidate_score > best_score:
-            best_score = candidate_score
-            best_bbox = candidate_bbox
+        for top_offset in range(max_top_offset + 1):
+            candidate_top = search_top + top_offset
+            candidate_bbox = build_tileset_candidate_bbox(
+                image_np=image_np,
+                search_left=search_left,
+                search_top=candidate_top,
+                search_bottom=search_bottom,
+                tile_size=tile_size,
+            )
+            candidate_score = score_tileset_candidate_bbox(
+                image_np=image_np,
+                candidate_bbox=candidate_bbox,
+                tile_size=tile_size,
+                map_np=map_np,
+            )
+
+            if best_score is None or candidate_score > best_score:
+                best_score = candidate_score
+                best_bbox = candidate_bbox
 
     if best_bbox is None:
+        if anchored_bbox is not None:
+            return align_tileset_bbox_to_tab_left(image_np, anchored_bbox, tab_bbox)
         raise ValueError("Could not determine the tileset preview bounds in the screenshot.")
 
-    best_bbox = trim_tileset_top_noncontent_rows(image_np, best_bbox, tile_size)
-    return trim_tileset_bottom_neutral_rows(image_np, best_bbox, tile_size)
+    best_tile_size = best_bbox.width // TILESET_COLUMNS
+    best_bbox = trim_tileset_top_noncontent_rows(image_np, best_bbox, best_tile_size)
+    best_bbox = trim_tileset_bottom_neutral_rows(image_np, best_bbox, best_tile_size)
+    if anchored_bbox is not None and anchored_score is not None:
+        best_score = score_tileset_candidate_bbox(
+            image_np=image_np,
+            candidate_bbox=best_bbox,
+            tile_size=best_bbox.width // TILESET_COLUMNS,
+            map_np=map_np,
+        )
+        if anchored_score >= best_score:
+            return align_tileset_bbox_to_tab_left(image_np, anchored_bbox, tab_bbox)
+    return align_tileset_bbox_to_tab_left(image_np, best_bbox, tab_bbox)
 
 
 def extract_assets_from_screenshot(
     screenshot_path: Path,
     map_output_path: Path,
     tileset_output_path: Path,
+    forced_tileset_tile_size: int | None = None,
+    forced_map_tile_size: int | None = None,
 ) -> tuple[Path, Path, BoundingBox, BoundingBox]:
     screenshot = open_image(screenshot_path)
     screenshot_np = np.array(screenshot)
     workspace_top = detect_workspace_top(screenshot_np)
     map_bbox = find_map_canvas_bbox(screenshot_np, workspace_top)
-    tileset_bbox = find_tileset_bbox(screenshot_np, workspace_top, map_bbox=map_bbox)
+    screenshot_tile_size = (
+        forced_tileset_tile_size
+        if forced_tileset_tile_size is not None
+        else DEFAULT_SCREENSHOT_TILESET_TILE_SIZE
+    )
+    screenshot_map_tile_size = (
+        forced_map_tile_size
+        if forced_map_tile_size is not None
+        else DEFAULT_SCREENSHOT_MAP_TILE_SIZE
+    )
+    tileset_bbox = find_tileset_bbox(
+        screenshot_np,
+        workspace_top,
+        map_bbox=map_bbox,
+        forced_tile_size=screenshot_tile_size,
+    )
     tile_size = tileset_bbox.width // TILESET_COLUMNS
+    tileset_bbox = shift_tileset_bbox_up_one_tile(
+        screenshot_np,
+        tileset_bbox,
+        tile_size,
+        workspace_top=workspace_top,
+    )
     tileset_np = rgb_view(screenshot_np[tileset_bbox.top : tileset_bbox.bottom, tileset_bbox.left : tileset_bbox.right])
-    map_bbox = refine_map_canvas_bbox(screenshot_np, map_bbox, tile_size, tileset_np=tileset_np)
+    map_bbox = refine_map_canvas_bbox(screenshot_np, map_bbox, screenshot_map_tile_size, tileset_np=None)
 
     map_output_path.parent.mkdir(parents=True, exist_ok=True)
     tileset_output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1061,39 +1246,159 @@ def split_tiles(tileset_np: np.ndarray, tile_size: int) -> list[np.ndarray]:
     return tiles
 
 
+def resize_tile(tile: np.ndarray, tile_size: int) -> np.ndarray:
+    if tile.shape[0] == tile_size and tile.shape[1] == tile_size:
+        return tile
+    image = Image.fromarray(tile)
+    resized = image.resize((tile_size, tile_size), Image.Resampling.NEAREST)
+    return np.array(resized)
+
+
+def build_map_tiles(tileset_np: np.ndarray, tileset_tile_size: int, map_tile_size: int) -> list[np.ndarray]:
+    source_tiles = split_tiles(tileset_np, tileset_tile_size)
+    return [resize_tile(tile, map_tile_size) for tile in source_tiles]
+
+
 def inner_view(tile: np.ndarray, margin: int = INNER_MARGIN) -> np.ndarray:
     if margin <= 0:
         return tile
     return tile[margin:-margin, margin:-margin, :]
 
 
+def edge_intensity_view(tile: np.ndarray) -> np.ndarray:
+    gray = grayscale_view(tile)
+    horizontal = np.pad(np.abs(np.diff(gray, axis=1)), ((0, 0), (0, 1)))
+    vertical = np.pad(np.abs(np.diff(gray, axis=0)), ((0, 1), (0, 0)))
+    return horizontal + vertical
+
+
+def grayscale_projection_signature(tile: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    gray = grayscale_view(tile)
+    return gray.mean(axis=0), gray.mean(axis=1)
+
+
+def build_tile_features(tiles: list[np.ndarray]) -> list[TileFeatures]:
+    features = []
+    for tile in tiles:
+        inner_tile = inner_view(tile)
+        col_signature, row_signature = grayscale_projection_signature(inner_tile)
+        features.append(
+            TileFeatures(
+                tile=tile,
+                inner_tile_i32=inner_tile.astype(np.int32),
+                inner_edge_view=edge_intensity_view(inner_tile).astype(np.float32),
+                col_signature=col_signature,
+                row_signature=row_signature,
+                full_tile_i32=tile.astype(np.int32),
+                left_edge_i32=tile[:, 0, :].astype(np.int32),
+                top_edge_i32=tile[0, :, :].astype(np.int32),
+            )
+        )
+    return features
+
+
+def build_chunk_features(
+    chunk: np.ndarray,
+    left_tile: np.ndarray | None = None,
+    top_tile: np.ndarray | None = None,
+) -> ChunkFeatures:
+    inner_chunk = inner_view(chunk)
+    col_signature, row_signature = grayscale_projection_signature(inner_chunk)
+    return ChunkFeatures(
+        chunk=chunk,
+        inner_chunk_i32=inner_chunk.astype(np.int32),
+        inner_edge_view=edge_intensity_view(inner_chunk).astype(np.float32),
+        col_signature=col_signature,
+        row_signature=row_signature,
+        full_chunk_i32=chunk.astype(np.int32),
+        left_neighbor_edge_i32=left_tile[:, -1, :].astype(np.int32) if left_tile is not None else None,
+        top_neighbor_edge_i32=top_tile[-1, :, :].astype(np.int32) if top_tile is not None else None,
+    )
+
+
+def boundary_match_score(
+    tile_features: TileFeatures,
+    left_edge_i32: np.ndarray | None = None,
+    top_edge_i32: np.ndarray | None = None,
+) -> int:
+    score = 0
+
+    if left_edge_i32 is not None:
+        left_diff = left_edge_i32 - tile_features.left_edge_i32
+        score += int(np.abs(left_diff).sum())
+
+    if top_edge_i32 is not None:
+        top_diff = top_edge_i32 - tile_features.top_edge_i32
+        score += int(np.abs(top_diff).sum())
+
+    return score
+
+
 def find_tile(
     chunk: np.ndarray,
     tiles: list[np.ndarray],
+    left_tile: np.ndarray | None = None,
+    top_tile: np.ndarray | None = None,
+    tile_features: list[TileFeatures] | None = None,
+    chunk_features: ChunkFeatures | None = None,
 ) -> tuple[int, str, int]:
-    inner_chunk = inner_view(chunk)
+    computed_chunk_features = (
+        chunk_features
+        if chunk_features is not None
+        else build_chunk_features(chunk, left_tile=left_tile, top_tile=top_tile)
+    )
+    candidate_features = tile_features if tile_features is not None else build_tile_features(tiles)
     scored_tiles = []
 
-    for index, tile in enumerate(tiles):
-        if tile.shape != chunk.shape:
+    for index, feature in enumerate(candidate_features):
+        tile = tiles[index]
+        if tile.shape != chunk.shape or feature.tile.shape != chunk.shape:
             continue
-        diff = inner_chunk.astype(np.int32) - inner_view(tile).astype(np.int32)
+        diff = computed_chunk_features.inner_chunk_i32 - feature.inner_tile_i32
         inner_score = int(np.abs(diff).sum())
-        full_diff = chunk.astype(np.int32) - tile.astype(np.int32)
+
+        edge_diff = computed_chunk_features.inner_edge_view - feature.inner_edge_view
+        edge_score = int(np.abs(edge_diff).sum())
+
+        profile_score = int(
+            np.abs(computed_chunk_features.col_signature - feature.col_signature).sum()
+            + np.abs(computed_chunk_features.row_signature - feature.row_signature).sum()
+        )
+
+        full_diff = computed_chunk_features.full_chunk_i32 - feature.full_tile_i32
         full_score = int(np.abs(full_diff).sum())
-        scored_tiles.append((index + 1, inner_score, full_score))
+        neighbor_score = boundary_match_score(
+            feature,
+            left_edge_i32=computed_chunk_features.left_neighbor_edge_i32,
+            top_edge_i32=computed_chunk_features.top_neighbor_edge_i32,
+        )
+        scored_tiles.append((index + 1, inner_score, edge_score, profile_score, full_score, neighbor_score))
 
     if not scored_tiles:
         raise ValueError(f"No valid tiles found for chunk shape {chunk.shape}")
 
-    scored_tiles.sort(key=lambda item: (item[1], item[2], item[0]))
+    scored_tiles.sort(key=lambda item: (item[1], item[2], item[3], item[4], item[5], item[0]))
     best_inner_score = scored_tiles[0][1]
     near_ties = [
         item for item in scored_tiles if item[1] <= best_inner_score + INNER_SCORE_TIE_THRESHOLD
     ]
-    chosen_tile_id, chosen_inner_score, _ = min(near_ties, key=lambda item: (item[2], item[1], item[0]))
-    match_mode = "inner_exact" if chosen_inner_score == 0 else "nearest"
-    return chosen_tile_id, match_mode, chosen_inner_score
+    neighbor_context_available = left_tile is not None or top_tile is not None
+    if neighbor_context_available:
+        chosen_tile_id, chosen_inner_score, chosen_edge_score, chosen_profile_score, _, chosen_neighbor_score = min(
+            near_ties,
+            key=lambda item: (item[5], item[2], item[3], item[4], item[1], item[0]),
+        )
+    else:
+        chosen_tile_id, chosen_inner_score, chosen_edge_score, chosen_profile_score, _, chosen_neighbor_score = min(
+            near_ties,
+            key=lambda item: (item[2], item[3], item[4], item[1], item[0]),
+        )
+    match_mode = "inner_exact" if chosen_inner_score == 0 and chosen_edge_score == 0 else "nearest"
+    return (
+        chosen_tile_id,
+        match_mode,
+        chosen_inner_score + chosen_edge_score + chosen_profile_score + chosen_neighbor_score,
+    )
 
 
 def derive_output_paths(map_path: Path) -> OutputPaths:
@@ -1112,13 +1417,17 @@ def analyze_map(
     map_offset_y: int,
     map_tile_columns: int | None,
     map_tile_rows: int | None,
+    map_tile_size: int | None,
 ) -> AnalyzeSummary:
     tileset = open_image(tileset_path)
     map_img = open_image(map_path)
     tileset_np = np.array(tileset)
     source_map_np = np.array(map_img)
-    tile_size = infer_tile_size(tileset_np)
-    tiles = split_tiles(tileset_np, tile_size)
+    tileset_tile_size = infer_tile_size(tileset_np)
+    detected_map_tile_size = detect_map_tile_size(rgb_view(source_map_np))
+    tile_size = map_tile_size if map_tile_size is not None else detected_map_tile_size
+    tiles = build_map_tiles(tileset_np, tileset_tile_size=tileset_tile_size, map_tile_size=tile_size)
+    tile_features = build_tile_features(tiles)
 
     source_height, source_width = source_map_np.shape[:2]
     available_columns = (source_width - map_offset_x) // tile_size
@@ -1144,9 +1453,29 @@ def analyze_map(
         row = []
         debug_row = []
         reconstructed_row = []
+        row_index = y // tile_size
         for x in range(0, width, tile_size):
             chunk = map_np[y : y + tile_size, x : x + tile_size]
-            tile_id, match_mode, score = find_tile(chunk, tiles)
+            column_index = x // tile_size
+            left_tile = reconstructed_row[column_index - 1] if column_index > 0 else None
+            top_tile = (
+                reconstructed_rows[row_index - 1][column_index]
+                if row_index > 0
+                else None
+            )
+            chunk_features = build_chunk_features(
+                chunk,
+                left_tile=left_tile,
+                top_tile=top_tile,
+            )
+            tile_id, match_mode, score = find_tile(
+                chunk,
+                tiles,
+                left_tile=left_tile,
+                top_tile=top_tile,
+                tile_features=tile_features,
+                chunk_features=chunk_features,
+            )
             row.append(tile_id)
             debug_row.append(DebugCell(tile_id=tile_id, mode=match_mode, score=score))
             reconstructed_row.append(tiles[tile_id - 1])
@@ -1163,7 +1492,6 @@ def analyze_map(
 
     output_paths = derive_output_paths(map_path)
     reconstructed_img = Image.fromarray(reconstructed)
-    # reconstructed_img.save(map_path.with_name(f"{map_path.stem}_reconstructed.png"))
 
     cropped_map_img = Image.fromarray(map_np)
     comparison = Image.new("RGBA", (cropped_map_img.width * 2, cropped_map_img.height), (0, 0, 0, 255))
@@ -1209,6 +1537,7 @@ def analyze_map(
         "result": result,
         "debug_rows": debug_rows,
         "tile_size": tile_size,
+        "tileset_tile_size": tileset_tile_size,
         "output_paths": output_paths,
     }
 
@@ -1221,6 +1550,11 @@ def build_argument_parser() -> argparse.ArgumentParser:
         )
     )
     parser.add_argument("--screenshot", type=Path, help="FF6Tools screenshot to extract from.")
+    parser.add_argument(
+        "--screenshot-tileset-tile-size",
+        type=int,
+        help="Override the screenshot tileset tile size. Defaults to 38px when omitted.",
+    )
     parser.add_argument("--map-name", help="Output map canvas name without extension.")
     parser.add_argument("--tileset-name", help="Output tileset name without extension.")
     parser.add_argument("--map-path", type=Path, default=DEFAULT_MAP_PATH, help="Input map image path.")
@@ -1234,6 +1568,7 @@ def build_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--map-offset-y", type=int, default=DEFAULT_MAP_OFFSET_Y)
     parser.add_argument("--map-tile-columns", type=int, default=DEFAULT_MAP_TILE_COLUMNS)
     parser.add_argument("--map-tile-rows", type=int, default=DEFAULT_MAP_TILE_ROWS)
+    parser.add_argument("--map-tile-size", type=int, help="Override the map canvas tile size used for matching.")
     return parser
 
 
@@ -1256,7 +1591,8 @@ def print_results(summary: AnalyzeSummary, map_path: Path, tileset_path: Path) -
 
     print(f"# map: {map_path}")
     print(f"# tileset: {tileset_path}")
-    print(f"# tile_size: {summary['tile_size']}")
+    print(f"# map_tile_size: {summary['tile_size']}")
+    print(f"# tileset_tile_size: {summary['tileset_tile_size']}")
     print()
     for row in result:
         print(row)
@@ -1269,7 +1605,6 @@ def print_results(summary: AnalyzeSummary, map_path: Path, tileset_path: Path) -
     print()
     print(f"# comparison_image: {output_paths['comparison']}")
     print(f"# csv: {output_paths['csv']}")
-    # print(f"# reconstructed_image: {map_path.with_name(f'{map_path.stem}_reconstructed.png')}")
     # print(f"# debug_csv: {map_path.with_name(f'{map_path.stem}_tiles_debug.csv')}")
     # print(f"# suspicious_tiles_image: {map_path.with_name(f'{map_path.stem}_suspicious_tiles.png')}")
 
@@ -1278,12 +1613,19 @@ def main() -> None:
     parser = build_argument_parser()
     args = parser.parse_args()
     map_path, tileset_path = resolve_output_paths(args)
+    effective_map_tile_size = (
+        args.map_tile_size
+        if args.map_tile_size is not None
+        else (DEFAULT_SCREENSHOT_MAP_TILE_SIZE if args.screenshot is not None else None)
+    )
 
     if args.screenshot is not None:
         _, _, map_bbox, tileset_bbox = extract_assets_from_screenshot(
             screenshot_path=args.screenshot,
             map_output_path=map_path,
             tileset_output_path=tileset_path,
+            forced_tileset_tile_size=args.screenshot_tileset_tile_size,
+            forced_map_tile_size=effective_map_tile_size,
         )
         print(f"# extracted_map_bbox: {map_bbox}")
         print(f"# extracted_tileset_bbox: {tileset_bbox}")
@@ -1295,6 +1637,7 @@ def main() -> None:
         map_offset_y=args.map_offset_y,
         map_tile_columns=args.map_tile_columns,
         map_tile_rows=args.map_tile_rows,
+        map_tile_size=effective_map_tile_size,
     )
     print_results(summary, map_path=map_path, tileset_path=tileset_path)
 
