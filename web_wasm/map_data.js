@@ -7,6 +7,7 @@ const MAP_MANIFEST = {
   Alter_Cave_B3: new URL("../assets/maps/Alter_Cave_B3.json", import.meta.url).href,
   Alter_Cave_B4: new URL("../assets/maps/Alter_Cave_B4.json", import.meta.url).href,
   Alter_Cave_Crystal_Room: new URL("../assets/maps/Alter_Cave_Crystal_Room.json", import.meta.url).href,
+  Canaan: new URL("../assets/maps/Canaan.json", import.meta.url).href,
   Castle_Sasune: new URL("../assets/maps/Castle_Sasune.json", import.meta.url).href,
   Castle_Sasune_MainKeep_B1F: new URL("../assets/maps/Castle_Sasune_MainKeep_B1F.json", import.meta.url).href,
   Castle_Sasune_MainKeep_1F: new URL("../assets/maps/Castle_Sasune_MainKeep_1F.json", import.meta.url).href,

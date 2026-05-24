@@ -125,6 +125,7 @@ test("encounter areas restrict random encounters by tile position", () => {
 });
 
 test("getMapManifestUrl resolves registered maps without falling back", () => {
+  assert.match(String(getMapManifestUrl("Canaan")), /\/assets\/maps\/Canaan\.json$/);
   assert.match(String(getMapManifestUrl("Castle_Sasune")), /\/assets\/maps\/Castle_Sasune\.json$/);
   assert.match(String(getMapManifestUrl("Castle_Sasune_MainKeep_B1F")), /\/assets\/maps\/Castle_Sasune_MainKeep_B1F\.json$/);
   assert.match(String(getMapManifestUrl("Castle_Sasune_MainKeep_1F")), /\/assets\/maps\/Castle_Sasune_MainKeep_1F\.json$/);

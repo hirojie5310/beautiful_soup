@@ -148,6 +148,17 @@
       }
     },
     {
+      "type": "exit",
+      "name": "Canaan",
+      "x": 86,
+      "y": 66,
+      "target_map": "Canaan",
+      "target_spawn": {
+        "x": 16,
+        "y": 29
+      }
+    },
+    {
       "type": "decoration",
       "name": "Floating Continent Big Rock",
       "x": 81,
