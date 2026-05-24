@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import colorsys
 import csv
 from collections import deque
 from dataclasses import dataclass
@@ -11,8 +12,18 @@ import numpy as np
 from PIL import Image
 
 INNER_MARGIN = 1
+COMPARISON_TILE_SIZE = 16
+EDGE_IGNORE_MARGIN = 1
 SUSPICIOUS_SCORE_THRESHOLD = 500
-INNER_SCORE_TIE_THRESHOLD = 32
+INNER_SCORE_WEIGHT = 0.3
+CENTER_SCORE_WEIGHT = 6.0
+LOWER_BLOCK_SCORE_WEIGHT = 4.0
+BLOCK_SCORE_WEIGHT = 5.0
+EDGE_SCORE_WEIGHT = 0.5
+PROFILE_SCORE_WEIGHT = 1.0
+FULL_SCORE_WEIGHT = 0.05
+NEIGHBOR_SCORE_WEIGHT = 0.1
+COLOR_SCORE_WEIGHT = 45.0
 DEFAULT_MAP_OFFSET_X = 0
 DEFAULT_MAP_OFFSET_Y = 0
 DEFAULT_MAP_TILE_COLUMNS = None
@@ -79,6 +90,10 @@ class TileFeatures:
     inner_edge_view: np.ndarray
     col_signature: np.ndarray
     row_signature: np.ndarray
+    block_signature: np.ndarray
+    center_block_signature: np.ndarray
+    lower_block_signature: np.ndarray
+    color_signature: np.ndarray
     full_tile_i32: np.ndarray
     left_edge_i32: np.ndarray
     top_edge_i32: np.ndarray
@@ -91,6 +106,10 @@ class ChunkFeatures:
     inner_edge_view: np.ndarray
     col_signature: np.ndarray
     row_signature: np.ndarray
+    block_signature: np.ndarray
+    center_block_signature: np.ndarray
+    lower_block_signature: np.ndarray
+    color_signature: np.ndarray
     full_chunk_i32: np.ndarray
     left_neighbor_edge_i32: np.ndarray | None
     top_neighbor_edge_i32: np.ndarray | None
@@ -1221,14 +1240,20 @@ def extract_assets_from_screenshot(
 
 def infer_tile_size(tileset_np: np.ndarray) -> int:
     height, width = tileset_np.shape[:2]
-    if width % TILESET_COLUMNS != 0 or height % TILESET_ROWS != 0:
+    if width % TILESET_COLUMNS != 0:
         raise ValueError(
-            "Tileset dimensions are not divisible by the expected grid "
-            f"({TILESET_COLUMNS}x{TILESET_ROWS}): {width}x{height}"
+            "Tileset width is not divisible by the expected column count "
+            f"({TILESET_COLUMNS}): {width}x{height}"
         )
 
     tile_width = width // TILESET_COLUMNS
-    tile_height = height // TILESET_ROWS
+    if height % tile_width != 0:
+        raise ValueError(
+            "Tileset height is not divisible by the inferred tile size "
+            f"({tile_width}): {width}x{height}"
+        )
+
+    tile_height = tile_width
     if tile_width != tile_height:
         raise ValueError(f"Tileset tiles are not square: {tile_width}x{tile_height}")
     return tile_width
@@ -1254,6 +1279,23 @@ def resize_tile(tile: np.ndarray, tile_size: int) -> np.ndarray:
     return np.array(resized)
 
 
+def ignore_outer_edge_pixels(tile: np.ndarray) -> np.ndarray:
+    if tile.shape[0] <= EDGE_IGNORE_MARGIN * 2 or tile.shape[1] <= EDGE_IGNORE_MARGIN * 2:
+        return tile
+    adjusted = tile.copy()
+    adjusted[0, :, :] = adjusted[1, :, :]
+    adjusted[-1, :, :] = adjusted[-2, :, :]
+    adjusted[:, 0, :] = adjusted[:, 1, :]
+    adjusted[:, -1, :] = adjusted[:, -2, :]
+    return adjusted
+
+
+def normalize_tile_for_comparison(tile: np.ndarray, tile_size: int = COMPARISON_TILE_SIZE) -> np.ndarray:
+    edge_ignored = ignore_outer_edge_pixels(tile)
+    normalized = resize_tile(edge_ignored, tile_size)
+    return ignore_outer_edge_pixels(normalized)
+
+
 def build_map_tiles(tileset_np: np.ndarray, tileset_tile_size: int, map_tile_size: int) -> list[np.ndarray]:
     source_tiles = split_tiles(tileset_np, tileset_tile_size)
     return [resize_tile(tile, map_tile_size) for tile in source_tiles]
@@ -1263,6 +1305,17 @@ def inner_view(tile: np.ndarray, margin: int = INNER_MARGIN) -> np.ndarray:
     if margin <= 0:
         return tile
     return tile[margin:-margin, margin:-margin, :]
+
+
+def lower_focus_view(tile: np.ndarray) -> np.ndarray:
+    height = tile.shape[0]
+    top = max(1, height // 2)
+    bottom = max(top + 1, height - 2)
+    return tile[top:bottom, 1:-1, :]
+
+
+def structure_view(tile: np.ndarray) -> np.ndarray:
+    return tile[1:-2, 1:-1, :]
 
 
 def edge_intensity_view(tile: np.ndarray) -> np.ndarray:
@@ -1277,19 +1330,50 @@ def grayscale_projection_signature(tile: np.ndarray) -> tuple[np.ndarray, np.nda
     return gray.mean(axis=0), gray.mean(axis=1)
 
 
+def pooled_rgb_signature(tile: np.ndarray, cells: int = 4) -> np.ndarray:
+    image = Image.fromarray(tile)
+    pooled = image.resize((cells, cells), Image.Resampling.BILINEAR)
+    return np.array(pooled, dtype=np.float32)
+
+
+def color_signature(tile: np.ndarray) -> np.ndarray:
+    inner = tile[1:-1, 1:-1, :3]
+    pixels = inner.reshape(-1, 3).astype(np.float32)
+    rgb = pixels / 255.0
+    hsv = np.array([colorsys.rgb_to_hsv(*pixel) for pixel in rgb], dtype=np.float32) * 255.0
+    pooled = pooled_rgb_signature(inner, cells=3).reshape(-1)
+    return np.concatenate(
+        [
+            pixels.mean(axis=0),
+            pixels.std(axis=0),
+            hsv.mean(axis=0),
+            pooled,
+        ]
+    ).astype(np.float32)
+
+
 def build_tile_features(tiles: list[np.ndarray]) -> list[TileFeatures]:
     features = []
     for tile in tiles:
-        inner_tile = inner_view(tile)
+        comparable_tile = normalize_tile_for_comparison(tile)
+        inner_tile = structure_view(comparable_tile)
         col_signature, row_signature = grayscale_projection_signature(inner_tile)
+        block_signature = pooled_rgb_signature(comparable_tile, cells=4)
+        center_block_signature = pooled_rgb_signature(comparable_tile[2:-2, 2:-2, :], cells=3)
+        lower_block_signature = pooled_rgb_signature(lower_focus_view(comparable_tile), cells=3)
+        color_sig = color_signature(comparable_tile)
         features.append(
             TileFeatures(
-                tile=tile,
+                tile=comparable_tile,
                 inner_tile_i32=inner_tile.astype(np.int32),
                 inner_edge_view=edge_intensity_view(inner_tile).astype(np.float32),
                 col_signature=col_signature,
                 row_signature=row_signature,
-                full_tile_i32=tile.astype(np.int32),
+                block_signature=block_signature,
+                center_block_signature=center_block_signature,
+                lower_block_signature=lower_block_signature,
+                color_signature=color_sig,
+                full_tile_i32=comparable_tile.astype(np.int32),
                 left_edge_i32=tile[:, 0, :].astype(np.int32),
                 top_edge_i32=tile[0, :, :].astype(np.int32),
             )
@@ -1302,17 +1386,30 @@ def build_chunk_features(
     left_tile: np.ndarray | None = None,
     top_tile: np.ndarray | None = None,
 ) -> ChunkFeatures:
-    inner_chunk = inner_view(chunk)
+    comparable_chunk = normalize_tile_for_comparison(chunk)
+    inner_chunk = structure_view(comparable_chunk)
     col_signature, row_signature = grayscale_projection_signature(inner_chunk)
+    block_signature = pooled_rgb_signature(comparable_chunk, cells=4)
+    center_block_signature = pooled_rgb_signature(comparable_chunk[2:-2, 2:-2, :], cells=3)
+    lower_block_signature = pooled_rgb_signature(lower_focus_view(comparable_chunk), cells=3)
+    color_sig = color_signature(comparable_chunk)
     return ChunkFeatures(
-        chunk=chunk,
+        chunk=comparable_chunk,
         inner_chunk_i32=inner_chunk.astype(np.int32),
         inner_edge_view=edge_intensity_view(inner_chunk).astype(np.float32),
         col_signature=col_signature,
         row_signature=row_signature,
-        full_chunk_i32=chunk.astype(np.int32),
-        left_neighbor_edge_i32=left_tile[:, -1, :].astype(np.int32) if left_tile is not None else None,
-        top_neighbor_edge_i32=top_tile[-1, :, :].astype(np.int32) if top_tile is not None else None,
+        block_signature=block_signature,
+        center_block_signature=center_block_signature,
+        lower_block_signature=lower_block_signature,
+        color_signature=color_sig,
+        full_chunk_i32=comparable_chunk.astype(np.int32),
+        left_neighbor_edge_i32=(
+            left_tile[:, -1, :].astype(np.int32) if left_tile is not None else None
+        ),
+        top_neighbor_edge_i32=(
+            top_tile[-1, :, :].astype(np.int32) if top_tile is not None else None
+        ),
     )
 
 
@@ -1334,6 +1431,31 @@ def boundary_match_score(
     return score
 
 
+def combined_similarity_score(
+    *,
+    inner_score: int,
+    center_score: int,
+    lower_block_score: int,
+    block_score: int,
+    color_score: int,
+    edge_score: int,
+    profile_score: int,
+    full_score: int,
+    neighbor_score: int,
+) -> float:
+    return (
+        (inner_score * INNER_SCORE_WEIGHT)
+        + (center_score * CENTER_SCORE_WEIGHT)
+        + (lower_block_score * LOWER_BLOCK_SCORE_WEIGHT)
+        + (block_score * BLOCK_SCORE_WEIGHT)
+        + (color_score * COLOR_SCORE_WEIGHT)
+        + (edge_score * EDGE_SCORE_WEIGHT)
+        + (profile_score * PROFILE_SCORE_WEIGHT)
+        + (full_score * FULL_SCORE_WEIGHT)
+        + (neighbor_score * NEIGHBOR_SCORE_WEIGHT)
+    )
+
+
 def find_tile(
     chunk: np.ndarray,
     tiles: list[np.ndarray],
@@ -1341,6 +1463,7 @@ def find_tile(
     top_tile: np.ndarray | None = None,
     tile_features: list[TileFeatures] | None = None,
     chunk_features: ChunkFeatures | None = None,
+    preferred_tile_ids: set[int] | None = None,
 ) -> tuple[int, str, int]:
     computed_chunk_features = (
         chunk_features
@@ -1351,9 +1474,7 @@ def find_tile(
     scored_tiles = []
 
     for index, feature in enumerate(candidate_features):
-        tile = tiles[index]
-        if tile.shape != chunk.shape or feature.tile.shape != chunk.shape:
-            continue
+        preferred_rank = 0 if preferred_tile_ids is None or (index + 1) in preferred_tile_ids else 1
         diff = computed_chunk_features.inner_chunk_i32 - feature.inner_tile_i32
         inner_score = int(np.abs(diff).sum())
 
@@ -1364,6 +1485,18 @@ def find_tile(
             np.abs(computed_chunk_features.col_signature - feature.col_signature).sum()
             + np.abs(computed_chunk_features.row_signature - feature.row_signature).sum()
         )
+        block_score = int(
+            np.abs(computed_chunk_features.block_signature - feature.block_signature).sum()
+        )
+        center_score = int(
+            np.abs(computed_chunk_features.center_block_signature - feature.center_block_signature).sum()
+        )
+        lower_block_score = int(
+            np.abs(computed_chunk_features.lower_block_signature - feature.lower_block_signature).sum()
+        )
+        color_score = int(
+            np.abs(computed_chunk_features.color_signature - feature.color_signature).sum()
+        )
 
         full_diff = computed_chunk_features.full_chunk_i32 - feature.full_tile_i32
         full_score = int(np.abs(full_diff).sum())
@@ -1372,32 +1505,51 @@ def find_tile(
             left_edge_i32=computed_chunk_features.left_neighbor_edge_i32,
             top_edge_i32=computed_chunk_features.top_neighbor_edge_i32,
         )
-        scored_tiles.append((index + 1, inner_score, edge_score, profile_score, full_score, neighbor_score))
+        combined_score = combined_similarity_score(
+            inner_score=inner_score,
+            center_score=center_score,
+            lower_block_score=lower_block_score,
+            block_score=block_score,
+            color_score=color_score,
+            edge_score=edge_score,
+            profile_score=profile_score,
+            full_score=full_score,
+            neighbor_score=neighbor_score,
+        )
+        scored_tiles.append(
+            (
+                index + 1,
+                preferred_rank,
+                combined_score,
+                inner_score,
+                center_score,
+                lower_block_score,
+                color_score,
+                edge_score,
+                block_score,
+                profile_score,
+                full_score,
+                neighbor_score,
+            )
+        )
 
     if not scored_tiles:
         raise ValueError(f"No valid tiles found for chunk shape {chunk.shape}")
 
-    scored_tiles.sort(key=lambda item: (item[1], item[2], item[3], item[4], item[5], item[0]))
-    best_inner_score = scored_tiles[0][1]
-    near_ties = [
-        item for item in scored_tiles if item[1] <= best_inner_score + INNER_SCORE_TIE_THRESHOLD
-    ]
+    scored_tiles.sort(key=lambda item: (item[2], item[1], item[4], item[5], item[6], item[7], item[9], item[8], item[10], item[11], item[3], item[0]))
     neighbor_context_available = left_tile is not None or top_tile is not None
     if neighbor_context_available:
-        chosen_tile_id, chosen_inner_score, chosen_edge_score, chosen_profile_score, _, chosen_neighbor_score = min(
-            near_ties,
-            key=lambda item: (item[5], item[2], item[3], item[4], item[1], item[0]),
+        chosen_tile_id, _, chosen_combined_score, chosen_inner_score, chosen_center_score, chosen_lower_block_score, chosen_color_score, chosen_edge_score, chosen_block_score, chosen_profile_score, _, chosen_neighbor_score = min(
+            scored_tiles,
+            key=lambda item: (item[2], item[11], item[1], item[4], item[5], item[6], item[7], item[9], item[8], item[10], item[3], item[0]),
         )
     else:
-        chosen_tile_id, chosen_inner_score, chosen_edge_score, chosen_profile_score, _, chosen_neighbor_score = min(
-            near_ties,
-            key=lambda item: (item[2], item[3], item[4], item[1], item[0]),
-        )
+        chosen_tile_id, _, chosen_combined_score, chosen_inner_score, chosen_center_score, chosen_lower_block_score, chosen_color_score, chosen_edge_score, chosen_block_score, chosen_profile_score, _, chosen_neighbor_score = scored_tiles[0]
     match_mode = "inner_exact" if chosen_inner_score == 0 and chosen_edge_score == 0 else "nearest"
     return (
         chosen_tile_id,
         match_mode,
-        chosen_inner_score + chosen_edge_score + chosen_profile_score + chosen_neighbor_score,
+        int(round(chosen_combined_score)),
     )
 
 
@@ -1408,6 +1560,24 @@ def derive_output_paths(map_path: Path) -> OutputPaths:
         "comparison": map_path.with_name(f"{base_stem}_comparison.png"),
         "csv": map_path.with_name(f"{base_stem}_tiles.csv"),
     }
+
+
+def infer_map_stem(map_path: Path) -> str:
+    return map_path.stem[:-4] if map_path.stem.endswith("_map") else map_path.stem
+
+
+def infer_map_grid_dimensions(
+    source_width: int,
+    source_height: int,
+    map_offset_x: int,
+    map_offset_y: int,
+    tile_size: int,
+) -> tuple[int, int]:
+    usable_width = source_width - map_offset_x
+    usable_height = source_height - map_offset_y
+    if usable_width <= 0 or usable_height <= 0:
+        raise ValueError("Map offset is outside the image bounds.")
+    return usable_width // tile_size, usable_height // tile_size
 
 
 def analyze_map(
@@ -1426,12 +1596,17 @@ def analyze_map(
     tileset_tile_size = infer_tile_size(tileset_np)
     detected_map_tile_size = detect_map_tile_size(rgb_view(source_map_np))
     tile_size = map_tile_size if map_tile_size is not None else detected_map_tile_size
-    tiles = build_map_tiles(tileset_np, tileset_tile_size=tileset_tile_size, map_tile_size=tile_size)
-    tile_features = build_tile_features(tiles)
+    match_tiles = build_map_tiles(tileset_np, tileset_tile_size=tileset_tile_size, map_tile_size=tile_size)
+    tile_features = build_tile_features(match_tiles)
 
     source_height, source_width = source_map_np.shape[:2]
-    available_columns = (source_width - map_offset_x) // tile_size
-    available_rows = (source_height - map_offset_y) // tile_size
+    available_columns, available_rows = infer_map_grid_dimensions(
+        source_width=source_width,
+        source_height=source_height,
+        map_offset_x=map_offset_x,
+        map_offset_y=map_offset_y,
+        tile_size=tile_size,
+    )
     tile_columns = map_tile_columns if map_tile_columns is not None else available_columns
     tile_rows = map_tile_rows if map_tile_rows is not None else available_rows
     tile_columns = min(tile_columns, available_columns)
@@ -1470,7 +1645,7 @@ def analyze_map(
             )
             tile_id, match_mode, score = find_tile(
                 chunk,
-                tiles,
+                match_tiles,
                 left_tile=left_tile,
                 top_tile=top_tile,
                 tile_features=tile_features,
@@ -1478,7 +1653,7 @@ def analyze_map(
             )
             row.append(tile_id)
             debug_row.append(DebugCell(tile_id=tile_id, mode=match_mode, score=score))
-            reconstructed_row.append(tiles[tile_id - 1])
+            reconstructed_row.append(match_tiles[tile_id - 1])
         result.append(row)
         debug_rows.append(debug_row)
         reconstructed_rows.append(reconstructed_row)

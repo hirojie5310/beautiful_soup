@@ -44,6 +44,27 @@ def make_tileset(tile_size: int = 8) -> np.ndarray:
     return tileset
 
 
+def make_tall_tileset(tile_size: int = 8, rows: int = 12) -> np.ndarray:
+    height = tile_size * rows
+    width = tile_size * map_separation.TILESET_COLUMNS
+    tileset = np.zeros((height, width, 3), dtype=np.uint8)
+
+    for row in range(rows):
+        for col in range(map_separation.TILESET_COLUMNS):
+            base_y = row * tile_size
+            base_x = col * tile_size
+            color = np.array(
+                [
+                    20 + (col * 9) % 200,
+                    30 + (row * 17) % 180,
+                    40 + ((row + col) * 7) % 190,
+                ],
+                dtype=np.uint8,
+            )
+            tileset[base_y : base_y + tile_size, base_x : base_x + tile_size] = color
+    return tileset
+
+
 def make_map_from_tiles(tileset: np.ndarray, tile_size: int = 8, rows: int = 4, cols: int = 4) -> np.ndarray:
     tiles = map_separation.split_tiles(tileset, tile_size)
     map_image = np.zeros((rows * tile_size, cols * tile_size, 3), dtype=np.uint8)
@@ -103,6 +124,13 @@ def test_refine_map_canvas_prefers_tileset_matching_component() -> None:
     assert refined_bbox.top == 0
     assert refined_bbox.width == map_image.shape[1]
     assert refined_bbox.height == map_image.shape[0]
+
+
+def test_infer_tile_size_accepts_variable_tileset_rows() -> None:
+    tile_size = 16
+    tall_tileset = make_tall_tileset(tile_size=tile_size, rows=23)
+
+    assert map_separation.infer_tile_size(tall_tileset) == tile_size
 
 
 def test_trim_map_component_preserves_full_height_grass_columns() -> None:
@@ -584,6 +612,19 @@ def test_analyze_map_resizes_tileset_tiles_to_map_tile_size(tmp_path: Path) -> N
     )
 
 
+def test_infer_map_grid_dimensions_uses_map_tile_size() -> None:
+    columns, rows = map_separation.infer_map_grid_dimensions(
+        source_width=864,
+        source_height=640,
+        map_offset_x=0,
+        map_offset_y=0,
+        tile_size=32,
+    )
+
+    assert columns == 27
+    assert rows == 20
+
+
 def test_find_tile_prefers_neighbor_connected_candidate_for_near_ties() -> None:
     tile_size = 6
     left_tile = np.full((tile_size, tile_size, 3), fill_value=30, dtype=np.uint8)
@@ -646,3 +687,35 @@ def test_find_tile_with_cached_features_matches_uncached_result() -> None:
 
     assert cached == uncached
     assert fully_cached == uncached
+
+
+def test_find_tile_matches_across_different_tile_sizes() -> None:
+    source_tile_size = 8
+    target_tile_size = 32
+    tileset = make_tileset(source_tile_size)
+    tiles = map_separation.split_tiles(tileset, source_tile_size)
+    large_tiles = [map_separation.resize_tile(tile, target_tile_size) for tile in tiles]
+    chunk = large_tiles[11].copy()
+
+    chosen_tile_id, match_mode, _ = map_separation.find_tile(
+        chunk,
+        large_tiles,
+    )
+
+    assert chosen_tile_id == 12
+    assert match_mode == "inner_exact"
+
+
+def test_find_tile_ignores_one_pixel_edge_noise() -> None:
+    tile_size = 16
+    tileset = make_tileset(tile_size)
+    tiles = map_separation.split_tiles(tileset, tile_size)
+    clean_chunk = tiles[5].copy()
+    noisy_chunk = clean_chunk.copy()
+    noisy_chunk[0, :, :] = np.array([255, 0, 0], dtype=np.uint8)
+    noisy_chunk[:, -1, :] = np.array([0, 255, 0], dtype=np.uint8)
+
+    clean_result = map_separation.find_tile(clean_chunk, tiles)
+    noisy_result = map_separation.find_tile(noisy_chunk, tiles)
+
+    assert noisy_result[0] == clean_result[0]
