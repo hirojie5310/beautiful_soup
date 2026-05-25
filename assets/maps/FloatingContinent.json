@@ -159,6 +159,17 @@
       }
     },
     {
+      "type": "exit",
+      "name": "Dragon's Peak",
+      "x": 88,
+      "y": 69,
+      "target_map": "Dragons_Peak",
+      "target_spawn": {
+        "x": 13,
+        "y": 30
+      }
+    },
+    {
       "type": "decoration",
       "name": "Floating Continent Big Rock",
       "x": 81,
