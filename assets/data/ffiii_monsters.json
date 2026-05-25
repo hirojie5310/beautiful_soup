@@ -1141,7 +1141,7 @@
     {
       "name": "Rukh",
       "HP": 120,
-      "sprite_id": "s48_48_003",
+      "sprite_id": "l48_48_003",
       "Weight": 2,
       "Level": 8,
       "JobLevel": 1,
