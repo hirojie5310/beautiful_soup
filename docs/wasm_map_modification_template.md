@@ -40,6 +40,7 @@
 - [ ] `location_requirement.group` / `locations` が既存 Location と一致している
 - [ ] `spawn` から通路に出られる
 - [ ] `collision_gids` と見た目が破綻していない
+- [ ] 段差や橋がある場合は `movement_rows` / `movement_edges` の要否を確認した
 - [ ] 新しい `event_flag` 名が既存と衝突していない
 - [ ] 新しい `treasure_id` 名が既存と衝突していない
 - [ ] 新しい `npc_key` / `scripted_sequence` 名が既存と衝突していない
@@ -75,6 +76,19 @@
     "tile_count": 128
   },
   "collision_gids": [1, 2, 70],
+  "movement_rows": [
+    "0,0,0,0",
+    "0,1,1,0",
+    "0,1,1,0",
+    "0,0,0,0"
+  ],
+  "movement_edges": [
+    {
+      "from": { "x": 1, "y": 1 },
+      "to": { "x": 1, "y": 0 },
+      "bidirectional": false
+    }
+  ],
   "location_requirement": {
     "group": "Sample Group",
     "locations": ["Sample Location"]
@@ -100,6 +114,14 @@
   ]
 }
 ```
+
+### 段差・橋マップ用メモ
+
+- `rows` は見た目タイルのまま維持し、侵入不可だけを `collision_gids` で表す
+- `movement_rows` は「どの移動レイヤに属するか」をタイル単位で持つ
+- `movement_edges` は階段、坂、飛び降り、橋の接続口のように、異なる移動レイヤ間を明示的につなぐ
+- `movement_rows` を省略したマップは従来どおり `collision_gids` だけで移動判定される
+- 将来、橋上と橋下を同じ座標で両立させる場合は `menu_state.map_state.current_movement_plane` と複数 plane の導入を前提に設計する
 
 ### 連動箇所
 
@@ -524,4 +546,3 @@
 - 実行テスト:
 - 実機確認結果:
 - 残課題:
-

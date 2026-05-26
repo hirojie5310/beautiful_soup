@@ -105,6 +105,67 @@ test("normalizeMapDefinition preserves animated object sprite settings", () => {
   assert.equal(result.objects[0].sprite_frame_ms, 1000);
 });
 
+test("normalizeMapDefinition keeps optional movement rows and edges separate from render rows", () => {
+  const result = normalizeMapDefinition({
+    id: "test",
+    width: 2,
+    height: 2,
+    rows: [
+      "9,9",
+      "9,9",
+    ],
+    movement_rows: [
+      "0,1",
+      "0,1",
+    ],
+    movement_edges: [
+      {
+        from: { x: 0, y: 0 },
+        to: { x: 1, y: 0 },
+        bidirectional: false,
+      },
+    ],
+    movement_plane_tiles: [
+      {
+        x: 1,
+        y: 1,
+        default_plane: "ground",
+        planes: {
+          ground: 3,
+          bridge: 1,
+        },
+      },
+    ],
+  });
+
+  assert.deepEqual(result.rows, [
+    [9, 9],
+    [9, 9],
+  ]);
+  assert.deepEqual(result.movementRows, [
+    [0, 1],
+    [0, 1],
+  ]);
+  assert.deepEqual(result.movementEdges, [
+    {
+      from: { x: 0, y: 0 },
+      to: { x: 1, y: 0 },
+      bidirectional: false,
+    },
+  ]);
+  assert.deepEqual(result.movementPlaneTiles, [
+    {
+      x: 1,
+      y: 1,
+      defaultPlane: "ground",
+      planes: {
+        ground: 3,
+        bridge: 1,
+      },
+    },
+  ]);
+});
+
 test("encounter areas restrict random encounters by tile position", () => {
   const result = normalizeMapDefinition({
     id: "test",

@@ -762,6 +762,14 @@ function optionalNumber(value, fallback = null) {
   return Number.isFinite(num) ? num : fallback;
 }
 
+function normalizeMovementPlane(value, fallback = "ground") {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "ground" || normalized === "bridge") {
+    return normalized;
+  }
+  return String(fallback || "ground").trim().toLowerCase() === "bridge" ? "bridge" : "ground";
+}
+
 export function npcDialogueIndices(row) {
   const rawIndices = Array.isArray(row?.dialogue_indices)
     ? row.dialogue_indices
@@ -1181,6 +1189,7 @@ export function deriveInitialMapState(appState, mapDefinition, options = {}) {
       current_map_id: wantedMapId,
       tile_x: asNumber(menuMapState.tile_x, asNumber(envelopeMap.x, asNumber(mapDefinition?.spawn?.x, 0))),
       tile_y: asNumber(menuMapState.tile_y, asNumber(envelopeMap.y, asNumber(mapDefinition?.spawn?.y, 0))),
+      current_movement_plane: normalizeMovementPlane(menuMapState.current_movement_plane, "ground"),
       facing_direction: normalizeMapFacingDirection(menuMapState.facing_direction, "down"),
       steps_since_reset: asNumber(menuMapState.steps_since_reset, 0),
       switch_states: normalizeSwitchStates(menuMapState.switch_states),
@@ -1208,6 +1217,7 @@ export function deriveInitialMapState(appState, mapDefinition, options = {}) {
     current_map_id: String(mapDefinition?.id || wantedMapId || DEFAULT_MAP_ID),
     tile_x: asNumber(initialSpawn.x, 0),
     tile_y: asNumber(initialSpawn.y, 0),
+    current_movement_plane: "ground",
     steps_since_reset: 0,
     switch_states: {},
     opened_treasures: savedOpenedTreasures,
@@ -1231,6 +1241,101 @@ export function canOccupyTile(mapDefinition, x, y, saveEnvelope = null) {
     isFloatingContinentCanoeEnabled(mapDefinition, saveEnvelope)
     && isCanoeWaterGid(gid)
   );
+}
+
+function resolveMovementLayer(mapDefinition, x, y) {
+  if (!mapDefinition || x < 0 || y < 0 || x >= mapDefinition.width || y >= mapDefinition.height) {
+    return null;
+  }
+  if (!Array.isArray(mapDefinition.movementRows)) {
+    return null;
+  }
+  return asNumber(mapDefinition.movementRows?.[y]?.[x], 0);
+}
+
+function findMovementPlaneTile(mapDefinition, x, y) {
+  const tiles = Array.isArray(mapDefinition?.movementPlaneTiles) ? mapDefinition.movementPlaneTiles : [];
+  return tiles.find((row) => Number(row?.x) === Number(x) && Number(row?.y) === Number(y)) || null;
+}
+
+function resolveMovementLayerCandidates(mapDefinition, x, y) {
+  const baseLayer = resolveMovementLayer(mapDefinition, x, y);
+  if (baseLayer === null) {
+    return [];
+  }
+  const planeTile = findMovementPlaneTile(mapDefinition, x, y);
+  if (!planeTile) {
+    return [{ plane: "ground", layer: baseLayer }];
+  }
+  const planeEntries = Object.entries(planeTile.planes || {})
+    .map(([plane, layer]) => ({
+      plane: normalizeMovementPlane(plane, planeTile.defaultPlane || "ground"),
+      layer: asNumber(layer, 0),
+    }))
+    .filter((row) => row.layer > 0);
+  if (planeEntries.length) {
+    return planeEntries;
+  }
+  return [{ plane: normalizeMovementPlane(planeTile.defaultPlane, "ground"), layer: baseLayer }];
+}
+
+function resolveEffectiveMovementLayer(mapDefinition, x, y, currentPlane = "ground") {
+  const candidates = resolveMovementLayerCandidates(mapDefinition, x, y);
+  if (!candidates.length) return null;
+  return candidates.find((row) => row.plane === normalizeMovementPlane(currentPlane, "ground"))?.layer
+    ?? candidates[0].layer;
+}
+
+function hasDirectedMovementEdge(mapDefinition, fromX, fromY, toX, toY) {
+  const edges = Array.isArray(mapDefinition?.movementEdges) ? mapDefinition.movementEdges : [];
+  return edges.some((edge) => (
+    (
+      Number(edge?.from?.x) === Number(fromX)
+      && Number(edge?.from?.y) === Number(fromY)
+      && Number(edge?.to?.x) === Number(toX)
+      && Number(edge?.to?.y) === Number(toY)
+    )
+    || (
+      edge?.bidirectional !== false
+      && Number(edge?.from?.x) === Number(toX)
+      && Number(edge?.from?.y) === Number(toY)
+      && Number(edge?.to?.x) === Number(fromX)
+      && Number(edge?.to?.y) === Number(fromY)
+    )
+  ));
+}
+
+function canTraverseBetweenTiles(mapDefinition, fromX, fromY, toX, toY, saveEnvelope = null, currentPlane = "ground") {
+  if (!canOccupyTile(mapDefinition, toX, toY, saveEnvelope)) {
+    return false;
+  }
+  const fromLayer = resolveEffectiveMovementLayer(mapDefinition, fromX, fromY, currentPlane);
+  const toCandidates = resolveMovementLayerCandidates(mapDefinition, toX, toY);
+  if (fromLayer === null || !toCandidates.length) {
+    return true;
+  }
+  if (toCandidates.some((candidate) => candidate.layer === fromLayer)) {
+    return true;
+  }
+  return hasDirectedMovementEdge(mapDefinition, fromX, fromY, toX, toY);
+}
+
+function resolveTraversalTargetPlane(mapDefinition, fromX, fromY, toX, toY, currentPlane = "ground") {
+  const normalizedCurrentPlane = normalizeMovementPlane(currentPlane, "ground");
+  const fromLayer = resolveEffectiveMovementLayer(mapDefinition, fromX, fromY, normalizedCurrentPlane);
+  const toCandidates = resolveMovementLayerCandidates(mapDefinition, toX, toY);
+  if (!toCandidates.length) {
+    return normalizedCurrentPlane;
+  }
+  const sameLayerCandidate = toCandidates.find((candidate) => candidate.layer === fromLayer);
+  if (sameLayerCandidate) {
+    return sameLayerCandidate.plane;
+  }
+  const samePlaneCandidate = toCandidates.find((candidate) => candidate.plane === normalizedCurrentPlane);
+  if (samePlaneCandidate) {
+    return samePlaneCandidate.plane;
+  }
+  return toCandidates[0].plane;
 }
 
 function isWithinMapBounds(mapDefinition, x, y) {
@@ -1349,6 +1454,21 @@ export function canNpcOccupyTile(mapDefinition, npcRow, mapState, x, y, saveEnve
   );
 }
 
+function canNpcTraverseBetweenTiles(mapDefinition, npcRow, mapState, fromX, fromY, toX, toY, saveEnvelope = null) {
+  if (!canNpcOccupyTile(mapDefinition, npcRow, mapState, toX, toY, saveEnvelope)) {
+    return false;
+  }
+  const fromLayer = resolveMovementLayer(mapDefinition, fromX, fromY);
+  const toLayer = resolveMovementLayer(mapDefinition, toX, toY);
+  if (fromLayer === null || toLayer === null) {
+    return true;
+  }
+  if (fromLayer === toLayer) {
+    return true;
+  }
+  return hasDirectedMovementEdge(mapDefinition, fromX, fromY, toX, toY);
+}
+
 export function canAirshipOccupyTile(mapDefinition, x, y) {
   if (!mapDefinition) return false;
   if (x < 0 || y < 0 || x >= mapDefinition.width || y >= mapDefinition.height) {
@@ -1395,7 +1515,15 @@ export function moveMapPosition(mapDefinition, mapState, direction, saveEnvelope
   }
   const nextX = asNumber(mapState?.tile_x, 0) + delta.x;
   const nextY = asNumber(mapState?.tile_y, 0) + delta.y;
-  if (!canOccupyTile(mapDefinition, nextX, nextY, saveEnvelope)) {
+  if (!canTraverseBetweenTiles(
+    mapDefinition,
+    asNumber(mapState?.tile_x, 0),
+    asNumber(mapState?.tile_y, 0),
+    nextX,
+    nextY,
+    saveEnvelope,
+    mapState?.current_movement_plane,
+  )) {
     return {
       moved: false,
       nextState: {
@@ -1411,6 +1539,14 @@ export function moveMapPosition(mapDefinition, mapState, direction, saveEnvelope
       ...mapState,
       tile_x: nextX,
       tile_y: nextY,
+      current_movement_plane: resolveTraversalTargetPlane(
+        mapDefinition,
+        asNumber(mapState?.tile_x, 0),
+        asNumber(mapState?.tile_y, 0),
+        nextX,
+        nextY,
+        mapState?.current_movement_plane,
+      ),
       facing_direction: facingDirection,
       steps_since_reset: asNumber(mapState?.steps_since_reset, 0) + 1,
     },
@@ -1484,6 +1620,7 @@ export function moveAirshipPosition(mapDefinition, mapState, direction, saveEnve
       tile_y: nextY,
       airship_tile_x: nextX,
       airship_tile_y: nextY,
+      current_movement_plane: normalizeMovementPlane(mapState?.current_movement_plane, "ground"),
       facing_direction: facingDirection,
       steps_since_reset: asNumber(mapState?.steps_since_reset, 0) + 1,
     },
@@ -1493,6 +1630,10 @@ export function moveAirshipPosition(mapDefinition, mapState, direction, saveEnve
 
 function buildEnvelopeWithMapState(store, nextMapState, mapDefinition, options = {}) {
   const currentState = store.getState();
+  const normalizedMapState = {
+    ...(nextMapState && typeof nextMapState === "object" ? nextMapState : {}),
+    current_movement_plane: normalizeMovementPlane(nextMapState?.current_movement_plane, "ground"),
+  };
   const currentEnvelope = currentState.saveEnvelope && typeof currentState.saveEnvelope === "object"
     ? currentState.saveEnvelope
     : {
@@ -1506,7 +1647,7 @@ function buildEnvelopeWithMapState(store, nextMapState, mapDefinition, options =
   const nextMenuState = {
     ...(currentState.menuState && typeof currentState.menuState === "object" ? currentState.menuState : {}),
     map_state: {
-      ...nextMapState,
+      ...normalizedMapState,
     },
   };
   const currentAirshipState = currentState.menuState?.airship_state && typeof currentState.menuState.airship_state === "object"
@@ -1525,12 +1666,12 @@ function buildEnvelopeWithMapState(store, nextMapState, mapDefinition, options =
   }
   const nextSave = {
     ...(currentEnvelope.save && typeof currentEnvelope.save === "object" ? currentEnvelope.save : {}),
-    map: normalizeMapSaveShape(nextMapState, mapDefinition),
+    map: normalizeMapSaveShape(normalizedMapState, mapDefinition),
   };
   writeSavedTreasureStates(
     { save: nextSave },
-    nextMapState?.current_map_id || mapDefinition?.id,
-    nextMapState?.opened_treasures,
+    normalizedMapState?.current_map_id || mapDefinition?.id,
+    normalizedMapState?.opened_treasures,
   );
   return {
     ...currentEnvelope,
@@ -3549,6 +3690,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       ...previousMapState,
       tile_x: nextX,
       tile_y: nextY,
+      current_movement_plane: normalizeMovementPlane(previousMapState?.current_movement_plane, "ground"),
       facing_direction: playerDirection,
       steps_since_reset: asNumber(previousMapState?.steps_since_reset, 0) + 1,
     };
@@ -3671,6 +3813,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
       current_map_id: nextMapDefinition.id,
       tile_x: Number(nextPlayerState?.x ?? nextMapDefinition.spawn?.x ?? 0),
       tile_y: Number(nextPlayerState?.y ?? nextMapDefinition.spawn?.y ?? 0),
+      current_movement_plane: normalizeMovementPlane(nextPlayerState?.current_movement_plane, "ground"),
       facing_direction: normalizeMapFacingDirection(nextPlayerState?.direction, playerDirection),
       steps_since_reset: 0,
       switch_states: normalizeSwitchStates(options?.switch_states),
@@ -4457,7 +4600,15 @@ export async function mountScreen({ mountNode, store, navigate }) {
         const delta = directionDelta(npcState.direction);
         const nextX = Number(npcRow?.x || 0) + Number(delta?.x || 0);
         const nextY = Number(npcRow?.y || 0) + Number(delta?.y || 0);
-        if (npcRow && canNpcOccupyTile(mapDefinition, npcRow, mapState, nextX, nextY)) {
+        if (npcRow && canNpcTraverseBetweenTiles(
+          mapDefinition,
+          npcRow,
+          mapState,
+          Number(npcRow?.x || 0),
+          Number(npcRow?.y || 0),
+          nextX,
+          nextY,
+        )) {
           npcRow.x = nextX;
           npcRow.y = nextY;
           const marker = node.closest(".map-object-npc");
@@ -4875,6 +5026,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
         current_map_id: nextMapDefinition.id,
         tile_x: resolvedSpawn.x,
         tile_y: resolvedSpawn.y,
+        current_movement_plane: "ground",
         facing_direction: playerDirection,
         steps_since_reset: 0,
         switch_states: {},
@@ -4889,6 +5041,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
           current_map_id: nextMapDefinition.id,
           tile_x: asNumber(nextMapDefinition.spawn?.x, 0),
           tile_y: asNumber(nextMapDefinition.spawn?.y, 0),
+          current_movement_plane: "ground",
           facing_direction: playerDirection,
           steps_since_reset: 0,
           switch_states: {},
@@ -5342,6 +5495,7 @@ export async function mountScreen({ mountNode, store, navigate }) {
         current_map_id: mapDefinition.id,
         tile_x: mapDefinition.spawn.x,
         tile_y: mapDefinition.spawn.y,
+        current_movement_plane: normalizeMovementPlane(mapState?.current_movement_plane, "ground"),
         facing_direction: playerDirection,
         steps_since_reset: 0,
         switch_states: normalizeSwitchStates(mapState?.switch_states),
