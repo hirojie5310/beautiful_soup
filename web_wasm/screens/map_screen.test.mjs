@@ -134,6 +134,7 @@ test("deriveInitialMapState always starts from map spawn", () => {
     current_map_id: "Alter_Cave_B1",
     tile_x: 1,
     tile_y: 1,
+    current_movement_plane: "ground",
     steps_since_reset: 0,
     switch_states: {},
     opened_treasures: {},
@@ -157,6 +158,7 @@ test("deriveInitialMapState restores opened treasures from save data on fresh en
     current_map_id: "Alter_Cave_B1",
     tile_x: 1,
     tile_y: 1,
+    current_movement_plane: "ground",
     steps_since_reset: 0,
     switch_states: {},
     opened_treasures: {
@@ -193,6 +195,7 @@ test("deriveInitialMapState merges save treasures with resumed menu state", () =
     current_map_id: "Alter_Cave_B1",
     tile_x: 2,
     tile_y: 2,
+    current_movement_plane: "ground",
     facing_direction: "down",
     steps_since_reset: 0,
     switch_states: {},
@@ -595,6 +598,7 @@ test("deriveInitialMapState ignores stale saved map id on fresh location entry",
     current_map_id: "Alter_Cave_B3",
     tile_x: 9,
     tile_y: 23,
+    current_movement_plane: "ground",
     steps_since_reset: 0,
     switch_states: {},
     opened_treasures: {},
@@ -624,6 +628,7 @@ test("deriveInitialMapState can resume from saved position after battle", () => 
     current_map_id: "Alter_Cave_B1",
     tile_x: 2,
     tile_y: 2,
+    current_movement_plane: "ground",
     facing_direction: "down",
     steps_since_reset: 4,
     switch_states: {},
@@ -660,11 +665,33 @@ test("deriveInitialMapState resumes menu map position ahead of save map position
     current_map_id: "Alter_Cave_B4",
     tile_x: 16,
     tile_y: 26,
+    current_movement_plane: "ground",
     facing_direction: "down",
     steps_since_reset: 7,
     switch_states: { switch1: true },
     opened_treasures: { chest1: true },
   });
+});
+
+test("deriveInitialMapState restores current movement plane from menu map state", () => {
+  const result = deriveInitialMapState({
+    menuState: {
+      map_state: {
+        current_map_id: "Alter_Cave_B4",
+        tile_x: 16,
+        tile_y: 26,
+        current_movement_plane: "bridge",
+      },
+    },
+  }, {
+    ...stubMap,
+    id: "Alter_Cave_B4",
+    spawn: { x: 24, y: 27 },
+  }, {
+    resumeFromSavedPosition: true,
+  });
+
+  assert.equal(result.current_movement_plane, "bridge");
 });
 
 test("shouldResumeMapPosition resumes when returning from menu", () => {
@@ -917,6 +944,7 @@ test("moveMapPosition advances only onto passable tiles", () => {
     current_map_id: "Alter_Cave_B1",
     tile_x: 1,
     tile_y: 2,
+    current_movement_plane: "ground",
     facing_direction: "down",
     steps_since_reset: 1,
   });
@@ -925,6 +953,236 @@ test("moveMapPosition advances only onto passable tiles", () => {
   assert.equal(blocked.moved, false);
   assert.equal(blocked.reason, "blocked");
   assert.equal(blocked.nextState.facing_direction, "left");
+});
+
+test("moveMapPosition preserves the current movement plane", () => {
+  const start = {
+    current_map_id: "Alter_Cave_B1",
+    tile_x: 1,
+    tile_y: 1,
+    current_movement_plane: "bridge",
+    steps_since_reset: 0,
+  };
+  const moved = moveMapPosition(stubMap, start, "down");
+  assert.equal(moved.moved, true);
+  assert.equal(moved.nextState.current_movement_plane, "bridge");
+});
+
+test("moveMapPosition can pass under a bridge tile while keeping the ground plane", () => {
+  const bridgeMap = {
+    ...stubMap,
+    width: 3,
+    height: 3,
+    rows: [
+      [1, 1, 1],
+      [1, 91, 1],
+      [1, 1, 1],
+    ],
+    collisionGids: new Set(),
+    movementRows: [
+      [1, 3, 1],
+      [1, 1, 1],
+      [1, 3, 1],
+    ],
+    movementPlaneTiles: [
+      {
+        x: 1,
+        y: 1,
+        defaultPlane: "ground",
+        planes: {
+          ground: 3,
+          bridge: 1,
+        },
+      },
+    ],
+  };
+  const moved = moveMapPosition(bridgeMap, {
+    current_map_id: "Alter_Cave_B1",
+    tile_x: 1,
+    tile_y: 0,
+    current_movement_plane: "ground",
+    steps_since_reset: 0,
+  }, "down");
+
+  assert.equal(moved.moved, true);
+  assert.equal(moved.nextState.tile_x, 1);
+  assert.equal(moved.nextState.tile_y, 1);
+  assert.equal(moved.nextState.current_movement_plane, "ground");
+});
+
+test("moveMapPosition can step onto a bridge tile and switch to the bridge plane", () => {
+  const bridgeMap = {
+    ...stubMap,
+    width: 3,
+    height: 3,
+    rows: [
+      [1, 1, 1],
+      [1, 91, 1],
+      [1, 1, 1],
+    ],
+    collisionGids: new Set(),
+    movementRows: [
+      [1, 3, 1],
+      [1, 1, 1],
+      [1, 3, 1],
+    ],
+    movementPlaneTiles: [
+      {
+        x: 1,
+        y: 1,
+        defaultPlane: "ground",
+        planes: {
+          ground: 3,
+          bridge: 1,
+        },
+      },
+    ],
+  };
+  const moved = moveMapPosition(bridgeMap, {
+    current_map_id: "Alter_Cave_B1",
+    tile_x: 0,
+    tile_y: 1,
+    current_movement_plane: "ground",
+    steps_since_reset: 0,
+  }, "right");
+
+  assert.equal(moved.moved, true);
+  assert.equal(moved.nextState.tile_x, 1);
+  assert.equal(moved.nextState.tile_y, 1);
+  assert.equal(moved.nextState.current_movement_plane, "bridge");
+});
+
+test("moveMapPosition can walk across a bridge tile and return to the ground plane", () => {
+  const bridgeMap = {
+    ...stubMap,
+    width: 3,
+    height: 3,
+    rows: [
+      [1, 1, 1],
+      [1, 91, 1],
+      [1, 1, 1],
+    ],
+    collisionGids: new Set(),
+    movementRows: [
+      [1, 3, 1],
+      [1, 1, 1],
+      [1, 3, 1],
+    ],
+    movementPlaneTiles: [
+      {
+        x: 1,
+        y: 1,
+        defaultPlane: "ground",
+        planes: {
+          ground: 3,
+          bridge: 1,
+        },
+      },
+    ],
+  };
+  const ontoBridge = moveMapPosition(bridgeMap, {
+    current_map_id: "Alter_Cave_B1",
+    tile_x: 0,
+    tile_y: 1,
+    current_movement_plane: "ground",
+    steps_since_reset: 0,
+  }, "right");
+  assert.equal(ontoBridge.moved, true);
+  assert.equal(ontoBridge.nextState.current_movement_plane, "bridge");
+
+  const offBridge = moveMapPosition(bridgeMap, ontoBridge.nextState, "right");
+  assert.equal(offBridge.moved, true);
+  assert.equal(offBridge.nextState.tile_x, 2);
+  assert.equal(offBridge.nextState.tile_y, 1);
+  assert.equal(offBridge.nextState.current_movement_plane, "ground");
+});
+
+test("moveMapPosition blocks movement across different movement layers", () => {
+  const layeredMap = {
+    ...stubMap,
+    rows: [
+      [5, 5],
+      [5, 5],
+    ],
+    width: 2,
+    height: 2,
+    collisionGids: new Set(),
+    movementRows: [
+      [0, 1],
+      [0, 1],
+    ],
+    movementEdges: [],
+  };
+  const start = { current_map_id: "Alter_Cave_B1", tile_x: 0, tile_y: 0, steps_since_reset: 0 };
+
+  const blocked = moveMapPosition(layeredMap, start, "right");
+  assert.equal(blocked.moved, false);
+  assert.equal(blocked.reason, "blocked");
+});
+
+test("moveMapPosition allows explicit movement edges across movement layers", () => {
+  const layeredMap = {
+    ...stubMap,
+    rows: [
+      [5, 5],
+      [5, 5],
+    ],
+    width: 2,
+    height: 2,
+    collisionGids: new Set(),
+    movementRows: [
+      [0, 1],
+      [0, 1],
+    ],
+    movementEdges: [
+      {
+        from: { x: 0, y: 0 },
+        to: { x: 1, y: 0 },
+        bidirectional: false,
+      },
+    ],
+  };
+  const start = { current_map_id: "Alter_Cave_B1", tile_x: 0, tile_y: 0, steps_since_reset: 0 };
+
+  const moved = moveMapPosition(layeredMap, start, "right");
+  assert.equal(moved.moved, true);
+  assert.equal(moved.nextState.tile_x, 1);
+  assert.equal(moved.nextState.tile_y, 0);
+
+  const blockedBacktrack = moveMapPosition(layeredMap, moved.nextState, "left");
+  assert.equal(blockedBacktrack.moved, false);
+});
+
+test("moveMapPosition treats movement edges as bidirectional by default", () => {
+  const layeredMap = {
+    ...stubMap,
+    rows: [
+      [5, 5],
+    ],
+    width: 2,
+    height: 1,
+    collisionGids: new Set(),
+    movementRows: [
+      [0, 1],
+    ],
+    movementEdges: [
+      {
+        from: { x: 0, y: 0 },
+        to: { x: 1, y: 0 },
+      },
+    ],
+  };
+
+  const movedRight = moveMapPosition(layeredMap, {
+    current_map_id: "Alter_Cave_B1",
+    tile_x: 0,
+    tile_y: 0,
+    steps_since_reset: 0,
+  }, "right");
+  assert.equal(movedRight.moved, true);
+
+  const movedLeft = moveMapPosition(layeredMap, movedRight.nextState, "left");
+  assert.equal(movedLeft.moved, true);
 });
 
 test("moveMapPosition enters Floating Continent canoe water after the canoe is obtained", () => {

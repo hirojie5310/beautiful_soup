@@ -68,6 +68,56 @@ function parseRow(rowValue) {
     .map((chunk) => asNumber(chunk.trim(), 0));
 }
 
+function normalizeGridRows(rawRows, width, height, fallbackValue = 0) {
+  const rows = Array.isArray(rawRows) ? rawRows.map(parseRow) : [];
+  return Array.from({ length: height }, (_unused, y) => {
+    const row = Array.isArray(rows[y]) ? rows[y].slice(0, width) : [];
+    while (row.length < width) row.push(fallbackValue);
+    return row;
+  });
+}
+
+function normalizeMovementEdge(row) {
+  const source = row && typeof row === "object" ? row : {};
+  return {
+    from: {
+      x: asNumber(source?.from?.x ?? source.from_x, 0),
+      y: asNumber(source?.from?.y ?? source.from_y, 0),
+    },
+    to: {
+      x: asNumber(source?.to?.x ?? source.to_x, 0),
+      y: asNumber(source?.to?.y ?? source.to_y, 0),
+    },
+    bidirectional: source?.bidirectional !== false,
+  };
+}
+
+function normalizeMovementPlaneName(value, fallback = "ground") {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "ground" || normalized === "bridge") {
+    return normalized;
+  }
+  return String(fallback || "ground").trim().toLowerCase() === "bridge" ? "bridge" : "ground";
+}
+
+function normalizeMovementPlaneTile(row) {
+  const source = row && typeof row === "object" ? row : {};
+  const rawPlanes = source?.planes && typeof source.planes === "object" && !Array.isArray(source.planes)
+    ? source.planes
+    : {};
+  const planes = Object.fromEntries(
+    Object.entries(rawPlanes)
+      .map(([plane, layer]) => [normalizeMovementPlaneName(plane, ""), asNumber(layer, 0)])
+      .filter(([plane, layer]) => Boolean(plane) && layer > 0),
+  );
+  return {
+    x: asNumber(source?.x, 0),
+    y: asNumber(source?.y, 0),
+    defaultPlane: normalizeMovementPlaneName(source?.default_plane, "ground"),
+    planes,
+  };
+}
+
 function normalizeObject(row) {
   const targetSpawn = row?.target_spawn && typeof row.target_spawn === "object"
     ? {
@@ -149,12 +199,10 @@ export function normalizeMapDefinition(rawMap) {
   const tileset = rawMap?.tileset && typeof rawMap.tileset === "object"
     ? rawMap.tileset
     : {};
-  const rows = Array.isArray(rawMap?.rows) ? rawMap.rows.map(parseRow) : [];
-  const normalizedRows = Array.from({ length: height }, (_unused, y) => {
-    const row = Array.isArray(rows[y]) ? rows[y].slice(0, width) : [];
-    while (row.length < width) row.push(0);
-    return row;
-  });
+  const normalizedRows = normalizeGridRows(rawMap?.rows, width, height, 0);
+  const movementRows = Array.isArray(rawMap?.movement_rows)
+    ? normalizeGridRows(rawMap.movement_rows, width, height, 0)
+    : null;
   const renderPadding = {
     top: Math.max(0, asNumber(rawMap?.padding?.top, 0)),
     right: Math.max(0, asNumber(rawMap?.padding?.right, 0)),
@@ -181,6 +229,13 @@ export function normalizeMapDefinition(rawMap) {
     tileHeight,
     baseRows: normalizedRows.map((row) => row.slice()),
     rows: normalizedRows,
+    movementRows,
+    movementEdges: Array.isArray(rawMap?.movement_edges)
+      ? rawMap.movement_edges.map(normalizeMovementEdge)
+      : [],
+    movementPlaneTiles: Array.isArray(rawMap?.movement_plane_tiles)
+      ? rawMap.movement_plane_tiles.map(normalizeMovementPlaneTile)
+      : [],
     renderRows,
     renderPadding,
     collisionGids: new Set(
