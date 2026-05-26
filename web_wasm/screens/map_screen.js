@@ -296,6 +296,10 @@ const MAP_SHOP_ACTIVATIONS = [
   { mapId: "Kazus_MagicShop", x: 4, y: 4, shopMap: "Kazus", shopType: "Magic" },
   { mapId: "Kazus_WeaponShop", x: 3, y: 4, shopMap: "Kazus", shopType: "Weapons" },
   { mapId: "Kazus_Inn_ItemShop_1F", x: 13, y: 6, shopMap: "Kazus", shopType: "Items" },
+  { mapId: "Canaan_ArmorShop", x: 3, y: 5, shopMap: "Canaan", shopType: "Armor" },
+  { mapId: "Canaan_Inn_ItemShop", x: 11, y: 5, shopMap: "Canaan", shopType: "Items" },
+  { mapId: "Canaan_MagicShop", x: 4, y: 4, shopMap: "Canaan", shopType: "Magic" },
+  { mapId: "Canaan_WeaponShop", x: 3, y: 4, shopMap: "Canaan", shopType: "Weapons" },
 ];
 const CRYSTAL_SPRITE_FRAMES = 4;
 const CRYSTAL_SPRITE_FRAME_MS = 500;

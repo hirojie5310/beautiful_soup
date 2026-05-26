@@ -1737,6 +1737,44 @@ test("findShopActivation resolves tiles adjacent to Kazus shopkeepers", () => {
   assert.equal(findShopActivation({ id: "Kazus_MagicShop" }, { tile_x: 6, tile_y: 4 }), null);
 });
 
+test("findShopActivation resolves tiles adjacent to the Canaan magic shopkeeper", () => {
+  assert.deepEqual(findShopActivation({ id: "Canaan_MagicShop" }, { tile_x: 4, tile_y: 5 }), {
+    mapId: "Canaan_MagicShop",
+    x: 4,
+    y: 4,
+    shopMap: "Canaan",
+    shopType: "Magic",
+  });
+  assert.equal(findShopActivation({ id: "Canaan_MagicShop" }, { tile_x: 6, tile_y: 5 }), null);
+});
+
+test("findShopActivation resolves tiles adjacent to the Canaan shopkeepers", () => {
+  assert.deepEqual(findShopActivation({ id: "Canaan_ArmorShop" }, { tile_x: 3, tile_y: 6 }), {
+    mapId: "Canaan_ArmorShop",
+    x: 3,
+    y: 5,
+    shopMap: "Canaan",
+    shopType: "Armor",
+  });
+  assert.deepEqual(findShopActivation({ id: "Canaan_WeaponShop" }, { tile_x: 3, tile_y: 5 }), {
+    mapId: "Canaan_WeaponShop",
+    x: 3,
+    y: 4,
+    shopMap: "Canaan",
+    shopType: "Weapons",
+  });
+  assert.deepEqual(findShopActivation({ id: "Canaan_Inn_ItemShop" }, { tile_x: 11, tile_y: 6 }), {
+    mapId: "Canaan_Inn_ItemShop",
+    x: 11,
+    y: 5,
+    shopMap: "Canaan",
+    shopType: "Items",
+  });
+  assert.equal(findShopActivation({ id: "Canaan_ArmorShop" }, { tile_x: 3, tile_y: 5 }), null);
+  assert.equal(findShopActivation({ id: "Canaan_WeaponShop" }, { tile_x: 5, tile_y: 4 }), null);
+  assert.equal(findShopActivation({ id: "Canaan_Inn_ItemShop" }, { tile_x: 9, tile_y: 6 }), null);
+});
+
 test("reviveZeroHpPartyMembersToOneHp revives only KO members and clears KO status", () => {
   const save = {
     party: [

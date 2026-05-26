@@ -152,6 +152,83 @@
   "objects": [
     {
       "type": "exit",
+      "name": "Canaan Cid House 1F",
+      "x": 7,
+      "y": 7,
+      "target_map": "Canaan_CidHouse_1F",
+      "target_spawn": {
+        "x": 7,
+        "y": 13
+      }
+    },
+    {
+      "type": "exit",
+      "name": "Canaan Armor Shop",
+      "x": 7,
+      "y": 15,
+      "target_map": "Canaan_ArmorShop",
+      "target_spawn": {
+        "x": 3,
+        "y": 9
+      }
+    },
+    {
+      "type": "exit",
+      "name": "Canaan Shrine",
+      "x": 11,
+      "y": 14,
+      "target_map": "Canaan_Shrine",
+      "target_spawn": {
+        "x": 3,
+        "y": 9
+      }
+    },
+    {
+      "type": "exit",
+      "name": "Canaan Magic Shop",
+      "x": 23,
+      "y": 16,
+      "target_map": "Canaan_MagicShop",
+      "target_spawn": {
+        "x": 4,
+        "y": 8
+      }
+    },
+    {
+      "type": "exit",
+      "name": "Canaan Inn ItemShop",
+      "x": 6,
+      "y": 23,
+      "target_map": "Canaan_Inn_ItemShop",
+      "target_spawn": {
+        "x": 7,
+        "y": 10
+      }
+    },
+    {
+      "type": "exit",
+      "name": "Canaan Noble House",
+      "x": 12,
+      "y": 23,
+      "target_map": "Canaan_NobleHouse",
+      "target_spawn": {
+        "x": 9,
+        "y": 16
+      }
+    },
+    {
+      "type": "exit",
+      "name": "Canaan Weapon Shop",
+      "x": 25,
+      "y": 22,
+      "target_map": "Canaan_WeaponShop",
+      "target_spawn": {
+        "x": 3,
+        "y": 8
+      }
+    },
+    {
+      "type": "exit",
       "name": "Floating Continent",
       "x": 16,
       "y": 30,

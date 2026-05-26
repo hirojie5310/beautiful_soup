@@ -1,0 +1,66 @@
+{
+  "id": "Canaan_WeaponShop",
+  "name": "Canaan Weapon Shop",
+  "tile_width": 24,
+  "tile_height": 24,
+  "width": 7,
+  "height": 10,
+  "tileset": {
+    "name": "TILESET - CombinedUnique16px",
+    "image": "../assets/images/maps/TILESET/TILESET - CombinedUnique16px.png",
+    "columns": 16,
+    "tile_count": 6020
+  },
+  "collision_gids": [104, 598, 1013, 1311, 1649, 2767, 5880, 5910, 5913],
+  "location_requirement": {
+    "group": "Canaan",
+    "locations": ["Canaan"]
+  },
+  "encounter_rate": 0,
+  "padding": {
+    "top": 10,
+    "right": 10,
+    "bottom": 10,
+    "left": 10,
+    "fill_gid": 1
+  },
+  "spawn": {
+    "x": 3,
+    "y": 8
+  },
+  "objects": [
+    {
+      "type": "exit",
+      "name": "Canaan",
+      "x": 3,
+      "y": 9,
+      "target_map": "Canaan",
+      "target_spawn": {
+        "x": 25,
+        "y": 22
+      }
+    },
+    {
+      "type": "npc",
+      "name": "Canaan Weapon Shop NPC 285",
+      "x": 3,
+      "y": 3,
+      "sprite_image": "../assets/images/NPCs/fs_merchant1.png",
+      "dialogue_index": 285,
+      "movement": "fixed",
+      "direction": "down"
+    }
+  ],
+  "rows": [
+    "5910,5910,5910,5910,5910,5910,5910",
+    "5910,2767,1013,1013,1013,2767,5880",
+    "5880,598,2767,2767,2767,2767,5910",
+    "5880,1649,104,54,54,104,5880",
+    "5910,1311,1311,1311,1311,1311,5880",
+    "5913,298,298,298,298,298,5880",
+    "5880,53,53,53,53,53,5880",
+    "53,53,53,53,53,53,53",
+    "2768,2768,2768,2768,2768,2768,2768",
+    "2768,2768,2768,2558,2768,2768,2768"
+  ]
+}

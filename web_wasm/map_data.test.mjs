@@ -187,6 +187,13 @@ test("encounter areas restrict random encounters by tile position", () => {
 
 test("getMapManifestUrl resolves registered maps without falling back", () => {
   assert.match(String(getMapManifestUrl("Canaan")), /\/assets\/maps\/Canaan\.json$/);
+  assert.match(String(getMapManifestUrl("Canaan_ArmorShop")), /\/assets\/maps\/Canaan-ArmorShop\.json$/);
+  assert.match(String(getMapManifestUrl("Canaan_CidHouse_1F")), /\/assets\/maps\/Canaan-CidHouse_1F\.json$/);
+  assert.match(String(getMapManifestUrl("Canaan_Inn_ItemShop")), /\/assets\/maps\/Canaan-Inn_ItemShop\.json$/);
+  assert.match(String(getMapManifestUrl("Canaan_MagicShop")), /\/assets\/maps\/Canaan-MagicShop\.json$/);
+  assert.match(String(getMapManifestUrl("Canaan_NobleHouse")), /\/assets\/maps\/Canaan-NobleHouse\.json$/);
+  assert.match(String(getMapManifestUrl("Canaan_Shrine")), /\/assets\/maps\/Canaan-Shrine\.json$/);
+  assert.match(String(getMapManifestUrl("Canaan_WeaponShop")), /\/assets\/maps\/Canaan-WeaponShop\.json$/);
   assert.match(String(getMapManifestUrl("Dragons_Peak")), /\/assets\/maps\/Dragons_Peak\.json$/);
   assert.match(String(getMapManifestUrl("Castle_Sasune")), /\/assets\/maps\/Castle_Sasune\.json$/);
   assert.match(String(getMapManifestUrl("Castle_Sasune_MainKeep_B1F")), /\/assets\/maps\/Castle_Sasune_MainKeep_B1F\.json$/);
