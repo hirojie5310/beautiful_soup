@@ -1,0 +1,57 @@
+{
+  "id": "Canaan_Shrine",
+  "name": "Canaan Shrine",
+  "tile_width": 24,
+  "tile_height": 24,
+  "width": 7,
+  "height": 11,
+  "tileset": {
+    "name": "TILESET - CombinedUnique16px",
+    "image": "../assets/images/maps/TILESET/TILESET - CombinedUnique16px.png",
+    "columns": 16,
+    "tile_count": 6020
+  },
+  "collision_gids": [2718, 2719, 2744, 2936, 3431, 4715, 5880, 5913],
+  "location_requirement": {
+    "group": "Canaan",
+    "locations": ["Canaan"]
+  },
+  "encounter_rate": 0,
+  "padding": {
+    "top": 10,
+    "right": 10,
+    "bottom": 10,
+    "left": 10,
+    "fill_gid": 1
+  },
+  "spawn": {
+    "x": 3,
+    "y": 9
+  },
+  "objects": [
+    {
+      "type": "exit",
+      "name": "Canaan",
+      "x": 3,
+      "y": 10,
+      "target_map": "Canaan",
+      "target_spawn": {
+        "x": 11,
+        "y": 14
+      }
+    }
+  ],
+  "rows": [
+    "5913,5913,5913,5913,5913,5913,5913",
+    "5913,2744,2744,2936,2744,2744,5913",
+    "5913,2744,2718,2718,2718,2744,5913",
+    "5913,54,2718,2765,2719,54,5913",
+    "5913,54,2719,4715,2719,54,5913",
+    "5913,54,2718,3431,2719,54,5913",
+    "5913,54,2765,54,2765,54,5913",
+    "5913,54,54,54,54,54,5913",
+    "5913,54,54,54,54,54,5913",
+    "5913,5913,5913,54,5913,5880,5913",
+    "2744,2744,2744,54,2744,2744,2744"
+  ]
+}

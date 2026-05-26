@@ -1,0 +1,67 @@
+{
+  "id": "Canaan_ArmorShop",
+  "name": "Canaan Armor Shop",
+  "tile_width": 24,
+  "tile_height": 24,
+  "width": 7,
+  "height": 11,
+  "tileset": {
+    "name": "TILESET - CombinedUnique16px",
+    "image": "../assets/images/maps/TILESET/TILESET - CombinedUnique16px.png",
+    "columns": 16,
+    "tile_count": 6020
+  },
+  "collision_gids": [1, 434, 1310, 2701, 2742, 3887, 4042, 5150, 5785, 5788, 5790],
+  "location_requirement": {
+    "group": "Canaan",
+    "locations": ["Canaan"]
+  },
+  "encounter_rate": 0,
+  "padding": {
+    "top": 10,
+    "right": 10,
+    "bottom": 10,
+    "left": 10,
+    "fill_gid": 1
+  },
+  "spawn": {
+    "x": 3,
+    "y": 9
+  },
+  "objects": [
+    {
+      "type": "exit",
+      "name": "Canaan",
+      "x": 3,
+      "y": 10,
+      "target_map": "Canaan",
+      "target_spawn": {
+        "x": 7,
+        "y": 15
+      }
+    },
+    {
+      "type": "npc",
+      "name": "Canaan Armor Shop NPC 285",
+      "x": 3,
+      "y": 4,
+      "sprite_image": "../assets/images/NPCs/fs_merchant1.png",
+      "dialogue_index": 285,
+      "movement": "fixed",
+      "direction": "down"
+    }
+  ],
+  "rows": [
+    "1,5790,5790,5790,5790,5790,1",
+    "5790,5790,4042,2742,4042,5790,5790",
+    "5790,3887,2742,4042,2742,3887,5790",
+    "5790,2742,434,43,43,2742,5790",
+    "5785,43,43,2701,43,43,5790",
+    "5785,1310,1310,5150,1310,1310,5790",
+    "5785,297,297,297,297,297,5790",
+    "5785,44,44,44,44,44,5790",
+    "44,44,44,44,44,44,44",
+    "44,44,44,44,44,44,44",
+    "44,44,44,23,44,44,44"
+  ]
+}
