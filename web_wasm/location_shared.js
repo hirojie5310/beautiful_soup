@@ -205,10 +205,10 @@ export async function loadShopMasterData() {
 export function resolveInventoryBucketForItem(masterData, itemName, preferredBucket = "") {
   const normalizedItemName = String(itemName || "");
   const fallbackBucket = String(preferredBucket || "Anywhere");
-  const spellLevel = asNumber(masterData?.spellLevelByName?.[normalizedItemName], 0);
-  if (spellLevel > 0) return "Magic";
   const itemType = String(masterData?.itemTypeByName?.[normalizedItemName] || "");
   if (itemType) return itemType;
+  const spellLevel = asNumber(masterData?.spellLevelByName?.[normalizedItemName], 0);
+  if (spellLevel > 0) return "Magic";
   if (masterData?.weaponNameSet instanceof Set && masterData.weaponNameSet.has(normalizedItemName)) {
     return "Weapon";
   }

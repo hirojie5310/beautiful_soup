@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
 
 import {
   applySwitchStateToMap,
@@ -2461,6 +2462,39 @@ test("openAdjacentTreasure stores Magic treasure under inventory level buckets",
   assert.equal(result.opened, true);
   assert.equal(result.saveEnvelope.save.inventory.Magic.LV1.Sleep, 1);
   assert.equal(result.mapState.opened_treasures.treasure_magic, true);
+});
+
+test("openAdjacentTreasure stores Canaan Noble House Mallet under Anywhere inventory", () => {
+  const mapWithTreasure = JSON.parse(fs.readFileSync(
+    new URL("../../assets/maps/Canaan-NobleHouse.json", import.meta.url),
+    "utf8",
+  ));
+  mapWithTreasure.rows = mapWithTreasure.rows.map((row) => row.split(",").map((value) => Number(value)));
+  mapWithTreasure.baseRows = mapWithTreasure.rows.map((row) => row.slice());
+  mapWithTreasure.collisionGids = new Set(mapWithTreasure.collision_gids || []);
+  mapWithTreasure.renderPadding = { top: 0, right: 0, bottom: 0, left: 0, fillGid: 1 };
+
+  const result = openAdjacentTreasure(mapWithTreasure, {
+    current_map_id: "Canaan_NobleHouse",
+    tile_x: 6,
+    tile_y: 3,
+    facing_direction: "right",
+    switch_states: {},
+    opened_treasures: {},
+  }, {
+    save: { inventory: {} },
+    menu_state: {},
+  }, {
+    spellLevelByName: { Mallet: 1 },
+    itemTypeByName: { Mallet: "Anywhere" },
+    weaponNameSet: new Set(),
+    armorNameSet: new Set(),
+  });
+
+  assert.equal(result.opened, true);
+  assert.equal(result.itemName, "Mallet");
+  assert.equal(result.saveEnvelope.save.inventory.Anywhere.Mallet, 1);
+  assert.equal(result.saveEnvelope.save.treasures.Canaan_NobleHouse.canaan_noble_house_treasure_mallet, true);
 });
 
 test("openAdjacentTreasure leaves chest closed when Magic treasure level is unknown", () => {

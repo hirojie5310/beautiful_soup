@@ -13,7 +13,19 @@
   },
   "collision_gids": [
     157,
-    1636
+    283,
+    1030,
+    1038,
+    1254,
+    1551,
+    1636,
+    1906,
+    2011,
+    2195,
+    2199,
+    2266,
+    2271,
+    2310
   ],
   "location_requirement": {
     "group": "Dragon's Peak",
@@ -52,6 +64,42 @@
         "x": 88,
         "y": 69
       }
+    },
+    {
+      "type": "treasure",
+      "name": "Dragons Peak Aero Upper",
+      "x": 14,
+      "y": 5,
+      "treasure_id": "dragons_peak_treasure_aero",
+      "item_name": "Aero",
+      "inventory_bucket": "Magic",
+      "quantity": 1,
+      "closed_gid": 157,
+      "open_gid": 508
+    },
+    {
+      "type": "treasure",
+      "name": "Dragons Peak Gold Needle Left",
+      "x": 6,
+      "y": 12,
+      "treasure_id": "dragons_peak_treasure_gold_needle_left",
+      "item_name": "Gold Needle",
+      "inventory_bucket": "Anywhere",
+      "quantity": 1,
+      "closed_gid": 157,
+      "open_gid": 508
+    },
+    {
+      "type": "treasure",
+      "name": "Dragons Peak Gold Needle Lower",
+      "x": 24,
+      "y": 26,
+      "treasure_id": "dragons_peak_treasure_gold_needle_lower",
+      "item_name": "Gold Needle",
+      "inventory_bucket": "Anywhere",
+      "quantity": 1,
+      "closed_gid": 157,
+      "open_gid": 508
     }
   ],
   "rows": [

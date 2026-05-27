@@ -39,6 +39,30 @@
         "x": 12,
         "y": 23
       }
+    },
+    {
+      "type": "treasure",
+      "name": "Canaan Noble House Mallet",
+      "x": 7,
+      "y": 3,
+      "treasure_id": "canaan_noble_house_treasure_mallet",
+      "item_name": "Mallet",
+      "inventory_bucket": "Anywhere",
+      "quantity": 1,
+      "closed_gid": 801,
+      "open_gid": 801
+    },
+    {
+      "type": "treasure",
+      "name": "Canaan Noble House Gold Needle",
+      "x": 3,
+      "y": 8,
+      "treasure_id": "canaan_noble_house_treasure_gold_needle",
+      "item_name": "Gold Needle",
+      "inventory_bucket": "Anywhere",
+      "quantity": 1,
+      "closed_gid": 801,
+      "open_gid": 801
     }
   ],
   "rows": [
