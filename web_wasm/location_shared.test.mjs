@@ -154,6 +154,20 @@ test("resolveInventoryBucketForItem prefers catalog item types over mistaken pre
   assert.equal(resolveInventoryBucketForItem(masterData, "Antarctic Wind", "Anywhere"), "Combat");
 });
 
+test("resolveInventoryBucketForItem prefers item catalog type when item name also exists as a spell", () => {
+  const masterData = {
+    itemTypeByName: {
+      Mallet: "Anywhere",
+    },
+    spellLevelByName: {
+      Mallet: 1,
+    },
+    weaponNameSet: new Set(),
+    armorNameSet: new Set(),
+  };
+  assert.equal(resolveInventoryBucketForItem(masterData, "Mallet", "Magic"), "Anywhere");
+});
+
 test("normalizeShopTypeToInventoryBucket still resolves magic and equipment buckets", () => {
   const masterData = {
     itemTypeByName: {
