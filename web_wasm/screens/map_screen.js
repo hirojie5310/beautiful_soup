@@ -119,11 +119,14 @@ const FLOATING_CONTINENT_LOCATION_SPAWNS = {
   "Floating Continent Near desert": { x: 57, y: 84 },
 };
 const KAZUS_MAP_ID = "Kazus";
+const CANAAN_MAP_ID = "Canaan";
 const KAZUS_BLACKSMITH_MAP_ID = "Kazus_Blacksmith";
 const KAZUS_NPC_516_KEY = "kazus_npc_516_scripted";
 const KAZUS_CID_JOIN_KEY = "kazus_cid_join_scripted";
 const KAZUS_CID_JOIN_SEQUENCE_ID = "kazus_cid_join";
 const KAZUS_CID_FOLLOWER_EVENT_FLAG = "kazus_cid_follower_joined";
+const CANAAN_CID_FAREWELL_SEQUENCE_ID = "canaan_cid_farewell";
+const CANAAN_CID_FAREWELL_EVENT_FLAG = "canaan_cid_farewell_complete";
 const KAZUS_BLACKSMITH_TAKA_KEY = "kazus_blacksmith_taka_scripted";
 const KAZUS_BLACKSMITH_MITHRIL_RAM_EVENT_FLAG = "kazus_blacksmith_mythril_ram_complete";
 const KAZUS_BLACKSMITH_TAKA_OUTBOUND_PATH = [
@@ -161,6 +164,11 @@ const KAZUS_CID_JOIN_PATH = [
   { x: 9, y: 28 },
 ];
 const KAZUS_CID_FOLLOWER_START = { x: 9, y: 28, direction: "left" };
+const CANAAN_CID_INITIAL_DESTINATION = { x: 16, y: 27 };
+const CANAAN_CID_CROSSROAD_DESTINATION = { x: 15, y: 26 };
+const CANAAN_CID_NORTH_DESTINATION = { x: 15, y: 23 };
+const CANAAN_CID_EXIT_LANE_DESTINATION = { x: 14, y: 23 };
+const CANAAN_CID_EXIT_FINAL_DESTINATION = { x: 14, y: 17 };
 const SEALED_CAVE_B2_2_MAP_ID = "Sealed_Cave_B2_2";
 const SEALED_CAVE_B3_MAP_ID = "Sealed_Cave_B3";
 const SEALED_CAVE_B2_2_SARA_KEY = "sealed_cave_b2_2_sara_scripted";
@@ -277,6 +285,18 @@ const MERGED_FIXED_DIALOGUE_PAGE_OVERRIDES = {
   16: [
     "よくやった！\nさすが　わしが　みこんだだけのことはあるわい。\nひくうていは　おまえさんたちが　やくにたてるのが\n１ばんいいじゃろう。",
     "それより　わしを　ばあさんのまつ　カナーンの\nむらまで　つれていってくれ。\nなっ　たのむ！\nシドじいさんが　パーティーにくわわった。",
+  ],
+  17: [
+    "ありがとうよ。\nわしのできることなら　なんでもいってくれ……\nそうだ！　もう１ど　ひくうていをつくれれば\nおまえさんたちの　やくにたつかもしれんな。",
+    "アーガスおうに　あうのじゃ！\nおうが　ひくうていの　ひみつを　しっている。\nほんとに　たすかったよ！\nいつでもまた　きなさい！",
+  ],
+  562: [
+    "デッシュとかいったかね……\nあのろくでなしに　むすめの　サリーナは\nぞっこんなんだよ。\nまいったね……",
+    "あのおとこ　どうしても　さがさなければならない\nものが　あるといって　たびにでちまった。\nおかげで　むすめは　ないてばかりさ。",
+  ],
+  563: [
+    "サリーナ「ああ……デッシュさま。\nこんなに　おしたいしておりますのに……\nシクシク……",
+    "りゅうが　すむという　みなみのやまに\nいってしまわれました……",
   ],
   535: [
     "シド「カナーンへいくために\n　　　ネルブのおおいわを　くだこうとおもうのだが……\n　　　ひくうていにミスリルせいの　せんしゅを\n　　　つければなんとかなるかもしれん。",
@@ -4072,6 +4092,95 @@ export async function mountScreen({ mountNode, store, navigate }) {
     }
   }
 
+  async function runCanaanCidFarewellSequence() {
+    if (!mapState || !saraFollowerState || !isCidFollowerActive(store.getState().saveEnvelope)) {
+      return false;
+    }
+    const messages = await loadMergedFixedContentByIndices([17], currentDialoguePartyMembers());
+    holdRepeater.stop();
+    mapTransitionLocked = true;
+    try {
+      const initialPath = buildAxisAlignedPath(
+        {
+          x: Number(saraFollowerState.tile_x || 0),
+          y: Number(saraFollowerState.tile_y || 0),
+        },
+        CANAAN_CID_INITIAL_DESTINATION,
+        { horizontalFirst: false },
+      );
+      for (const step of initialPath) {
+        await animateSaraFollowerStepTo(step.x, step.y, 1000);
+      }
+      await openDialogueMessagesAndWait(messages);
+      const crossroadPath = buildAxisAlignedPath(
+        {
+          x: Number(saraFollowerState.tile_x || 0),
+          y: Number(saraFollowerState.tile_y || 0),
+        },
+        CANAAN_CID_CROSSROAD_DESTINATION,
+        { horizontalFirst: false },
+      );
+      for (const step of crossroadPath) {
+        await animateSaraFollowerStepTo(step.x, step.y, 1000);
+      }
+      saraFollowerState = {
+        ...saraFollowerState,
+        direction: "left",
+        walkFrame: 0,
+      };
+      redraw();
+      const northPath = buildAxisAlignedPath(
+        {
+          x: Number(saraFollowerState.tile_x || 0),
+          y: Number(saraFollowerState.tile_y || 0),
+        },
+        CANAAN_CID_NORTH_DESTINATION,
+        { horizontalFirst: false },
+      );
+      for (const step of northPath) {
+        await animateSaraFollowerStepTo(step.x, step.y, 1000);
+      }
+      saraFollowerState = {
+        ...saraFollowerState,
+        direction: "down",
+        walkFrame: 0,
+      };
+      redraw();
+      await waitForDuration(1000);
+      await animateSaraFollowerStepToWithFacing(
+        CANAAN_CID_EXIT_LANE_DESTINATION.x,
+        CANAAN_CID_EXIT_LANE_DESTINATION.y,
+        1000,
+        "left",
+      );
+      const exitPath = buildAxisAlignedPath(
+        {
+          x: Number(saraFollowerState.tile_x || 0),
+          y: Number(saraFollowerState.tile_y || 0),
+        },
+        CANAAN_CID_EXIT_FINAL_DESTINATION,
+        { horizontalFirst: false },
+      );
+      for (const step of exitPath) {
+        await animateSaraFollowerStepTo(step.x, step.y, 1000);
+      }
+      if (!persistNamedEventFlag(CANAAN_CID_FAREWELL_EVENT_FLAG)) {
+        return false;
+      }
+      stopSaraFollowerMoveAnimation();
+      visualSaraFollowerPosition = null;
+      saraFollowerState = null;
+      hideSaraFollowerNode();
+      renderMapTiles(mapLayer, mapDefinition, store.getState().saveEnvelope);
+      tickNpcSprites();
+      redraw();
+      mapStatus.textContent = "シドじいさんは　カナーンに　のこった。";
+      return true;
+    } finally {
+      mapTransitionLocked = false;
+    }
+  }
+
   async function maybeFollowWithSealedCaveSara(previousPlayerState) {
     if (!saraFollowerState || !previousPlayerState || !shouldRenderSaraFollower(store.getState().saveEnvelope)) {
       return false;
@@ -4708,6 +4817,9 @@ export async function mountScreen({ mountNode, store, navigate }) {
     }
     if (String(eventRow.scripted_sequence || "") === KAZUS_CID_JOIN_SEQUENCE_ID) {
       return runKazusCidJoinSequence();
+    }
+    if (String(eventRow.scripted_sequence || "") === CANAAN_CID_FAREWELL_SEQUENCE_ID) {
+      return runCanaanCidFarewellSequence();
     }
     const enemyNames = eventEnemyNames(eventRow);
     if (enemyNames.length) {
