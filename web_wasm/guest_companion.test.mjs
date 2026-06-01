@@ -34,6 +34,14 @@ test("Cid guest becomes active after the Kazus join event", () => {
       },
     },
   }), true);
+  assert.equal(isCidGuestActive({
+    save: {
+      event_flag: {
+        kazus_cid_follower_joined: true,
+        canaan_cid_farewell_complete: true,
+      },
+    },
+  }), false);
 });
 
 test("active guest follower prefers forced or active Sara before Cid", () => {

@@ -1503,6 +1503,135 @@ test("findStandingEventTrigger resolves hidden standing events until completion 
   );
 });
 
+test("Canaan map includes the hidden Cid farewell standing event", () => {
+  const canaanMap = JSON.parse(
+    fs.readFileSync(new URL("../../assets/maps/Canaan.json", import.meta.url), "utf8"),
+  );
+  const eventRow = canaanMap.objects.find((row) => row?.name === "Canaan Cid Farewell Event");
+  assert.deepEqual(eventRow, {
+    type: "event",
+    name: "Canaan Cid Farewell Event",
+    x: 16,
+    y: 28,
+    hidden: true,
+    scripted_sequence: "canaan_cid_farewell",
+    required_event_flag: "kazus_cid_follower_joined",
+    required_event_flag_absent: "canaan_cid_farewell_complete",
+  });
+});
+
+test("Canaan map includes the requested town NPC placements", () => {
+  const canaanMap = JSON.parse(
+    fs.readFileSync(new URL("../../assets/maps/Canaan.json", import.meta.url), "utf8"),
+  );
+  const npcRows = canaanMap.objects.filter((row) => row?.type === "npc");
+  assert.deepEqual(
+    npcRows.map((row) => ({
+      name: row.name,
+      x: row.x,
+      y: row.y,
+      sprite_image: row.sprite_image,
+      dialogue_index: row.dialogue_index,
+      movement: row.movement,
+      direction: row.direction,
+    })),
+    [
+      {
+        name: "Canaan NPC 559",
+        x: 11,
+        y: 27,
+        sprite_image: "../assets/images/NPCs/fs_man1.png",
+        dialogue_index: 559,
+        movement: "random",
+        direction: "down",
+      },
+      {
+        name: "Canaan NPC 560",
+        x: 20,
+        y: 26,
+        sprite_image: "../assets/images/NPCs/fs_man1.png",
+        dialogue_index: 560,
+        movement: "random",
+        direction: "down",
+      },
+      {
+        name: "Canaan NPC 105",
+        x: 21,
+        y: 18,
+        sprite_image: "../assets/images/NPCs/fs_lady1.png",
+        dialogue_index: 105,
+        movement: "fixed",
+        direction: "down",
+      },
+      {
+        name: "Canaan NPC 564",
+        x: 22,
+        y: 12,
+        sprite_image: "../assets/images/NPCs/fs_old_woman1.png",
+        dialogue_index: 564,
+        movement: "random",
+        direction: "down",
+      },
+      {
+        name: "Canaan NPC 561",
+        x: 9,
+        y: 18,
+        sprite_image: "../assets/images/NPCs/fs_old_man1.png",
+        dialogue_index: 561,
+        movement: "random",
+        direction: "down",
+      },
+      {
+        name: "Canaan NPC 565",
+        x: 4,
+        y: 11,
+        sprite_image: "../assets/images/NPCs/fs_woman1.png",
+        dialogue_index: 565,
+        movement: "random",
+        direction: "down",
+      },
+    ],
+  );
+});
+
+test("Canaan Noble House map includes the requested NPC placements", () => {
+  const nobleHouseMap = JSON.parse(
+    fs.readFileSync(new URL("../../assets/maps/Canaan-NobleHouse.json", import.meta.url), "utf8"),
+  );
+  const npcRows = nobleHouseMap.objects.filter((row) => row?.type === "npc");
+  assert.deepEqual(
+    npcRows.map((row) => ({
+      name: row.name,
+      x: row.x,
+      y: row.y,
+      sprite_image: row.sprite_image,
+      dialogue_index: row.dialogue_index,
+      movement: row.movement,
+      direction: row.direction,
+    })),
+    [
+      {
+        name: "Canaan Noble House NPC 563",
+        x: 4,
+        y: 12,
+        sprite_image: "../assets/images/NPCs/fs_lady1.png",
+        dialogue_index: 563,
+        movement: "fixed",
+        direction: "down",
+      },
+      {
+        name: "Canaan Noble House NPC 562",
+        x: 10,
+        y: 8,
+        sprite_image: "../assets/images/NPCs/fs_woman1.png",
+        dialogue_index: 562,
+        movement: "random",
+        direction: "down",
+      },
+    ],
+  );
+});
+
 test("isMapObjectAvailable respects required event flags", () => {
   assert.equal(isMapObjectAvailable({
     type: "exit",
@@ -1977,6 +2106,51 @@ test("buildMergedFixedContentPages splits Cid join dialogue in Kazus into two pa
   assert.equal(pages.length, 2);
   assert.match(pages[0], /^よくやった！/);
   assert.match(pages[1], /^それより　わしを　ばあさんのまつ　カナーンの/);
+});
+
+test("buildMergedFixedContentPages splits Cid farewell dialogue in Canaan into two pages", () => {
+  const pages = buildMergedFixedContentPages(17, `>-
+    ありがとうよ。\\nわしのできることなら　なんでもいってくれ……\\nそうだ！　もう１ど　ひくうていをつくれれば\\nおまえさんたちの　やくにたつかもしれんな。\\nアーガスおうに　あうのじゃ！\\nおうが　ひくうていの　ひみつを　しっている。\\nほんとに　たすかったよ！\\nいつでもまた　きなさい！\\n
+`);
+  assert.equal(pages.length, 2);
+  assert.equal(
+    pages[0],
+    "ありがとうよ。\nわしのできることなら　なんでもいってくれ……\nそうだ！　もう１ど　ひくうていをつくれれば\nおまえさんたちの　やくにたつかもしれんな。",
+  );
+  assert.equal(
+    pages[1],
+    "アーガスおうに　あうのじゃ！\nおうが　ひくうていの　ひみつを　しっている。\nほんとに　たすかったよ！\nいつでもまた　きなさい！",
+  );
+});
+
+test("buildMergedFixedContentPages splits Desch mother dialogue in Canaan Noble House into two pages", () => {
+  const pages = buildMergedFixedContentPages(562, `>-
+    デッシュとかいったかね……\\nあのろくでなしに　むすめの　サリーナは\\nぞっこんなんだよ。\\nまいったね……\\nあのおとこ　どうしても　さがさなければならない\\nものが　あるといって　たびにでちまった。\\nおかげで　むすめは　ないてばかりさ。\\n
+`);
+  assert.equal(pages.length, 2);
+  assert.equal(
+    pages[0],
+    "デッシュとかいったかね……\nあのろくでなしに　むすめの　サリーナは\nぞっこんなんだよ。\nまいったね……",
+  );
+  assert.equal(
+    pages[1],
+    "あのおとこ　どうしても　さがさなければならない\nものが　あるといって　たびにでちまった。\nおかげで　むすめは　ないてばかりさ。",
+  );
+});
+
+test("buildMergedFixedContentPages splits Salina dialogue in Canaan Noble House into two pages", () => {
+  const pages = buildMergedFixedContentPages(563, `>-
+    サリーナ「ああ……デッシュさま。\\n\\t[0x05]こんなに　おしたいしておりますのに……\\n\\t[0x05]シクシク……\\n\\n\\t[0x05]りゅうが　すむという　みなみのやまに\\n\\t[0x05]いってしまわれました……\\n
+`);
+  assert.equal(pages.length, 2);
+  assert.equal(
+    pages[0],
+    "サリーナ「ああ……デッシュさま。\nこんなに　おしたいしておりますのに……\nシクシク……",
+  );
+  assert.equal(
+    pages[1],
+    "りゅうが　すむという　みなみのやまに\nいってしまわれました……",
+  );
 });
 
 test("buildMergedFixedContentPages splits Kazus blacksmith intro into two pages", () => {
